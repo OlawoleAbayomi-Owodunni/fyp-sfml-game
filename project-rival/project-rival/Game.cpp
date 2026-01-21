@@ -109,13 +109,18 @@ void Game::processGameEvents(const sf::Event& event)
 ////////////////////////////////////////////////////////////
 void Game::update(double dt)
 {
-
+	m_player.update(dt);
 }
 
 ////////////////////////////////////////////////////////////
 void Game::render()
 {
 	m_window.clear(sf::Color(0, 0, 0, 0));
+	m_player.render(m_window);
+
+
+
+
 #ifdef TEST_FPS
 	m_window.draw(x_updateFPS); //ups is 60 and dps is 61
 	m_window.draw(x_drawFPS);
@@ -126,4 +131,7 @@ void Game::render()
 
 
 
-
+void Game::gameStart()
+{
+	m_player.init();
+}

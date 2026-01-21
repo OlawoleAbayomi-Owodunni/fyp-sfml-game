@@ -17,3 +17,21 @@ void player::init()
 	p_body.setOrigin(size / 2.f);
 	p_body.setPosition(Vector2f(25., 25.f));
 }
+
+void player::update(double dt)
+{
+	return;
+}
+
+void player::render(RenderWindow& window)
+{
+	window.draw(p_body);
+}
+
+
+
+
+void player::reset()
+{
+	p_body.setPosition(Vector2f(25., 25.f));
+}

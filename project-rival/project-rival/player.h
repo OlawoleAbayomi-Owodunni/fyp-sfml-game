@@ -9,12 +9,13 @@ public:
 	player();
 	~player();
 
+	void init();
 	void update(double dt);
 	void render(RenderWindow& window);
 
 private:
 	// FUNCTIONS
-	void init();
+	void reset();
 
 	// VARIABLES
 	RectangleShape p_body;
