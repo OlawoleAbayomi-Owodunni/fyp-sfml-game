@@ -15,7 +15,7 @@ public:
 	void update(double dt);
 	void render(RenderWindow& window);
 
-	void processGameEvents(const sf::Event& event);
+	const Vector2f getPosition();
 
 private:
 	// FUNCTIONS

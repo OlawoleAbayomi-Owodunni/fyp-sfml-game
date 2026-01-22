@@ -56,9 +56,9 @@ void player::render(RenderWindow& window)
 	window.draw(p_body);
 }
 
-void player::processGameEvents(const sf::Event& event)
+const Vector2f player::getPosition()
 {
-	// Currently no player-specific event processing.
+	return p_body.getPosition();
 }
 
 
