@@ -1,4 +1,5 @@
 #include "player.h"
+#include "InputManager.h"
 
 player::player()
 {
@@ -22,20 +23,32 @@ void player::init()
 
 void player::update(double dt)
 {
+	//--------- movement logic ---------//
 	Vector2f direction{ 0.f, 0.f };
-	if (Keyboard::isKeyPressed(Keyboard::Key::W)) { direction.y -= 1.f; }
-	if (Keyboard::isKeyPressed(Keyboard::Key::S)) { direction.y += 1.f; }
-	if (Keyboard::isKeyPressed(Keyboard::Key::A)) { direction.x -= 1.f; }
-	if (Keyboard::isKeyPressed(Keyboard::Key::D)) { direction.x += 1.f; }
 
-	if (direction.x != 0.f || direction.y != 0.f)
-		direction = direction.normalized();
+	const Vector2f ls = InputManager::pad().leftStick();
+	const bool isControllerActive = (ls.x != 0.f || ls.y != 0.f);
+
+	if (isControllerActive) // Gamepad input
+	{
+		direction += ls.normalized();
+	}
+	else // Keyboard input
+	{
+		if (Keyboard::isKeyPressed(Keyboard::Key::W)) { direction.y -= 1.f; }
+		if (Keyboard::isKeyPressed(Keyboard::Key::S)) { direction.y += 1.f; }
+		if (Keyboard::isKeyPressed(Keyboard::Key::A)) { direction.x -= 1.f; }
+		if (Keyboard::isKeyPressed(Keyboard::Key::D)) { direction.x += 1.f; }
+
+		if (direction.x != 0.f || direction.y != 0.f)
+			direction = direction.normalized();
+	}
+
 	p_velocity = direction * p_moveSpeed;
-
-	//Vector2f currentPosition = p_body.getPosition();
-	//currentPosition += p_velocity * static_cast<float>(dt);
-	//p_body.setPosition(currentPosition);
 	p_body.move(p_velocity * static_cast<float>(dt));
+
+	if (InputManager::pad().rightTrigger()) InputManager::pad().setRumble(0.2f, 0.8f);
+	else InputManager::pad().setRumble(0.0f, 0.0f);
 }
 
 void player::render(RenderWindow& window)

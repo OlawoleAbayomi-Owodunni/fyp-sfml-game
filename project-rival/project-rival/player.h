@@ -1,5 +1,7 @@
 #pragma once
 #include <SFML/Graphics.hpp>
+#include <Windows.h>
+#include <Xinput.h>
 
 using namespace sf;
 

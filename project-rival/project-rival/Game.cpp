@@ -1,4 +1,5 @@
 #include "Game.h"
+#include "InputManager.h"
 #include <iostream>
 
 // Our target FPS
@@ -6,7 +7,7 @@ static double const FPS{ 60.0f };
 
 ////////////////////////////////////////////////////////////
 Game::Game()
-	: m_window(sf::VideoMode(sf::Vector2u(ScreenSize::s_width, ScreenSize::s_height), 32), "SFML Playground", sf::Style::Default)
+	: m_window(sf::VideoMode(sf::Vector2u(ScreenSize::s_width, ScreenSize::s_height), 32), "FYP: Dungeonish Crawler", sf::Style::Default)
 {
 	init();
 }
@@ -109,6 +110,7 @@ void Game::processGameEvents(const sf::Event& event)
 ////////////////////////////////////////////////////////////
 void Game::update(double dt)
 {
+	InputManager::update();
 	m_player.update(dt);
 }
 
