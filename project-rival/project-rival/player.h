@@ -13,11 +13,16 @@ public:
 	void update(double dt);
 	void render(RenderWindow& window);
 
+	void processGameEvents(const sf::Event& event);
+
 private:
 	// FUNCTIONS
 	void reset();
 
 	// VARIABLES
 	RectangleShape p_body;
+
+	Vector2f p_velocity{ 0.f, 0.f };
+	float p_moveSpeed{ 200.f };
 };
 

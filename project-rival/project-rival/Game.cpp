@@ -49,7 +49,7 @@ void Game::run()
 		{
 			timeSinceLastUpdate -= timePerFrame;
 			processEvents(); // at least 60 fps
-			update(timePerFrame.asMilliseconds()); //60 fps
+			update(timePerFrame.asSeconds()); //60 fps
 #ifdef TEST_FPS
 			x_secondTime += timePerFrame;
 			x_updateFrameCount++;

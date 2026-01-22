@@ -133,6 +133,7 @@ Visual Studio
 *.sdf
 *.cachefile
 ipch/
+.github/
 
 Xcode
 *.pbxuser
