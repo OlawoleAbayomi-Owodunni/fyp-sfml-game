@@ -33,6 +33,8 @@ void Game::init()
 	x_drawFPS.setCharacterSize(24);
 	x_drawFPS.setFillColor(sf::Color::White);
 #endif
+
+	gameStart();
 }
 
 ////////////////////////////////////////////////////////////
@@ -110,8 +112,12 @@ void Game::processGameEvents(const sf::Event& event)
 ////////////////////////////////////////////////////////////
 void Game::update(double dt)
 {
+	m_enemy.setTarget(m_player.getPosition());
+
+
 	InputManager::update();
 	m_player.update(dt);
+	m_enemy.update(dt);
 }
 
 ////////////////////////////////////////////////////////////
@@ -119,7 +125,7 @@ void Game::render()
 {
 	m_window.clear(sf::Color(0, 0, 0, 0));
 	m_player.render(m_window);
-
+	m_enemy.render(m_window);
 
 
 
@@ -131,9 +137,7 @@ void Game::render()
 }
 
 
-
-
 void Game::gameStart()
 {
-	m_player.init();
+
 }

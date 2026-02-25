@@ -16,6 +16,8 @@ public:
 	void handleMovement(double dt);
 	void render(RenderWindow& window);
 
+	const Vector2f getPosition() const { return p_body.getPosition(); }
+
 private:
 	// FUNCTIONS
 	void reset();

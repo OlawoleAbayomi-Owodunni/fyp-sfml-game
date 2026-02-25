@@ -1,7 +1,4 @@
 #include "SeekBehaviour.h"
-#include <cmath>
-
-using namespace trig_helper;
 
 namespace trig_helper
 {
@@ -26,6 +23,7 @@ namespace trig_helper
 	}
 }
 
+
 void SeekBehaviour::setTarget(const Vector2f& target)
 {
 	sb_target = target;
@@ -39,13 +37,13 @@ const Vector2f SeekBehaviour::getSteering(const SteeringAgent& agent)
 		return Vector2f();
 
 	// 2) Calculate desired Velocity (towards target, with max speed)
-	const Vector2f desiredVelocity = normalise(toTarget) * agent.maxSpeed;
+	const Vector2f desiredVelocity = trig_helper::normalise(toTarget) * agent.maxSpeed;
 
 	// 3) Calculate steering (desired velocity - current velocity)
 	Vector2f steering = desiredVelocity - agent.velocity;
 
 	// 4) Clamp steering to the agents max acceleration
-	steering = clampMagnitude(steering, agent.maxAcceleration);
+	steering = trig_helper::clampMagnitude(steering, agent.maxAcceleration);
 
 	return steering;
 }

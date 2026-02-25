@@ -10,6 +10,7 @@
 #include <string>
 
 #include "player.h"
+#include "Enemy.h"
 
 using namespace std;
 using namespace sf;
@@ -48,6 +49,7 @@ protected:
 	sf::RenderWindow m_window;
 
 	player m_player;
+	Enemy m_enemy{ Vector2f(500.f, 500.f) };
 
 #ifdef TEST_FPS
 	sf::Text x_updateFPS{ m_arialFont };	// text used to display updates per second.
