@@ -23,6 +23,25 @@ void player::init()
 
 void player::update(double dt)
 {
+	handleMovement(dt);
+
+	if (InputManager::pad().rightTrigger()) InputManager::pad().setRumble(0.2f, 0.8f);
+	else InputManager::pad().setRumble(0.0f, 0.0f);
+}
+
+
+void player::render(RenderWindow& window)
+{
+	window.draw(p_body);
+}
+
+void player::reset()
+{
+	p_body.setPosition(Vector2f(50., 50.f));
+}
+
+void player::handleMovement(double dt)
+{
 	//--------- movement logic ---------//
 	Vector2f direction{ 0.f, 0.f };
 
@@ -46,23 +65,4 @@ void player::update(double dt)
 
 	p_velocity = direction * p_moveSpeed;
 	p_body.move(p_velocity * static_cast<float>(dt));
-
-	if (InputManager::pad().rightTrigger()) InputManager::pad().setRumble(0.2f, 0.8f);
-	else InputManager::pad().setRumble(0.0f, 0.0f);
-}
-
-void player::render(RenderWindow& window)
-{
-	window.draw(p_body);
-}
-
-void player::processGameEvents(const sf::Event& event)
-{
-	// Currently no player-specific event processing.
-}
-
-
-void player::reset()
-{
-	p_body.setPosition(Vector2f(50., 50.f));
 }

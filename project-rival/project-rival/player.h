@@ -13,9 +13,8 @@ public:
 
 	void init();
 	void update(double dt);
+	void handleMovement(double dt);
 	void render(RenderWindow& window);
-
-	void processGameEvents(const sf::Event& event);
 
 private:
 	// FUNCTIONS
