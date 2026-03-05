@@ -34,6 +34,9 @@
     <Filter Include="Resource Files\DOCUMENTATION">
       <UniqueIdentifier>{432d37c5-2336-4597-a4da-e09c882032eb}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Resource Files\AUTOMATIONS">
+      <UniqueIdentifier>{b8e2caa8-ed7f-45de-ace6-9451eb9edab4}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -57,6 +60,9 @@
     <ClCompile Include="SeekBehaviour.cpp">
       <Filter>Header Files\Behaviours</Filter>
     </ClCompile>
+    <ClCompile Include="ArriveBehaviour.cpp">
+      <Filter>Header Files\Behaviours</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Game.h">
@@ -74,10 +80,13 @@
     <ClInclude Include="Enemy.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Steering.h">
+    <ClInclude Include="SeekBehaviour.h">
       <Filter>Header Files\Behaviours</Filter>
     </ClInclude>
-    <ClInclude Include="SeekBehaviour.h">
+    <ClInclude Include="Steering.h">
+      <Filter>Header Files\Abs.Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="ArriveBehaviour.h">
       <Filter>Header Files\Behaviours</Filter>
     </ClInclude>
   </ItemGroup>
@@ -94,6 +103,15 @@
   <ItemGroup>
     <None Include="..\docs\Project\Project Proposal Form.docx">
       <Filter>Resource Files\DOCUMENTATION</Filter>
+    </None>
+    <None Include="..\automation\prompts\steering-enemy-seek-step-by-step-context.md">
+      <Filter>Resource Files\AUTOMATIONS</Filter>
+    </None>
+    <None Include="..\automation\prompts\git-staged-changes-to-commit-context.md">
+      <Filter>Resource Files\AUTOMATIONS</Filter>
+    </None>
+    <None Include="..\automation\prompts\docs-architecture-development-log-context.md">
+      <Filter>Resource Files\AUTOMATIONS</Filter>
     </None>
   </ItemGroup>
 </Project>

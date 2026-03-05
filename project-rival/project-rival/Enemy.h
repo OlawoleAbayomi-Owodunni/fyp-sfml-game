@@ -1,6 +1,7 @@
 #pragma once
 #include <SFML/graphics.hpp>
 #include "SeekBehaviour.h"
+#include "ArriveBehaviour.h"
 
 class Enemy
 {
@@ -23,6 +24,11 @@ private:
 
 	SteeringAgent e_agent;
 	SeekBehaviour e_seek{ Vector2f(0.f,0.f) };
+	ArriveBehaviour e_arrive{ Vector2f(0.f,0.f), 0.f, 250.f };
 	ISteeringBehaviour* e_currBehaviour{ nullptr };
+
+	sf::Vector2f e_target{ 0.f, 0.f };
+	float e_arriveEnterDist;
+	float e_arriveExitDist;
 };
 

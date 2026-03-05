@@ -16,8 +16,11 @@ Most gameplay code is inside `project-rival/`.
 - `InputManager.h` / `InputManager.cpp`
 - `Gamepad.h` / `Gamepad.cpp`
 
-### AI / Movement (planned)
+### AI / Movement
 
 - `Steering.h`
+
+- `SeekBehaviour.h` / `SeekBehaviour.cpp`
+- `ArriveBehaviour.h` / `ArriveBehaviour.cpp`
 
 This category list is mainly to keep the codebase readable as the number of files grows.

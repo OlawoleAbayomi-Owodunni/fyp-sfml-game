@@ -41,6 +41,22 @@ void Enemy::update(double dt)
 {
 	if (e_currBehaviour != nullptr) 
 	{
+		const float disToTarget = length(e_target - e_agent.position);
+
+		// Auto Switchin behaviours
+		if (e_currBehaviour == &e_seek) {
+			if (disToTarget <= e_arriveEnterDist)
+			{
+				e_currBehaviour = &e_arrive;
+			}
+		}
+		else if (e_currBehaviour == &e_arrive) {
+			if (disToTarget > e_arriveExitDist)
+			{
+				e_currBehaviour = &e_seek;
+			}
+		}
+
 		float dtS = static_cast<float>(dt);
 
 		// 1) Get the steering (acceleration) from the current behaviour.
@@ -73,7 +89,10 @@ void Enemy::render(sf::RenderWindow& window)
 
 void Enemy::setTarget(const Vector2f& target)
 {
+	e_target = target;
+
 	e_seek.setTarget(target);
+	e_arrive.setTarget(target);
 }
 
 void Enemy::setBehaviour(ISteeringBehaviour* behaviour)

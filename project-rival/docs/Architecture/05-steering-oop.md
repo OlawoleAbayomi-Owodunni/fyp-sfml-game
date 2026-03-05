@@ -10,16 +10,17 @@
   - describes the thing being controlled (position/velocity + limits)
 - `ISteeringBehaviour`
   - an interface-like base class with a pure virtual function:
-    - `calculateSteeringForce(const SteeringAgent& agent)`
+    - `getSteering(const SteeringAgent& agent)`
+  - returns a steering vector (treated as “acceleration” in `Enemy::update(dt)`)
 
 ## What this enables (polymorphism)
 
 Later, multiple behaviours that all share the same interface can be created, for example:
 
 - `SeekBehaviour : public ISteeringBehaviour`
-- `FleeBehaviour : public ISteeringBehaviour`
+- `ArriveBehaviour : public ISteeringBehaviour`
 
-Code can store an `ISteeringBehaviour*` and call `calculateSteeringForce(...)` without caring which concrete behaviour it is.
+Code can store an `ISteeringBehaviour*` and call `getSteering(...)` without caring which concrete behaviour it is.
 
 ## Quick definitions
 

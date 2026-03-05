@@ -19,6 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="ArriveBehaviour.cpp" />
     <ClCompile Include="Enemy.cpp" />
     <ClCompile Include="Game.cpp" />
     <ClCompile Include="Gamepad.cpp" />
@@ -28,6 +29,7 @@
     <ClCompile Include="SeekBehaviour.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="ArriveBehaviour.h" />
     <ClInclude Include="Enemy.h" />
     <ClInclude Include="Game.h" />
     <ClInclude Include="Gamepad.h" />
@@ -51,6 +53,9 @@
     </Font>
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\automation\prompts\docs-architecture-development-log-context.md" />
+    <None Include="..\automation\prompts\git-staged-changes-to-commit-context.md" />
+    <None Include="..\automation\prompts\steering-enemy-seek-step-by-step-context.md" />
     <None Include="..\docs\Project\Project Proposal Form.docx" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

@@ -1,6 +1,6 @@
 #include "SeekBehaviour.h"
 
-namespace trig_helper
+namespace
 {
 	float length(const sf::Vector2f& v) //magnitude (line length of the vector)
 	{
@@ -31,19 +31,19 @@ void SeekBehaviour::setTarget(const Vector2f& target)
 
 const Vector2f SeekBehaviour::getSteering(const SteeringAgent& agent)
 {
-	// 1) Calculate Vector from Agent to Target
-	const Vector2f toTarget = sb_target - agent.position;
-	if (toTarget == Vector2f(0.f, 0.f))
+	// 1) Calculate Direction Vector from Agent to Target
+	const Vector2f dirToTarget = sb_target - agent.position;
+	if (dirToTarget == Vector2f(0.f, 0.f))
 		return Vector2f();
 
 	// 2) Calculate desired Velocity (towards target, with max speed)
-	const Vector2f desiredVelocity = trig_helper::normalise(toTarget) * agent.maxSpeed;
+	const Vector2f desiredVelocity = normalise(dirToTarget) * agent.maxSpeed;
 
 	// 3) Calculate steering (desired velocity - current velocity)
 	Vector2f steering = desiredVelocity - agent.velocity;
 
 	// 4) Clamp steering to the agents max acceleration
-	steering = trig_helper::clampMagnitude(steering, agent.maxAcceleration);
+	steering = clampMagnitude(steering, agent.maxAcceleration);
 
 	return steering;
 }

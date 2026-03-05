@@ -7,7 +7,7 @@
 ## Responsibilities (current)
 
 - Owns its SFML shape (`p_body`)
-- Reads input (keyboard or gamepad)
+- Reads input (keyboard or gamepad, via `InputManager`)
 - Moves by updating velocity and applying it every update
 
 ## Movement (high level)
@@ -15,6 +15,8 @@
 Movement is handled in `player::handleMovement(double dt)`:
 
 - build a `direction` vector from input
+  - controller: use `InputManager::pad().leftStick()`
+  - keyboard: WASD
 - normalize it so diagonal movement isn’t faster
 - set `p_velocity = direction * p_moveSpeed`
 - move by `p_velocity * dt`
