@@ -10,6 +10,9 @@ public:
 
 	const Vector2f getSteering(const SteeringAgent& agent) override;
 
+	const float getSlowRadius() const { return ab_slowRadius; }
+	const float getStopRadius() const { return ab_stopRadius; }
+
 private:
 	Vector2f ab_target;
 	float ab_slowRadius;
