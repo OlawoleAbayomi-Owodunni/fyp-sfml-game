@@ -1,6 +1,11 @@
 #include "Enemy.h"
 using namespace sf;
 
+Enemy::Enemy(const sf::Vector2f pos) :
+	e_startPos(pos)
+{
+}
+
 void Enemy::initBody(const sf::Vector2f& size, const sf::Color& colour)
 {
 	//--------- body setup ---------//

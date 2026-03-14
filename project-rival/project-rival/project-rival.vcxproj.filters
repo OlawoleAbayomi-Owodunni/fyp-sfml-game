@@ -37,6 +37,9 @@
     <Filter Include="Resource Files\AUTOMATIONS">
       <UniqueIdentifier>{b8e2caa8-ed7f-45de-ace6-9451eb9edab4}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Enemies">
+      <UniqueIdentifier>{641a97c9-ec20-499b-a847-eae07285cfdb}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -54,14 +57,20 @@
     <ClCompile Include="Gamepad.cpp">
       <Filter>Header Files\Input</Filter>
     </ClCompile>
-    <ClCompile Include="Enemy.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="SeekBehaviour.cpp">
       <Filter>Header Files\Behaviours</Filter>
     </ClCompile>
     <ClCompile Include="ArriveBehaviour.cpp">
       <Filter>Header Files\Behaviours</Filter>
+    </ClCompile>
+    <ClCompile Include="Enemy.cpp">
+      <Filter>Header Files\Abs.Classes</Filter>
+    </ClCompile>
+    <ClCompile Include="GruntEnemy.cpp">
+      <Filter>Header Files\Enemies</Filter>
+    </ClCompile>
+    <ClCompile Include="TurretEnemy.cpp">
+      <Filter>Header Files\Enemies</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -77,9 +86,6 @@
     <ClInclude Include="Gamepad.h">
       <Filter>Header Files\Input</Filter>
     </ClInclude>
-    <ClInclude Include="Enemy.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="SeekBehaviour.h">
       <Filter>Header Files\Behaviours</Filter>
     </ClInclude>
@@ -88,6 +94,15 @@
     </ClInclude>
     <ClInclude Include="ArriveBehaviour.h">
       <Filter>Header Files\Behaviours</Filter>
+    </ClInclude>
+    <ClInclude Include="Enemy.h">
+      <Filter>Header Files\Abs.Classes</Filter>
+    </ClInclude>
+    <ClInclude Include="GruntEnemy.h">
+      <Filter>Header Files\Enemies</Filter>
+    </ClInclude>
+    <ClInclude Include="TurretEnemy.h">
+      <Filter>Header Files\Enemies</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

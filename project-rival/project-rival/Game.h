@@ -49,7 +49,8 @@ protected:
 	sf::RenderWindow m_window;
 
 	player m_player;
-	Enemy m_enemy{ Vector2f(500.f, 500.f) };
+
+	std::vector<std::unique_ptr<Enemy>> m_enemies;
 
 #ifdef TEST_FPS
 	sf::Text x_updateFPS{ m_arialFont };	// text used to display updates per second.

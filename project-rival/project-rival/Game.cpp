@@ -1,5 +1,7 @@
 #include "Game.h"
 #include "InputManager.h"
+#include "GruntEnemy.h"
+#include "TurretEnemy.h"
 #include <iostream>
 
 // Our target FPS
@@ -9,6 +11,7 @@ static double const FPS{ 60.0f };
 Game::Game()
 	: m_window(sf::VideoMode(sf::Vector2u(ScreenSize::s_width, ScreenSize::s_height), 32), "FYP: Dungeonish Crawler", sf::Style::Default)
 {
+	srand(time(NULL));
 	init();
 }
 
@@ -112,12 +115,12 @@ void Game::processGameEvents(const sf::Event& event)
 ////////////////////////////////////////////////////////////
 void Game::update(double dt)
 {
-	m_enemy.setTarget(m_player.getPosition());
-
-
 	InputManager::update();
 	m_player.update(dt);
-	m_enemy.update(dt);
+	for (auto& enemy : m_enemies) {
+		enemy->setTarget(m_player.getPosition());
+		enemy->update(dt);
+	}
 }
 
 ////////////////////////////////////////////////////////////
@@ -125,9 +128,9 @@ void Game::render()
 {
 	m_window.clear(sf::Color(0, 0, 0, 0));
 	m_player.render(m_window);
-	m_enemy.render(m_window);
-
-
+	for (auto& enemy : m_enemies) {
+		enemy->render(m_window);
+	}
 
 #ifdef TEST_FPS
 	m_window.draw(x_updateFPS); //ups is 60 and dps is 61
@@ -139,5 +142,10 @@ void Game::render()
 
 void Game::gameStart()
 {
-
+	for (int i = 0; i < 5; i++)
+	{
+		sf::Vector2f randEnemyPos{ static_cast<float>(rand() % ScreenSize::s_width), static_cast<float>(rand() % ScreenSize::s_height) };
+		m_enemies.push_back(std::make_unique<GruntEnemy>(randEnemyPos));
+		m_enemies.push_back(std::make_unique<TurretEnemy>(randEnemyPos));
+	}
 }

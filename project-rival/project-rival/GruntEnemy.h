@@ -1,13 +1,14 @@
 #pragma once
 #include "Enemy.h"
+
 class GruntEnemy : public Enemy
 {
 public: 
 	GruntEnemy(const sf::Vector2f pos);
+	~GruntEnemy() = default;
 
 	void init() override;
 	void update(double dt) override;
-
 	void setTarget(const Vector2f& target) override;
 
 
