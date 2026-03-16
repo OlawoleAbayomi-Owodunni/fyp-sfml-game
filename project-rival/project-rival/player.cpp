@@ -1,6 +1,12 @@
 #include "player.h"
 #include "InputManager.h"
 
+namespace {
+	float length(const Vector2f& v) {
+		return std::sqrt(v.x * v.x + v.y * v.y);
+	}
+}
+
 player::player()
 {
 	init();
@@ -12,13 +18,23 @@ player::~player()
 
 void player::init()
 {
+	//body
 	p_body.setSize(Vector2f(100.f, 100.f));
 	Vector2f size = p_body.getSize();
 	p_body.setFillColor(Color::Blue);
 	p_body.setOrigin(size / 2.f);
 	p_body.setPosition(Vector2f(25., 25.f));
 
+	//physics
 	p_velocity = Vector2f(0.f, 0.f);
+
+	//reticle
+	p_reticle.setRadius(10.f);
+	p_reticle.setOrigin(Vector2f(p_reticle.getRadius(), p_reticle.getRadius()));
+	p_reticle.setFillColor(Color::Transparent);
+	p_reticle.setOutlineColor(Color::Yellow);
+	p_reticle.setOutlineThickness(2.f);
+	p_reticle.setPosition(p_body.getPosition() + p_reticleDistance * p_aimDir);
 }
 
 void player::update(double dt)
@@ -33,6 +49,7 @@ void player::update(double dt)
 void player::render(RenderWindow& window)
 {
 	window.draw(p_body);
+	window.draw(p_reticle);
 }
 
 void player::reset()
