@@ -12,11 +12,13 @@ public:
 	~player();
 
 	void init();
-	void update(double dt);
-	void handleMovement(double dt);
+	void update(double dt, const Vector2f& mousePos);
 	void render(RenderWindow& window);
 
 	const Vector2f getPosition() const { return p_body.getPosition(); }
+
+	void handleMovement(double dt);
+	void handleAiming(const Vector2f mousePos);
 
 private:
 	// FUNCTIONS

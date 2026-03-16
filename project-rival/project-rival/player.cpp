@@ -19,9 +19,9 @@ player::~player()
 void player::init()
 {
 	//body
-	p_body.setSize(Vector2f(100.f, 100.f));
+	p_body.setSize(Vector2f(50.f, 75.f));
 	Vector2f size = p_body.getSize();
-	p_body.setFillColor(Color::Blue);
+	p_body.setFillColor(Color::Green);
 	p_body.setOrigin(size / 2.f);
 	p_body.setPosition(Vector2f(25., 25.f));
 
@@ -35,11 +35,13 @@ void player::init()
 	p_reticle.setOutlineColor(Color::Yellow);
 	p_reticle.setOutlineThickness(2.f);
 	p_reticle.setPosition(p_body.getPosition() + p_reticleDistance * p_aimDir);
+	p_reticleDistance = 150.f;
 }
 
-void player::update(double dt)
+void player::update(double dt, const Vector2f& mousePos)
 {
 	handleMovement(dt);
+	handleAiming(mousePos);
 
 	if (InputManager::pad().rightTrigger()) InputManager::pad().setRumble(0.2f, 0.8f);
 	else InputManager::pad().setRumble(0.0f, 0.0f);
@@ -82,4 +84,32 @@ void player::handleMovement(double dt)
 
 	p_velocity = direction * p_moveSpeed;
 	p_body.move(p_velocity * static_cast<float>(dt));
+}
+
+void player::handleAiming(const Vector2f mousePos)
+{
+	//--------- aiming logic ---------//
+	
+	// Are we on Controller or Mouse
+	const Vector2f rs = InputManager::pad().rightStick();
+	const bool isRSMoved = (rs.x != 0.f || rs.y != 0.f);
+
+	const Vector2f mouseDelta = mousePos - p_prevMousePos;
+	const bool isMouseMoved = (length(mouseDelta) > 0.5f);
+
+	if (isRSMoved) p_isController = true;
+	else if (isMouseMoved) p_isController = false;
+
+	// Calculate and normalise aim direction
+	Vector2f aimVector;
+	if (p_isController) aimVector = rs;
+	else aimVector = mousePos - p_body.getPosition();
+
+	if (aimVector != Vector2f(0.f, 0.f))	// avoid crash out on controller since we can't normalise a zero vector
+		p_aimDir = aimVector.normalized();
+	else p_aimDir = Vector2f(0.f, 0.f);
+
+	p_reticle.setPosition(p_body.getPosition() + p_aimDir * p_reticleDistance);
+
+	p_prevMousePos = mousePos;
 }
