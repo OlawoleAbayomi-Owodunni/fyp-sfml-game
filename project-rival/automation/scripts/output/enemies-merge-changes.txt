@@ -1,0 +1,3233 @@
+===== LOCAL COMMITS (origin/main..HEAD) =====
+
+
+===== PATCH (per commit; origin/main..HEAD) =====
+
+
+===== STAGED DIFF SUMMARY (git diff --cached --name-status) =====
+
+A	project-rival/automation/prompts/docs-architecture-development-log-context.md
+A	project-rival/automation/prompts/git-staged-changes-to-commit-context.md
+A	project-rival/automation/prompts/steering-enemy-seek-step-by-step-context.md
+A	project-rival/automation/scripts/merge-summary-generator.ps1
+A	project-rival/automation/scripts/staged-dump.ps1
+A	project-rival/docs/Architecture/01-project-structure.md
+A	project-rival/docs/Architecture/02-player.md
+A	project-rival/docs/Architecture/03-input.md
+A	project-rival/docs/Architecture/04-enemy.md
+A	project-rival/docs/Architecture/05-steering-oop.md
+A	project-rival/docs/Architecture/06-coding-conventions.md
+A	project-rival/docs/Architecture/README.md
+A	project-rival/docs/DEVELOPMENT_LOG.md
+A	project-rival/docs/README.md
+A	project-rival/project-rival/ArriveBehaviour.cpp
+A	project-rival/project-rival/ArriveBehaviour.h
+A	project-rival/project-rival/Enemy.cpp
+A	project-rival/project-rival/Enemy.h
+M	project-rival/project-rival/Game.cpp
+M	project-rival/project-rival/Game.h
+A	project-rival/project-rival/GruntEnemy.cpp
+A	project-rival/project-rival/GruntEnemy.h
+A	project-rival/project-rival/SeekBehaviour.cpp
+A	project-rival/project-rival/SeekBehaviour.h
+A	project-rival/project-rival/Steering.h
+A	project-rival/project-rival/TurretEnemy.cpp
+A	project-rival/project-rival/TurretEnemy.h
+M	project-rival/project-rival/player.cpp
+M	project-rival/project-rival/player.h
+M	project-rival/project-rival/project-rival.vcxproj
+M	project-rival/project-rival/project-rival.vcxproj.filters
+
+===== STAGED PATCH (git diff --cached) =====
+
+diff --git a/project-rival/automation/prompts/docs-architecture-development-log-context.md b/project-rival/automation/prompts/docs-architecture-development-log-context.md
+new file mode 100644
+index 0000000..20e1e41
+--- /dev/null
++++ b/project-rival/automation/prompts/docs-architecture-development-log-context.md
+@@ -0,0 +1,91 @@
++# Context: Docs split (architecture chapters) + development log
++
++## Contents
++1. [High-level goal](#high-level-goal)
++2. [User preferences / working style](#user-preferences--working-style)
++3. [What was done in this chat](#what-was-done-in-this-chat)
++4. [Current documentation layout](#current-documentation-layout)
++5. [How to update the development log going forward](#how-to-update-the-development-log-going-forward)
++6. [Next steps planned](#next-steps-planned)
++
++---
++
++## High-level goal
++Keep project documentation **simple, short, and readable**:
++
++- Architecture docs should be easy to navigate even as the codebase grows (chapter-like).
++- Maintain a supervisor-friendly **timeline / development log** (weekly or milestone based).
++
++---
++
++## User preferences / working style
++- Keep docs beginner-friendly and **not unnecessarily long**.
++- Architecture documentation should avoid going deep on the game loop.
++- `InputManager` / `Gamepad` should be described only at a high level.
++- Prefer a “book” style for docs (index page + smaller pages/chapters).
++- Development log should be **weekly** most of the time, but can be **milestone-based** if a big feature lands quickly.
++- User will add “why/intent” in future updates; Copilot should help append/format.
++
++---
++
++## What was done in this chat
++
++1) Split architecture documentation into multiple small Markdown files under `docs/architecture/`.
++
++2) Added a documentation index at `docs/README.md`.
++
++3) Created a timeline document at `docs/DEVELOPMENT_LOG.md` using git history provided by the user.
++
++4) Updated `docs/README.md` so it links to:
++- `docs/architecture/README.md`
++- `docs/DEVELOPMENT_LOG.md`
++
++---
++
++## Current documentation layout
++
++### Docs index
++- `docs/README.md`
++  - Links to architecture index + development log
++  - Links to proposal doc
++
++### Architecture (chapter-style)
++- `docs/architecture/README.md` (index + clickable TOC)
++- `docs/architecture/01-project-structure.md`
++- `docs/architecture/02-player.md`
++- `docs/architecture/03-input.md`
++- `docs/architecture/04-enemy.md`
++- `docs/architecture/05-steering-oop.md`
++- `docs/architecture/06-coding-conventions.md`
++
++### Development timeline
++- `docs/DEVELOPMENT_LOG.md`
++  - Filled with sections for:
++    - Week of 2026-01-22 (controller support + omni movement)
++    - Week of 2026-01-21 (player wired into game + movement iteration)
++    - Week of 2025-11-24 (initial setup)
++  - Includes a copy/paste template for new entries.
++
++### Proposal doc (source material for README)
++- `docs/Project/Project Proposal Form.docx`
++
++---
++
++## How to update the development log going forward
++Best workflow:
++
++1) Get new commits since last update:
++
++- `git log --date=short --name-only --pretty=format:"%ad %h %s" <lastHash>..HEAD`
++
++2) Provide 2–5 bullets of “Why / intent” for that week/milestone.
++
++3) Append a new section to `docs/DEVELOPMENT_LOG.md`:
++- `Week of YYYY-MM-DD` OR `Milestone: Name`
++- Summary / Technical notes / Evidence / Why
++
++---
++
++## Next steps planned
++- Create the project root `README.md` using the proposal doc (`docs/Project/Project Proposal Form.docx`) as source.
++- Optionally add a milestone-based entry when the steering/AI work (Seek/Enemy wiring) lands.
+diff --git a/project-rival/automation/prompts/git-staged-changes-to-commit-context.md b/project-rival/automation/prompts/git-staged-changes-to-commit-context.md
+new file mode 100644
+index 0000000..0288c37
+--- /dev/null
++++ b/project-rival/automation/prompts/git-staged-changes-to-commit-context.md
+@@ -0,0 +1,119 @@
++# Context: Generating commit message(s) from staged Git changes
++
++## Contents
++1. [High-level goal](#high-level-goal)
++2. [Repo / branch context](#repo--branch-context)
++3. [What the user asked for](#what-the-user-asked-for)
++4. [What staged changes exist (as provided)](#what-staged-changes-exist-as-provided)
++5. [Recommended commit split + messages](#recommended-commit-split--messages)
++6. [Git commands used / suggested](#git-commands-used--suggested)
++
++---
++
++## High-level goal
++Capture enough information about the **currently staged Git changes** to:
++- share them across machines/chat instances
++- generate good Git commit(s) (title + body) from the staged diff / staged file contents
++
++---
++
++## Repo / branch context
++- Repo root (local): `C:\Users\ayola\Desktop\School\Y4\FYP\fyp-sfml-game`
++- Branch: `enemies`
++- Remote: `origin` -> `https://github.com/OlawoleAbayomi-Owodunni/fyp-sfml-game`
++
++---
++
++## What the user asked for
++The user wanted a way to get:
++- a “change log” of staged files (what’s staged)
++- the staged diff (patch)
++- the staged contents of the changed files
++
++…so they can paste that info into Copilot and have it generate an appropriate commit message (and potentially suggest commit splits).
++
++---
++
++## What staged changes exist (as provided)
++The user provided staged summary + name/status (no renames/copies; mostly adds).
++
++### Staged adds (`A`)
++Docs:
++- `project-rival/docs/Architecture/README.md`
++- `project-rival/docs/Architecture/01-project-structure.md`
++- `project-rival/docs/Architecture/02-player.md`
++- `project-rival/docs/Architecture/03-input.md`
++- `project-rival/docs/Architecture/04-enemy.md`
++- `project-rival/docs/Architecture/05-steering-oop.md`
++- `project-rival/docs/Architecture/06-coding-conventions.md`
++- `project-rival/docs/DEVELOPMENT_LOG.md`
++- `project-rival/docs/README.md`
++- `project-rival/docs/Project/Project Proposal Form.docx`
++
++Code scaffolding:
++- `project-rival/project-rival/Steering.h` (defines `SteeringAgent`, `ISteeringBehaviour`, and an output struct)
++- `project-rival/project-rival/Enemy.cpp` (empty placeholder)
++- `project-rival/project-rival/Enemy.h` (empty placeholder)
++
++### Staged modifications (`M`)
++- `project-rival/project-rival/player.cpp`
++  - Reads controller via `InputManager::pad().leftStick()`
++  - Uses controller input when non-zero; otherwise keyboard WASD fallback
++  - Normalizes direction to avoid faster diagonal movement
++  - Moves with `p_velocity * dt` where `dt` is seconds
++  - Uses right trigger to drive rumble (`setRumble`)
++
++- `project-rival/project-rival/player.h`
++  - Includes Windows/XInput headers
++
++- `project-rival/project-rival/project-rival.vcxproj.filters`
++  - Visual Studio filter organization updated
++
++---
++
++## Recommended commit split + messages
++Suggested splitting into 2 commits (docs vs code), since they are independent concerns.
++
++### Commit 1 (docs)
++**Title:** `docs: add architecture overview and development log`
++
++Optional body bullets:
++- Add architecture chapter pages (player/input/enemy/steering/conventions)
++- Add supervisor-friendly development log
++- Add project proposal document
++
++### Commit 2 (code)
++**Title:** `feat: add steering interface and controller-driven player movement`
++
++Optional body bullets:
++- Add steering agent + behaviour interface scaffolding
++- Add placeholder enemy files
++- Player: support gamepad left stick input with keyboard fallback; set rumble via triggers
++- Update Visual Studio filters
++
++A single-commit alternative was also offered:
++- `feat: document architecture and extend player input with gamepad support`
++
++---
++
++## Git commands used / suggested
++To collect staged info:
++- `git diff --cached --name-status`
++- `git diff --cached`
++- `git diff --cached --summary -M`
++
++To dump staged contents:
++- `git show :path/to/file`
++
++PowerShell helper to dump all staged file contents:
++- `git diff --cached --name-only | % { "===== FILE: $_ ====="; git show ":$_"; "" }`
++
++To split commits (example approach):
++- `git restore --staged <code files...>` then commit docs
++- `git add <code files...>` then commit code
++
++---
++
++## Project note (repo instruction reminder)
++Project rule from `./.github/copilot-instructions.md` relevant to recent changes:
++- `dt` is expected to be **seconds** (e.g., `timePerFrame.asSeconds()`), and entity updates should use it directly.
+diff --git a/project-rival/automation/prompts/steering-enemy-seek-step-by-step-context.md b/project-rival/automation/prompts/steering-enemy-seek-step-by-step-context.md
+new file mode 100644
+index 0000000..33eaf52
+--- /dev/null
++++ b/project-rival/automation/prompts/steering-enemy-seek-step-by-step-context.md
+@@ -0,0 +1,143 @@
++# Context: Step-by-step Steering (Seek) wired into Enemy (SFML / C++)
++
++## Contents
++1. [High-level goal](#high-level-goal)
++2. [User preferences / working style](#user-preferences--working-style)
++3. [Project constraints](#project-constraints)
++4. [What exists now (code state)](#what-exists-now-code-state)
++5. [Known issues / improvements to consider later](#known-issues--improvements-to-consider-later)
++6. [Next steps planned](#next-steps-planned)
++
++---
++
++## High-level goal
++Implement a reusable **steering system** for `Enemy` (and later other entities) that supports:
++- a steering-enabled agent state (position/velocity/limits)
++- steering behaviours (starting with **Seek**)
++- ability to **switch behaviours at runtime** (trigger-based)
++- later ability to **combine** behaviours (blending/priority)
++
++Initial implementation focuses on correctness and learning (tutorial/exam-prep style), not speed.
++
++---
++
++## User preferences / working style
++- **Incremental, tutorial-style** changes.
++- Avoid dumping a full solution all at once.
++- Explain *why* each variable/function exists and what each line is responsible for.
++- Avoid introducing concepts like `inline` / namespaces without explanation.
++- User intentionally postponed cleanup like removing `using namespace ...` from headers.
++
++---
++
++## Project constraints
++- `Game::update` passes `dt` in **seconds** (`timePerFrame.asSeconds()`).
++- Entity updates should treat `dt` as seconds.
++
++---
++
++## What exists now (code state)
++
++### Core steering types (`project-rival/Steering.h`)
++- `struct SteeringAgent`
++  - `position`, `velocity`, `maxSpeed`, `maxAcceleration`
++- `class ISteeringBehaviour`
++  - `virtual const Vector2f getSteering(const SteeringAgent& agent) = 0;`
++- There is also `struct SteerungOutput` (typo in name) but it’s not currently used.
++
++> Note: `Steering.h` currently has `using namespace sf;` (kept for now).
++
++### Seek behaviour (`project-rival/SeekBehaviour.h/.cpp`)
++- `SeekBehaviour` derives from `ISteeringBehaviour`.
++- Stores a target (`sb_target`) and exposes `setTarget(...)`.
++- `getSteering(agent)`:
++  - compute `toTarget = target - agent.position`
++  - compute desired velocity toward target at `maxSpeed`
++  - steering = desiredVelocity − currentVelocity
++  - clamp steering to `maxAcceleration`
++
++> Math helpers (`trig_helper::length/normalise/clampMagnitude`) were previously defined in a header and caused LNK2005. That was fixed by **removing helper definitions from the header** and keeping them in a single translation unit.
++
++### Enemy wiring (`project-rival/Enemy.h/.cpp`)
++- `Enemy` owns:
++  - `SteeringAgent e_agent`
++  - `SeekBehaviour e_seek{ Vector2f(0,0) }`
++  - `ISteeringBehaviour* e_currBehaviour{ nullptr }`
++- In `Enemy::init()` the default behaviour is set:
++  - `e_currBehaviour = &e_seek;`
++- `Enemy::setTarget(...)` currently only updates seek’s target:
++  - `e_seek.setTarget(target);`
++- `Enemy::setBehaviour(ISteeringBehaviour* behaviour)` sets `e_currBehaviour`.
++- `Enemy::update(dt)` integrates:
++  - `a = behaviour->getSteering(e_agent)`
++  - `v += a * dt`
++  - clamp `v` to `maxSpeed`
++  - `p += v * dt`
++  - update shape position
++
++### Game wiring (`project-rival/Game.h/.cpp`)
++- `Game` includes `Enemy` and renders it.
++- `Enemy` is constructed with a start position, e.g. `Enemy m_enemy{ Vector2f(500.f, 500.f) };`
++- Each frame, `Game::update(dt)` sets the enemy target to the player’s current position:
++  - `m_enemy.setTarget(m_player.getPosition());`
++  - then updates player and enemy.
++
++### Player (`project-rival/player.h/.cpp`)
++- `player` exposes `const Vector2f getPosition() const { return p_body.getPosition(); }`
++
++---
++
++## Known issues / improvements to consider later
++(Not required to proceed, but tracked for future refactors.)
++
++1. **Behaviour switching vs target updates**
++   - `setTarget()` should not switch behaviours.
++   - Switching should be done by a separate “decision layer” (FSM/AI triggers).
++
++2. **Multiple behaviours**
++   - Need a scalable way to:
++     - switch behaviours once per trigger (e.g., Seek → Arrive when close)
++     - optionally combine behaviours (blend/priority)
++
++3. **Header `using namespace`**
++   - Present in headers (`Steering.h`, historically `SeekBehaviour.h`).
++   - Risky long term (pollutes translation units), but user postponed cleanup.
++
++4. **Return type const-by-value**
++   - `virtual const Vector2f getSteering(...)` returns const by value.
++   - Doesn’t add safety; can be simplified later.
++
++5. **Float equality / epsilon**
++   - Seek checks `toTarget == Vector2f(0,0)`.
++   - More robust to use an epsilon (distance threshold).
++
++6. **Math helper placement**
++   - Keep helper function *definitions* in exactly one `.cpp` (or make them `inline` later after explaining).
++
++---
++
++## Next steps planned
++
++### Step A: Add a second behaviour (recommended: `ArriveBehaviour`)
++- Teach “arrive” theory:
++  - slowing radius
++  - desired speed scales down as you get close
++  - clamp acceleration
++- Implementation goal:
++  - `ArriveBehaviour` derives from `ISteeringBehaviour`
++  - has `setTarget(...)`, `slowRadius`, `stopRadius` (or similar)
++
++### Step B: Add decision logic (trigger-based switching)
++- Keep updating target every frame.
++- Add a small AI layer in `Enemy` (or a separate controller):
++  - compute distance to target
++  - if distance < threshold: switch to `ArriveBehaviour`
++  - else: switch to `SeekBehaviour`
++- Ensure switching only occurs when state changes (one-time per trigger).
++
++### Step C: Optional behaviour mixing
++- Add a `BlendedBehaviour` (sum weighted forces) or `PriorityBehaviour`.
++
++---
++
++If continuing in a new Copilot instance: start by confirming current file contents for `Steering.h`, `SeekBehaviour.*`, `Enemy.*`, and then proceed with implementing `ArriveBehaviour` + switching logic incrementally.
+diff --git a/project-rival/automation/scripts/merge-summary-generator.ps1 b/project-rival/automation/scripts/merge-summary-generator.ps1
+new file mode 100644
+index 0000000..84aaa62
+--- /dev/null
++++ b/project-rival/automation/scripts/merge-summary-generator.ps1
+@@ -0,0 +1,16 @@
++$BASE = "origin/main"
++$out = "automation/scripts/output/enemies-merge-changes.txt"
++
++"===== LOCAL COMMITS (origin/main..HEAD) =====`n" | Out-File $out -Encoding utf8
++git log --reverse --date=short --pretty=format:"%ad %h %s%n%b%n" "$BASE..HEAD" -- >> $out
++
++"`n===== PATCH (per commit; origin/main..HEAD) =====`n" >> $out
++git log -p --reverse "$BASE..HEAD" -- . ":!*.docx" >> $out
++
++"`n===== STAGED DIFF SUMMARY (git diff --cached --name-status) =====`n" >> $out
++git diff --cached --name-status -M -C >> $out
++
++"`n===== STAGED PATCH (git diff --cached) =====`n" >> $out
++git diff --cached >> $out
++
++Write-Host "Wrote: $out"
+\ No newline at end of file
+diff --git a/project-rival/automation/scripts/staged-dump.ps1 b/project-rival/automation/scripts/staged-dump.ps1
+new file mode 100644
+index 0000000..3c7c1ae
+--- /dev/null
++++ b/project-rival/automation/scripts/staged-dump.ps1
+@@ -0,0 +1,42 @@
++# Writes, in order:
++# 1) git diff --cached --summary
++# 2) git diff --cached --name-status -M -C
++# 3) staged file contents for non-deleted paths only
++@(
++  "===== STAGED DIFF SUMMARY (git diff --cached --summary) ====="
++  git diff --cached --summary
++  ""
++
++  "===== STAGED NAME/STATUS (git diff --cached --name-status -M -C) ====="
++  git diff --cached --name-status -M -C
++  ""
++
++  "===== STAGED FILE CONTENTS (index blobs; skips deletions) ====="
++  ""
++
++  # Parse name-status output and exclude deletions (D)
++  (git diff --cached --name-status -M -C | ForEach-Object {
++    $line = $_.Trim()
++    if (-not $line) { return }
++
++    # Format is tab-separated. Examples:
++    #   M<TAB>path
++    #   A<TAB>path
++    #   D<TAB>path
++    #   R100<TAB>old<TAB>new
++    $cols = $line -split "`t"
++
++    $status = $cols[0]
++    if ($status -like "D*") { return }  # skip deletions
++
++    $path =
++      if ($status -like "R*" -or $status -like "C*") { $cols[2] } # new path
++      else { $cols[1] }
++
++    if (-not $path) { return }
++
++    "===== FILE: $path ====="
++    git show ":$path" 2>&1
++    ""
++  })
++) | Out-File staged-files-dump.txt -Encoding utf8
+\ No newline at end of file
+diff --git a/project-rival/docs/Architecture/01-project-structure.md b/project-rival/docs/Architecture/01-project-structure.md
+new file mode 100644
+index 0000000..39c8859
+--- /dev/null
++++ b/project-rival/docs/Architecture/01-project-structure.md
+@@ -0,0 +1,26 @@
++# 1) Project structure
++
++[Back to architecture index](README.md)
++
++Most gameplay code is inside `project-rival/`.
++
++## Suggested mental model (categories)
++
++### Entities
++
++- `player.h` / `player.cpp`
++- `Enemy.h` / `Enemy.cpp`
++
++### Input
++
++- `InputManager.h` / `InputManager.cpp`
++- `Gamepad.h` / `Gamepad.cpp`
++
++### AI / Movement
++
++- `Steering.h`
++
++- `SeekBehaviour.h` / `SeekBehaviour.cpp`
++- `ArriveBehaviour.h` / `ArriveBehaviour.cpp`
++
++This category list is mainly to keep the codebase readable as the number of files grows.
+diff --git a/project-rival/docs/Architecture/02-player.md b/project-rival/docs/Architecture/02-player.md
+new file mode 100644
+index 0000000..c1be9a1
+--- /dev/null
++++ b/project-rival/docs/Architecture/02-player.md
+@@ -0,0 +1,24 @@
++# 2) Player
++
++[Back to architecture index](README.md)
++
++`player` (in `player.h/.cpp`) represents the controllable character.
++
++## Responsibilities (current)
++
++- Owns its SFML shape (`p_body`)
++- Reads input (keyboard or gamepad, via `InputManager`)
++- Moves by updating velocity and applying it every update
++
++## Movement (high level)
++
++Movement is handled in `player::handleMovement(double dt)`:
++
++- build a `direction` vector from input
++  - controller: use `InputManager::pad().leftStick()`
++  - keyboard: WASD
++- normalize it so diagonal movement isn’t faster
++- set `p_velocity = direction * p_moveSpeed`
++- move by `p_velocity * dt`
++
++Note: `dt` is expected to be **seconds**.
+diff --git a/project-rival/docs/Architecture/03-input.md b/project-rival/docs/Architecture/03-input.md
+new file mode 100644
+index 0000000..bf264a8
+--- /dev/null
++++ b/project-rival/docs/Architecture/03-input.md
+@@ -0,0 +1,26 @@
++# 3) Input (high level)
++
++[Back to architecture index](README.md)
++
++The input code is split into two parts:
++
++- `InputManager`: a static helper that owns a `Gamepad`
++- `Gamepad`: a small wrapper around XInput
++
++## `InputManager`
++
++Typical usage:
++
++- call `InputManager::update()` once per frame
++- then read input through `InputManager::pad()`
++
++## `Gamepad`
++
++Exposes:
++
++- sticks as `sf::Vector2f` in `[-1..1]`
++- triggers in `[0..1]`
++- button states (`down`, `pressed`, `released`)
++- rumble (`setRumble`)
++
++Also applies deadzones to reduce controller drift.
+diff --git a/project-rival/docs/Architecture/04-enemy.md b/project-rival/docs/Architecture/04-enemy.md
+new file mode 100644
+index 0000000..04a7ae8
+--- /dev/null
++++ b/project-rival/docs/Architecture/04-enemy.md
+@@ -0,0 +1,21 @@
++# 4) Enemy (current state)
++
++[Back to architecture index](README.md)
++
++`Enemy` (in `Enemy.h/.cpp`) is a simple entity that demonstrates steering-based movement.
++
++## What exists
++
++- A visible SFML body (`sf::RectangleShape`)
++- A `SteeringAgent` (`position`, `velocity`, `maxSpeed`, `maxAcceleration`)
++- A current steering behaviour (`ISteeringBehaviour*`), currently set to `ArriveBehaviour` by default
++- `init()`, `update(double dt)`, `render(...)`
++- `setTarget(...)` to update the target used by behaviours
++- `setBehaviour(...)` to switch behaviours at runtime (for testing)
++
++In `Game::update(dt)`, the enemy target is set to the player position each frame.
++
++## Likely next steps
++
++- Decide when to use `SeekBehaviour` vs `ArriveBehaviour` (for example: seek when far away, arrive when close)
++- Expose behaviour parameters (speed/acceleration/radii) so different enemy “types” can be created
+diff --git a/project-rival/docs/Architecture/05-steering-oop.md b/project-rival/docs/Architecture/05-steering-oop.md
+new file mode 100644
+index 0000000..ac3d27a
+--- /dev/null
++++ b/project-rival/docs/Architecture/05-steering-oop.md
+@@ -0,0 +1,29 @@
++# 5) Steering (AI) + OOP concepts
++
++[Back to architecture index](README.md)
++
++`Steering.h` sets up a simple architecture for AI movement behaviours.
++
++## Key types
++
++- `SteeringAgent`
++  - describes the thing being controlled (position/velocity + limits)
++- `ISteeringBehaviour`
++  - an interface-like base class with a pure virtual function:
++    - `getSteering(const SteeringAgent& agent)`
++  - returns a steering vector (treated as “acceleration” in `Enemy::update(dt)`)
++
++## What this enables (polymorphism)
++
++Later, multiple behaviours that all share the same interface can be created, for example:
++
++- `SeekBehaviour : public ISteeringBehaviour`
++- `ArriveBehaviour : public ISteeringBehaviour`
++
++Code can store an `ISteeringBehaviour*` and call `getSteering(...)` without caring which concrete behaviour it is.
++
++## Quick definitions
++
++- **Abstract class**: a class you cannot instantiate directly (often because it has a pure virtual function).
++- **Interface (C++ style)**: usually an abstract class that only contains virtual functions.
++- **Polymorphism**: treating different derived types through a shared base type.
+diff --git a/project-rival/docs/Architecture/06-coding-conventions.md b/project-rival/docs/Architecture/06-coding-conventions.md
+new file mode 100644
+index 0000000..07565f8
+--- /dev/null
++++ b/project-rival/docs/Architecture/06-coding-conventions.md
+@@ -0,0 +1,22 @@
++# 6) Coding / design conventions
++
++[Back to architecture index](README.md)
++
++This is the current style used in the codebase.
++
++## File layout
++
++- Headers (`.h`) declare types/functions
++- Source files (`.cpp`) implement them
++
++## `dt` (delta time)
++
++- `dt` is passed around as **seconds**.
++- Entity movement uses `velocity * dt`.
++
++## Update/render separation
++
++Most gameplay classes follow a simple pattern:
++
++- `update(dt)` changes state
++- `render(...)` draws the current state
+diff --git a/project-rival/docs/Architecture/README.md b/project-rival/docs/Architecture/README.md
+new file mode 100644
+index 0000000..2e143c6
+--- /dev/null
++++ b/project-rival/docs/Architecture/README.md
+@@ -0,0 +1,14 @@
++# Architecture
++
++A high-level, beginner-friendly overview of how the main gameplay-related code is organized.
++
++[Back to docs index](../README.md)
++
++## Table of contents
++
++1. [Project structure](01-project-structure.md)
++2. [Player](02-player.md)
++3. [Input (high level)](03-input.md)
++4. [Enemy (current state)](04-enemy.md)
++5. [Steering (AI) + OOP concepts](05-steering-oop.md)
++6. [Coding / design conventions](06-coding-conventions.md)
+diff --git a/project-rival/docs/DEVELOPMENT_LOG.md b/project-rival/docs/DEVELOPMENT_LOG.md
+new file mode 100644
+index 0000000..bef2b69
+--- /dev/null
++++ b/project-rival/docs/DEVELOPMENT_LOG.md
+@@ -0,0 +1,61 @@
++# Development log (weekly / milestone)
++
++This document tracks technical progress over time in a supervisor-friendly way.
++
++## How to use this log ---->DELETE WHEN PROJECT IS COMPLETE<-----
++
++- Add a new section each **week** (recommended) or per **milestone**.
++- Each entry should be short:
++  - **Summary**: 2–5 bullets
++  - **Technical notes** (optional): 2–6 bullets
++  - **Evidence**: commit hashes
++  - **Why / intent**: add when available
++
++---
++
++## Week of 2026-01-22
++
++### Summary
++- Added Windows controller (XInput) support and integrated it into player controls.
++- Improved player movement so it supports omni-directional input (keyboard and controller stick).
++
++### Technical notes
++- Introduced `Gamepad` abstraction to read sticks/triggers/buttons and apply deadzones.
++- Added `InputManager` as a simple static access point for reading controller state.
++- Updated `player` to read controller input and (optionally) trigger rumble.
++
++### Evidence (commits)
++- `a1be98e` — Controller Support
++- `f2663af` — Player: Omni Directional movement
++
++---
++
++## Week of 2026-01-21
++
++### Summary
++- Wired the `player` entity into the game so it updates and renders during gameplay.
++- Implemented/iterated on basic player movement.
++- Synced work with `main` via merge.
++
++### Technical notes
++- `Game` now owns a `player` instance and calls its `update(dt)` and `render(...)`.
++- Movement logic was iterated in `player.cpp`.
++
++### Evidence (commits)
++- `cb409c7` — Player: called in game
++- `c324a0b` — Player class: movement
++- `1f10f8e` — Player class: movement
++- `1aecc43` — merge branch 'main'
++
++---
++
++## Week of 2025-11-24 (project setup)
++
++### Summary
++- Initial SFML project setup, solution/project files, and base game scaffolding.
++- Added basic assets (font/logo) and a `.gitignore`.
++
++### Evidence (commit)
++- `ca2c920` — Setup + `.gitignore`
++
++---
+diff --git a/project-rival/docs/README.md b/project-rival/docs/README.md
+new file mode 100644
+index 0000000..0d38472
+--- /dev/null
++++ b/project-rival/docs/README.md
+@@ -0,0 +1,16 @@
++# Documentation
++
++This folder contains short docs for the project.
++
++## Start here
++
++- Architecture: [docs/Architecture/README.md](Architecture/README.md)
++- Development log: [docs/DEVELOPMENT_LOG.md](DEVELOPMENT_LOG.md)
++
++## Other references
++
++- Project proposal (source): [docs/Project/Project Proposal Form.docx](Project/Project%20Proposal%20Form.docx)
++
++## Planned docs (optional)
++
++- Additional design notes / deep-dives as the project grows
+diff --git a/project-rival/project-rival/ArriveBehaviour.cpp b/project-rival/project-rival/ArriveBehaviour.cpp
+new file mode 100644
+index 0000000..e1c3b3b
+--- /dev/null
++++ b/project-rival/project-rival/ArriveBehaviour.cpp
+@@ -0,0 +1,62 @@
++#include "ArriveBehaviour.h"
++
++namespace 
++{
++	float length(const sf::Vector2f& v) //magnitude (line length of the vector)
++	{
++		return std::sqrt(v.x * v.x + v.y * v.y);
++	}
++	Vector2f normalise(const Vector2f& v) //normalised vector for direction
++	{
++		const float len = length(v);
++		if (len == 0.f) return Vector2f(0.f, 0.f);
++		return v / len;
++	}
++
++	Vector2f clampMagnitude(const Vector2f& v, float maxMagnitude) //clamp the magnitude to a max value (so that the agent doesn't accelerate too much)
++	{
++		const float len = length(v);
++		if (len == 0.f) return Vector2f(0.f, 0.f);
++		if (len <= maxMagnitude)return v;
++
++		return normalise(v) * maxMagnitude;
++	}
++}
++
++void ArriveBehaviour::setTarget(const Vector2f& target)
++{
++	ab_target = target;
++}
++
++const Vector2f ArriveBehaviour::getSteering(const SteeringAgent& agent)
++{
++	// 1) Calculate Direction Vector from Agent to Target
++	const Vector2 dirToTarget = normalise(ab_target - agent.position);
++
++	// 2) Calculate Distance to Target
++	const float disToTarget = length(ab_target - agent.position);
++
++	// 3) Calculate target speed based on distance to target (slow down as we get closer, stop if we get too close)
++	float targetSpeed;
++	if (disToTarget > ab_slowRadius)	// 3.1) If outside slow radius, go max speed
++		targetSpeed = agent.maxSpeed;
++	
++	else								// 3.2) If within slow radius, slow down (proportional to distance to target)
++		targetSpeed = agent.maxSpeed * (disToTarget / ab_slowRadius);
++
++	if (disToTarget <= ab_stopRadius)	// 3.3) If within stop radius, stop moving
++		targetSpeed = 0.f;
++
++
++
++	// 4) Calculate desired Velocity (towards target, with target speed)
++	const Vector2f desiredVelocity = dirToTarget * targetSpeed;
++
++	// 5) Calculate steering (desired velocity - current velocity)
++	Vector2f steering = desiredVelocity - agent.velocity;
++
++	// 6) Clamp steering to the agents max acceleration
++	steering = clampMagnitude(steering, agent.maxAcceleration);
++	
++	return steering;
++}
+diff --git a/project-rival/project-rival/ArriveBehaviour.h b/project-rival/project-rival/ArriveBehaviour.h
+new file mode 100644
+index 0000000..0d34b25
+--- /dev/null
++++ b/project-rival/project-rival/ArriveBehaviour.h
+@@ -0,0 +1,21 @@
++#pragma once
++#include "Steering.h"
++
++class ArriveBehaviour : public ISteeringBehaviour
++{
++public:
++	ArriveBehaviour(const Vector2f& target, float slowRadius, float stopRadius) :ab_target(target), ab_slowRadius(slowRadius), ab_stopRadius(stopRadius) {};
++
++	void setTarget(const Vector2f& target);
++
++	const Vector2f getSteering(const SteeringAgent& agent) override;
++
++	const float getSlowRadius() const { return ab_slowRadius; }
++	const float getStopRadius() const { return ab_stopRadius; }
++
++private:
++	Vector2f ab_target;
++	float ab_slowRadius;
++	float ab_stopRadius;
++};
++
+diff --git a/project-rival/project-rival/Enemy.cpp b/project-rival/project-rival/Enemy.cpp
+new file mode 100644
+index 0000000..8a9e87d
+--- /dev/null
++++ b/project-rival/project-rival/Enemy.cpp
+@@ -0,0 +1,21 @@
++#include "Enemy.h"
++using namespace sf;
++
++Enemy::Enemy(const sf::Vector2f pos) :
++	e_startPos(pos)
++{
++}
++
++void Enemy::initBody(const sf::Vector2f& size, const sf::Color& colour)
++{
++	//--------- body setup ---------//
++	e_body.setSize(size);
++	e_body.setFillColor(colour);
++	e_body.setOrigin(size / 2.f);
++	e_body.setPosition(e_startPos);
++}
++
++void Enemy::render(sf::RenderWindow& window)
++{
++	window.draw(e_body);
++}
+diff --git a/project-rival/project-rival/Enemy.h b/project-rival/project-rival/Enemy.h
+new file mode 100644
+index 0000000..5e6f02f
+--- /dev/null
++++ b/project-rival/project-rival/Enemy.h
+@@ -0,0 +1,25 @@
++#pragma once
++#include<iostream>
++#include <SFML/graphics.hpp>
++#include "SeekBehaviour.h"
++#include "ArriveBehaviour.h"
++
++class Enemy
++{
++public:
++	Enemy(const sf::Vector2f pos);
++
++	virtual void init() = 0;
++	virtual void update(double dt) = 0;
++	virtual void render(sf::RenderWindow& window);
++
++	virtual void setTarget(const Vector2f& target) = 0;
++
++protected:
++	void initBody(const sf::Vector2f& size, const sf::Color& colour);
++
++	sf::RectangleShape e_body;
++	sf::Vector2f e_startPos;
++	sf::Vector2f e_target{ 0.f, 0.f };
++};
++
+diff --git a/project-rival/project-rival/Game.cpp b/project-rival/project-rival/Game.cpp
+index 95526bc..39a7507 100644
+--- a/project-rival/project-rival/Game.cpp
++++ b/project-rival/project-rival/Game.cpp
+@@ -1,5 +1,7 @@
+ #include "Game.h"
+ #include "InputManager.h"
++#include "GruntEnemy.h"
++#include "TurretEnemy.h"
+ #include <iostream>
+ 
+ // Our target FPS
+@@ -9,6 +11,7 @@ static double const FPS{ 60.0f };
+ Game::Game()
+ 	: m_window(sf::VideoMode(sf::Vector2u(ScreenSize::s_width, ScreenSize::s_height), 32), "FYP: Dungeonish Crawler", sf::Style::Default)
+ {
++	srand(time(NULL));
+ 	init();
+ }
+ 
+@@ -33,6 +36,8 @@ void Game::init()
+ 	x_drawFPS.setCharacterSize(24);
+ 	x_drawFPS.setFillColor(sf::Color::White);
+ #endif
++
++	gameStart();
+ }
+ 
+ ////////////////////////////////////////////////////////////
+@@ -112,6 +117,10 @@ void Game::update(double dt)
+ {
+ 	InputManager::update();
+ 	m_player.update(dt);
++	for (auto& enemy : m_enemies) {
++		enemy->setTarget(m_player.getPosition());
++		enemy->update(dt);
++	}
+ }
+ 
+ ////////////////////////////////////////////////////////////
+@@ -119,9 +128,9 @@ void Game::render()
+ {
+ 	m_window.clear(sf::Color(0, 0, 0, 0));
+ 	m_player.render(m_window);
+-
+-
+-
++	for (auto& enemy : m_enemies) {
++		enemy->render(m_window);
++	}
+ 
+ #ifdef TEST_FPS
+ 	m_window.draw(x_updateFPS); //ups is 60 and dps is 61
+@@ -131,9 +140,12 @@ void Game::render()
+ }
+ 
+ 
+-
+-
+ void Game::gameStart()
+ {
+-	m_player.init();
++	for (int i = 0; i < 5; i++)
++	{
++		sf::Vector2f randEnemyPos{ static_cast<float>(rand() % ScreenSize::s_width), static_cast<float>(rand() % ScreenSize::s_height) };
++		m_enemies.push_back(std::make_unique<GruntEnemy>(randEnemyPos));
++		m_enemies.push_back(std::make_unique<TurretEnemy>(randEnemyPos));
++	}
+ }
+diff --git a/project-rival/project-rival/Game.h b/project-rival/project-rival/Game.h
+index f5e1347..322b007 100644
+--- a/project-rival/project-rival/Game.h
++++ b/project-rival/project-rival/Game.h
+@@ -10,6 +10,7 @@
+ #include <string>
+ 
+ #include "player.h"
++#include "Enemy.h"
+ 
+ using namespace std;
+ using namespace sf;
+@@ -49,6 +50,8 @@ protected:
+ 
+ 	player m_player;
+ 
++	std::vector<std::unique_ptr<Enemy>> m_enemies;
++
+ #ifdef TEST_FPS
+ 	sf::Text x_updateFPS{ m_arialFont };	// text used to display updates per second.
+ 	sf::Text x_drawFPS{  m_arialFont };	// text used to display draw calls per second.
+diff --git a/project-rival/project-rival/GruntEnemy.cpp b/project-rival/project-rival/GruntEnemy.cpp
+new file mode 100644
+index 0000000..af974cd
+--- /dev/null
++++ b/project-rival/project-rival/GruntEnemy.cpp
+@@ -0,0 +1,84 @@
++#include "GruntEnemy.h"
++
++namespace
++{
++	float length(const sf::Vector2f& v) //magnitude (line length of the vector)
++	{
++		return std::sqrt(v.x * v.x + v.y * v.y);
++	}
++}
++
++GruntEnemy::GruntEnemy(const sf::Vector2f pos)
++	:Enemy(pos)
++{
++	initBody(sf::Vector2f(50.f, 50.f), sf::Color::Red);
++	init();
++}
++
++void GruntEnemy::init()
++{
++	//--------- steering setup ---------//
++	e_agent.position = e_body.getPosition();
++	e_agent.velocity = Vector2f(0.f, 0.f);
++	e_agent.maxSpeed = 200.f; //consider making this a parameter of the constructor if we want different types of enemies with different speeds.
++	e_agent.maxAcceleration = 100.f; //consider making this a parameter of the constructor if we want different types of enemies with different accelerations.
++
++	e_currBehaviour = &e_seek; //default behaviour is seek, but we can change this later with setBehaviour() if we want to test other behaviours.
++
++	//--------- behaviour setup ---------//
++	// Derive switching distances from a "gap" value to avoid jittering when switching behaviours
++	const float base = std::max(e_arrive.getSlowRadius(), e_arrive.getStopRadius());
++	const float gap = 100.f;
++	e_arriveEnterDist = base;
++	e_arriveExitDist = base + gap;
++}
++
++void GruntEnemy::update(double dt)
++{
++	if (e_currBehaviour != nullptr)
++	{
++		const float disToTarget = length(e_target - e_agent.position);
++
++		// Auto Switchin behaviours
++		if (e_currBehaviour == &e_seek) {
++			if (disToTarget <= e_arriveEnterDist)
++			{
++				e_currBehaviour = &e_arrive;
++			}
++		}
++		else if (e_currBehaviour == &e_arrive) {
++			if (disToTarget > e_arriveExitDist)
++			{
++				e_currBehaviour = &e_seek;
++			}
++		}
++
++		float dtS = static_cast<float>(dt);
++
++		// 1) Get the steering (acceleration) from the current behaviour.
++		const Vector2f steering = e_currBehaviour->getSteering(e_agent);
++
++		// 2) v = v + a * dt
++		e_agent.velocity += steering * dtS;
++
++		// 3) Clamp velocity to max speed.
++		const float speed = length(e_agent.velocity);
++		if (speed > e_agent.maxSpeed && speed > 0.f) {
++			e_agent.velocity = (e_agent.velocity / speed) * e_agent.maxSpeed;
++		}
++
++		// 4) p = p + v * dt
++		e_agent.position += e_agent.velocity * dtS;
++
++		e_body.setPosition(e_agent.position);
++	}
++}
++
++void GruntEnemy::setTarget(const Vector2f& target)
++{
++	e_target = target;
++
++	e_seek.setTarget(target);
++	e_arrive.setTarget(target);
++}
++
+diff --git a/project-rival/project-rival/GruntEnemy.h b/project-rival/project-rival/GruntEnemy.h
+new file mode 100644
+index 0000000..fd8ccb0
+--- /dev/null
++++ b/project-rival/project-rival/GruntEnemy.h
+@@ -0,0 +1,24 @@
++#pragma once
++#include "Enemy.h"
++
++class GruntEnemy : public Enemy
++{
++public: 
++	GruntEnemy(const sf::Vector2f pos);
++	~GruntEnemy() = default;
++
++	void init() override;
++	void update(double dt) override;
++	void setTarget(const Vector2f& target) override;
++
++
++private:
++	SteeringAgent e_agent;
++	SeekBehaviour e_seek{ Vector2f(0.f,0.f) };
++	ArriveBehaviour e_arrive{ Vector2f(0.f,0.f), 500.f, 250.f };
++	ISteeringBehaviour* e_currBehaviour{ nullptr };
++
++	float e_arriveEnterDist;
++	float e_arriveExitDist;
++};
++
+diff --git a/project-rival/project-rival/SeekBehaviour.cpp b/project-rival/project-rival/SeekBehaviour.cpp
+new file mode 100644
+index 0000000..d2a6c66
+--- /dev/null
++++ b/project-rival/project-rival/SeekBehaviour.cpp
+@@ -0,0 +1,49 @@
++#include "SeekBehaviour.h"
++
++namespace
++{
++	float length(const sf::Vector2f& v) //magnitude (line length of the vector)
++	{
++		return std::sqrt(v.x * v.x + v.y * v.y);
++	}
++	Vector2f normalise(const Vector2f& v) //normalised vector for direction
++	{
++		const float len = length(v);
++		if (len == 0.f) return Vector2f(0.f, 0.f);
++		return v / len;
++	}
++
++	Vector2f clampMagnitude(const Vector2f& v, float maxMagnitude) //clamp the magnitude to a max value (so that the agent doesn't accelerate too much)
++	{
++		const float len = length(v);
++		if (len == 0.f) return Vector2f(0.f, 0.f);
++		if (len <= maxMagnitude)return v;
++
++		return normalise(v) * maxMagnitude;
++	}
++}
++
++
++void SeekBehaviour::setTarget(const Vector2f& target)
++{
++	sb_target = target;
++}
++
++const Vector2f SeekBehaviour::getSteering(const SteeringAgent& agent)
++{
++	// 1) Calculate Direction Vector from Agent to Target
++	const Vector2f dirToTarget = sb_target - agent.position;
++	if (dirToTarget == Vector2f(0.f, 0.f))
++		return Vector2f();
++
++	// 2) Calculate desired Velocity (towards target, with max speed)
++	const Vector2f desiredVelocity = normalise(dirToTarget) * agent.maxSpeed;
++
++	// 3) Calculate steering (desired velocity - current velocity)
++	Vector2f steering = desiredVelocity - agent.velocity;
++
++	// 4) Clamp steering to the agents max acceleration
++	steering = clampMagnitude(steering, agent.maxAcceleration);
++
++	return steering;
++}
+\ No newline at end of file
+diff --git a/project-rival/project-rival/SeekBehaviour.h b/project-rival/project-rival/SeekBehaviour.h
+new file mode 100644
+index 0000000..1fc2d80
+--- /dev/null
++++ b/project-rival/project-rival/SeekBehaviour.h
+@@ -0,0 +1,16 @@
++#pragma once
++#include "Steering.h"
++
++class SeekBehaviour : public ISteeringBehaviour
++{
++public:
++	SeekBehaviour(const Vector2f& target) : sb_target(target) {};
++
++	void setTarget(const Vector2f& target);
++
++	const Vector2f getSteering(const SteeringAgent& agent) override;
++
++private:
++	Vector2f sb_target;
++};
++
+diff --git a/project-rival/project-rival/Steering.h b/project-rival/project-rival/Steering.h
+new file mode 100644
+index 0000000..60ff937
+--- /dev/null
++++ b/project-rival/project-rival/Steering.h
+@@ -0,0 +1,26 @@
++#pragma once
++#include <SFML/Graphics.hpp>
++
++using namespace sf;
++
++struct SteerungOutput
++{
++	// "Acceleration" we want to apply this frame (units per second^2).
++	// Example: (100, 0) means "speed up to the right".
++	Vector2f linear{ 0.f,0.f };
++};
++
++struct SteeringAgent {
++	Vector2f position{ 0.f,0.f };
++	Vector2f velocity{ 0.f,0.f };
++	float maxSpeed{ 0.f };
++	float maxAcceleration{ 0.f };
++};
++
++class ISteeringBehaviour
++{
++public:
++	virtual ~ISteeringBehaviour() {};
++
++	virtual const Vector2f getSteering(const SteeringAgent& agent) = 0;
++};
+\ No newline at end of file
+diff --git a/project-rival/project-rival/TurretEnemy.cpp b/project-rival/project-rival/TurretEnemy.cpp
+new file mode 100644
+index 0000000..23b3d99
+--- /dev/null
++++ b/project-rival/project-rival/TurretEnemy.cpp
+@@ -0,0 +1,21 @@
++#include "TurretEnemy.h"
++
++TurretEnemy::TurretEnemy(const sf::Vector2f pos)
++	:Enemy(pos)
++{
++	initBody(sf::Vector2f(50.f, 50.f), sf::Color::Blue);
++	init();
++}
++
++void TurretEnemy::init()
++{
++}
++
++void TurretEnemy::update(double dt)
++{
++}
++
++void TurretEnemy::setTarget(const Vector2f& target)
++{
++	e_target = target;
++}
+diff --git a/project-rival/project-rival/TurretEnemy.h b/project-rival/project-rival/TurretEnemy.h
+new file mode 100644
+index 0000000..108e865
+--- /dev/null
++++ b/project-rival/project-rival/TurretEnemy.h
+@@ -0,0 +1,17 @@
++#pragma once
++#include "Enemy.h"
++
++class TurretEnemy : public Enemy
++{
++public:
++	TurretEnemy(const sf::Vector2f pos);
++	~TurretEnemy() = default;
++
++	void init() override;
++	void update(double dt) override;
++	void setTarget(const Vector2f& target) override;
++
++private:
++
++};
++
+diff --git a/project-rival/project-rival/player.cpp b/project-rival/project-rival/player.cpp
+index 08cb6bf..6dd6194 100644
+--- a/project-rival/project-rival/player.cpp
++++ b/project-rival/project-rival/player.cpp
+@@ -22,6 +22,25 @@ void player::init()
+ }
+ 
+ void player::update(double dt)
++{
++	handleMovement(dt);
++
++	if (InputManager::pad().rightTrigger()) InputManager::pad().setRumble(0.2f, 0.8f);
++	else InputManager::pad().setRumble(0.0f, 0.0f);
++}
++
++
++void player::render(RenderWindow& window)
++{
++	window.draw(p_body);
++}
++
++void player::reset()
++{
++	p_body.setPosition(Vector2f(50., 50.f));
++}
++
++void player::handleMovement(double dt)
+ {
+ 	//--------- movement logic ---------//
+ 	Vector2f direction{ 0.f, 0.f };
+@@ -46,23 +65,4 @@ void player::update(double dt)
+ 
+ 	p_velocity = direction * p_moveSpeed;
+ 	p_body.move(p_velocity * static_cast<float>(dt));
+-
+-	if (InputManager::pad().rightTrigger()) InputManager::pad().setRumble(0.2f, 0.8f);
+-	else InputManager::pad().setRumble(0.0f, 0.0f);
+-}
+-
+-void player::render(RenderWindow& window)
+-{
+-	window.draw(p_body);
+ }
+-
+-void player::processGameEvents(const sf::Event& event)
+-{
+-	// Currently no player-specific event processing.
+-}
+-
+-
+-void player::reset()
+-{
+-	p_body.setPosition(Vector2f(50., 50.f));
+-}
+\ No newline at end of file
+diff --git a/project-rival/project-rival/player.h b/project-rival/project-rival/player.h
+index ac34c1d..8a2633c 100644
+--- a/project-rival/project-rival/player.h
++++ b/project-rival/project-rival/player.h
+@@ -13,9 +13,10 @@ public:
+ 
+ 	void init();
+ 	void update(double dt);
++	void handleMovement(double dt);
+ 	void render(RenderWindow& window);
+ 
+-	void processGameEvents(const sf::Event& event);
++	const Vector2f getPosition() const { return p_body.getPosition(); }
+ 
+ private:
+ 	// FUNCTIONS
+diff --git a/project-rival/project-rival/project-rival.vcxproj b/project-rival/project-rival/project-rival.vcxproj
+index 8058989..7ec70b8 100644
+--- a/project-rival/project-rival/project-rival.vcxproj
++++ b/project-rival/project-rival/project-rival.vcxproj
+@@ -19,17 +19,28 @@
+     </ProjectConfiguration>
+   </ItemGroup>
+   <ItemGroup>
++    <ClCompile Include="ArriveBehaviour.cpp" />
++    <ClCompile Include="Enemy.cpp" />
+     <ClCompile Include="Game.cpp" />
+     <ClCompile Include="Gamepad.cpp" />
++    <ClCompile Include="GruntEnemy.cpp" />
+     <ClCompile Include="InputManager.cpp" />
+     <ClCompile Include="main.cpp" />
+     <ClCompile Include="player.cpp" />
++    <ClCompile Include="SeekBehaviour.cpp" />
++    <ClCompile Include="TurretEnemy.cpp" />
+   </ItemGroup>
+   <ItemGroup>
++    <ClInclude Include="ArriveBehaviour.h" />
++    <ClInclude Include="Enemy.h" />
+     <ClInclude Include="Game.h" />
+     <ClInclude Include="Gamepad.h" />
++    <ClInclude Include="GruntEnemy.h" />
+     <ClInclude Include="InputManager.h" />
+     <ClInclude Include="player.h" />
++    <ClInclude Include="SeekBehaviour.h" />
++    <ClInclude Include="Steering.h" />
++    <ClInclude Include="TurretEnemy.h" />
+   </ItemGroup>
+   <ItemGroup>
+     <Image Include="ASSETS\IMAGES\SFML-LOGO.png">
+@@ -45,6 +56,12 @@
+       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</ExcludedFromBuild>
+     </Font>
+   </ItemGroup>
++  <ItemGroup>
++    <None Include="..\automation\prompts\docs-architecture-development-log-context.md" />
++    <None Include="..\automation\prompts\git-staged-changes-to-commit-context.md" />
++    <None Include="..\automation\prompts\steering-enemy-seek-step-by-step-context.md" />
++    <None Include="..\docs\Project\Project Proposal Form.docx" />
++  </ItemGroup>
+   <PropertyGroup Label="Globals">
+     <VCProjectVersion>15.0</VCProjectVersion>
+     <ProjectGuid>{72f74580-4c0c-4adc-be48-d33f3c5aa1ef}</ProjectGuid>
+diff --git a/project-rival/project-rival/project-rival.vcxproj.filters b/project-rival/project-rival/project-rival.vcxproj.filters
+index e739df3..cb6832d 100644
+--- a/project-rival/project-rival/project-rival.vcxproj.filters
++++ b/project-rival/project-rival/project-rival.vcxproj.filters
+@@ -19,6 +19,27 @@
+     <Filter Include="Resource Files\IMAGES">
+       <UniqueIdentifier>{1d793ccc-0d22-4eea-8d0e-c5b5a5270a40}</UniqueIdentifier>
+     </Filter>
++    <Filter Include="Header Files\Input">
++      <UniqueIdentifier>{492c6b32-40d8-4a9f-8d7b-f4959ad27b73}</UniqueIdentifier>
++    </Filter>
++    <Filter Include="Header Files\Abs.Interfaces">
++      <UniqueIdentifier>{fc0fe863-09ef-468e-aaa5-2881e53dd4b7}</UniqueIdentifier>
++    </Filter>
++    <Filter Include="Header Files\Abs.Classes">
++      <UniqueIdentifier>{0c6e4511-7f0a-4e12-afe0-7425cf365a97}</UniqueIdentifier>
++    </Filter>
++    <Filter Include="Header Files\Behaviours">
++      <UniqueIdentifier>{b532eab4-ae76-449b-9ec6-96913d08a763}</UniqueIdentifier>
++    </Filter>
++    <Filter Include="Resource Files\DOCUMENTATION">
++      <UniqueIdentifier>{432d37c5-2336-4597-a4da-e09c882032eb}</UniqueIdentifier>
++    </Filter>
++    <Filter Include="Resource Files\AUTOMATIONS">
++      <UniqueIdentifier>{b8e2caa8-ed7f-45de-ace6-9451eb9edab4}</UniqueIdentifier>
++    </Filter>
++    <Filter Include="Header Files\Enemies">
++      <UniqueIdentifier>{641a97c9-ec20-499b-a847-eae07285cfdb}</UniqueIdentifier>
++    </Filter>
+   </ItemGroup>
+   <ItemGroup>
+     <ClCompile Include="main.cpp">
+@@ -30,11 +51,26 @@
+     <ClCompile Include="player.cpp">
+       <Filter>Source Files</Filter>
+     </ClCompile>
++    <ClCompile Include="InputManager.cpp">
++      <Filter>Header Files\Input</Filter>
++    </ClCompile>
+     <ClCompile Include="Gamepad.cpp">
+-      <Filter>Source Files</Filter>
++      <Filter>Header Files\Input</Filter>
+     </ClCompile>
+-    <ClCompile Include="InputManager.cpp">
+-      <Filter>Source Files</Filter>
++    <ClCompile Include="SeekBehaviour.cpp">
++      <Filter>Header Files\Behaviours</Filter>
++    </ClCompile>
++    <ClCompile Include="ArriveBehaviour.cpp">
++      <Filter>Header Files\Behaviours</Filter>
++    </ClCompile>
++    <ClCompile Include="Enemy.cpp">
++      <Filter>Header Files\Abs.Classes</Filter>
++    </ClCompile>
++    <ClCompile Include="GruntEnemy.cpp">
++      <Filter>Header Files\Enemies</Filter>
++    </ClCompile>
++    <ClCompile Include="TurretEnemy.cpp">
++      <Filter>Header Files\Enemies</Filter>
+     </ClCompile>
+   </ItemGroup>
+   <ItemGroup>
+@@ -44,11 +80,29 @@
+     <ClInclude Include="player.h">
+       <Filter>Header Files</Filter>
+     </ClInclude>
++    <ClInclude Include="InputManager.h">
++      <Filter>Header Files\Input</Filter>
++    </ClInclude>
+     <ClInclude Include="Gamepad.h">
+-      <Filter>Header Files</Filter>
++      <Filter>Header Files\Input</Filter>
+     </ClInclude>
+-    <ClInclude Include="InputManager.h">
+-      <Filter>Header Files</Filter>
++    <ClInclude Include="SeekBehaviour.h">
++      <Filter>Header Files\Behaviours</Filter>
++    </ClInclude>
++    <ClInclude Include="Steering.h">
++      <Filter>Header Files\Abs.Interfaces</Filter>
++    </ClInclude>
++    <ClInclude Include="ArriveBehaviour.h">
++      <Filter>Header Files\Behaviours</Filter>
++    </ClInclude>
++    <ClInclude Include="Enemy.h">
++      <Filter>Header Files\Abs.Classes</Filter>
++    </ClInclude>
++    <ClInclude Include="GruntEnemy.h">
++      <Filter>Header Files\Enemies</Filter>
++    </ClInclude>
++    <ClInclude Include="TurretEnemy.h">
++      <Filter>Header Files\Enemies</Filter>
+     </ClInclude>
+   </ItemGroup>
+   <ItemGroup>
+@@ -61,4 +115,18 @@
+       <Filter>Resource Files\FONTS</Filter>
+     </Font>
+   </ItemGroup>
++  <ItemGroup>
++    <None Include="..\docs\Project\Project Proposal Form.docx">
++      <Filter>Resource Files\DOCUMENTATION</Filter>
++    </None>
++    <None Include="..\automation\prompts\steering-enemy-seek-step-by-step-context.md">
++      <Filter>Resource Files\AUTOMATIONS</Filter>
++    </None>
++    <None Include="..\automation\prompts\git-staged-changes-to-commit-context.md">
++      <Filter>Resource Files\AUTOMATIONS</Filter>
++    </None>
++    <None Include="..\automation\prompts\docs-architecture-development-log-context.md">
++      <Filter>Resource Files\AUTOMATIONS</Filter>
++    </None>
++  </ItemGroup>
+ </Project>
+\ No newline at end of file
+
+===== STAGED FILE CONTENTS (index blobs; skips deletions + binaries) =====
+
+===== FILE: project-rival/automation/prompts/docs-architecture-development-log-context.md =====
+# Context: Docs split (architecture chapters) + development log
+
+## Contents
+1. [High-level goal](#high-level-goal)
+2. [User preferences / working style](#user-preferences--working-style)
+3. [What was done in this chat](#what-was-done-in-this-chat)
+4. [Current documentation layout](#current-documentation-layout)
+5. [How to update the development log going forward](#how-to-update-the-development-log-going-forward)
+6. [Next steps planned](#next-steps-planned)
+
+---
+
+## High-level goal
+Keep project documentation **simple, short, and readable**:
+
+- Architecture docs should be easy to navigate even as the codebase grows (chapter-like).
+- Maintain a supervisor-friendly **timeline / development log** (weekly or milestone based).
+
+---
+
+## User preferences / working style
+- Keep docs beginner-friendly and **not unnecessarily long**.
+- Architecture documentation should avoid going deep on the game loop.
+- `InputManager` / `Gamepad` should be described only at a high level.
+- Prefer a ΓÇ£bookΓÇ¥ style for docs (index page + smaller pages/chapters).
+- Development log should be **weekly** most of the time, but can be **milestone-based** if a big feature lands quickly.
+- User will add ΓÇ£why/intentΓÇ¥ in future updates; Copilot should help append/format.
+
+---
+
+## What was done in this chat
+
+1) Split architecture documentation into multiple small Markdown files under `docs/architecture/`.
+
+2) Added a documentation index at `docs/README.md`.
+
+3) Created a timeline document at `docs/DEVELOPMENT_LOG.md` using git history provided by the user.
+
+4) Updated `docs/README.md` so it links to:
+- `docs/architecture/README.md`
+- `docs/DEVELOPMENT_LOG.md`
+
+---
+
+## Current documentation layout
+
+### Docs index
+- `docs/README.md`
+  - Links to architecture index + development log
+  - Links to proposal doc
+
+### Architecture (chapter-style)
+- `docs/architecture/README.md` (index + clickable TOC)
+- `docs/architecture/01-project-structure.md`
+- `docs/architecture/02-player.md`
+- `docs/architecture/03-input.md`
+- `docs/architecture/04-enemy.md`
+- `docs/architecture/05-steering-oop.md`
+- `docs/architecture/06-coding-conventions.md`
+
+### Development timeline
+- `docs/DEVELOPMENT_LOG.md`
+  - Filled with sections for:
+    - Week of 2026-01-22 (controller support + omni movement)
+    - Week of 2026-01-21 (player wired into game + movement iteration)
+    - Week of 2025-11-24 (initial setup)
+  - Includes a copy/paste template for new entries.
+
+### Proposal doc (source material for README)
+- `docs/Project/Project Proposal Form.docx`
+
+---
+
+## How to update the development log going forward
+Best workflow:
+
+1) Get new commits since last update:
+
+- `git log --date=short --name-only --pretty=format:"%ad %h %s" <lastHash>..HEAD`
+
+2) Provide 2ΓÇô5 bullets of ΓÇ£Why / intentΓÇ¥ for that week/milestone.
+
+3) Append a new section to `docs/DEVELOPMENT_LOG.md`:
+- `Week of YYYY-MM-DD` OR `Milestone: Name`
+- Summary / Technical notes / Evidence / Why
+
+---
+
+## Next steps planned
+- Create the project root `README.md` using the proposal doc (`docs/Project/Project Proposal Form.docx`) as source.
+- Optionally add a milestone-based entry when the steering/AI work (Seek/Enemy wiring) lands.
+
+===== FILE: project-rival/automation/prompts/git-staged-changes-to-commit-context.md =====
+# Context: Generating commit message(s) from staged Git changes
+
+## Contents
+1. [High-level goal](#high-level-goal)
+2. [Repo / branch context](#repo--branch-context)
+3. [What the user asked for](#what-the-user-asked-for)
+4. [What staged changes exist (as provided)](#what-staged-changes-exist-as-provided)
+5. [Recommended commit split + messages](#recommended-commit-split--messages)
+6. [Git commands used / suggested](#git-commands-used--suggested)
+
+---
+
+## High-level goal
+Capture enough information about the **currently staged Git changes** to:
+- share them across machines/chat instances
+- generate good Git commit(s) (title + body) from the staged diff / staged file contents
+
+---
+
+## Repo / branch context
+- Repo root (local): `C:\Users\ayola\Desktop\School\Y4\FYP\fyp-sfml-game`
+- Branch: `enemies`
+- Remote: `origin` -> `https://github.com/OlawoleAbayomi-Owodunni/fyp-sfml-game`
+
+---
+
+## What the user asked for
+The user wanted a way to get:
+- a ΓÇ£change logΓÇ¥ of staged files (whatΓÇÖs staged)
+- the staged diff (patch)
+- the staged contents of the changed files
+
+ΓÇªso they can paste that info into Copilot and have it generate an appropriate commit message (and potentially suggest commit splits).
+
+---
+
+## What staged changes exist (as provided)
+The user provided staged summary + name/status (no renames/copies; mostly adds).
+
+### Staged adds (`A`)
+Docs:
+- `project-rival/docs/Architecture/README.md`
+- `project-rival/docs/Architecture/01-project-structure.md`
+- `project-rival/docs/Architecture/02-player.md`
+- `project-rival/docs/Architecture/03-input.md`
+- `project-rival/docs/Architecture/04-enemy.md`
+- `project-rival/docs/Architecture/05-steering-oop.md`
+- `project-rival/docs/Architecture/06-coding-conventions.md`
+- `project-rival/docs/DEVELOPMENT_LOG.md`
+- `project-rival/docs/README.md`
+- `project-rival/docs/Project/Project Proposal Form.docx`
+
+Code scaffolding:
+- `project-rival/project-rival/Steering.h` (defines `SteeringAgent`, `ISteeringBehaviour`, and an output struct)
+- `project-rival/project-rival/Enemy.cpp` (empty placeholder)
+- `project-rival/project-rival/Enemy.h` (empty placeholder)
+
+### Staged modifications (`M`)
+- `project-rival/project-rival/player.cpp`
+  - Reads controller via `InputManager::pad().leftStick()`
+  - Uses controller input when non-zero; otherwise keyboard WASD fallback
+  - Normalizes direction to avoid faster diagonal movement
+  - Moves with `p_velocity * dt` where `dt` is seconds
+  - Uses right trigger to drive rumble (`setRumble`)
+
+- `project-rival/project-rival/player.h`
+  - Includes Windows/XInput headers
+
+- `project-rival/project-rival/project-rival.vcxproj.filters`
+  - Visual Studio filter organization updated
+
+---
+
+## Recommended commit split + messages
+Suggested splitting into 2 commits (docs vs code), since they are independent concerns.
+
+### Commit 1 (docs)
+**Title:** `docs: add architecture overview and development log`
+
+Optional body bullets:
+- Add architecture chapter pages (player/input/enemy/steering/conventions)
+- Add supervisor-friendly development log
+- Add project proposal document
+
+### Commit 2 (code)
+**Title:** `feat: add steering interface and controller-driven player movement`
+
+Optional body bullets:
+- Add steering agent + behaviour interface scaffolding
+- Add placeholder enemy files
+- Player: support gamepad left stick input with keyboard fallback; set rumble via triggers
+- Update Visual Studio filters
+
+A single-commit alternative was also offered:
+- `feat: document architecture and extend player input with gamepad support`
+
+---
+
+## Git commands used / suggested
+To collect staged info:
+- `git diff --cached --name-status`
+- `git diff --cached`
+- `git diff --cached --summary -M`
+
+To dump staged contents:
+- `git show :path/to/file`
+
+PowerShell helper to dump all staged file contents:
+- `git diff --cached --name-only | % { "===== FILE: $_ ====="; git show ":$_"; "" }`
+
+To split commits (example approach):
+- `git restore --staged <code files...>` then commit docs
+- `git add <code files...>` then commit code
+
+---
+
+## Project note (repo instruction reminder)
+Project rule from `./.github/copilot-instructions.md` relevant to recent changes:
+- `dt` is expected to be **seconds** (e.g., `timePerFrame.asSeconds()`), and entity updates should use it directly.
+
+===== FILE: project-rival/automation/prompts/steering-enemy-seek-step-by-step-context.md =====
+# Context: Step-by-step Steering (Seek) wired into Enemy (SFML / C++)
+
+## Contents
+1. [High-level goal](#high-level-goal)
+2. [User preferences / working style](#user-preferences--working-style)
+3. [Project constraints](#project-constraints)
+4. [What exists now (code state)](#what-exists-now-code-state)
+5. [Known issues / improvements to consider later](#known-issues--improvements-to-consider-later)
+6. [Next steps planned](#next-steps-planned)
+
+---
+
+## High-level goal
+Implement a reusable **steering system** for `Enemy` (and later other entities) that supports:
+- a steering-enabled agent state (position/velocity/limits)
+- steering behaviours (starting with **Seek**)
+- ability to **switch behaviours at runtime** (trigger-based)
+- later ability to **combine** behaviours (blending/priority)
+
+Initial implementation focuses on correctness and learning (tutorial/exam-prep style), not speed.
+
+---
+
+## User preferences / working style
+- **Incremental, tutorial-style** changes.
+- Avoid dumping a full solution all at once.
+- Explain *why* each variable/function exists and what each line is responsible for.
+- Avoid introducing concepts like `inline` / namespaces without explanation.
+- User intentionally postponed cleanup like removing `using namespace ...` from headers.
+
+---
+
+## Project constraints
+- `Game::update` passes `dt` in **seconds** (`timePerFrame.asSeconds()`).
+- Entity updates should treat `dt` as seconds.
+
+---
+
+## What exists now (code state)
+
+### Core steering types (`project-rival/Steering.h`)
+- `struct SteeringAgent`
+  - `position`, `velocity`, `maxSpeed`, `maxAcceleration`
+- `class ISteeringBehaviour`
+  - `virtual const Vector2f getSteering(const SteeringAgent& agent) = 0;`
+- There is also `struct SteerungOutput` (typo in name) but itΓÇÖs not currently used.
+
+> Note: `Steering.h` currently has `using namespace sf;` (kept for now).
+
+### Seek behaviour (`project-rival/SeekBehaviour.h/.cpp`)
+- `SeekBehaviour` derives from `ISteeringBehaviour`.
+- Stores a target (`sb_target`) and exposes `setTarget(...)`.
+- `getSteering(agent)`:
+  - compute `toTarget = target - agent.position`
+  - compute desired velocity toward target at `maxSpeed`
+  - steering = desiredVelocity ΓêÆ currentVelocity
+  - clamp steering to `maxAcceleration`
+
+> Math helpers (`trig_helper::length/normalise/clampMagnitude`) were previously defined in a header and caused LNK2005. That was fixed by **removing helper definitions from the header** and keeping them in a single translation unit.
+
+### Enemy wiring (`project-rival/Enemy.h/.cpp`)
+- `Enemy` owns:
+  - `SteeringAgent e_agent`
+  - `SeekBehaviour e_seek{ Vector2f(0,0) }`
+  - `ISteeringBehaviour* e_currBehaviour{ nullptr }`
+- In `Enemy::init()` the default behaviour is set:
+  - `e_currBehaviour = &e_seek;`
+- `Enemy::setTarget(...)` currently only updates seekΓÇÖs target:
+  - `e_seek.setTarget(target);`
+- `Enemy::setBehaviour(ISteeringBehaviour* behaviour)` sets `e_currBehaviour`.
+- `Enemy::update(dt)` integrates:
+  - `a = behaviour->getSteering(e_agent)`
+  - `v += a * dt`
+  - clamp `v` to `maxSpeed`
+  - `p += v * dt`
+  - update shape position
+
+### Game wiring (`project-rival/Game.h/.cpp`)
+- `Game` includes `Enemy` and renders it.
+- `Enemy` is constructed with a start position, e.g. `Enemy m_enemy{ Vector2f(500.f, 500.f) };`
+- Each frame, `Game::update(dt)` sets the enemy target to the playerΓÇÖs current position:
+  - `m_enemy.setTarget(m_player.getPosition());`
+  - then updates player and enemy.
+
+### Player (`project-rival/player.h/.cpp`)
+- `player` exposes `const Vector2f getPosition() const { return p_body.getPosition(); }`
+
+---
+
+## Known issues / improvements to consider later
+(Not required to proceed, but tracked for future refactors.)
+
+1. **Behaviour switching vs target updates**
+   - `setTarget()` should not switch behaviours.
+   - Switching should be done by a separate ΓÇ£decision layerΓÇ¥ (FSM/AI triggers).
+
+2. **Multiple behaviours**
+   - Need a scalable way to:
+     - switch behaviours once per trigger (e.g., Seek ΓåÆ Arrive when close)
+     - optionally combine behaviours (blend/priority)
+
+3. **Header `using namespace`**
+   - Present in headers (`Steering.h`, historically `SeekBehaviour.h`).
+   - Risky long term (pollutes translation units), but user postponed cleanup.
+
+4. **Return type const-by-value**
+   - `virtual const Vector2f getSteering(...)` returns const by value.
+   - DoesnΓÇÖt add safety; can be simplified later.
+
+5. **Float equality / epsilon**
+   - Seek checks `toTarget == Vector2f(0,0)`.
+   - More robust to use an epsilon (distance threshold).
+
+6. **Math helper placement**
+   - Keep helper function *definitions* in exactly one `.cpp` (or make them `inline` later after explaining).
+
+---
+
+## Next steps planned
+
+### Step A: Add a second behaviour (recommended: `ArriveBehaviour`)
+- Teach ΓÇ£arriveΓÇ¥ theory:
+  - slowing radius
+  - desired speed scales down as you get close
+  - clamp acceleration
+- Implementation goal:
+  - `ArriveBehaviour` derives from `ISteeringBehaviour`
+  - has `setTarget(...)`, `slowRadius`, `stopRadius` (or similar)
+
+### Step B: Add decision logic (trigger-based switching)
+- Keep updating target every frame.
+- Add a small AI layer in `Enemy` (or a separate controller):
+  - compute distance to target
+  - if distance < threshold: switch to `ArriveBehaviour`
+  - else: switch to `SeekBehaviour`
+- Ensure switching only occurs when state changes (one-time per trigger).
+
+### Step C: Optional behaviour mixing
+- Add a `BlendedBehaviour` (sum weighted forces) or `PriorityBehaviour`.
+
+---
+
+If continuing in a new Copilot instance: start by confirming current file contents for `Steering.h`, `SeekBehaviour.*`, `Enemy.*`, and then proceed with implementing `ArriveBehaviour` + switching logic incrementally.
+
+===== FILE: project-rival/automation/scripts/merge-summary-generator.ps1 =====
+$BASE = "origin/main"
+$out = "automation/scripts/output/enemies-merge-changes.txt"
+
+"===== LOCAL COMMITS (origin/main..HEAD) =====`n" | Out-File $out -Encoding utf8
+git log --reverse --date=short --pretty=format:"%ad %h %s%n%b%n" "$BASE..HEAD" -- >> $out
+
+"`n===== PATCH (per commit; origin/main..HEAD) =====`n" >> $out
+git log -p --reverse "$BASE..HEAD" -- . ":!*.docx" >> $out
+
+"`n===== STAGED DIFF SUMMARY (git diff --cached --name-status) =====`n" >> $out
+git diff --cached --name-status -M -C >> $out
+
+"`n===== STAGED PATCH (git diff --cached) =====`n" >> $out
+git diff --cached >> $out
+
+Write-Host "Wrote: $out"
+
+===== FILE: project-rival/automation/scripts/staged-dump.ps1 =====
+# Writes, in order:
+# 1) git diff --cached --summary
+# 2) git diff --cached --name-status -M -C
+# 3) staged file contents for non-deleted paths only
+@(
+  "===== STAGED DIFF SUMMARY (git diff --cached --summary) ====="
+  git diff --cached --summary
+  ""
+
+  "===== STAGED NAME/STATUS (git diff --cached --name-status -M -C) ====="
+  git diff --cached --name-status -M -C
+  ""
+
+  "===== STAGED FILE CONTENTS (index blobs; skips deletions) ====="
+  ""
+
+  # Parse name-status output and exclude deletions (D)
+  (git diff --cached --name-status -M -C | ForEach-Object {
+    $line = $_.Trim()
+    if (-not $line) { return }
+
+    # Format is tab-separated. Examples:
+    #   M<TAB>path
+    #   A<TAB>path
+    #   D<TAB>path
+    #   R100<TAB>old<TAB>new
+    $cols = $line -split "`t"
+
+    $status = $cols[0]
+    if ($status -like "D*") { return }  # skip deletions
+
+    $path =
+      if ($status -like "R*" -or $status -like "C*") { $cols[2] } # new path
+      else { $cols[1] }
+
+    if (-not $path) { return }
+
+    "===== FILE: $path ====="
+    git show ":$path" 2>&1
+    ""
+  })
+) | Out-File staged-files-dump.txt -Encoding utf8
+
+===== FILE: project-rival/docs/Architecture/01-project-structure.md =====
+# 1) Project structure
+
+[Back to architecture index](README.md)
+
+Most gameplay code is inside `project-rival/`.
+
+## Suggested mental model (categories)
+
+### Entities
+
+- `player.h` / `player.cpp`
+- `Enemy.h` / `Enemy.cpp`
+
+### Input
+
+- `InputManager.h` / `InputManager.cpp`
+- `Gamepad.h` / `Gamepad.cpp`
+
+### AI / Movement
+
+- `Steering.h`
+
+- `SeekBehaviour.h` / `SeekBehaviour.cpp`
+- `ArriveBehaviour.h` / `ArriveBehaviour.cpp`
+
+This category list is mainly to keep the codebase readable as the number of files grows.
+
+===== FILE: project-rival/docs/Architecture/02-player.md =====
+# 2) Player
+
+[Back to architecture index](README.md)
+
+`player` (in `player.h/.cpp`) represents the controllable character.
+
+## Responsibilities (current)
+
+- Owns its SFML shape (`p_body`)
+- Reads input (keyboard or gamepad, via `InputManager`)
+- Moves by updating velocity and applying it every update
+
+## Movement (high level)
+
+Movement is handled in `player::handleMovement(double dt)`:
+
+- build a `direction` vector from input
+  - controller: use `InputManager::pad().leftStick()`
+  - keyboard: WASD
+- normalize it so diagonal movement isnΓÇÖt faster
+- set `p_velocity = direction * p_moveSpeed`
+- move by `p_velocity * dt`
+
+Note: `dt` is expected to be **seconds**.
+
+===== FILE: project-rival/docs/Architecture/03-input.md =====
+# 3) Input (high level)
+
+[Back to architecture index](README.md)
+
+The input code is split into two parts:
+
+- `InputManager`: a static helper that owns a `Gamepad`
+- `Gamepad`: a small wrapper around XInput
+
+## `InputManager`
+
+Typical usage:
+
+- call `InputManager::update()` once per frame
+- then read input through `InputManager::pad()`
+
+## `Gamepad`
+
+Exposes:
+
+- sticks as `sf::Vector2f` in `[-1..1]`
+- triggers in `[0..1]`
+- button states (`down`, `pressed`, `released`)
+- rumble (`setRumble`)
+
+Also applies deadzones to reduce controller drift.
+
+===== FILE: project-rival/docs/Architecture/04-enemy.md =====
+# 4) Enemy (current state)
+
+[Back to architecture index](README.md)
+
+`Enemy` (in `Enemy.h/.cpp`) is a simple entity that demonstrates steering-based movement.
+
+## What exists
+
+- A visible SFML body (`sf::RectangleShape`)
+- A `SteeringAgent` (`position`, `velocity`, `maxSpeed`, `maxAcceleration`)
+- A current steering behaviour (`ISteeringBehaviour*`), currently set to `ArriveBehaviour` by default
+- `init()`, `update(double dt)`, `render(...)`
+- `setTarget(...)` to update the target used by behaviours
+- `setBehaviour(...)` to switch behaviours at runtime (for testing)
+
+In `Game::update(dt)`, the enemy target is set to the player position each frame.
+
+## Likely next steps
+
+- Decide when to use `SeekBehaviour` vs `ArriveBehaviour` (for example: seek when far away, arrive when close)
+- Expose behaviour parameters (speed/acceleration/radii) so different enemy ΓÇ£typesΓÇ¥ can be created
+
+===== FILE: project-rival/docs/Architecture/05-steering-oop.md =====
+# 5) Steering (AI) + OOP concepts
+
+[Back to architecture index](README.md)
+
+`Steering.h` sets up a simple architecture for AI movement behaviours.
+
+## Key types
+
+- `SteeringAgent`
+  - describes the thing being controlled (position/velocity + limits)
+- `ISteeringBehaviour`
+  - an interface-like base class with a pure virtual function:
+    - `getSteering(const SteeringAgent& agent)`
+  - returns a steering vector (treated as ΓÇ£accelerationΓÇ¥ in `Enemy::update(dt)`)
+
+## What this enables (polymorphism)
+
+Later, multiple behaviours that all share the same interface can be created, for example:
+
+- `SeekBehaviour : public ISteeringBehaviour`
+- `ArriveBehaviour : public ISteeringBehaviour`
+
+Code can store an `ISteeringBehaviour*` and call `getSteering(...)` without caring which concrete behaviour it is.
+
+## Quick definitions
+
+- **Abstract class**: a class you cannot instantiate directly (often because it has a pure virtual function).
+- **Interface (C++ style)**: usually an abstract class that only contains virtual functions.
+- **Polymorphism**: treating different derived types through a shared base type.
+
+===== FILE: project-rival/docs/Architecture/06-coding-conventions.md =====
+# 6) Coding / design conventions
+
+[Back to architecture index](README.md)
+
+This is the current style used in the codebase.
+
+## File layout
+
+- Headers (`.h`) declare types/functions
+- Source files (`.cpp`) implement them
+
+## `dt` (delta time)
+
+- `dt` is passed around as **seconds**.
+- Entity movement uses `velocity * dt`.
+
+## Update/render separation
+
+Most gameplay classes follow a simple pattern:
+
+- `update(dt)` changes state
+- `render(...)` draws the current state
+
+===== FILE: project-rival/docs/Architecture/README.md =====
+# Architecture
+
+A high-level, beginner-friendly overview of how the main gameplay-related code is organized.
+
+[Back to docs index](../README.md)
+
+## Table of contents
+
+1. [Project structure](01-project-structure.md)
+2. [Player](02-player.md)
+3. [Input (high level)](03-input.md)
+4. [Enemy (current state)](04-enemy.md)
+5. [Steering (AI) + OOP concepts](05-steering-oop.md)
+6. [Coding / design conventions](06-coding-conventions.md)
+
+===== FILE: project-rival/docs/DEVELOPMENT_LOG.md =====
+# Development log (weekly / milestone)
+
+This document tracks technical progress over time in a supervisor-friendly way.
+
+## How to use this log ---->DELETE WHEN PROJECT IS COMPLETE<-----
+
+- Add a new section each **week** (recommended) or per **milestone**.
+- Each entry should be short:
+  - **Summary**: 2ΓÇô5 bullets
+  - **Technical notes** (optional): 2ΓÇô6 bullets
+  - **Evidence**: commit hashes
+  - **Why / intent**: add when available
+
+---
+
+## Week of 2026-01-22
+
+### Summary
+- Added Windows controller (XInput) support and integrated it into player controls.
+- Improved player movement so it supports omni-directional input (keyboard and controller stick).
+
+### Technical notes
+- Introduced `Gamepad` abstraction to read sticks/triggers/buttons and apply deadzones.
+- Added `InputManager` as a simple static access point for reading controller state.
+- Updated `player` to read controller input and (optionally) trigger rumble.
+
+### Evidence (commits)
+- `a1be98e` ΓÇö Controller Support
+- `f2663af` ΓÇö Player: Omni Directional movement
+
+---
+
+## Week of 2026-01-21
+
+### Summary
+- Wired the `player` entity into the game so it updates and renders during gameplay.
+- Implemented/iterated on basic player movement.
+- Synced work with `main` via merge.
+
+### Technical notes
+- `Game` now owns a `player` instance and calls its `update(dt)` and `render(...)`.
+- Movement logic was iterated in `player.cpp`.
+
+### Evidence (commits)
+- `cb409c7` ΓÇö Player: called in game
+- `c324a0b` ΓÇö Player class: movement
+- `1f10f8e` ΓÇö Player class: movement
+- `1aecc43` ΓÇö merge branch 'main'
+
+---
+
+## Week of 2025-11-24 (project setup)
+
+### Summary
+- Initial SFML project setup, solution/project files, and base game scaffolding.
+- Added basic assets (font/logo) and a `.gitignore`.
+
+### Evidence (commit)
+- `ca2c920` ΓÇö Setup + `.gitignore`
+
+---
+
+===== FILE: project-rival/docs/README.md =====
+# Documentation
+
+This folder contains short docs for the project.
+
+## Start here
+
+- Architecture: [docs/Architecture/README.md](Architecture/README.md)
+- Development log: [docs/DEVELOPMENT_LOG.md](DEVELOPMENT_LOG.md)
+
+## Other references
+
+- Project proposal (source): [docs/Project/Project Proposal Form.docx](Project/Project%20Proposal%20Form.docx)
+
+## Planned docs (optional)
+
+- Additional design notes / deep-dives as the project grows
+
+===== FILE: project-rival/project-rival/ArriveBehaviour.cpp =====
+#include "ArriveBehaviour.h"
+
+namespace 
+{
+	float length(const sf::Vector2f& v) //magnitude (line length of the vector)
+	{
+		return std::sqrt(v.x * v.x + v.y * v.y);
+	}
+	Vector2f normalise(const Vector2f& v) //normalised vector for direction
+	{
+		const float len = length(v);
+		if (len == 0.f) return Vector2f(0.f, 0.f);
+		return v / len;
+	}
+
+	Vector2f clampMagnitude(const Vector2f& v, float maxMagnitude) //clamp the magnitude to a max value (so that the agent doesn't accelerate too much)
+	{
+		const float len = length(v);
+		if (len == 0.f) return Vector2f(0.f, 0.f);
+		if (len <= maxMagnitude)return v;
+
+		return normalise(v) * maxMagnitude;
+	}
+}
+
+void ArriveBehaviour::setTarget(const Vector2f& target)
+{
+	ab_target = target;
+}
+
+const Vector2f ArriveBehaviour::getSteering(const SteeringAgent& agent)
+{
+	// 1) Calculate Direction Vector from Agent to Target
+	const Vector2 dirToTarget = normalise(ab_target - agent.position);
+
+	// 2) Calculate Distance to Target
+	const float disToTarget = length(ab_target - agent.position);
+
+	// 3) Calculate target speed based on distance to target (slow down as we get closer, stop if we get too close)
+	float targetSpeed;
+	if (disToTarget > ab_slowRadius)	// 3.1) If outside slow radius, go max speed
+		targetSpeed = agent.maxSpeed;
+	
+	else								// 3.2) If within slow radius, slow down (proportional to distance to target)
+		targetSpeed = agent.maxSpeed * (disToTarget / ab_slowRadius);
+
+	if (disToTarget <= ab_stopRadius)	// 3.3) If within stop radius, stop moving
+		targetSpeed = 0.f;
+
+
+
+	// 4) Calculate desired Velocity (towards target, with target speed)
+	const Vector2f desiredVelocity = dirToTarget * targetSpeed;
+
+	// 5) Calculate steering (desired velocity - current velocity)
+	Vector2f steering = desiredVelocity - agent.velocity;
+
+	// 6) Clamp steering to the agents max acceleration
+	steering = clampMagnitude(steering, agent.maxAcceleration);
+	
+	return steering;
+}
+
+===== FILE: project-rival/project-rival/ArriveBehaviour.h =====
+#pragma once
+#include "Steering.h"
+
+class ArriveBehaviour : public ISteeringBehaviour
+{
+public:
+	ArriveBehaviour(const Vector2f& target, float slowRadius, float stopRadius) :ab_target(target), ab_slowRadius(slowRadius), ab_stopRadius(stopRadius) {};
+
+	void setTarget(const Vector2f& target);
+
+	const Vector2f getSteering(const SteeringAgent& agent) override;
+
+	const float getSlowRadius() const { return ab_slowRadius; }
+	const float getStopRadius() const { return ab_stopRadius; }
+
+private:
+	Vector2f ab_target;
+	float ab_slowRadius;
+	float ab_stopRadius;
+};
+
+
+===== FILE: project-rival/project-rival/Enemy.cpp =====
+#include "Enemy.h"
+using namespace sf;
+
+Enemy::Enemy(const sf::Vector2f pos) :
+	e_startPos(pos)
+{
+}
+
+void Enemy::initBody(const sf::Vector2f& size, const sf::Color& colour)
+{
+	//--------- body setup ---------//
+	e_body.setSize(size);
+	e_body.setFillColor(colour);
+	e_body.setOrigin(size / 2.f);
+	e_body.setPosition(e_startPos);
+}
+
+void Enemy::render(sf::RenderWindow& window)
+{
+	window.draw(e_body);
+}
+
+===== FILE: project-rival/project-rival/Enemy.h =====
+#pragma once
+#include<iostream>
+#include <SFML/graphics.hpp>
+#include "SeekBehaviour.h"
+#include "ArriveBehaviour.h"
+
+class Enemy
+{
+public:
+	Enemy(const sf::Vector2f pos);
+
+	virtual void init() = 0;
+	virtual void update(double dt) = 0;
+	virtual void render(sf::RenderWindow& window);
+
+	virtual void setTarget(const Vector2f& target) = 0;
+
+protected:
+	void initBody(const sf::Vector2f& size, const sf::Color& colour);
+
+	sf::RectangleShape e_body;
+	sf::Vector2f e_startPos;
+	sf::Vector2f e_target{ 0.f, 0.f };
+};
+
+
+===== FILE: project-rival/project-rival/Game.cpp =====
+#include "Game.h"
+#include "InputManager.h"
+#include "GruntEnemy.h"
+#include "TurretEnemy.h"
+#include <iostream>
+
+// Our target FPS
+static double const FPS{ 60.0f };
+
+////////////////////////////////////////////////////////////
+Game::Game()
+	: m_window(sf::VideoMode(sf::Vector2u(ScreenSize::s_width, ScreenSize::s_height), 32), "FYP: Dungeonish Crawler", sf::Style::Default)
+{
+	srand(time(NULL));
+	init();
+}
+
+////////////////////////////////////////////////////////////
+void Game::init()
+{
+	// Really only necessary is our target FPS is greater than 60.
+	m_window.setVerticalSyncEnabled(true);
+	
+	if (!m_arialFont.openFromFile("ASSETS/FONTS/ariblk.ttf"))
+	{
+		std::cout << "Error loading font file";
+	}
+
+#ifdef TEST_FPS
+	x_updateFPS.setFont(m_arialFont);
+	x_updateFPS.setPosition(sf::Vector2f(20, 300));
+	x_updateFPS.setCharacterSize(24);
+	x_updateFPS.setFillColor(sf::Color::White);
+	x_drawFPS.setFont(m_arialFont);
+	x_drawFPS.setPosition(sf::Vector2f(20, 350));
+	x_drawFPS.setCharacterSize(24);
+	x_drawFPS.setFillColor(sf::Color::White);
+#endif
+
+	gameStart();
+}
+
+////////////////////////////////////////////////////////////
+void Game::run()
+{
+	sf::Clock clock;
+	sf::Time timeSinceLastUpdate = sf::Time::Zero;
+	
+	sf::Time timePerFrame = sf::seconds(1.0f / FPS); // 60 fps
+	while (m_window.isOpen())
+	{
+		processEvents(); // as many as possible
+		timeSinceLastUpdate += clock.restart();
+		while (timeSinceLastUpdate > timePerFrame)
+		{
+			timeSinceLastUpdate -= timePerFrame;
+			processEvents(); // at least 60 fps
+			update(timePerFrame.asSeconds()); //60 fps
+#ifdef TEST_FPS
+			x_secondTime += timePerFrame;
+			x_updateFrameCount++;
+			if (x_secondTime.asSeconds() > 1)
+			{
+				std::string updatesPS = "UPS " + std::to_string(x_updateFrameCount - 1);
+				x_updateFPS.setString(updatesPS);
+				std::string drawsPS = "DPS " + std::to_string(x_drawFrameCount);
+				x_drawFPS.setString(drawsPS);
+				x_updateFrameCount = 0;
+				x_drawFrameCount = 0;
+				x_secondTime = sf::Time::Zero;
+			}
+#endif
+		}
+		render(); // as many as possible
+#ifdef TEST_FPS
+		x_drawFrameCount++;
+#endif
+	}
+}
+
+////////////////////////////////////////////////////////////
+void Game::processEvents()
+{
+    while (const std::optional event = m_window.pollEvent())
+    {
+        if (event->is<sf::Event::Closed>())
+        {
+            m_window.close();
+        }
+        processGameEvents(*event);
+    }
+}
+
+
+////////////////////////////////////////////////////////////
+void Game::processGameEvents(const sf::Event& event)
+{
+	if (const auto* keyPressed = event.getIf<sf::Event::KeyPressed>())
+	{
+		switch (keyPressed->scancode)
+		{
+		case sf::Keyboard::Scancode::Escape:
+			m_window.close();
+			break;
+		case sf::Keyboard::Scancode::Up:
+			// Up key was pressed...
+			break;
+		default:
+			break;
+		}
+	}
+}
+
+
+////////////////////////////////////////////////////////////
+void Game::update(double dt)
+{
+	InputManager::update();
+	m_player.update(dt);
+	for (auto& enemy : m_enemies) {
+		enemy->setTarget(m_player.getPosition());
+		enemy->update(dt);
+	}
+}
+
+////////////////////////////////////////////////////////////
+void Game::render()
+{
+	m_window.clear(sf::Color(0, 0, 0, 0));
+	m_player.render(m_window);
+	for (auto& enemy : m_enemies) {
+		enemy->render(m_window);
+	}
+
+#ifdef TEST_FPS
+	m_window.draw(x_updateFPS); //ups is 60 and dps is 61
+	m_window.draw(x_drawFPS);
+#endif
+	m_window.display();
+}
+
+
+void Game::gameStart()
+{
+	for (int i = 0; i < 5; i++)
+	{
+		sf::Vector2f randEnemyPos{ static_cast<float>(rand() % ScreenSize::s_width), static_cast<float>(rand() % ScreenSize::s_height) };
+		m_enemies.push_back(std::make_unique<GruntEnemy>(randEnemyPos));
+		m_enemies.push_back(std::make_unique<TurretEnemy>(randEnemyPos));
+	}
+}
+
+===== FILE: project-rival/project-rival/Game.h =====
+#pragma once
+
+// If VS Debug build is enabled, then any block of code enclosed within 
+//  the preprocessor directive #ifdef TEST_FPS is compiled and executed.
+#ifdef _DEBUG
+#define TEST_FPS
+#endif // _DEBUG
+
+#include <SFML/Graphics.hpp>
+#include <string>
+
+#include "player.h"
+#include "Enemy.h"
+
+using namespace std;
+using namespace sf;
+
+/// <summary>
+/// @author OA-O
+/// @date November 2025
+/// @version 1.0
+/// 
+/// </summary>
+
+struct ScreenSize
+{
+public:
+	static const int s_width{ 1440 };
+
+	static const int s_height{ 900 };
+};
+
+class Game
+{
+public:
+	Game();
+	void run();
+
+protected:
+	void init();
+	void update(double dt);
+
+	void render();
+
+	void processEvents();
+	void processGameEvents(const sf::Event&);
+
+	sf::Font m_arialFont{ "ASSETS/FONTS/ariblk.ttf" };
+	sf::RenderWindow m_window;
+
+	player m_player;
+
+	std::vector<std::unique_ptr<Enemy>> m_enemies;
+
+#ifdef TEST_FPS
+	sf::Text x_updateFPS{ m_arialFont };	// text used to display updates per second.
+	sf::Text x_drawFPS{  m_arialFont };	// text used to display draw calls per second.
+	sf::Time x_secondTime{ sf::Time::Zero };			// counter used to establish when a second has passed.
+	int x_updateFrameCount{ 0 };						// updates per second counter.
+	int x_drawFrameCount{ 0 };							// draws per second counter.
+#endif // TEST_FPS
+
+
+private:
+	void gameStart();
+};
+
+===== FILE: project-rival/project-rival/GruntEnemy.cpp =====
+#include "GruntEnemy.h"
+
+namespace
+{
+	float length(const sf::Vector2f& v) //magnitude (line length of the vector)
+	{
+		return std::sqrt(v.x * v.x + v.y * v.y);
+	}
+}
+
+GruntEnemy::GruntEnemy(const sf::Vector2f pos)
+	:Enemy(pos)
+{
+	initBody(sf::Vector2f(50.f, 50.f), sf::Color::Red);
+	init();
+}
+
+void GruntEnemy::init()
+{
+	//--------- steering setup ---------//
+	e_agent.position = e_body.getPosition();
+	e_agent.velocity = Vector2f(0.f, 0.f);
+	e_agent.maxSpeed = 200.f; //consider making this a parameter of the constructor if we want different types of enemies with different speeds.
+	e_agent.maxAcceleration = 100.f; //consider making this a parameter of the constructor if we want different types of enemies with different accelerations.
+
+	e_currBehaviour = &e_seek; //default behaviour is seek, but we can change this later with setBehaviour() if we want to test other behaviours.
+
+	//--------- behaviour setup ---------//
+	// Derive switching distances from a "gap" value to avoid jittering when switching behaviours
+	const float base = std::max(e_arrive.getSlowRadius(), e_arrive.getStopRadius());
+	const float gap = 100.f;
+	e_arriveEnterDist = base;
+	e_arriveExitDist = base + gap;
+}
+
+void GruntEnemy::update(double dt)
+{
+	if (e_currBehaviour != nullptr)
+	{
+		const float disToTarget = length(e_target - e_agent.position);
+
+		// Auto Switchin behaviours
+		if (e_currBehaviour == &e_seek) {
+			if (disToTarget <= e_arriveEnterDist)
+			{
+				e_currBehaviour = &e_arrive;
+			}
+		}
+		else if (e_currBehaviour == &e_arrive) {
+			if (disToTarget > e_arriveExitDist)
+			{
+				e_currBehaviour = &e_seek;
+			}
+		}
+
+		float dtS = static_cast<float>(dt);
+
+		// 1) Get the steering (acceleration) from the current behaviour.
+		const Vector2f steering = e_currBehaviour->getSteering(e_agent);
+
+		// 2) v = v + a * dt
+		e_agent.velocity += steering * dtS;
+
+		// 3) Clamp velocity to max speed.
+		const float speed = length(e_agent.velocity);
+		if (speed > e_agent.maxSpeed && speed > 0.f) {
+			e_agent.velocity = (e_agent.velocity / speed) * e_agent.maxSpeed;
+		}
+
+		// 4) p = p + v * dt
+		e_agent.position += e_agent.velocity * dtS;
+
+		e_body.setPosition(e_agent.position);
+	}
+}
+
+void GruntEnemy::setTarget(const Vector2f& target)
+{
+	e_target = target;
+
+	e_seek.setTarget(target);
+	e_arrive.setTarget(target);
+}
+
+
+===== FILE: project-rival/project-rival/GruntEnemy.h =====
+#pragma once
+#include "Enemy.h"
+
+class GruntEnemy : public Enemy
+{
+public: 
+	GruntEnemy(const sf::Vector2f pos);
+	~GruntEnemy() = default;
+
+	void init() override;
+	void update(double dt) override;
+	void setTarget(const Vector2f& target) override;
+
+
+private:
+	SteeringAgent e_agent;
+	SeekBehaviour e_seek{ Vector2f(0.f,0.f) };
+	ArriveBehaviour e_arrive{ Vector2f(0.f,0.f), 500.f, 250.f };
+	ISteeringBehaviour* e_currBehaviour{ nullptr };
+
+	float e_arriveEnterDist;
+	float e_arriveExitDist;
+};
+
+
+===== FILE: project-rival/project-rival/SeekBehaviour.cpp =====
+#include "SeekBehaviour.h"
+
+namespace
+{
+	float length(const sf::Vector2f& v) //magnitude (line length of the vector)
+	{
+		return std::sqrt(v.x * v.x + v.y * v.y);
+	}
+	Vector2f normalise(const Vector2f& v) //normalised vector for direction
+	{
+		const float len = length(v);
+		if (len == 0.f) return Vector2f(0.f, 0.f);
+		return v / len;
+	}
+
+	Vector2f clampMagnitude(const Vector2f& v, float maxMagnitude) //clamp the magnitude to a max value (so that the agent doesn't accelerate too much)
+	{
+		const float len = length(v);
+		if (len == 0.f) return Vector2f(0.f, 0.f);
+		if (len <= maxMagnitude)return v;
+
+		return normalise(v) * maxMagnitude;
+	}
+}
+
+
+void SeekBehaviour::setTarget(const Vector2f& target)
+{
+	sb_target = target;
+}
+
+const Vector2f SeekBehaviour::getSteering(const SteeringAgent& agent)
+{
+	// 1) Calculate Direction Vector from Agent to Target
+	const Vector2f dirToTarget = sb_target - agent.position;
+	if (dirToTarget == Vector2f(0.f, 0.f))
+		return Vector2f();
+
+	// 2) Calculate desired Velocity (towards target, with max speed)
+	const Vector2f desiredVelocity = normalise(dirToTarget) * agent.maxSpeed;
+
+	// 3) Calculate steering (desired velocity - current velocity)
+	Vector2f steering = desiredVelocity - agent.velocity;
+
+	// 4) Clamp steering to the agents max acceleration
+	steering = clampMagnitude(steering, agent.maxAcceleration);
+
+	return steering;
+}
+
+===== FILE: project-rival/project-rival/SeekBehaviour.h =====
+#pragma once
+#include "Steering.h"
+
+class SeekBehaviour : public ISteeringBehaviour
+{
+public:
+	SeekBehaviour(const Vector2f& target) : sb_target(target) {};
+
+	void setTarget(const Vector2f& target);
+
+	const Vector2f getSteering(const SteeringAgent& agent) override;
+
+private:
+	Vector2f sb_target;
+};
+
+
+===== FILE: project-rival/project-rival/Steering.h =====
+#pragma once
+#include <SFML/Graphics.hpp>
+
+using namespace sf;
+
+struct SteerungOutput
+{
+	// "Acceleration" we want to apply this frame (units per second^2).
+	// Example: (100, 0) means "speed up to the right".
+	Vector2f linear{ 0.f,0.f };
+};
+
+struct SteeringAgent {
+	Vector2f position{ 0.f,0.f };
+	Vector2f velocity{ 0.f,0.f };
+	float maxSpeed{ 0.f };
+	float maxAcceleration{ 0.f };
+};
+
+class ISteeringBehaviour
+{
+public:
+	virtual ~ISteeringBehaviour() {};
+
+	virtual const Vector2f getSteering(const SteeringAgent& agent) = 0;
+};
+
+===== FILE: project-rival/project-rival/TurretEnemy.cpp =====
+#include "TurretEnemy.h"
+
+TurretEnemy::TurretEnemy(const sf::Vector2f pos)
+	:Enemy(pos)
+{
+	initBody(sf::Vector2f(50.f, 50.f), sf::Color::Blue);
+	init();
+}
+
+void TurretEnemy::init()
+{
+}
+
+void TurretEnemy::update(double dt)
+{
+}
+
+void TurretEnemy::setTarget(const Vector2f& target)
+{
+	e_target = target;
+}
+
+===== FILE: project-rival/project-rival/TurretEnemy.h =====
+#pragma once
+#include "Enemy.h"
+
+class TurretEnemy : public Enemy
+{
+public:
+	TurretEnemy(const sf::Vector2f pos);
+	~TurretEnemy() = default;
+
+	void init() override;
+	void update(double dt) override;
+	void setTarget(const Vector2f& target) override;
+
+private:
+
+};
+
+
+===== FILE: project-rival/project-rival/player.cpp =====
+#include "player.h"
+#include "InputManager.h"
+
+player::player()
+{
+	init();
+}
+
+player::~player()
+{
+}
+
+void player::init()
+{
+	p_body.setSize(Vector2f(100.f, 100.f));
+	Vector2f size = p_body.getSize();
+	p_body.setFillColor(Color::Blue);
+	p_body.setOrigin(size / 2.f);
+	p_body.setPosition(Vector2f(25., 25.f));
+
+	p_velocity = Vector2f(0.f, 0.f);
+}
+
+void player::update(double dt)
+{
+	handleMovement(dt);
+
+	if (InputManager::pad().rightTrigger()) InputManager::pad().setRumble(0.2f, 0.8f);
+	else InputManager::pad().setRumble(0.0f, 0.0f);
+}
+
+
+void player::render(RenderWindow& window)
+{
+	window.draw(p_body);
+}
+
+void player::reset()
+{
+	p_body.setPosition(Vector2f(50., 50.f));
+}
+
+void player::handleMovement(double dt)
+{
+	//--------- movement logic ---------//
+	Vector2f direction{ 0.f, 0.f };
+
+	const Vector2f ls = InputManager::pad().leftStick();
+	const bool isControllerActive = (ls.x != 0.f || ls.y != 0.f);
+
+	if (isControllerActive) // Gamepad input
+	{
+		direction += ls.normalized();
+	}
+	else // Keyboard input
+	{
+		if (Keyboard::isKeyPressed(Keyboard::Key::W)) { direction.y -= 1.f; }
+		if (Keyboard::isKeyPressed(Keyboard::Key::S)) { direction.y += 1.f; }
+		if (Keyboard::isKeyPressed(Keyboard::Key::A)) { direction.x -= 1.f; }
+		if (Keyboard::isKeyPressed(Keyboard::Key::D)) { direction.x += 1.f; }
+
+		if (direction.x != 0.f || direction.y != 0.f)
+			direction = direction.normalized();
+	}
+
+	p_velocity = direction * p_moveSpeed;
+	p_body.move(p_velocity * static_cast<float>(dt));
+}
+
+===== FILE: project-rival/project-rival/player.h =====
+#pragma once
+#include <SFML/Graphics.hpp>
+#include <Windows.h>
+#include <Xinput.h>
+
+using namespace sf;
+
+class player
+{
+public:
+	player();
+	~player();
+
+	void init();
+	void update(double dt);
+	void handleMovement(double dt);
+	void render(RenderWindow& window);
+
+	const Vector2f getPosition() const { return p_body.getPosition(); }
+
+private:
+	// FUNCTIONS
+	void reset();
+
+	// VARIABLES
+	RectangleShape p_body;
+
+	Vector2f p_velocity{ 0.f, 0.f };
+	float p_moveSpeed{ 200.f };
+};
+
+
+===== FILE: project-rival/project-rival/project-rival.vcxproj =====
+∩╗┐<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="ArriveBehaviour.cpp" />
+    <ClCompile Include="Enemy.cpp" />
+    <ClCompile Include="Game.cpp" />
+    <ClCompile Include="Gamepad.cpp" />
+    <ClCompile Include="GruntEnemy.cpp" />
+    <ClCompile Include="InputManager.cpp" />
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="player.cpp" />
+    <ClCompile Include="SeekBehaviour.cpp" />
+    <ClCompile Include="TurretEnemy.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="ArriveBehaviour.h" />
+    <ClInclude Include="Enemy.h" />
+    <ClInclude Include="Game.h" />
+    <ClInclude Include="Gamepad.h" />
+    <ClInclude Include="GruntEnemy.h" />
+    <ClInclude Include="InputManager.h" />
+    <ClInclude Include="player.h" />
+    <ClInclude Include="SeekBehaviour.h" />
+    <ClInclude Include="Steering.h" />
+    <ClInclude Include="TurretEnemy.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="ASSETS\IMAGES\SFML-LOGO.png">
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</DeploymentContent>
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</DeploymentContent>
+    </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <Font Include="ASSETS\FONTS\ariblk.ttf">
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</DeploymentContent>
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</DeploymentContent>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</ExcludedFromBuild>
+    </Font>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\automation\prompts\docs-architecture-development-log-context.md" />
+    <None Include="..\automation\prompts\git-staged-changes-to-commit-context.md" />
+    <None Include="..\automation\prompts\steering-enemy-seek-step-by-step-context.md" />
+    <None Include="..\docs\Project\Project Proposal Form.docx" />
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>15.0</VCProjectVersion>
+    <ProjectGuid>{72f74580-4c0c-4adc-be48-d33f3c5aa1ef}</ProjectGuid>
+    <RootNamespace>project_rival</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v145</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v145</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v145</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v145</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup />
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>$(SFML_SDK)/include</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <AdditionalLibraryDirectories>$(SFML_SDK)\lib</AdditionalLibraryDirectories>
+      <AdditionalDependencies>xinput.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>true</SDLCheck>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>$(SFML_SDK)/include</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalLibraryDirectories>$(SFML_SDK)\lib</AdditionalLibraryDirectories>
+      <AdditionalDependencies>xinput.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+    </ClCompile>
+    <Link>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
+
+===== FILE: project-rival/project-rival/project-rival.vcxproj.filters =====
+∩╗┐<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Resource Files\FONTS">
+      <UniqueIdentifier>{b5e82806-bf9b-4fdf-b17c-c35282c021a5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\IMAGES">
+      <UniqueIdentifier>{1d793ccc-0d22-4eea-8d0e-c5b5a5270a40}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Input">
+      <UniqueIdentifier>{492c6b32-40d8-4a9f-8d7b-f4959ad27b73}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Abs.Interfaces">
+      <UniqueIdentifier>{fc0fe863-09ef-468e-aaa5-2881e53dd4b7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Abs.Classes">
+      <UniqueIdentifier>{0c6e4511-7f0a-4e12-afe0-7425cf365a97}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Behaviours">
+      <UniqueIdentifier>{b532eab4-ae76-449b-9ec6-96913d08a763}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\DOCUMENTATION">
+      <UniqueIdentifier>{432d37c5-2336-4597-a4da-e09c882032eb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\AUTOMATIONS">
+      <UniqueIdentifier>{b8e2caa8-ed7f-45de-ace6-9451eb9edab4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Enemies">
+      <UniqueIdentifier>{641a97c9-ec20-499b-a847-eae07285cfdb}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Game.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="player.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="InputManager.cpp">
+      <Filter>Header Files\Input</Filter>
+    </ClCompile>
+    <ClCompile Include="Gamepad.cpp">
+      <Filter>Header Files\Input</Filter>
+    </ClCompile>
+    <ClCompile Include="SeekBehaviour.cpp">
+      <Filter>Header Files\Behaviours</Filter>
+    </ClCompile>
+    <ClCompile Include="ArriveBehaviour.cpp">
+      <Filter>Header Files\Behaviours</Filter>
+    </ClCompile>
+    <ClCompile Include="Enemy.cpp">
+      <Filter>Header Files\Abs.Classes</Filter>
+    </ClCompile>
+    <ClCompile Include="GruntEnemy.cpp">
+      <Filter>Header Files\Enemies</Filter>
+    </ClCompile>
+    <ClCompile Include="TurretEnemy.cpp">
+      <Filter>Header Files\Enemies</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Game.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="player.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="InputManager.h">
+      <Filter>Header Files\Input</Filter>
+    </ClInclude>
+    <ClInclude Include="Gamepad.h">
+      <Filter>Header Files\Input</Filter>
+    </ClInclude>
+    <ClInclude Include="SeekBehaviour.h">
+      <Filter>Header Files\Behaviours</Filter>
+    </ClInclude>
+    <ClInclude Include="Steering.h">
+      <Filter>Header Files\Abs.Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="ArriveBehaviour.h">
+      <Filter>Header Files\Behaviours</Filter>
+    </ClInclude>
+    <ClInclude Include="Enemy.h">
+      <Filter>Header Files\Abs.Classes</Filter>
+    </ClInclude>
+    <ClInclude Include="GruntEnemy.h">
+      <Filter>Header Files\Enemies</Filter>
+    </ClInclude>
+    <ClInclude Include="TurretEnemy.h">
+      <Filter>Header Files\Enemies</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="ASSETS\IMAGES\SFML-LOGO.png">
+      <Filter>Resource Files\IMAGES</Filter>
+    </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <Font Include="ASSETS\FONTS\ariblk.ttf">
+      <Filter>Resource Files\FONTS</Filter>
+    </Font>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\docs\Project\Project Proposal Form.docx">
+      <Filter>Resource Files\DOCUMENTATION</Filter>
+    </None>
+    <None Include="..\automation\prompts\steering-enemy-seek-step-by-step-context.md">
+      <Filter>Resource Files\AUTOMATIONS</Filter>
+    </None>
+    <None Include="..\automation\prompts\git-staged-changes-to-commit-context.md">
+      <Filter>Resource Files\AUTOMATIONS</Filter>
+    </None>
+    <None Include="..\automation\prompts\docs-architecture-development-log-context.md">
+      <Filter>Resource Files\AUTOMATIONS</Filter>
+    </None>
+  </ItemGroup>
+</Project>
+

@@ -9,6 +9,6 @@ A high-level, beginner-friendly overview of how the main gameplay-related code i
 1. [Project structure](01-project-structure.md)
 2. [Player](02-player.md)
 3. [Input (high level)](03-input.md)
-4. [Enemy (current state)](04-enemy.md)
+4. [Enemies (current state)](04-enemy.md)
 5. [Steering (AI) + OOP concepts](05-steering-oop.md)
 6. [Coding / design conventions](06-coding-conventions.md)
