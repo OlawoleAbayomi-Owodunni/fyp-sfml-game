@@ -115,8 +115,11 @@ void Game::processGameEvents(const sf::Event& event)
 ////////////////////////////////////////////////////////////
 void Game::update(double dt)
 {
+	const Vector2i mousePos = Mouse::getPosition(m_window);
+	const Vector2f mousePosF = m_window.mapPixelToCoords(mousePos);
+
 	InputManager::update();
-	m_player.update(dt);
+	m_player.update(dt, mousePosF);
 	for (auto& enemy : m_enemies) {
 		enemy->setTarget(m_player.getPosition());
 		enemy->update(dt);

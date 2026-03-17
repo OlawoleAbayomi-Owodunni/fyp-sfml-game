@@ -14,6 +14,8 @@ Typical usage:
 - call `InputManager::update()` once per frame
 - then read input through `InputManager::pad()`
 
+In `Game::update(dt)`, the current mouse position is also read from the window and passed into `player::update(...)` for aiming.
+
 ## `Gamepad`
 
 Exposes:

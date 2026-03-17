@@ -12,3 +12,4 @@ A high-level, beginner-friendly overview of how the main gameplay-related code i
 4. [Enemies (current state)](04-enemy.md)
 5. [Steering (AI) + OOP concepts](05-steering-oop.md)
 6. [Coding / design conventions](06-coding-conventions.md)
+7. [Projectiles (prototype)](07-projectiles.md)

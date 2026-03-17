@@ -23,6 +23,11 @@ Most gameplay code is inside `project-rival/`.
 - `InputManager.h` / `InputManager.cpp`
 - `Gamepad.h` / `Gamepad.cpp`
 
+### Combat / projectiles (early prototype)
+
+- `Projectile.h` / `Projectile.cpp` (base class)
+- `NormalBulletProjectile.h` / `NormalBulletProjectile.cpp` (simple bullet)
+
 ### AI / Movement
 
 - `Steering.h`

@@ -1,20 +1,33 @@
-$BASE = "origin/main"
-$out = "automation/scripts/output/enemies-merge-changes.txt"
+param(
+	[string]$Feature = "aiming",
+	[string]$Main = "main",
+	[string]$RemoteBase = "origin/main",
+	[string]$Out = ""
+)
 
-"===== LOCAL COMMITS (origin/main..HEAD) =====`n" | Out-File $out -Encoding utf8
-git log --reverse --date=short --pretty=format:"%ad %h %s%n%b%n" "$BASE..HEAD" -- >> $out
+if (-not $Out) {
+	$Out = "automation/scripts/output/$Feature-merge-changes.txt"
+}
 
-"`n===== PATCH (per commit; origin/main..HEAD) =====`n" >> $out
-git log -p --reverse "$BASE..HEAD" -- . ":!*.docx" >> $out
+New-Item -ItemType Directory -Force (Split-Path -Parent $Out) | Out-Null
+git fetch origin | Out-Null
 
-"`n===== STAGED DIFF SUMMARY (git diff --cached --name-status) =====`n" >> $out
-git diff --cached --name-status -M -C >> $out
+"===== LOCAL COMMITS ($RemoteBase..HEAD) =====`n" | Out-File $Out -Encoding utf8
+git log --reverse --date=short --pretty=format:"%ad %h %s%n%b%n" "$RemoteBase..HEAD" -- >> $Out
 
-"`n===== STAGED PATCH (git diff --cached) =====`n" >> $out
-git diff --cached >> $out
+"`n===== FEATURE COMMITS ($Main..$Feature) (what will be squashed) =====`n" >> $Out
+git log --reverse --date=short --pretty=format:"%ad %h %s%n%b%n" "$Main..$Feature" -- >> $Out
 
-# If you've done `git reset --soft origin/main`, this section captures the full squashed content.
-"`n===== STAGED FILE CONTENTS (index blobs; skips deletions + binaries) =====`n" >> $out
+"`n===== FEATURE PATCH (per commit; $Main..$Feature) =====`n" >> $Out
+git log -p --reverse "$Main..$Feature" -- . ":!*.docx" >> $Out
+
+"`n===== STAGED DIFF SUMMARY (git diff --cached --name-status) =====`n" >> $Out
+git diff --cached --name-status -M -C >> $Out
+
+"`n===== STAGED PATCH (git diff --cached; what will be committed on $Main) =====`n" >> $Out
+git diff --cached -- . ":!*.docx" >> $Out
+
+"`n===== STAGED FILE CONTENTS (index blobs; skips deletions + binaries) =====`n" >> $Out
 
 $skipExt = @(
 	".docx", ".pdf",
@@ -48,6 +61,6 @@ git diff --cached --name-status -M -C | ForEach-Object {
 	"===== FILE: $path ====="
 	git show ":$path" 2>&1
 	""
-} >> $out
+} >> $Out
 
-Write-Host "Wrote: $out"
+Write-Host "Wrote: $Out"

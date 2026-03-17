@@ -1,8 +1,8 @@
 #include "Enemy.h"
 using namespace sf;
 
-Enemy::Enemy(const sf::Vector2f pos) :
-	e_startPos(pos)
+Enemy::Enemy(const sf::Vector2f startPos) :
+	e_startPos(startPos)
 {
 }
 
