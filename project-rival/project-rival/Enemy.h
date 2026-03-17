@@ -7,7 +7,7 @@
 class Enemy
 {
 public:
-	Enemy(const sf::Vector2f pos);
+	Enemy(const sf::Vector2f startPos);
 
 	virtual void init() = 0;
 	virtual void update(double dt) = 0;

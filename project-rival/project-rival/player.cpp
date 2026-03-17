@@ -1,5 +1,6 @@
 #include "player.h"
 #include "InputManager.h"
+#include "NormalBulletProjectile.h"
 
 namespace {
 	float length(const Vector2f& v) {
@@ -52,6 +53,9 @@ void player::render(RenderWindow& window)
 {
 	window.draw(p_body);
 	window.draw(p_reticle);
+
+	for (const auto& bullet : p_projectiles)
+		bullet->render(window);
 }
 
 void player::reset()
@@ -112,4 +116,11 @@ void player::handleAiming(const Vector2f mousePos)
 	p_reticle.setPosition(p_body.getPosition() + p_aimDir * p_reticleDistance);
 
 	p_prevMousePos = mousePos;
+
+	//--------- shooting logic ---------// -> this will move to weapon class when made
+	if (InputManager::pad().rightTrigger() || Mouse::isButtonPressed(Mouse::Button::Left))
+	{
+		std::unique_ptr<NormalBulletProjectile> newBullet = std::make_unique<NormalBulletProjectile>(p_body.getPosition());
+		p_projectiles.push_back(std::move(newBullet));
+	}
 }
