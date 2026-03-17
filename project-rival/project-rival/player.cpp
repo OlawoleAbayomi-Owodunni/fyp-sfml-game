@@ -47,8 +47,20 @@ void player::update(double dt, const Vector2f& mousePos)
 	if (InputManager::pad().rightTrigger()) InputManager::pad().setRumble(0.2f, 0.8f);
 	else InputManager::pad().setRumble(0.0f, 0.0f);
 
-	for (auto& bullet : p_projectiles)
+	for (auto bullet_it = p_projectiles.begin(); bullet_it != p_projectiles.end(); )
+	{
+		auto& bullet = *bullet_it;
 		bullet->update(dt);
+
+		if (bullet->shouldDestroy())
+		{
+			bullet_it = p_projectiles.erase(bullet_it);
+		}
+		else
+		{
+			bullet_it++;
+		}
+	}
 }
 
 
