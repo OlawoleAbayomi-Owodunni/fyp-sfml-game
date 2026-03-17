@@ -46,6 +46,9 @@ void player::update(double dt, const Vector2f& mousePos)
 
 	if (InputManager::pad().rightTrigger()) InputManager::pad().setRumble(0.2f, 0.8f);
 	else InputManager::pad().setRumble(0.0f, 0.0f);
+
+	for (auto& bullet : p_projectiles)
+		bullet->update(dt);
 }
 
 
@@ -120,7 +123,7 @@ void player::handleAiming(const Vector2f mousePos)
 	//--------- shooting logic ---------// -> this will move to weapon class when made
 	if (InputManager::pad().rightTrigger() || Mouse::isButtonPressed(Mouse::Button::Left))
 	{
-		std::unique_ptr<NormalBulletProjectile> newBullet = std::make_unique<NormalBulletProjectile>(p_body.getPosition());
+		std::unique_ptr<NormalBulletProjectile> newBullet = std::make_unique<NormalBulletProjectile>(p_body.getPosition(), p_aimDir);
 		p_projectiles.push_back(std::move(newBullet));
 	}
 }
