@@ -39,6 +39,11 @@ bool Projectile::shouldDestroy() const
 	return p_shouldDestroy;
 }
 
+int Projectile::applyDamage() const
+{
+	return p_damage;
+}
+
 void Projectile::init_body()
 {
 	p_body.setSize(sf::Vector2f(10.f, 10.f));

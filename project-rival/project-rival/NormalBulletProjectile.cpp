@@ -12,6 +12,9 @@ void NormalBulletProjectile::init()
 		nbp_dir = nbp_dir.normalized();
 	else
 		destroy();
+
+	// set damage
+	p_damage = 1;
 }
 
 void NormalBulletProjectile::update(double dt)

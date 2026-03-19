@@ -1,9 +1,11 @@
 #include "Enemy.h"
 using namespace sf;
 
-Enemy::Enemy(const sf::Vector2f startPos) :
-	e_startPos(startPos)
+Enemy::Enemy(const sf::Vector2f startPos, int totalHealth) :
+	e_startPos(startPos), e_health(totalHealth)
 {
+	e_isDead = false;
+
 	e_collisionProfile.layer = CollisionLayer::ENEMY_LAYER;
 	e_collisionProfile.mask = CollisionLayer::PLAYER_LAYER | CollisionLayer::PLAYER_BULLET_LAYER;
 }
@@ -30,4 +32,21 @@ sf::FloatRect Enemy::getCollisionBounds() const
 CollisionProfile Enemy::getCollisionProfile() const
 {
 	return e_collisionProfile;
+}
+
+void Enemy::takeDamage(int damage)
+{
+	e_health -= damage;
+	if (e_health <= 0)
+		onDeath();
+}
+
+void Enemy::onDeath()
+{
+	e_isDead = true;
+}
+
+bool Enemy::isDead() const
+{
+	return e_isDead;
 }

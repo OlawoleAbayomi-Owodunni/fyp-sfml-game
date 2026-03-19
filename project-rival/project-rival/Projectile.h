@@ -18,6 +18,8 @@ public:
 
 	virtual bool shouldDestroy() const;
 
+	virtual int applyDamage() const;
+
 protected:
 	void init_body();
 	virtual void onExpire(float dt);
@@ -33,5 +35,7 @@ protected:
 	CollisionProfile p_collisionProfile;
 
 	float p_lifetime{ 50.f };
+
+	int p_damage;	// set damage in sub classes
 };
 

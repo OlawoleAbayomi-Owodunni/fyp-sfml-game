@@ -8,8 +8,8 @@ namespace
 	}
 }
 
-GruntEnemy::GruntEnemy(const sf::Vector2f pos)
-	:Enemy(pos)
+GruntEnemy::GruntEnemy(const sf::Vector2f pos, int totalHealth)
+	:Enemy(pos, totalHealth)
 {
 	initBody(sf::Vector2f(50.f, 50.f), sf::Color::Red);
 	init();

@@ -26,6 +26,8 @@ public:
 	void handleMovement(double dt);
 	void handleAiming(const Vector2f mousePos);
 
+	void takeDamage(int damage);
+
 private:
 	// FUNCTIONS
 	void reset();
@@ -46,6 +48,9 @@ private:
 
 	// collsion
 	CollisionProfile p_collisionProfile;
+
+	// entity stats
+	int p_health;
 
 	// projectiles --> test. this will move to weapon class when made
 	std::vector<std::unique_ptr<Projectile>> p_projectiles;

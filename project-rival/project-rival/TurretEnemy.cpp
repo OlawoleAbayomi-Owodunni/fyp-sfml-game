@@ -1,7 +1,7 @@
 #include "TurretEnemy.h"
 
-TurretEnemy::TurretEnemy(const sf::Vector2f pos)
-	:Enemy(pos)
+TurretEnemy::TurretEnemy(const sf::Vector2f pos, int totalHealth)
+	:Enemy(pos, totalHealth)
 {
 	initBody(sf::Vector2f(50.f, 50.f), sf::Color::Blue);
 	init();

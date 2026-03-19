@@ -24,7 +24,6 @@ void Player::init()
 	Vector2f size = p_body.getSize();
 	p_body.setFillColor(Color::Green);
 	p_body.setOrigin(size / 2.f);
-	p_body.setPosition(Vector2f(25., 25.f));
 
 	//physics
 	p_velocity = Vector2f(0.f, 0.f);
@@ -41,6 +40,8 @@ void Player::init()
 	//collision
 	p_collisionProfile.layer = CollisionLayer::PLAYER_LAYER;
 	p_collisionProfile.mask = CollisionLayer::ENEMY_LAYER | CollisionLayer::ENEMY_BULLET_LAYER;
+
+	reset();
 }
 
 void Player::update(double dt, const Vector2f& mousePos)
@@ -94,7 +95,8 @@ CollisionProfile Player::getCollisionProfile() const
 
 void Player::reset()
 {
-	p_body.setPosition(Vector2f(50., 50.f));
+	p_body.setPosition(Vector2f(500, 500.f));
+	p_health = 1000;
 }
 
 void Player::handleMovement(double dt)
@@ -156,5 +158,14 @@ void Player::handleAiming(const Vector2f mousePos)
 	{
 		std::unique_ptr<NormalBulletProjectile> newBullet = std::make_unique<NormalBulletProjectile>(p_body.getPosition(), p_aimDir, true);
 		p_projectiles.push_back(std::move(newBullet));
+	}
+}
+
+void Player::takeDamage(int damage)
+{
+	p_health -= damage;
+	if (p_health <= 0)
+	{
+		reset();
 	}
 }
