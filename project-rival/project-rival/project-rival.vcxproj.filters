@@ -88,7 +88,7 @@
       <Filter>Header Files\Projectiles</Filter>
     </ClCompile>
     <ClCompile Include="Collision.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Header Files\Abs.Interfaces</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

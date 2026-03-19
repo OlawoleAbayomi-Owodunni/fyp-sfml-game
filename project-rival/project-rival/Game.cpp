@@ -129,12 +129,9 @@ void Game::update(double dt)
 		enemy->update(dt);
 
 		// Check collision with player
-		if (enemy->getCollisionProfile().canCollideWith(m_player.getCollisionProfile())) {
-			if (enemy->getCollisionBounds().contains(m_player.getCollisionBounds().getCenter()))
-			{
-				cout << "Player hit by enemy!\n";
-				m_player.takeDamage(10); // Arbitrary damage value for now
-			}
+		if (CollisionCheck::areColliding(m_player, *enemy)) {
+			cout << "Player collided with enemy!\n";
+			m_player.takeDamage(10);
 		}
 
 		// Check if enemy is dead and remove if so
@@ -148,14 +145,20 @@ void Game::update(double dt)
 
 	// Collision checks
 	// Check player projectiles against enemies
-	for (auto& bullet : m_player.getProjectiles()) {
+	for (auto& bullet : m_player.getProjectiles()) 
+	{
+		if(!bullet || bullet->shouldDestroy())
+			continue;
+
 		for (auto& enemy : m_enemies) {
-			if (bullet->getCollisionProfile().canCollideWith(enemy->getCollisionProfile())) {
-				if (bullet->getCollisionBounds().contains(enemy->getCollisionBounds().getCenter()))
-				{
-					enemy->takeDamage(bullet->applyDamage());
-					bullet->destroy();
-				}
+			if (!enemy || enemy->isDead())
+				continue;
+
+			if (CollisionCheck::areColliding(*bullet, *enemy))
+			{
+				enemy->takeDamage(bullet->applyDamage());
+				bullet->destroy();
+				break; // gets rid of bug where bullet hits multiple enemies
 			}
 		}
 	}

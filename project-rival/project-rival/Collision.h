@@ -32,3 +32,7 @@ public:
 	virtual CollisionProfile getCollisionProfile() const = 0;
 };
 
+class CollisionCheck {
+	public:
+		static bool areColliding(const ICollidable& entity_A, const ICollidable& entity_B);
+};
