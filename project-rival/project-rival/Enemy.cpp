@@ -4,6 +4,10 @@ using namespace sf;
 Enemy::Enemy(const sf::Vector2f startPos) :
 	e_startPos(startPos)
 {
+	e_collisionProfile.layer = CollisionLayer::ENEMY_LAYER;
+	e_collisionProfile.mask = 
+		CollisionLayer::PLAYER_LAYER | 
+		CollisionLayer::PLAYER_BULLET_LAYER;
 }
 
 void Enemy::initBody(const sf::Vector2f& size, const sf::Color& colour)

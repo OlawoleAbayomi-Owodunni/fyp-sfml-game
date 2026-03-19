@@ -66,9 +66,9 @@
     <None Include="..\automation\prompts\player-aiming-mouse-right-stick-reticle-context.md" />
     <None Include="..\automation\prompts\steering-enemy-seek-step-by-step-context.md" />
     <None Include="..\automation\scripts\merge-summary-generator.ps1" />
-    <None Include="..\automation\scripts\staged-dump.ps1" />
   </ItemGroup>
   <ItemGroup>
+    <Text Include="..\automation\scripts\output\aiming-merge-changes.txt" />
     <Text Include="..\automation\scripts\output\enemies-merge-changes.txt" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

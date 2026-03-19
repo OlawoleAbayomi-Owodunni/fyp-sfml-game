@@ -1,10 +1,13 @@
 #pragma once
 #include<iostream>
 #include <SFML/graphics.hpp>
+
 #include "SeekBehaviour.h"
 #include "ArriveBehaviour.h"
 
-class Enemy
+#include "Collision.h"
+
+class Enemy : public ICollidable
 {
 public:
 	Enemy(const sf::Vector2f startPos);
@@ -21,5 +24,7 @@ protected:
 	sf::RectangleShape e_body;
 	sf::Vector2f e_startPos;
 	sf::Vector2f e_target{ 0.f, 0.f };
+
+	CollisionProfile e_collisionProfile;
 };
 
