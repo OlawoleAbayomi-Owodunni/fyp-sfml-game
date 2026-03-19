@@ -11,6 +11,10 @@ Most gameplay code is inside `project-rival/`.
 - `main.cpp`
 - `Game.h` / `Game.cpp`
 
+### Collision
+
+- `Collision.h` / `Collision.cpp`
+
 ### Entities
 
 - `player.h` / `player.cpp`

@@ -2,7 +2,7 @@
 
 [Back to architecture index](README.md)
 
-`player` (in `player.h/.cpp`) represents the controllable character.
+`Player` (declared in `player.h` / implemented in `player.cpp`) represents the controllable character.
 
 ## Responsibilities (current)
 
@@ -11,6 +11,11 @@
 - Moves by updating velocity and applying it every update
 - Exposes its position (used as an enemy target)
 
+Also:
+
+- Implements `ICollidable` (so it can participate in collision checks)
+- Has health + `takeDamage(...)` (currently resets when health reaches 0)
+
 Also (current prototype features):
 
 - Aiming (mouse or right stick)
@@ -18,7 +23,7 @@ Also (current prototype features):
 
 ## Movement (high level)
 
-Movement is handled in `player::handleMovement(double dt)`:
+Movement is handled in `Player::handleMovement(double dt)`:
 
 - build a `direction` vector from input
   - controller: use `InputManager::pad().leftStick()`
@@ -42,3 +47,5 @@ Note: `dt` is expected to be **seconds**.
 ## Used by other systems
 
 Enemies use the player position as a target (via `m_player.getPosition()`).
+
+Game code also reads the player's projectiles via `m_player.getProjectiles()` for bullet-vs-enemy collision.
