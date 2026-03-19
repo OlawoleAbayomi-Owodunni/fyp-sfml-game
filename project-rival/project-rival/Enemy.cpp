@@ -5,9 +5,7 @@ Enemy::Enemy(const sf::Vector2f startPos) :
 	e_startPos(startPos)
 {
 	e_collisionProfile.layer = CollisionLayer::ENEMY_LAYER;
-	e_collisionProfile.mask = 
-		CollisionLayer::PLAYER_LAYER | 
-		CollisionLayer::PLAYER_BULLET_LAYER;
+	e_collisionProfile.mask = CollisionLayer::PLAYER_LAYER | CollisionLayer::PLAYER_BULLET_LAYER;
 }
 
 void Enemy::initBody(const sf::Vector2f& size, const sf::Color& colour)
@@ -22,4 +20,14 @@ void Enemy::initBody(const sf::Vector2f& size, const sf::Color& colour)
 void Enemy::render(sf::RenderWindow& window)
 {
 	window.draw(e_body);
+}
+
+sf::FloatRect Enemy::getCollisionBounds() const
+{
+	return e_body.getGlobalBounds();
+}
+
+CollisionProfile Enemy::getCollisionProfile() const
+{
+	return e_collisionProfile;
 }

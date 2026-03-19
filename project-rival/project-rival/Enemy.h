@@ -18,6 +18,9 @@ public:
 
 	virtual void setTarget(const Vector2f& target) = 0;
 
+	virtual sf::FloatRect getCollisionBounds() const override;
+	virtual CollisionProfile getCollisionProfile() const override;
+
 protected:
 	void initBody(const sf::Vector2f& size, const sf::Color& colour);
 

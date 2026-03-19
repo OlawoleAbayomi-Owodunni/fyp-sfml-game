@@ -20,6 +20,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ArriveBehaviour.cpp" />
+    <ClCompile Include="Collision.cpp" />
     <ClCompile Include="NormalBulletProjectile.cpp" />
     <ClCompile Include="Projectile.cpp" />
     <ClCompile Include="Enemy.cpp" />
@@ -34,6 +35,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ArriveBehaviour.h" />
+    <ClInclude Include="Collision.h" />
     <ClInclude Include="NormalBulletProjectile.h" />
     <ClInclude Include="Projectile.h" />
     <ClInclude Include="Enemy.h" />
