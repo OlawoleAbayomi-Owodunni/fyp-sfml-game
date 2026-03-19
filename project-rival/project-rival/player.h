@@ -28,6 +28,9 @@ public:
 
 	void takeDamage(int damage);
 
+	// this functions will likely move to weapon class when made
+	std::vector<std::unique_ptr<Projectile>>& const getProjectiles();
+
 private:
 	// FUNCTIONS
 	void reset();

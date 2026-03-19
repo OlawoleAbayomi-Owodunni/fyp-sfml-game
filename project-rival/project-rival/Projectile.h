@@ -19,11 +19,11 @@ public:
 	virtual bool shouldDestroy() const;
 
 	virtual int applyDamage() const;
+	virtual void destroy();
 
 protected:
 	void init_body();
 	virtual void onExpire(float dt);
-	virtual void destroy();
 
 	bool p_shouldDestroy{ false };
 

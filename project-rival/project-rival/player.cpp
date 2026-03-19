@@ -52,6 +52,7 @@ void Player::update(double dt, const Vector2f& mousePos)
 	if (InputManager::pad().rightTrigger()) InputManager::pad().setRumble(0.2f, 0.8f);
 	else InputManager::pad().setRumble(0.0f, 0.0f);
 
+	// Update projectiles and remove any that should be destroyed
 	for (auto bullet_it = p_projectiles.begin(); bullet_it != p_projectiles.end(); )
 	{
 		auto& bullet = *bullet_it;
@@ -168,4 +169,9 @@ void Player::takeDamage(int damage)
 	{
 		reset();
 	}
+}
+
+std::vector<std::unique_ptr<Projectile>>& Player::getProjectiles()
+{
+	return p_projectiles;
 }
