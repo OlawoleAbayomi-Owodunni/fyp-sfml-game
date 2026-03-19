@@ -1,7 +1,7 @@
 #include "NormalBulletProjectile.h"
 
-NormalBulletProjectile::NormalBulletProjectile(sf::Vector2f spawnPoint, sf::Vector2f direction) :
-	Projectile(spawnPoint, nbp_lifetime), nbp_dir(direction)
+NormalBulletProjectile::NormalBulletProjectile(sf::Vector2f spawnPoint, sf::Vector2f direction, bool isFromPlayer) :
+	Projectile(spawnPoint, nbp_lifetime, isFromPlayer), nbp_dir(direction)
 {
 	init();
 }

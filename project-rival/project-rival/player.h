@@ -2,21 +2,26 @@
 #include <SFML/Graphics.hpp>
 #include <Windows.h>
 #include <Xinput.h>
+
 #include "Projectile.h"
+#include "Collision.h"
 
 using namespace sf;
 
-class player
+class Player : public ICollidable
 {
 public:
-	player();
-	~player();
+	Player();
+	~Player();
 
 	void init();
 	void update(double dt, const Vector2f& mousePos);
 	void render(RenderWindow& window);
 
-	const Vector2f getPosition() const { return p_body.getPosition(); }
+	const Vector2f getPosition() const;
+	sf::FloatRect getCollisionBounds() const override;
+	CollisionProfile getCollisionProfile() const override;
+
 
 	void handleMovement(double dt);
 	void handleAiming(const Vector2f mousePos);
@@ -38,6 +43,9 @@ private:
 	Vector2f p_aimDir{ 0.f,0.f };
 	float p_reticleDistance;
 	Vector2f p_prevMousePos;
+
+	// collsion
+	CollisionProfile p_collisionProfile;
 
 	// projectiles --> test. this will move to weapon class when made
 	std::vector<std::unique_ptr<Projectile>> p_projectiles;

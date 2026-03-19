@@ -129,7 +129,7 @@
       <Filter>Header Files\Projectiles</Filter>
     </ClInclude>
     <ClInclude Include="Collision.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\Abs.Interfaces</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

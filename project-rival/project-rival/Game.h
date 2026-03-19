@@ -48,7 +48,7 @@ protected:
 	sf::Font m_arialFont{ "ASSETS/FONTS/ariblk.ttf" };
 	sf::RenderWindow m_window;
 
-	player m_player;
+	Player m_player;
 
 	std::vector<std::unique_ptr<Enemy>> m_enemies;
 
