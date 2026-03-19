@@ -40,6 +40,15 @@
     <Filter Include="Header Files\Enemies">
       <UniqueIdentifier>{641a97c9-ec20-499b-a847-eae07285cfdb}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Resource Files\AUTOMATIONS\Agent">
+      <UniqueIdentifier>{63056c86-90e2-4897-abae-e538dd6536ac}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\AUTOMATIONS\Scripts">
+      <UniqueIdentifier>{25290212-7808-4d9b-93d3-2c9d0ccc6259}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Projectiles">
+      <UniqueIdentifier>{b9295663-bd23-4a50-bb5f-6ae5e6710b01}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -71,6 +80,15 @@
     </ClCompile>
     <ClCompile Include="TurretEnemy.cpp">
       <Filter>Header Files\Enemies</Filter>
+    </ClCompile>
+    <ClCompile Include="Projectile.cpp">
+      <Filter>Header Files\Abs.Classes</Filter>
+    </ClCompile>
+    <ClCompile Include="NormalBulletProjectile.cpp">
+      <Filter>Header Files\Projectiles</Filter>
+    </ClCompile>
+    <ClCompile Include="Collision.cpp">
+      <Filter>Header Files\Abs.Interfaces</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -104,6 +122,15 @@
     <ClInclude Include="TurretEnemy.h">
       <Filter>Header Files\Enemies</Filter>
     </ClInclude>
+    <ClInclude Include="Projectile.h">
+      <Filter>Header Files\Abs.Classes</Filter>
+    </ClInclude>
+    <ClInclude Include="NormalBulletProjectile.h">
+      <Filter>Header Files\Projectiles</Filter>
+    </ClInclude>
+    <ClInclude Include="Collision.h">
+      <Filter>Header Files\Abs.Interfaces</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="ASSETS\IMAGES\SFML-LOGO.png">
@@ -116,17 +143,24 @@
     </Font>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\docs\Project\Project Proposal Form.docx">
-      <Filter>Resource Files\DOCUMENTATION</Filter>
-    </None>
-    <None Include="..\automation\prompts\steering-enemy-seek-step-by-step-context.md">
-      <Filter>Resource Files\AUTOMATIONS</Filter>
+    <None Include="..\automation\prompts\docs-architecture-development-log-context.md">
+      <Filter>Resource Files\AUTOMATIONS\Agent</Filter>
     </None>
     <None Include="..\automation\prompts\git-staged-changes-to-commit-context.md">
-      <Filter>Resource Files\AUTOMATIONS</Filter>
+      <Filter>Resource Files\AUTOMATIONS\Agent</Filter>
     </None>
-    <None Include="..\automation\prompts\docs-architecture-development-log-context.md">
-      <Filter>Resource Files\AUTOMATIONS</Filter>
+    <None Include="..\automation\prompts\player-aiming-mouse-right-stick-reticle-context.md">
+      <Filter>Resource Files\AUTOMATIONS\Agent</Filter>
     </None>
+    <None Include="..\automation\prompts\steering-enemy-seek-step-by-step-context.md">
+      <Filter>Resource Files\AUTOMATIONS\Agent</Filter>
+    </None>
+    <None Include="..\automation\scripts\merge-summary-generator.ps1">
+      <Filter>Resource Files\AUTOMATIONS\Scripts</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="..\automation\scripts\output\aiming-merge-changes.txt" />
+    <Text Include="..\automation\scripts\output\enemies-merge-changes.txt" />
   </ItemGroup>
 </Project>

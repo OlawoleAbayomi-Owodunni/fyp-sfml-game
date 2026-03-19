@@ -1,0 +1,4472 @@
+===== LOCAL COMMITS (origin/main..HEAD) =====
+
+
+===== FEATURE COMMITS (main..collisions) (what will be squashed) =====
+
+2026-03-19 562fe18 Collidable abstract class setup to dictate collision system
+
+
+2026-03-19 24093f8 Collidable interface integrated into enemy
+
+
+2026-03-19 cce2d9c Collidable interface added to other existing game entities
+
+
+2026-03-19 a5e8bf1 player shooting damage setup
+
+
+2026-03-19 dd9e691 collision with other objects possible (messy)
+
+
+2026-03-19 d01ba3c true collision detection
+
+
+2026-03-19 7e719b4 DOCS UPDATE: Updating docs to include info about collisions
+
+
+2026-03-19 431f9e5 Collision chat context
+
+
+===== FEATURE PATCH (per commit; main..collisions) =====
+
+commit 562fe1858d99b4f7e2df56ed3f6d3ac8ead018c2
+Author: WollyTech <ayolawole@gmail.com>
+Date:   Thu Mar 19 01:37:44 2026 +0000
+
+    Collidable abstract class setup to dictate collision system
+
+diff --git a/project-rival/project-rival/Collision.cpp b/project-rival/project-rival/Collision.cpp
+new file mode 100644
+index 0000000..e69de29
+diff --git a/project-rival/project-rival/Collision.h b/project-rival/project-rival/Collision.h
+new file mode 100644
+index 0000000..c1d759f
+--- /dev/null
++++ b/project-rival/project-rival/Collision.h
+@@ -0,0 +1,35 @@
++#pragma once
++#include "Sfml/Graphics.hpp"
++
++enum CollisionLayer : uint32_t
++{
++	NONE = 0,
++
++	PLAYER_LAYER = 1 << 0,
++	ENEMY_LAYER = 1 << 1,
++	PLAYER_BULLET_LAYER = 1 << 2,
++	ENEMY_BULLET_LAYER = 1 << 3,
++};
++
++
++class ICollidable
++{
++public:
++	struct CollisionProfile
++	{
++		CollisionLayer layer;
++		CollisionLayer mask;
++
++		bool canCollideWith(const CollisionProfile& other) const
++		{
++			//  check if the other object's layer is in our mask AND also if our layer is in the other object's mask.
++			return (((mask & other.layer) != CollisionLayer::NONE) && ((other.mask & layer) != CollisionLayer::NONE));
++		}
++	};
++
++	virtual ~ICollidable() = default;
++
++	virtual sf::FloatRect getRectBounds() const = 0;
++	virtual CollisionProfile getCollisionProfile() const = 0;
++};
++
+diff --git a/project-rival/project-rival/Enemy.cpp b/project-rival/project-rival/Enemy.cpp
+index 9f4a1d4..f4a3568 100644
+--- a/project-rival/project-rival/Enemy.cpp
++++ b/project-rival/project-rival/Enemy.cpp
+@@ -4,6 +4,10 @@ using namespace sf;
+ Enemy::Enemy(const sf::Vector2f startPos) :
+ 	e_startPos(startPos)
+ {
++	e_collisionProfile.layer = CollisionLayer::ENEMY_LAYER;
++	e_collisionProfile.mask = 
++		CollisionLayer::PLAYER_LAYER | 
++		CollisionLayer::PLAYER_BULLET_LAYER;
+ }
+ 
+ void Enemy::initBody(const sf::Vector2f& size, const sf::Color& colour)
+diff --git a/project-rival/project-rival/Enemy.h b/project-rival/project-rival/Enemy.h
+index 39b88b9..49cfca1 100644
+--- a/project-rival/project-rival/Enemy.h
++++ b/project-rival/project-rival/Enemy.h
+@@ -1,10 +1,13 @@
+ #pragma once
+ #include<iostream>
+ #include <SFML/graphics.hpp>
++
+ #include "SeekBehaviour.h"
+ #include "ArriveBehaviour.h"
+ 
+-class Enemy
++#include "Collision.h"
++
++class Enemy : public ICollidable
+ {
+ public:
+ 	Enemy(const sf::Vector2f startPos);
+@@ -21,5 +24,7 @@ protected:
+ 	sf::RectangleShape e_body;
+ 	sf::Vector2f e_startPos;
+ 	sf::Vector2f e_target{ 0.f, 0.f };
++
++	CollisionProfile e_collisionProfile;
+ };
+ 
+diff --git a/project-rival/project-rival/project-rival.vcxproj b/project-rival/project-rival/project-rival.vcxproj
+index 0b16d1b..cc211c6 100644
+--- a/project-rival/project-rival/project-rival.vcxproj
++++ b/project-rival/project-rival/project-rival.vcxproj
+@@ -66,9 +66,9 @@
+     <None Include="..\automation\prompts\player-aiming-mouse-right-stick-reticle-context.md" />
+     <None Include="..\automation\prompts\steering-enemy-seek-step-by-step-context.md" />
+     <None Include="..\automation\scripts\merge-summary-generator.ps1" />
+-    <None Include="..\automation\scripts\staged-dump.ps1" />
+   </ItemGroup>
+   <ItemGroup>
++    <Text Include="..\automation\scripts\output\aiming-merge-changes.txt" />
+     <Text Include="..\automation\scripts\output\enemies-merge-changes.txt" />
+   </ItemGroup>
+   <PropertyGroup Label="Globals">
+diff --git a/project-rival/project-rival/project-rival.vcxproj.filters b/project-rival/project-rival/project-rival.vcxproj.filters
+index cb6832d..eb5f930 100644
+--- a/project-rival/project-rival/project-rival.vcxproj.filters
++++ b/project-rival/project-rival/project-rival.vcxproj.filters
+@@ -40,6 +40,15 @@
+     <Filter Include="Header Files\Enemies">
+       <UniqueIdentifier>{641a97c9-ec20-499b-a847-eae07285cfdb}</UniqueIdentifier>
+     </Filter>
++    <Filter Include="Resource Files\AUTOMATIONS\Agent">
++      <UniqueIdentifier>{63056c86-90e2-4897-abae-e538dd6536ac}</UniqueIdentifier>
++    </Filter>
++    <Filter Include="Resource Files\AUTOMATIONS\Scripts">
++      <UniqueIdentifier>{25290212-7808-4d9b-93d3-2c9d0ccc6259}</UniqueIdentifier>
++    </Filter>
++    <Filter Include="Header Files\Projectiles">
++      <UniqueIdentifier>{b9295663-bd23-4a50-bb5f-6ae5e6710b01}</UniqueIdentifier>
++    </Filter>
+   </ItemGroup>
+   <ItemGroup>
+     <ClCompile Include="main.cpp">
+@@ -72,6 +81,12 @@
+     <ClCompile Include="TurretEnemy.cpp">
+       <Filter>Header Files\Enemies</Filter>
+     </ClCompile>
++    <ClCompile Include="Projectile.cpp">
++      <Filter>Header Files\Abs.Classes</Filter>
++    </ClCompile>
++    <ClCompile Include="NormalBulletProjectile.cpp">
++      <Filter>Header Files\Projectiles</Filter>
++    </ClCompile>
+   </ItemGroup>
+   <ItemGroup>
+     <ClInclude Include="Game.h">
+@@ -104,6 +119,12 @@
+     <ClInclude Include="TurretEnemy.h">
+       <Filter>Header Files\Enemies</Filter>
+     </ClInclude>
++    <ClInclude Include="Projectile.h">
++      <Filter>Header Files\Abs.Classes</Filter>
++    </ClInclude>
++    <ClInclude Include="NormalBulletProjectile.h">
++      <Filter>Header Files\Projectiles</Filter>
++    </ClInclude>
+   </ItemGroup>
+   <ItemGroup>
+     <Image Include="ASSETS\IMAGES\SFML-LOGO.png">
+@@ -116,17 +137,24 @@
+     </Font>
+   </ItemGroup>
+   <ItemGroup>
+-    <None Include="..\docs\Project\Project Proposal Form.docx">
+-      <Filter>Resource Files\DOCUMENTATION</Filter>
+-    </None>
+-    <None Include="..\automation\prompts\steering-enemy-seek-step-by-step-context.md">
+-      <Filter>Resource Files\AUTOMATIONS</Filter>
++    <None Include="..\automation\prompts\docs-architecture-development-log-context.md">
++      <Filter>Resource Files\AUTOMATIONS\Agent</Filter>
+     </None>
+     <None Include="..\automation\prompts\git-staged-changes-to-commit-context.md">
+-      <Filter>Resource Files\AUTOMATIONS</Filter>
++      <Filter>Resource Files\AUTOMATIONS\Agent</Filter>
+     </None>
+-    <None Include="..\automation\prompts\docs-architecture-development-log-context.md">
+-      <Filter>Resource Files\AUTOMATIONS</Filter>
++    <None Include="..\automation\prompts\player-aiming-mouse-right-stick-reticle-context.md">
++      <Filter>Resource Files\AUTOMATIONS\Agent</Filter>
+     </None>
++    <None Include="..\automation\prompts\steering-enemy-seek-step-by-step-context.md">
++      <Filter>Resource Files\AUTOMATIONS\Agent</Filter>
++    </None>
++    <None Include="..\automation\scripts\merge-summary-generator.ps1">
++      <Filter>Resource Files\AUTOMATIONS\Scripts</Filter>
++    </None>
++  </ItemGroup>
++  <ItemGroup>
++    <Text Include="..\automation\scripts\output\aiming-merge-changes.txt" />
++    <Text Include="..\automation\scripts\output\enemies-merge-changes.txt" />
+   </ItemGroup>
+ </Project>
+\ No newline at end of file
+
+commit 24093f8531b3bb10d76100aa170d41cf48cfb4fd
+Author: WollyTech <ayolawole@gmail.com>
+Date:   Thu Mar 19 02:12:03 2026 +0000
+
+    Collidable interface integrated into enemy
+
+diff --git a/project-rival/project-rival/Collision.cpp b/project-rival/project-rival/Collision.cpp
+index e69de29..d4d5b64 100644
+--- a/project-rival/project-rival/Collision.cpp
++++ b/project-rival/project-rival/Collision.cpp
+@@ -0,0 +1 @@
++#include "Collision.h"
+diff --git a/project-rival/project-rival/Collision.h b/project-rival/project-rival/Collision.h
+index c1d759f..5e309f1 100644
+--- a/project-rival/project-rival/Collision.h
++++ b/project-rival/project-rival/Collision.h
+@@ -11,25 +11,24 @@ enum CollisionLayer : uint32_t
+ 	ENEMY_BULLET_LAYER = 1 << 3,
+ };
+ 
++struct CollisionProfile
++{
++	CollisionLayer layer;
++	uint32_t mask;
++
++	bool canCollideWith(const CollisionProfile& other) const
++	{
++		//  check if the other object's layer is in our mask AND also if our layer is in the other object's mask.
++		return (((mask & other.layer) != CollisionLayer::NONE) && ((other.mask & layer) != CollisionLayer::NONE));
++	}
++};
+ 
+ class ICollidable
+ {
+ public:
+-	struct CollisionProfile
+-	{
+-		CollisionLayer layer;
+-		CollisionLayer mask;
+-
+-		bool canCollideWith(const CollisionProfile& other) const
+-		{
+-			//  check if the other object's layer is in our mask AND also if our layer is in the other object's mask.
+-			return (((mask & other.layer) != CollisionLayer::NONE) && ((other.mask & layer) != CollisionLayer::NONE));
+-		}
+-	};
+-
+ 	virtual ~ICollidable() = default;
+ 
+-	virtual sf::FloatRect getRectBounds() const = 0;
++	virtual sf::FloatRect getCollisionBounds() const = 0;
+ 	virtual CollisionProfile getCollisionProfile() const = 0;
+ };
+ 
+diff --git a/project-rival/project-rival/Enemy.cpp b/project-rival/project-rival/Enemy.cpp
+index f4a3568..b3aa0cb 100644
+--- a/project-rival/project-rival/Enemy.cpp
++++ b/project-rival/project-rival/Enemy.cpp
+@@ -5,9 +5,7 @@ Enemy::Enemy(const sf::Vector2f startPos) :
+ 	e_startPos(startPos)
+ {
+ 	e_collisionProfile.layer = CollisionLayer::ENEMY_LAYER;
+-	e_collisionProfile.mask = 
+-		CollisionLayer::PLAYER_LAYER | 
+-		CollisionLayer::PLAYER_BULLET_LAYER;
++	e_collisionProfile.mask = CollisionLayer::PLAYER_LAYER | CollisionLayer::PLAYER_BULLET_LAYER;
+ }
+ 
+ void Enemy::initBody(const sf::Vector2f& size, const sf::Color& colour)
+@@ -23,3 +21,13 @@ void Enemy::render(sf::RenderWindow& window)
+ {
+ 	window.draw(e_body);
+ }
++
++sf::FloatRect Enemy::getCollisionBounds() const
++{
++	return e_body.getGlobalBounds();
++}
++
++CollisionProfile Enemy::getCollisionProfile() const
++{
++	return e_collisionProfile;
++}
+diff --git a/project-rival/project-rival/Enemy.h b/project-rival/project-rival/Enemy.h
+index 49cfca1..1c3f036 100644
+--- a/project-rival/project-rival/Enemy.h
++++ b/project-rival/project-rival/Enemy.h
+@@ -18,6 +18,9 @@ public:
+ 
+ 	virtual void setTarget(const Vector2f& target) = 0;
+ 
++	virtual sf::FloatRect getCollisionBounds() const override;
++	virtual CollisionProfile getCollisionProfile() const override;
++
+ protected:
+ 	void initBody(const sf::Vector2f& size, const sf::Color& colour);
+ 
+diff --git a/project-rival/project-rival/project-rival.vcxproj b/project-rival/project-rival/project-rival.vcxproj
+index cc211c6..cee6a85 100644
+--- a/project-rival/project-rival/project-rival.vcxproj
++++ b/project-rival/project-rival/project-rival.vcxproj
+@@ -20,6 +20,7 @@
+   </ItemGroup>
+   <ItemGroup>
+     <ClCompile Include="ArriveBehaviour.cpp" />
++    <ClCompile Include="Collision.cpp" />
+     <ClCompile Include="NormalBulletProjectile.cpp" />
+     <ClCompile Include="Projectile.cpp" />
+     <ClCompile Include="Enemy.cpp" />
+@@ -34,6 +35,7 @@
+   </ItemGroup>
+   <ItemGroup>
+     <ClInclude Include="ArriveBehaviour.h" />
++    <ClInclude Include="Collision.h" />
+     <ClInclude Include="NormalBulletProjectile.h" />
+     <ClInclude Include="Projectile.h" />
+     <ClInclude Include="Enemy.h" />
+diff --git a/project-rival/project-rival/project-rival.vcxproj.filters b/project-rival/project-rival/project-rival.vcxproj.filters
+index eb5f930..828d4bc 100644
+--- a/project-rival/project-rival/project-rival.vcxproj.filters
++++ b/project-rival/project-rival/project-rival.vcxproj.filters
+@@ -87,6 +87,9 @@
+     <ClCompile Include="NormalBulletProjectile.cpp">
+       <Filter>Header Files\Projectiles</Filter>
+     </ClCompile>
++    <ClCompile Include="Collision.cpp">
++      <Filter>Source Files</Filter>
++    </ClCompile>
+   </ItemGroup>
+   <ItemGroup>
+     <ClInclude Include="Game.h">
+@@ -125,6 +128,9 @@
+     <ClInclude Include="NormalBulletProjectile.h">
+       <Filter>Header Files\Projectiles</Filter>
+     </ClInclude>
++    <ClInclude Include="Collision.h">
++      <Filter>Header Files</Filter>
++    </ClInclude>
+   </ItemGroup>
+   <ItemGroup>
+     <Image Include="ASSETS\IMAGES\SFML-LOGO.png">
+
+commit cce2d9c6070fa7e5f600e3972ad66b03345d349b
+Author: WollyTech <ayolawole@gmail.com>
+Date:   Thu Mar 19 02:32:10 2026 +0000
+
+    Collidable interface added to other existing game entities
+
+diff --git a/project-rival/project-rival/Game.h b/project-rival/project-rival/Game.h
+index 322b007..4bd8d67 100644
+--- a/project-rival/project-rival/Game.h
++++ b/project-rival/project-rival/Game.h
+@@ -48,7 +48,7 @@ protected:
+ 	sf::Font m_arialFont{ "ASSETS/FONTS/ariblk.ttf" };
+ 	sf::RenderWindow m_window;
+ 
+-	player m_player;
++	Player m_player;
+ 
+ 	std::vector<std::unique_ptr<Enemy>> m_enemies;
+ 
+diff --git a/project-rival/project-rival/NormalBulletProjectile.cpp b/project-rival/project-rival/NormalBulletProjectile.cpp
+index c084a8e..e07605b 100644
+--- a/project-rival/project-rival/NormalBulletProjectile.cpp
++++ b/project-rival/project-rival/NormalBulletProjectile.cpp
+@@ -1,7 +1,7 @@
+ #include "NormalBulletProjectile.h"
+ 
+-NormalBulletProjectile::NormalBulletProjectile(sf::Vector2f spawnPoint, sf::Vector2f direction) :
+-	Projectile(spawnPoint, nbp_lifetime), nbp_dir(direction)
++NormalBulletProjectile::NormalBulletProjectile(sf::Vector2f spawnPoint, sf::Vector2f direction, bool isFromPlayer) :
++	Projectile(spawnPoint, nbp_lifetime, isFromPlayer), nbp_dir(direction)
+ {
+ 	init();
+ }
+diff --git a/project-rival/project-rival/NormalBulletProjectile.h b/project-rival/project-rival/NormalBulletProjectile.h
+index fb6aa95..abda1d8 100644
+--- a/project-rival/project-rival/NormalBulletProjectile.h
++++ b/project-rival/project-rival/NormalBulletProjectile.h
+@@ -4,7 +4,7 @@
+ class NormalBulletProjectile : public Projectile
+ {
+ public:
+-	NormalBulletProjectile(sf::Vector2f spawnPoint, sf::Vector2f direction);
++	NormalBulletProjectile(sf::Vector2f spawnPoint, sf::Vector2f direction, bool isFromPlayer);
+ 	~NormalBulletProjectile() = default;
+ 
+ 	void init() override;
+diff --git a/project-rival/project-rival/Projectile.cpp b/project-rival/project-rival/Projectile.cpp
+index 9346966..4d8f893 100644
+--- a/project-rival/project-rival/Projectile.cpp
++++ b/project-rival/project-rival/Projectile.cpp
+@@ -1,9 +1,22 @@
+ #include "Projectile.h"
+ 
+-Projectile::Projectile(sf::Vector2f spawnPoint, float lifetime) :
+-	p_spawnPoint(spawnPoint), p_lifetime(lifetime)
++Projectile::Projectile(sf::Vector2f spawnPoint, float lifetime, bool isFromPlayer) :
++	p_spawnPoint(spawnPoint), p_lifetime(lifetime), p_isFromPlayer(isFromPlayer)
+ {
+ 	init_body();
++
++	if(isFromPlayer)
++	{
++		p_collisionProfile.layer = CollisionLayer::PLAYER_BULLET_LAYER;
++		p_collisionProfile.mask = CollisionLayer::ENEMY_LAYER;
++	}
++	else
++	{
++		p_collisionProfile.layer = CollisionLayer::ENEMY_BULLET_LAYER;
++		p_collisionProfile.mask = CollisionLayer::PLAYER_LAYER;
++	}
++	// add other collision masks for environment (e.g. walls)
++	// like so ----> p_collisionProfile.mask |= CollisionLayer::LEVEL_LAYER;
+ }
+ 
+ void Projectile::render(sf::RenderWindow& window)
+@@ -11,6 +24,16 @@ void Projectile::render(sf::RenderWindow& window)
+ 	window.draw(p_body);
+ }
+ 
++sf::FloatRect Projectile::getCollisionBounds() const
++{
++	return p_body.getGlobalBounds();
++}
++
++CollisionProfile Projectile::getCollisionProfile() const
++{
++	return p_collisionProfile;
++}
++
+ bool Projectile::shouldDestroy() const
+ {
+ 	return p_shouldDestroy;
+diff --git a/project-rival/project-rival/Projectile.h b/project-rival/project-rival/Projectile.h
+index 9d3827b..bbdcdd4 100644
+--- a/project-rival/project-rival/Projectile.h
++++ b/project-rival/project-rival/Projectile.h
+@@ -1,15 +1,21 @@
+ #pragma once
+ #include "SFML/Graphics.hpp"
+-class Projectile
++
++#include "Collision.h"
++
++class Projectile : public ICollidable
+ {
+ public:
+-	Projectile(sf::Vector2f spawnPoint, float lifetime);
++	Projectile(sf::Vector2f spawnPoint, float lifetime, bool isFromPlayer);
+ 	virtual ~Projectile() = default;
+ 
+ 	virtual void init() = 0;
+ 	virtual void update(double dt) = 0;
+ 	virtual void render(sf::RenderWindow& window);
+ 
++	virtual sf::FloatRect getCollisionBounds() const override;
++	virtual CollisionProfile getCollisionProfile() const override;
++
+ 	virtual bool shouldDestroy() const;
+ 
+ protected:
+@@ -23,6 +29,9 @@ protected:
+ 	sf::Vector2f p_spawnPoint;
+ 	sf::Vector2f p_target;
+ 
++	bool p_isFromPlayer;
++	CollisionProfile p_collisionProfile;
++
+ 	float p_lifetime{ 50.f };
+ };
+ 
+diff --git a/project-rival/project-rival/player.cpp b/project-rival/project-rival/player.cpp
+index 671e0ae..cd5e5dd 100644
+--- a/project-rival/project-rival/player.cpp
++++ b/project-rival/project-rival/player.cpp
+@@ -8,16 +8,16 @@ namespace {
+ 	}
+ }
+ 
+-player::player()
++Player::Player()
+ {
+ 	init();
+ }
+ 
+-player::~player()
++Player::~Player()
+ {
+ }
+ 
+-void player::init()
++void Player::init()
+ {
+ 	//body
+ 	p_body.setSize(Vector2f(50.f, 75.f));
+@@ -37,9 +37,13 @@ void player::init()
+ 	p_reticle.setOutlineThickness(2.f);
+ 	p_reticle.setPosition(p_body.getPosition() + p_reticleDistance * p_aimDir);
+ 	p_reticleDistance = 150.f;
++
++	//collision
++	p_collisionProfile.layer = CollisionLayer::PLAYER_LAYER;
++	p_collisionProfile.mask = CollisionLayer::ENEMY_LAYER | CollisionLayer::ENEMY_BULLET_LAYER;
+ }
+ 
+-void player::update(double dt, const Vector2f& mousePos)
++void Player::update(double dt, const Vector2f& mousePos)
+ {
+ 	handleMovement(dt);
+ 	handleAiming(mousePos);
+@@ -64,7 +68,7 @@ void player::update(double dt, const Vector2f& mousePos)
+ }
+ 
+ 
+-void player::render(RenderWindow& window)
++void Player::render(RenderWindow& window)
+ {
+ 	window.draw(p_body);
+ 	window.draw(p_reticle);
+@@ -73,12 +77,27 @@ void player::render(RenderWindow& window)
+ 		bullet->render(window);
+ }
+ 
+-void player::reset()
++const Vector2f Player::getPosition() const
++{
++	return p_body.getPosition();
++}
++
++sf::FloatRect Player::getCollisionBounds() const
++{
++	return p_body.getGlobalBounds();
++}
++
++CollisionProfile Player::getCollisionProfile() const
++{
++	return p_collisionProfile;
++}
++
++void Player::reset()
+ {
+ 	p_body.setPosition(Vector2f(50., 50.f));
+ }
+ 
+-void player::handleMovement(double dt)
++void Player::handleMovement(double dt)
+ {
+ 	//--------- movement logic ---------//
+ 	Vector2f direction{ 0.f, 0.f };
+@@ -105,7 +124,7 @@ void player::handleMovement(double dt)
+ 	p_body.move(p_velocity * static_cast<float>(dt));
+ }
+ 
+-void player::handleAiming(const Vector2f mousePos)
++void Player::handleAiming(const Vector2f mousePos)
+ {
+ 	//--------- aiming logic ---------//
+ 	
+@@ -135,7 +154,7 @@ void player::handleAiming(const Vector2f mousePos)
+ 	//--------- shooting logic ---------// -> this will move to weapon class when made
+ 	if (InputManager::pad().rightTrigger() || Mouse::isButtonPressed(Mouse::Button::Left))
+ 	{
+-		std::unique_ptr<NormalBulletProjectile> newBullet = std::make_unique<NormalBulletProjectile>(p_body.getPosition(), p_aimDir);
++		std::unique_ptr<NormalBulletProjectile> newBullet = std::make_unique<NormalBulletProjectile>(p_body.getPosition(), p_aimDir, true);
+ 		p_projectiles.push_back(std::move(newBullet));
+ 	}
+ }
+diff --git a/project-rival/project-rival/player.h b/project-rival/project-rival/player.h
+index 6ca6499..df06fd3 100644
+--- a/project-rival/project-rival/player.h
++++ b/project-rival/project-rival/player.h
+@@ -2,21 +2,26 @@
+ #include <SFML/Graphics.hpp>
+ #include <Windows.h>
+ #include <Xinput.h>
++
+ #include "Projectile.h"
++#include "Collision.h"
+ 
+ using namespace sf;
+ 
+-class player
++class Player : public ICollidable
+ {
+ public:
+-	player();
+-	~player();
++	Player();
++	~Player();
+ 
+ 	void init();
+ 	void update(double dt, const Vector2f& mousePos);
+ 	void render(RenderWindow& window);
+ 
+-	const Vector2f getPosition() const { return p_body.getPosition(); }
++	const Vector2f getPosition() const;
++	sf::FloatRect getCollisionBounds() const override;
++	CollisionProfile getCollisionProfile() const override;
++
+ 
+ 	void handleMovement(double dt);
+ 	void handleAiming(const Vector2f mousePos);
+@@ -39,6 +44,9 @@ private:
+ 	float p_reticleDistance;
+ 	Vector2f p_prevMousePos;
+ 
++	// collsion
++	CollisionProfile p_collisionProfile;
++
+ 	// projectiles --> test. this will move to weapon class when made
+ 	std::vector<std::unique_ptr<Projectile>> p_projectiles;
+ };
+diff --git a/project-rival/project-rival/project-rival.vcxproj.filters b/project-rival/project-rival/project-rival.vcxproj.filters
+index 828d4bc..7da26d0 100644
+--- a/project-rival/project-rival/project-rival.vcxproj.filters
++++ b/project-rival/project-rival/project-rival.vcxproj.filters
+@@ -129,7 +129,7 @@
+       <Filter>Header Files\Projectiles</Filter>
+     </ClInclude>
+     <ClInclude Include="Collision.h">
+-      <Filter>Header Files</Filter>
++      <Filter>Header Files\Abs.Interfaces</Filter>
+     </ClInclude>
+   </ItemGroup>
+   <ItemGroup>
+
+commit a5e8bf127e45e227bc2ce9a87f4790a53750145d
+Author: WollyTech <ayolawole@gmail.com>
+Date:   Thu Mar 19 02:57:51 2026 +0000
+
+    player shooting damage setup
+
+diff --git a/project-rival/project-rival/Enemy.cpp b/project-rival/project-rival/Enemy.cpp
+index b3aa0cb..8792e63 100644
+--- a/project-rival/project-rival/Enemy.cpp
++++ b/project-rival/project-rival/Enemy.cpp
+@@ -1,9 +1,11 @@
+ #include "Enemy.h"
+ using namespace sf;
+ 
+-Enemy::Enemy(const sf::Vector2f startPos) :
+-	e_startPos(startPos)
++Enemy::Enemy(const sf::Vector2f startPos, int totalHealth) :
++	e_startPos(startPos), e_health(totalHealth)
+ {
++	e_isDead = false;
++
+ 	e_collisionProfile.layer = CollisionLayer::ENEMY_LAYER;
+ 	e_collisionProfile.mask = CollisionLayer::PLAYER_LAYER | CollisionLayer::PLAYER_BULLET_LAYER;
+ }
+@@ -31,3 +33,20 @@ CollisionProfile Enemy::getCollisionProfile() const
+ {
+ 	return e_collisionProfile;
+ }
++
++void Enemy::takeDamage(int damage)
++{
++	e_health -= damage;
++	if (e_health <= 0)
++		onDeath();
++}
++
++void Enemy::onDeath()
++{
++	e_isDead = true;
++}
++
++bool Enemy::isDead() const
++{
++	return e_isDead;
++}
+diff --git a/project-rival/project-rival/Enemy.h b/project-rival/project-rival/Enemy.h
+index 1c3f036..58ad4e4 100644
+--- a/project-rival/project-rival/Enemy.h
++++ b/project-rival/project-rival/Enemy.h
+@@ -10,7 +10,7 @@
+ class Enemy : public ICollidable
+ {
+ public:
+-	Enemy(const sf::Vector2f startPos);
++	Enemy(const sf::Vector2f startPos, int totalHealth);
+ 
+ 	virtual void init() = 0;
+ 	virtual void update(double dt) = 0;
+@@ -21,6 +21,10 @@ public:
+ 	virtual sf::FloatRect getCollisionBounds() const override;
+ 	virtual CollisionProfile getCollisionProfile() const override;
+ 
++	virtual void takeDamage(int damage);
++	virtual void onDeath();
++	virtual bool isDead() const;
++
+ protected:
+ 	void initBody(const sf::Vector2f& size, const sf::Color& colour);
+ 
+@@ -29,5 +33,9 @@ protected:
+ 	sf::Vector2f e_target{ 0.f, 0.f };
+ 
+ 	CollisionProfile e_collisionProfile;
++
++	// entity stats
++	int e_health;
++	bool e_isDead;
+ };
+ 
+diff --git a/project-rival/project-rival/GruntEnemy.cpp b/project-rival/project-rival/GruntEnemy.cpp
+index af974cd..5792a1e 100644
+--- a/project-rival/project-rival/GruntEnemy.cpp
++++ b/project-rival/project-rival/GruntEnemy.cpp
+@@ -8,8 +8,8 @@ namespace
+ 	}
+ }
+ 
+-GruntEnemy::GruntEnemy(const sf::Vector2f pos)
+-	:Enemy(pos)
++GruntEnemy::GruntEnemy(const sf::Vector2f pos, int totalHealth)
++	:Enemy(pos, totalHealth)
+ {
+ 	initBody(sf::Vector2f(50.f, 50.f), sf::Color::Red);
+ 	init();
+diff --git a/project-rival/project-rival/GruntEnemy.h b/project-rival/project-rival/GruntEnemy.h
+index fd8ccb0..c88e7fb 100644
+--- a/project-rival/project-rival/GruntEnemy.h
++++ b/project-rival/project-rival/GruntEnemy.h
+@@ -4,7 +4,7 @@
+ class GruntEnemy : public Enemy
+ {
+ public: 
+-	GruntEnemy(const sf::Vector2f pos);
++	GruntEnemy(const sf::Vector2f pos, int totalHealth);
+ 	~GruntEnemy() = default;
+ 
+ 	void init() override;
+diff --git a/project-rival/project-rival/NormalBulletProjectile.cpp b/project-rival/project-rival/NormalBulletProjectile.cpp
+index e07605b..2d19070 100644
+--- a/project-rival/project-rival/NormalBulletProjectile.cpp
++++ b/project-rival/project-rival/NormalBulletProjectile.cpp
+@@ -12,6 +12,9 @@ void NormalBulletProjectile::init()
+ 		nbp_dir = nbp_dir.normalized();
+ 	else
+ 		destroy();
++
++	// set damage
++	p_damage = 1;
+ }
+ 
+ void NormalBulletProjectile::update(double dt)
+diff --git a/project-rival/project-rival/Projectile.cpp b/project-rival/project-rival/Projectile.cpp
+index 4d8f893..7edb8d8 100644
+--- a/project-rival/project-rival/Projectile.cpp
++++ b/project-rival/project-rival/Projectile.cpp
+@@ -39,6 +39,11 @@ bool Projectile::shouldDestroy() const
+ 	return p_shouldDestroy;
+ }
+ 
++int Projectile::applyDamage() const
++{
++	return p_damage;
++}
++
+ void Projectile::init_body()
+ {
+ 	p_body.setSize(sf::Vector2f(10.f, 10.f));
+diff --git a/project-rival/project-rival/Projectile.h b/project-rival/project-rival/Projectile.h
+index bbdcdd4..fe49d0c 100644
+--- a/project-rival/project-rival/Projectile.h
++++ b/project-rival/project-rival/Projectile.h
+@@ -18,6 +18,8 @@ public:
+ 
+ 	virtual bool shouldDestroy() const;
+ 
++	virtual int applyDamage() const;
++
+ protected:
+ 	void init_body();
+ 	virtual void onExpire(float dt);
+@@ -33,5 +35,7 @@ protected:
+ 	CollisionProfile p_collisionProfile;
+ 
+ 	float p_lifetime{ 50.f };
++
++	int p_damage;	// set damage in sub classes
+ };
+ 
+diff --git a/project-rival/project-rival/TurretEnemy.cpp b/project-rival/project-rival/TurretEnemy.cpp
+index 23b3d99..29ac6f1 100644
+--- a/project-rival/project-rival/TurretEnemy.cpp
++++ b/project-rival/project-rival/TurretEnemy.cpp
+@@ -1,7 +1,7 @@
+ #include "TurretEnemy.h"
+ 
+-TurretEnemy::TurretEnemy(const sf::Vector2f pos)
+-	:Enemy(pos)
++TurretEnemy::TurretEnemy(const sf::Vector2f pos, int totalHealth)
++	:Enemy(pos, totalHealth)
+ {
+ 	initBody(sf::Vector2f(50.f, 50.f), sf::Color::Blue);
+ 	init();
+diff --git a/project-rival/project-rival/TurretEnemy.h b/project-rival/project-rival/TurretEnemy.h
+index 108e865..634040a 100644
+--- a/project-rival/project-rival/TurretEnemy.h
++++ b/project-rival/project-rival/TurretEnemy.h
+@@ -4,7 +4,7 @@
+ class TurretEnemy : public Enemy
+ {
+ public:
+-	TurretEnemy(const sf::Vector2f pos);
++	TurretEnemy(const sf::Vector2f pos, int totalHealth);
+ 	~TurretEnemy() = default;
+ 
+ 	void init() override;
+diff --git a/project-rival/project-rival/player.cpp b/project-rival/project-rival/player.cpp
+index cd5e5dd..b757c09 100644
+--- a/project-rival/project-rival/player.cpp
++++ b/project-rival/project-rival/player.cpp
+@@ -24,7 +24,6 @@ void Player::init()
+ 	Vector2f size = p_body.getSize();
+ 	p_body.setFillColor(Color::Green);
+ 	p_body.setOrigin(size / 2.f);
+-	p_body.setPosition(Vector2f(25., 25.f));
+ 
+ 	//physics
+ 	p_velocity = Vector2f(0.f, 0.f);
+@@ -41,6 +40,8 @@ void Player::init()
+ 	//collision
+ 	p_collisionProfile.layer = CollisionLayer::PLAYER_LAYER;
+ 	p_collisionProfile.mask = CollisionLayer::ENEMY_LAYER | CollisionLayer::ENEMY_BULLET_LAYER;
++
++	reset();
+ }
+ 
+ void Player::update(double dt, const Vector2f& mousePos)
+@@ -94,7 +95,8 @@ CollisionProfile Player::getCollisionProfile() const
+ 
+ void Player::reset()
+ {
+-	p_body.setPosition(Vector2f(50., 50.f));
++	p_body.setPosition(Vector2f(500, 500.f));
++	p_health = 1000;
+ }
+ 
+ void Player::handleMovement(double dt)
+@@ -158,3 +160,12 @@ void Player::handleAiming(const Vector2f mousePos)
+ 		p_projectiles.push_back(std::move(newBullet));
+ 	}
+ }
++
++void Player::takeDamage(int damage)
++{
++	p_health -= damage;
++	if (p_health <= 0)
++	{
++		reset();
++	}
++}
+diff --git a/project-rival/project-rival/player.h b/project-rival/project-rival/player.h
+index df06fd3..aae00b3 100644
+--- a/project-rival/project-rival/player.h
++++ b/project-rival/project-rival/player.h
+@@ -26,6 +26,8 @@ public:
+ 	void handleMovement(double dt);
+ 	void handleAiming(const Vector2f mousePos);
+ 
++	void takeDamage(int damage);
++
+ private:
+ 	// FUNCTIONS
+ 	void reset();
+@@ -47,6 +49,9 @@ private:
+ 	// collsion
+ 	CollisionProfile p_collisionProfile;
+ 
++	// entity stats
++	int p_health;
++
+ 	// projectiles --> test. this will move to weapon class when made
+ 	std::vector<std::unique_ptr<Projectile>> p_projectiles;
+ };
+
+commit dd9e6910da977f34da94769eeaf696f3f92b9f4a
+Author: WollyTech <ayolawole@gmail.com>
+Date:   Thu Mar 19 03:43:45 2026 +0000
+
+    collision with other objects possible (messy)
+
+diff --git a/project-rival/project-rival/Game.cpp b/project-rival/project-rival/Game.cpp
+index 930f363..b9fd8a9 100644
+--- a/project-rival/project-rival/Game.cpp
++++ b/project-rival/project-rival/Game.cpp
+@@ -119,10 +119,45 @@ void Game::update(double dt)
+ 	const Vector2f mousePosF = m_window.mapPixelToCoords(mousePos);
+ 
+ 	InputManager::update();
++
++	// Update player and enemies
+ 	m_player.update(dt, mousePosF);
+-	for (auto& enemy : m_enemies) {
++	for (auto enemy_it = m_enemies.begin(); enemy_it != m_enemies.end();)
++	{
++		auto& enemy = *enemy_it;
+ 		enemy->setTarget(m_player.getPosition());
+ 		enemy->update(dt);
++
++		// Check collision with player
++		if (enemy->getCollisionProfile().canCollideWith(m_player.getCollisionProfile())) {
++			if (enemy->getCollisionBounds().contains(m_player.getCollisionBounds().getCenter()))
++			{
++				cout << "Player hit by enemy!\n";
++				m_player.takeDamage(10); // Arbitrary damage value for now
++			}
++		}
++
++		// Check if enemy is dead and remove if so
++		if (enemy->isDead())
++		{
++			enemy_it = m_enemies.erase(enemy_it);
++		}
++		else
++			enemy_it++;
++	}
++
++	// Collision checks
++	// Check player projectiles against enemies
++	for (auto& bullet : m_player.getProjectiles()) {
++		for (auto& enemy : m_enemies) {
++			if (bullet->getCollisionProfile().canCollideWith(enemy->getCollisionProfile())) {
++				if (bullet->getCollisionBounds().contains(enemy->getCollisionBounds().getCenter()))
++				{
++					enemy->takeDamage(bullet->applyDamage());
++					bullet->destroy();
++				}
++			}
++		}
+ 	}
+ }
+ 
+@@ -148,7 +183,7 @@ void Game::gameStart()
+ 	for (int i = 0; i < 5; i++)
+ 	{
+ 		sf::Vector2f randEnemyPos{ static_cast<float>(rand() % ScreenSize::s_width), static_cast<float>(rand() % ScreenSize::s_height) };
+-		m_enemies.push_back(std::make_unique<GruntEnemy>(randEnemyPos));
+-		m_enemies.push_back(std::make_unique<TurretEnemy>(randEnemyPos));
++		m_enemies.push_back(std::make_unique<GruntEnemy>(randEnemyPos, 150));
++		m_enemies.push_back(std::make_unique<TurretEnemy>(randEnemyPos, 250));
+ 	}
+ }
+diff --git a/project-rival/project-rival/Projectile.h b/project-rival/project-rival/Projectile.h
+index fe49d0c..ff9ba7c 100644
+--- a/project-rival/project-rival/Projectile.h
++++ b/project-rival/project-rival/Projectile.h
+@@ -19,11 +19,11 @@ public:
+ 	virtual bool shouldDestroy() const;
+ 
+ 	virtual int applyDamage() const;
++	virtual void destroy();
+ 
+ protected:
+ 	void init_body();
+ 	virtual void onExpire(float dt);
+-	virtual void destroy();
+ 
+ 	bool p_shouldDestroy{ false };
+ 
+diff --git a/project-rival/project-rival/player.cpp b/project-rival/project-rival/player.cpp
+index b757c09..aa7b7f3 100644
+--- a/project-rival/project-rival/player.cpp
++++ b/project-rival/project-rival/player.cpp
+@@ -52,6 +52,7 @@ void Player::update(double dt, const Vector2f& mousePos)
+ 	if (InputManager::pad().rightTrigger()) InputManager::pad().setRumble(0.2f, 0.8f);
+ 	else InputManager::pad().setRumble(0.0f, 0.0f);
+ 
++	// Update projectiles and remove any that should be destroyed
+ 	for (auto bullet_it = p_projectiles.begin(); bullet_it != p_projectiles.end(); )
+ 	{
+ 		auto& bullet = *bullet_it;
+@@ -169,3 +170,8 @@ void Player::takeDamage(int damage)
+ 		reset();
+ 	}
+ }
++
++std::vector<std::unique_ptr<Projectile>>& Player::getProjectiles()
++{
++	return p_projectiles;
++}
+diff --git a/project-rival/project-rival/player.h b/project-rival/project-rival/player.h
+index aae00b3..2118eb2 100644
+--- a/project-rival/project-rival/player.h
++++ b/project-rival/project-rival/player.h
+@@ -28,6 +28,9 @@ public:
+ 
+ 	void takeDamage(int damage);
+ 
++	// this functions will likely move to weapon class when made
++	std::vector<std::unique_ptr<Projectile>>& const getProjectiles();
++
+ private:
+ 	// FUNCTIONS
+ 	void reset();
+
+commit d01ba3c1b51403e4dfee86dc2319ffdd43be1dfd
+Author: WollyTech <ayolawole@gmail.com>
+Date:   Thu Mar 19 04:24:02 2026 +0000
+
+    true collision detection
+
+diff --git a/project-rival/project-rival/Collision.cpp b/project-rival/project-rival/Collision.cpp
+index d4d5b64..15b40c6 100644
+--- a/project-rival/project-rival/Collision.cpp
++++ b/project-rival/project-rival/Collision.cpp
+@@ -1 +1,19 @@
+ #include "Collision.h"
++
++bool CollisionCheck::areColliding(const ICollidable& entity_A, const ICollidable& entity_B)
++{
++	const CollisionProfile pa = entity_A.getCollisionProfile();
++	const CollisionProfile pb = entity_B.getCollisionProfile();
++
++	const sf::FloatRect cba = entity_A.getCollisionBounds();
++	const sf::FloatRect cbb = entity_B.getCollisionBounds();
++
++
++	if (pa.canCollideWith(pb))
++	{
++		bool isIntersecting = cba.findIntersection(cbb).has_value();
++		return isIntersecting;
++	}
++	else
++		return false;
++}
+diff --git a/project-rival/project-rival/Collision.h b/project-rival/project-rival/Collision.h
+index 5e309f1..8dee883 100644
+--- a/project-rival/project-rival/Collision.h
++++ b/project-rival/project-rival/Collision.h
+@@ -32,3 +32,7 @@ public:
+ 	virtual CollisionProfile getCollisionProfile() const = 0;
+ };
+ 
++class CollisionCheck {
++	public:
++		static bool areColliding(const ICollidable& entity_A, const ICollidable& entity_B);
++};
+diff --git a/project-rival/project-rival/Game.cpp b/project-rival/project-rival/Game.cpp
+index b9fd8a9..b508309 100644
+--- a/project-rival/project-rival/Game.cpp
++++ b/project-rival/project-rival/Game.cpp
+@@ -129,12 +129,9 @@ void Game::update(double dt)
+ 		enemy->update(dt);
+ 
+ 		// Check collision with player
+-		if (enemy->getCollisionProfile().canCollideWith(m_player.getCollisionProfile())) {
+-			if (enemy->getCollisionBounds().contains(m_player.getCollisionBounds().getCenter()))
+-			{
+-				cout << "Player hit by enemy!\n";
+-				m_player.takeDamage(10); // Arbitrary damage value for now
+-			}
++		if (CollisionCheck::areColliding(m_player, *enemy)) {
++			cout << "Player collided with enemy!\n";
++			m_player.takeDamage(10);
+ 		}
+ 
+ 		// Check if enemy is dead and remove if so
+@@ -148,14 +145,20 @@ void Game::update(double dt)
+ 
+ 	// Collision checks
+ 	// Check player projectiles against enemies
+-	for (auto& bullet : m_player.getProjectiles()) {
++	for (auto& bullet : m_player.getProjectiles()) 
++	{
++		if(!bullet || bullet->shouldDestroy())
++			continue;
++
+ 		for (auto& enemy : m_enemies) {
+-			if (bullet->getCollisionProfile().canCollideWith(enemy->getCollisionProfile())) {
+-				if (bullet->getCollisionBounds().contains(enemy->getCollisionBounds().getCenter()))
+-				{
+-					enemy->takeDamage(bullet->applyDamage());
+-					bullet->destroy();
+-				}
++			if (!enemy || enemy->isDead())
++				continue;
++
++			if (CollisionCheck::areColliding(*bullet, *enemy))
++			{
++				enemy->takeDamage(bullet->applyDamage());
++				bullet->destroy();
++				break; // gets rid of bug where bullet hits multiple enemies
+ 			}
+ 		}
+ 	}
+diff --git a/project-rival/project-rival/player.h b/project-rival/project-rival/player.h
+index 2118eb2..da30f5a 100644
+--- a/project-rival/project-rival/player.h
++++ b/project-rival/project-rival/player.h
+@@ -29,7 +29,7 @@ public:
+ 	void takeDamage(int damage);
+ 
+ 	// this functions will likely move to weapon class when made
+-	std::vector<std::unique_ptr<Projectile>>& const getProjectiles();
++	std::vector<std::unique_ptr<Projectile>>& getProjectiles();
+ 
+ private:
+ 	// FUNCTIONS
+diff --git a/project-rival/project-rival/project-rival.vcxproj.filters b/project-rival/project-rival/project-rival.vcxproj.filters
+index 7da26d0..1ccf64b 100644
+--- a/project-rival/project-rival/project-rival.vcxproj.filters
++++ b/project-rival/project-rival/project-rival.vcxproj.filters
+@@ -88,7 +88,7 @@
+       <Filter>Header Files\Projectiles</Filter>
+     </ClCompile>
+     <ClCompile Include="Collision.cpp">
+-      <Filter>Source Files</Filter>
++      <Filter>Header Files\Abs.Interfaces</Filter>
+     </ClCompile>
+   </ItemGroup>
+   <ItemGroup>
+
+commit 7e719b40f39356f2b08b12d33447222fd5a82679
+Author: WollyTech <ayolawole@gmail.com>
+Date:   Thu Mar 19 04:34:10 2026 +0000
+
+    DOCS UPDATE: Updating docs to include info about collisions
+
+diff --git a/project-rival/docs/Architecture/01-project-structure.md b/project-rival/docs/Architecture/01-project-structure.md
+index c16abb6..374e70c 100644
+--- a/project-rival/docs/Architecture/01-project-structure.md
++++ b/project-rival/docs/Architecture/01-project-structure.md
+@@ -11,6 +11,10 @@ Most gameplay code is inside `project-rival/`.
+ - `main.cpp`
+ - `Game.h` / `Game.cpp`
+ 
++### Collision
++
++- `Collision.h` / `Collision.cpp`
++
+ ### Entities
+ 
+ - `player.h` / `player.cpp`
+diff --git a/project-rival/docs/Architecture/02-player.md b/project-rival/docs/Architecture/02-player.md
+index d4053e9..ab4d43e 100644
+--- a/project-rival/docs/Architecture/02-player.md
++++ b/project-rival/docs/Architecture/02-player.md
+@@ -2,7 +2,7 @@
+ 
+ [Back to architecture index](README.md)
+ 
+-`player` (in `player.h/.cpp`) represents the controllable character.
++`Player` (declared in `player.h` / implemented in `player.cpp`) represents the controllable character.
+ 
+ ## Responsibilities (current)
+ 
+@@ -11,6 +11,11 @@
+ - Moves by updating velocity and applying it every update
+ - Exposes its position (used as an enemy target)
+ 
++Also:
++
++- Implements `ICollidable` (so it can participate in collision checks)
++- Has health + `takeDamage(...)` (currently resets when health reaches 0)
++
+ Also (current prototype features):
+ 
+ - Aiming (mouse or right stick)
+@@ -18,7 +23,7 @@ Also (current prototype features):
+ 
+ ## Movement (high level)
+ 
+-Movement is handled in `player::handleMovement(double dt)`:
++Movement is handled in `Player::handleMovement(double dt)`:
+ 
+ - build a `direction` vector from input
+   - controller: use `InputManager::pad().leftStick()`
+@@ -42,3 +47,5 @@ Note: `dt` is expected to be **seconds**.
+ ## Used by other systems
+ 
+ Enemies use the player position as a target (via `m_player.getPosition()`).
++
++Game code also reads the player's projectiles via `m_player.getProjectiles()` for bullet-vs-enemy collision.
+diff --git a/project-rival/docs/Architecture/03-input.md b/project-rival/docs/Architecture/03-input.md
+index d660fb2..7b58c46 100644
+--- a/project-rival/docs/Architecture/03-input.md
++++ b/project-rival/docs/Architecture/03-input.md
+@@ -14,7 +14,7 @@ Typical usage:
+ - call `InputManager::update()` once per frame
+ - then read input through `InputManager::pad()`
+ 
+-In `Game::update(dt)`, the current mouse position is also read from the window and passed into `player::update(...)` for aiming.
++In `Game::update(dt)`, the current mouse position is also read from the window and passed into `Player::update(...)` for aiming.
+ 
+ ## `Gamepad`
+ 
+@@ -25,4 +25,10 @@ Exposes:
+ - button states (`down`, `pressed`, `released`)
+ - rumble (`setRumble`)
+ 
++Current gameplay usage examples:
++
++- left stick: movement
++- right stick or mouse: aiming
++- right trigger or left mouse button: shoot
++
+ Also applies deadzones to reduce controller drift.
+diff --git a/project-rival/docs/Architecture/04-enemy.md b/project-rival/docs/Architecture/04-enemy.md
+index 08aac60..4d48cdb 100644
+--- a/project-rival/docs/Architecture/04-enemy.md
++++ b/project-rival/docs/Architecture/04-enemy.md
+@@ -15,6 +15,17 @@ It provides:
+ - a shared `render(...)`
+ - a shared `e_target` member that derived enemies can use
+ 
++It also implements `ICollidable` and includes basic “combat” state:
++
++- collision profile (layer/mask)
++- health (`takeDamage(...)`)
++- death flag (`isDead()`)
++
++Currently, enemies collide with:
++
++- the player
++- player-fired bullets
++
+ Derived classes must implement:
+ 
+ - `init()`
+@@ -46,6 +57,14 @@ Each update:
+ - the target is set to the player position (`enemy->setTarget(m_player.getPosition())`)
+ - then each enemy is updated (`enemy->update(dt)`)
+ 
++Collision + damage (current approach):
++
++- If player collides with an enemy, the player takes damage.
++- Player projectiles are checked against enemies; on hit:
++  - enemy takes damage
++  - projectile is destroyed
++- Dead enemies are removed from the `m_enemies` list.
++
+ ## Likely next steps
+ 
+ - Add actual turret behaviour (aiming / firing / cooldown) for `TurretEnemy`.
+diff --git a/project-rival/docs/Architecture/07-projectiles.md b/project-rival/docs/Architecture/07-projectiles.md
+index 6674889..4231eb7 100644
+--- a/project-rival/docs/Architecture/07-projectiles.md
++++ b/project-rival/docs/Architecture/07-projectiles.md
+@@ -15,6 +15,13 @@ It provides:
+ - `shouldDestroy()` so owners can remove expired projectiles
+ - `render(...)`
+ 
++It also implements `ICollidable` so projectiles can participate in collision checks.
++
++Projectiles also set a collision profile based on who fired them:
++
++- player-fired bullets collide with enemies
++- enemy-fired bullets collide with the player
++
+ Derived projectiles are expected to:
+ 
+ - implement `init()`
+@@ -29,8 +36,10 @@ Derived projectiles are expected to:
+ - moves at a fixed speed each update
+ - expires after a short lifetime
+ 
++It also sets a basic damage value (`applyDamage()`).
++
+ ## Current ownership
+ 
+-Right now, the `player` owns a `std::vector<std::unique_ptr<Projectile>>` and spawns bullets when the player shoots.
++Right now, the `Player` owns a `std::vector<std::unique_ptr<Projectile>>` and spawns bullets when the player shoots.
+ 
+ This is marked in code as “test” and can later be moved to a weapon system.
+diff --git a/project-rival/docs/Architecture/08-collision-and-damage.md b/project-rival/docs/Architecture/08-collision-and-damage.md
+new file mode 100644
+index 0000000..1bc66e0
+--- /dev/null
++++ b/project-rival/docs/Architecture/08-collision-and-damage.md
+@@ -0,0 +1,51 @@
++# 8) Collision + damage (current approach)
++
++[Back to architecture index](README.md)
++
++This project uses a simple collision system with **layers** and **masks** to filter which objects can collide.
++
++## Collision layers and masks
++
++Defined in `Collision.h`:
++
++- `CollisionLayer` (bit flags)
++  - examples: `PLAYER_LAYER`, `ENEMY_LAYER`, `PLAYER_BULLET_LAYER`
++- `CollisionProfile`
++  - `layer`: what this object *is*
++  - `mask`: what this object *can collide with*
++
++Two objects are allowed to collide if:
++
++- A’s mask contains B’s layer **and**
++- B’s mask contains A’s layer
++
++## `ICollidable` (capability interface)
++
++Also in `Collision.h`:
++
++- `ICollidable` requires:
++  - `getCollisionBounds()` (an `sf::FloatRect`)
++  - `getCollisionProfile()`
++
++Current gameplay types that implement it:
++
++- `Player`
++- `Enemy` (and all enemy subclasses)
++- `Projectile` (and bullet subclasses)
++
++## Collision checks
++
++`CollisionCheck::areColliding(a, b)` (in `Collision.cpp`) does:
++
++1. layer/mask filtering (`CollisionProfile::canCollideWith`)
++2. bounding box intersection test (SFML rectangles)
++
++## Damage flow (high level)
++
++Right now, the main damage logic lives in `Game::update(dt)`:
++
++- Player vs enemy collision → `m_player.takeDamage(...)`
++- Player bullets vs enemies:
++  - `enemy->takeDamage(bullet->applyDamage())`
++  - `bullet->destroy()`
++- If an enemy reports `isDead()` it is removed from the enemies list.
+diff --git a/project-rival/docs/Architecture/README.md b/project-rival/docs/Architecture/README.md
+index 06ebb5c..07eeb51 100644
+--- a/project-rival/docs/Architecture/README.md
++++ b/project-rival/docs/Architecture/README.md
+@@ -13,3 +13,4 @@ A high-level, beginner-friendly overview of how the main gameplay-related code i
+ 5. [Steering (AI) + OOP concepts](05-steering-oop.md)
+ 6. [Coding / design conventions](06-coding-conventions.md)
+ 7. [Projectiles (prototype)](07-projectiles.md)
++8. [Collision + damage](08-collision-and-damage.md)
+
+commit 431f9e5996d7e5a90fcc014bc67064558a1f3b75
+Author: WollyTech <ayolawole@gmail.com>
+Date:   Thu Mar 19 04:39:50 2026 +0000
+
+    Collision chat context
+
+diff --git a/project-rival/automation/prompts/collision-layers-masks-bullet-enemy-context.md b/project-rival/automation/prompts/collision-layers-masks-bullet-enemy-context.md
+new file mode 100644
+index 0000000..f9b8cb4
+--- /dev/null
++++ b/project-rival/automation/prompts/collision-layers-masks-bullet-enemy-context.md
+@@ -0,0 +1,152 @@
++# Collision system context (layers+masks, bullet hits enemy)
++
++[Back to contents](#contents)
++
++## Contents
++1. [Goal of this thread](#goal-of-this-thread)
++2. [Current project structure (relevant bits)](#current-project-structure-relevant-bits)
++3. [Decisions already made](#decisions-already-made)
++4. [Current implementation state (as of this chat)](#current-implementation-state-as-of-this-chat)
++5. [What to change next (recommended minimal fixes)](#what-to-change-next-recommended-minimal-fixes)
++6. [Notes / pitfalls spotted](#notes--pitfalls-spotted)
++
++---
++
++## Goal of this thread
++Establish a **bare-bones** collision system for the SFML game that supports:
++
++- Player fires a bullet
++- Bullet hits an enemy
++- Enemy **recognizes the collision** (takes damage / reacts)
++
++No environmental collision, triggers, broadphase, or complex response rules yet.
++
++[Back to contents](#contents)
++
++---
++
++## Current project structure (relevant bits)
++Ownership in gameplay code:
++
++- `Game` owns enemies: `std::vector<std::unique_ptr<Enemy>> m_enemies;` in `project-rival/Game.h`.
++- `Player` owns bullets/projectiles: `std::vector<std::unique_ptr<Projectile>> p_projectiles;` in `project-rival/player.h`.
++
++Implication:
++
++- The simplest place to perform collision checks is in `Game::update(double dt)` **after** player/enemy updates (because `Game` can see both lists).
++
++[Back to contents](#contents)
++
++---
++
++## Decisions already made
++Design preferences and decisions agreed during this chat:
++
++- **Filtering:** Use **layers + masks** (bitmask filtering). Avoid a global 2D collision matrix unless strongly justified.
++- **Geometry:** Basic AABB overlap is fine for now.
++- **Response:** Keep it minimal. Interfaces can be used as **small capability interfaces** (e.g., `IDamageable`) but avoid interface explosion. For now, a simple `takeDamage(int)` is acceptable.
++- **Ownership:** Keep bullets owned by `Player` for now; expose them to `Game` for collision checks.
++
++[Back to contents](#contents)
++
++---
++
++## Current implementation state (as of this chat)
++### Collision data contract
++A shared collision contract exists:
++
++- `project-rival/Collision.h`
++  - `enum CollisionLayer` is implemented as **bitflags** (`PLAYER_LAYER`, `ENEMY_LAYER`, `PLAYER_BULLET_LAYER`, `ENEMY_BULLET_LAYER`).
++  - `struct CollisionProfile { CollisionLayer layer; uint32_t mask; bool canCollideWith(...) }`
++  - `class ICollidable` exposes:
++    - `virtual sf::FloatRect getCollisionBounds() const = 0;`
++    - `virtual CollisionProfile getCollisionProfile() const = 0;`
++
++### Entities
++- `project-rival/player.h` / `project-rival/player.cpp`
++  - `Player : public ICollidable`
++  - `p_collisionProfile.layer = PLAYER_LAYER;`
++  - `p_collisionProfile.mask = ENEMY_LAYER | ENEMY_BULLET_LAYER;`
++  - `takeDamage(int)` implemented
++  - `getProjectiles()` returns `p_projectiles`
++
++- `project-rival/Enemy.h` / `project-rival/Enemy.cpp`
++  - `Enemy : public ICollidable`
++  - `e_collisionProfile.layer = ENEMY_LAYER;`
++  - `e_collisionProfile.mask = PLAYER_LAYER | PLAYER_BULLET_LAYER;`
++  - `takeDamage(int)`, `isDead()`, `onDeath()` implemented
++
++- `project-rival/Projectile.h` / `project-rival/Projectile.cpp`
++  - `Projectile : public ICollidable`
++  - Constructor takes `bool isFromPlayer` and sets:
++    - if from player: `layer = PLAYER_BULLET_LAYER`, `mask = ENEMY_LAYER`
++    - else: `layer = ENEMY_BULLET_LAYER`, `mask = PLAYER_LAYER`
++  - `applyDamage()` returns `p_damage` (int)
++  - `destroy()` sets `p_shouldDestroy = true`
++
++### Where collision is currently performed
++- `project-rival/Game.cpp`
++  - Collision checks are performed directly inside `Game::update(double dt)`.
++  - Geometry test currently uses **center-point containment**, e.g.:
++    - `enemyBounds.contains(playerBounds.getCenter())`
++    - `bulletBounds.contains(enemyBounds.getCenter())`
++
++This was called out as the main reason the system "technically works" but feels unreliable/unintuitive.
++
++[Back to contents](#contents)
++
++---
++
++## What to change next (recommended minimal fixes)
++### 1) Fix geometry test: use bounds overlap, not `contains(center)`
++Replace the containment checks with AABB overlap:
++
++- SFML 3: `a.findIntersection(b).has_value()`
++
++### 2) Centralize collision logic into one helper
++Add a single reusable function (suggested name):
++
++- `bool areColliding(const ICollidable& a, const ICollidable& b)`
++
++Responsibilities:
++
++- Read both profiles
++- Filter using `CollisionProfile::canCollideWith`
++- Perform AABB overlap check
++
++Use this helper in `Game::update` for:
++
++- Enemy vs Player
++- Bullet vs Enemy
++
++### 3) Bullet vs enemy response logic
++On successful collision:
++
++- Enemy: `enemy->takeDamage(bullet->applyDamage())`
++- Bullet: `bullet->destroy()` and `break` to prevent multi-hit in the same frame
++
++Bullet cleanup:
++
++- `Player::update` already erases bullets when `shouldDestroy()` becomes true (so bullets are removed next update).
++
++### 4) Fix small correctness issues in `Collision.h`
++- `canCollideWith`: compare bitwise results to `0u` (not `CollisionLayer::NONE` on an unscoped enum).
++- Use `1u << n` for enum constants.
++- Consider default initialization for `CollisionProfile` fields.
++
++### 5) Fix `Player::getProjectiles()` declaration
++In `project-rival/player.h`, the return type was observed as `std::vector<std::unique_ptr<Projectile>>& const getProjectiles();` which should be corrected to:
++
++- `std::vector<std::unique_ptr<Projectile>>& getProjectiles();`
++
++[Back to contents](#contents)
++
++---
++
++## Notes / pitfalls spotted
++- Center containment misses many overlaps and produces false negatives/positives.
++- After calling `bullet->destroy()`, ensure the bullet doesn’t keep checking and hitting multiple enemies in the same frame (add `if (bullet->shouldDestroy())` guard and/or `break`).
++- Dead enemy cleanup: currently enemies are erased during the main enemy update loop. If bullets can kill enemies after that loop, those deaths may not be erased until the next frame unless an additional cleanup pass is added.
++- `Collision.h` include path uses `"Sfml/Graphics.hpp"` (case mismatch vs `SFML`)—works on Windows, but not portable.
++
++[Back to contents](#contents)
+
+===== STAGED DIFF SUMMARY (git diff --cached --name-status) =====
+
+A	project-rival/automation/prompts/collision-layers-masks-bullet-enemy-context.md
+M	project-rival/docs/Architecture/01-project-structure.md
+M	project-rival/docs/Architecture/02-player.md
+M	project-rival/docs/Architecture/03-input.md
+M	project-rival/docs/Architecture/04-enemy.md
+M	project-rival/docs/Architecture/07-projectiles.md
+A	project-rival/docs/Architecture/08-collision-and-damage.md
+M	project-rival/docs/Architecture/README.md
+A	project-rival/project-rival/Collision.cpp
+A	project-rival/project-rival/Collision.h
+M	project-rival/project-rival/Enemy.cpp
+M	project-rival/project-rival/Enemy.h
+M	project-rival/project-rival/Game.cpp
+M	project-rival/project-rival/Game.h
+M	project-rival/project-rival/GruntEnemy.cpp
+M	project-rival/project-rival/GruntEnemy.h
+M	project-rival/project-rival/NormalBulletProjectile.cpp
+M	project-rival/project-rival/NormalBulletProjectile.h
+M	project-rival/project-rival/Projectile.cpp
+M	project-rival/project-rival/Projectile.h
+M	project-rival/project-rival/TurretEnemy.cpp
+M	project-rival/project-rival/TurretEnemy.h
+M	project-rival/project-rival/player.cpp
+M	project-rival/project-rival/player.h
+M	project-rival/project-rival/project-rival.vcxproj
+M	project-rival/project-rival/project-rival.vcxproj.filters
+
+===== STAGED PATCH (git diff --cached; what will be committed on main) =====
+
+diff --git a/project-rival/automation/prompts/collision-layers-masks-bullet-enemy-context.md b/project-rival/automation/prompts/collision-layers-masks-bullet-enemy-context.md
+new file mode 100644
+index 0000000..f9b8cb4
+--- /dev/null
++++ b/project-rival/automation/prompts/collision-layers-masks-bullet-enemy-context.md
+@@ -0,0 +1,152 @@
++# Collision system context (layers+masks, bullet hits enemy)
++
++[Back to contents](#contents)
++
++## Contents
++1. [Goal of this thread](#goal-of-this-thread)
++2. [Current project structure (relevant bits)](#current-project-structure-relevant-bits)
++3. [Decisions already made](#decisions-already-made)
++4. [Current implementation state (as of this chat)](#current-implementation-state-as-of-this-chat)
++5. [What to change next (recommended minimal fixes)](#what-to-change-next-recommended-minimal-fixes)
++6. [Notes / pitfalls spotted](#notes--pitfalls-spotted)
++
++---
++
++## Goal of this thread
++Establish a **bare-bones** collision system for the SFML game that supports:
++
++- Player fires a bullet
++- Bullet hits an enemy
++- Enemy **recognizes the collision** (takes damage / reacts)
++
++No environmental collision, triggers, broadphase, or complex response rules yet.
++
++[Back to contents](#contents)
++
++---
++
++## Current project structure (relevant bits)
++Ownership in gameplay code:
++
++- `Game` owns enemies: `std::vector<std::unique_ptr<Enemy>> m_enemies;` in `project-rival/Game.h`.
++- `Player` owns bullets/projectiles: `std::vector<std::unique_ptr<Projectile>> p_projectiles;` in `project-rival/player.h`.
++
++Implication:
++
++- The simplest place to perform collision checks is in `Game::update(double dt)` **after** player/enemy updates (because `Game` can see both lists).
++
++[Back to contents](#contents)
++
++---
++
++## Decisions already made
++Design preferences and decisions agreed during this chat:
++
++- **Filtering:** Use **layers + masks** (bitmask filtering). Avoid a global 2D collision matrix unless strongly justified.
++- **Geometry:** Basic AABB overlap is fine for now.
++- **Response:** Keep it minimal. Interfaces can be used as **small capability interfaces** (e.g., `IDamageable`) but avoid interface explosion. For now, a simple `takeDamage(int)` is acceptable.
++- **Ownership:** Keep bullets owned by `Player` for now; expose them to `Game` for collision checks.
++
++[Back to contents](#contents)
++
++---
++
++## Current implementation state (as of this chat)
++### Collision data contract
++A shared collision contract exists:
++
++- `project-rival/Collision.h`
++  - `enum CollisionLayer` is implemented as **bitflags** (`PLAYER_LAYER`, `ENEMY_LAYER`, `PLAYER_BULLET_LAYER`, `ENEMY_BULLET_LAYER`).
++  - `struct CollisionProfile { CollisionLayer layer; uint32_t mask; bool canCollideWith(...) }`
++  - `class ICollidable` exposes:
++    - `virtual sf::FloatRect getCollisionBounds() const = 0;`
++    - `virtual CollisionProfile getCollisionProfile() const = 0;`
++
++### Entities
++- `project-rival/player.h` / `project-rival/player.cpp`
++  - `Player : public ICollidable`
++  - `p_collisionProfile.layer = PLAYER_LAYER;`
++  - `p_collisionProfile.mask = ENEMY_LAYER | ENEMY_BULLET_LAYER;`
++  - `takeDamage(int)` implemented
++  - `getProjectiles()` returns `p_projectiles`
++
++- `project-rival/Enemy.h` / `project-rival/Enemy.cpp`
++  - `Enemy : public ICollidable`
++  - `e_collisionProfile.layer = ENEMY_LAYER;`
++  - `e_collisionProfile.mask = PLAYER_LAYER | PLAYER_BULLET_LAYER;`
++  - `takeDamage(int)`, `isDead()`, `onDeath()` implemented
++
++- `project-rival/Projectile.h` / `project-rival/Projectile.cpp`
++  - `Projectile : public ICollidable`
++  - Constructor takes `bool isFromPlayer` and sets:
++    - if from player: `layer = PLAYER_BULLET_LAYER`, `mask = ENEMY_LAYER`
++    - else: `layer = ENEMY_BULLET_LAYER`, `mask = PLAYER_LAYER`
++  - `applyDamage()` returns `p_damage` (int)
++  - `destroy()` sets `p_shouldDestroy = true`
++
++### Where collision is currently performed
++- `project-rival/Game.cpp`
++  - Collision checks are performed directly inside `Game::update(double dt)`.
++  - Geometry test currently uses **center-point containment**, e.g.:
++    - `enemyBounds.contains(playerBounds.getCenter())`
++    - `bulletBounds.contains(enemyBounds.getCenter())`
++
++This was called out as the main reason the system "technically works" but feels unreliable/unintuitive.
++
++[Back to contents](#contents)
++
++---
++
++## What to change next (recommended minimal fixes)
++### 1) Fix geometry test: use bounds overlap, not `contains(center)`
++Replace the containment checks with AABB overlap:
++
++- SFML 3: `a.findIntersection(b).has_value()`
++
++### 2) Centralize collision logic into one helper
++Add a single reusable function (suggested name):
++
++- `bool areColliding(const ICollidable& a, const ICollidable& b)`
++
++Responsibilities:
++
++- Read both profiles
++- Filter using `CollisionProfile::canCollideWith`
++- Perform AABB overlap check
++
++Use this helper in `Game::update` for:
++
++- Enemy vs Player
++- Bullet vs Enemy
++
++### 3) Bullet vs enemy response logic
++On successful collision:
++
++- Enemy: `enemy->takeDamage(bullet->applyDamage())`
++- Bullet: `bullet->destroy()` and `break` to prevent multi-hit in the same frame
++
++Bullet cleanup:
++
++- `Player::update` already erases bullets when `shouldDestroy()` becomes true (so bullets are removed next update).
++
++### 4) Fix small correctness issues in `Collision.h`
++- `canCollideWith`: compare bitwise results to `0u` (not `CollisionLayer::NONE` on an unscoped enum).
++- Use `1u << n` for enum constants.
++- Consider default initialization for `CollisionProfile` fields.
++
++### 5) Fix `Player::getProjectiles()` declaration
++In `project-rival/player.h`, the return type was observed as `std::vector<std::unique_ptr<Projectile>>& const getProjectiles();` which should be corrected to:
++
++- `std::vector<std::unique_ptr<Projectile>>& getProjectiles();`
++
++[Back to contents](#contents)
++
++---
++
++## Notes / pitfalls spotted
++- Center containment misses many overlaps and produces false negatives/positives.
++- After calling `bullet->destroy()`, ensure the bullet doesn’t keep checking and hitting multiple enemies in the same frame (add `if (bullet->shouldDestroy())` guard and/or `break`).
++- Dead enemy cleanup: currently enemies are erased during the main enemy update loop. If bullets can kill enemies after that loop, those deaths may not be erased until the next frame unless an additional cleanup pass is added.
++- `Collision.h` include path uses `"Sfml/Graphics.hpp"` (case mismatch vs `SFML`)—works on Windows, but not portable.
++
++[Back to contents](#contents)
+diff --git a/project-rival/docs/Architecture/01-project-structure.md b/project-rival/docs/Architecture/01-project-structure.md
+index c16abb6..374e70c 100644
+--- a/project-rival/docs/Architecture/01-project-structure.md
++++ b/project-rival/docs/Architecture/01-project-structure.md
+@@ -11,6 +11,10 @@ Most gameplay code is inside `project-rival/`.
+ - `main.cpp`
+ - `Game.h` / `Game.cpp`
+ 
++### Collision
++
++- `Collision.h` / `Collision.cpp`
++
+ ### Entities
+ 
+ - `player.h` / `player.cpp`
+diff --git a/project-rival/docs/Architecture/02-player.md b/project-rival/docs/Architecture/02-player.md
+index d4053e9..ab4d43e 100644
+--- a/project-rival/docs/Architecture/02-player.md
++++ b/project-rival/docs/Architecture/02-player.md
+@@ -2,7 +2,7 @@
+ 
+ [Back to architecture index](README.md)
+ 
+-`player` (in `player.h/.cpp`) represents the controllable character.
++`Player` (declared in `player.h` / implemented in `player.cpp`) represents the controllable character.
+ 
+ ## Responsibilities (current)
+ 
+@@ -11,6 +11,11 @@
+ - Moves by updating velocity and applying it every update
+ - Exposes its position (used as an enemy target)
+ 
++Also:
++
++- Implements `ICollidable` (so it can participate in collision checks)
++- Has health + `takeDamage(...)` (currently resets when health reaches 0)
++
+ Also (current prototype features):
+ 
+ - Aiming (mouse or right stick)
+@@ -18,7 +23,7 @@ Also (current prototype features):
+ 
+ ## Movement (high level)
+ 
+-Movement is handled in `player::handleMovement(double dt)`:
++Movement is handled in `Player::handleMovement(double dt)`:
+ 
+ - build a `direction` vector from input
+   - controller: use `InputManager::pad().leftStick()`
+@@ -42,3 +47,5 @@ Note: `dt` is expected to be **seconds**.
+ ## Used by other systems
+ 
+ Enemies use the player position as a target (via `m_player.getPosition()`).
++
++Game code also reads the player's projectiles via `m_player.getProjectiles()` for bullet-vs-enemy collision.
+diff --git a/project-rival/docs/Architecture/03-input.md b/project-rival/docs/Architecture/03-input.md
+index d660fb2..7b58c46 100644
+--- a/project-rival/docs/Architecture/03-input.md
++++ b/project-rival/docs/Architecture/03-input.md
+@@ -14,7 +14,7 @@ Typical usage:
+ - call `InputManager::update()` once per frame
+ - then read input through `InputManager::pad()`
+ 
+-In `Game::update(dt)`, the current mouse position is also read from the window and passed into `player::update(...)` for aiming.
++In `Game::update(dt)`, the current mouse position is also read from the window and passed into `Player::update(...)` for aiming.
+ 
+ ## `Gamepad`
+ 
+@@ -25,4 +25,10 @@ Exposes:
+ - button states (`down`, `pressed`, `released`)
+ - rumble (`setRumble`)
+ 
++Current gameplay usage examples:
++
++- left stick: movement
++- right stick or mouse: aiming
++- right trigger or left mouse button: shoot
++
+ Also applies deadzones to reduce controller drift.
+diff --git a/project-rival/docs/Architecture/04-enemy.md b/project-rival/docs/Architecture/04-enemy.md
+index 08aac60..4d48cdb 100644
+--- a/project-rival/docs/Architecture/04-enemy.md
++++ b/project-rival/docs/Architecture/04-enemy.md
+@@ -15,6 +15,17 @@ It provides:
+ - a shared `render(...)`
+ - a shared `e_target` member that derived enemies can use
+ 
++It also implements `ICollidable` and includes basic “combat” state:
++
++- collision profile (layer/mask)
++- health (`takeDamage(...)`)
++- death flag (`isDead()`)
++
++Currently, enemies collide with:
++
++- the player
++- player-fired bullets
++
+ Derived classes must implement:
+ 
+ - `init()`
+@@ -46,6 +57,14 @@ Each update:
+ - the target is set to the player position (`enemy->setTarget(m_player.getPosition())`)
+ - then each enemy is updated (`enemy->update(dt)`)
+ 
++Collision + damage (current approach):
++
++- If player collides with an enemy, the player takes damage.
++- Player projectiles are checked against enemies; on hit:
++  - enemy takes damage
++  - projectile is destroyed
++- Dead enemies are removed from the `m_enemies` list.
++
+ ## Likely next steps
+ 
+ - Add actual turret behaviour (aiming / firing / cooldown) for `TurretEnemy`.
+diff --git a/project-rival/docs/Architecture/07-projectiles.md b/project-rival/docs/Architecture/07-projectiles.md
+index 6674889..4231eb7 100644
+--- a/project-rival/docs/Architecture/07-projectiles.md
++++ b/project-rival/docs/Architecture/07-projectiles.md
+@@ -15,6 +15,13 @@ It provides:
+ - `shouldDestroy()` so owners can remove expired projectiles
+ - `render(...)`
+ 
++It also implements `ICollidable` so projectiles can participate in collision checks.
++
++Projectiles also set a collision profile based on who fired them:
++
++- player-fired bullets collide with enemies
++- enemy-fired bullets collide with the player
++
+ Derived projectiles are expected to:
+ 
+ - implement `init()`
+@@ -29,8 +36,10 @@ Derived projectiles are expected to:
+ - moves at a fixed speed each update
+ - expires after a short lifetime
+ 
++It also sets a basic damage value (`applyDamage()`).
++
+ ## Current ownership
+ 
+-Right now, the `player` owns a `std::vector<std::unique_ptr<Projectile>>` and spawns bullets when the player shoots.
++Right now, the `Player` owns a `std::vector<std::unique_ptr<Projectile>>` and spawns bullets when the player shoots.
+ 
+ This is marked in code as “test” and can later be moved to a weapon system.
+diff --git a/project-rival/docs/Architecture/08-collision-and-damage.md b/project-rival/docs/Architecture/08-collision-and-damage.md
+new file mode 100644
+index 0000000..1bc66e0
+--- /dev/null
++++ b/project-rival/docs/Architecture/08-collision-and-damage.md
+@@ -0,0 +1,51 @@
++# 8) Collision + damage (current approach)
++
++[Back to architecture index](README.md)
++
++This project uses a simple collision system with **layers** and **masks** to filter which objects can collide.
++
++## Collision layers and masks
++
++Defined in `Collision.h`:
++
++- `CollisionLayer` (bit flags)
++  - examples: `PLAYER_LAYER`, `ENEMY_LAYER`, `PLAYER_BULLET_LAYER`
++- `CollisionProfile`
++  - `layer`: what this object *is*
++  - `mask`: what this object *can collide with*
++
++Two objects are allowed to collide if:
++
++- A’s mask contains B’s layer **and**
++- B’s mask contains A’s layer
++
++## `ICollidable` (capability interface)
++
++Also in `Collision.h`:
++
++- `ICollidable` requires:
++  - `getCollisionBounds()` (an `sf::FloatRect`)
++  - `getCollisionProfile()`
++
++Current gameplay types that implement it:
++
++- `Player`
++- `Enemy` (and all enemy subclasses)
++- `Projectile` (and bullet subclasses)
++
++## Collision checks
++
++`CollisionCheck::areColliding(a, b)` (in `Collision.cpp`) does:
++
++1. layer/mask filtering (`CollisionProfile::canCollideWith`)
++2. bounding box intersection test (SFML rectangles)
++
++## Damage flow (high level)
++
++Right now, the main damage logic lives in `Game::update(dt)`:
++
++- Player vs enemy collision → `m_player.takeDamage(...)`
++- Player bullets vs enemies:
++  - `enemy->takeDamage(bullet->applyDamage())`
++  - `bullet->destroy()`
++- If an enemy reports `isDead()` it is removed from the enemies list.
+diff --git a/project-rival/docs/Architecture/README.md b/project-rival/docs/Architecture/README.md
+index 06ebb5c..07eeb51 100644
+--- a/project-rival/docs/Architecture/README.md
++++ b/project-rival/docs/Architecture/README.md
+@@ -13,3 +13,4 @@ A high-level, beginner-friendly overview of how the main gameplay-related code i
+ 5. [Steering (AI) + OOP concepts](05-steering-oop.md)
+ 6. [Coding / design conventions](06-coding-conventions.md)
+ 7. [Projectiles (prototype)](07-projectiles.md)
++8. [Collision + damage](08-collision-and-damage.md)
+diff --git a/project-rival/project-rival/Collision.cpp b/project-rival/project-rival/Collision.cpp
+new file mode 100644
+index 0000000..15b40c6
+--- /dev/null
++++ b/project-rival/project-rival/Collision.cpp
+@@ -0,0 +1,19 @@
++#include "Collision.h"
++
++bool CollisionCheck::areColliding(const ICollidable& entity_A, const ICollidable& entity_B)
++{
++	const CollisionProfile pa = entity_A.getCollisionProfile();
++	const CollisionProfile pb = entity_B.getCollisionProfile();
++
++	const sf::FloatRect cba = entity_A.getCollisionBounds();
++	const sf::FloatRect cbb = entity_B.getCollisionBounds();
++
++
++	if (pa.canCollideWith(pb))
++	{
++		bool isIntersecting = cba.findIntersection(cbb).has_value();
++		return isIntersecting;
++	}
++	else
++		return false;
++}
+diff --git a/project-rival/project-rival/Collision.h b/project-rival/project-rival/Collision.h
+new file mode 100644
+index 0000000..8dee883
+--- /dev/null
++++ b/project-rival/project-rival/Collision.h
+@@ -0,0 +1,38 @@
++#pragma once
++#include "Sfml/Graphics.hpp"
++
++enum CollisionLayer : uint32_t
++{
++	NONE = 0,
++
++	PLAYER_LAYER = 1 << 0,
++	ENEMY_LAYER = 1 << 1,
++	PLAYER_BULLET_LAYER = 1 << 2,
++	ENEMY_BULLET_LAYER = 1 << 3,
++};
++
++struct CollisionProfile
++{
++	CollisionLayer layer;
++	uint32_t mask;
++
++	bool canCollideWith(const CollisionProfile& other) const
++	{
++		//  check if the other object's layer is in our mask AND also if our layer is in the other object's mask.
++		return (((mask & other.layer) != CollisionLayer::NONE) && ((other.mask & layer) != CollisionLayer::NONE));
++	}
++};
++
++class ICollidable
++{
++public:
++	virtual ~ICollidable() = default;
++
++	virtual sf::FloatRect getCollisionBounds() const = 0;
++	virtual CollisionProfile getCollisionProfile() const = 0;
++};
++
++class CollisionCheck {
++	public:
++		static bool areColliding(const ICollidable& entity_A, const ICollidable& entity_B);
++};
+diff --git a/project-rival/project-rival/Enemy.cpp b/project-rival/project-rival/Enemy.cpp
+index 9f4a1d4..8792e63 100644
+--- a/project-rival/project-rival/Enemy.cpp
++++ b/project-rival/project-rival/Enemy.cpp
+@@ -1,9 +1,13 @@
+ #include "Enemy.h"
+ using namespace sf;
+ 
+-Enemy::Enemy(const sf::Vector2f startPos) :
+-	e_startPos(startPos)
++Enemy::Enemy(const sf::Vector2f startPos, int totalHealth) :
++	e_startPos(startPos), e_health(totalHealth)
+ {
++	e_isDead = false;
++
++	e_collisionProfile.layer = CollisionLayer::ENEMY_LAYER;
++	e_collisionProfile.mask = CollisionLayer::PLAYER_LAYER | CollisionLayer::PLAYER_BULLET_LAYER;
+ }
+ 
+ void Enemy::initBody(const sf::Vector2f& size, const sf::Color& colour)
+@@ -19,3 +23,30 @@ void Enemy::render(sf::RenderWindow& window)
+ {
+ 	window.draw(e_body);
+ }
++
++sf::FloatRect Enemy::getCollisionBounds() const
++{
++	return e_body.getGlobalBounds();
++}
++
++CollisionProfile Enemy::getCollisionProfile() const
++{
++	return e_collisionProfile;
++}
++
++void Enemy::takeDamage(int damage)
++{
++	e_health -= damage;
++	if (e_health <= 0)
++		onDeath();
++}
++
++void Enemy::onDeath()
++{
++	e_isDead = true;
++}
++
++bool Enemy::isDead() const
++{
++	return e_isDead;
++}
+diff --git a/project-rival/project-rival/Enemy.h b/project-rival/project-rival/Enemy.h
+index 39b88b9..58ad4e4 100644
+--- a/project-rival/project-rival/Enemy.h
++++ b/project-rival/project-rival/Enemy.h
+@@ -1,13 +1,16 @@
+ #pragma once
+ #include<iostream>
+ #include <SFML/graphics.hpp>
++
+ #include "SeekBehaviour.h"
+ #include "ArriveBehaviour.h"
+ 
+-class Enemy
++#include "Collision.h"
++
++class Enemy : public ICollidable
+ {
+ public:
+-	Enemy(const sf::Vector2f startPos);
++	Enemy(const sf::Vector2f startPos, int totalHealth);
+ 
+ 	virtual void init() = 0;
+ 	virtual void update(double dt) = 0;
+@@ -15,11 +18,24 @@ public:
+ 
+ 	virtual void setTarget(const Vector2f& target) = 0;
+ 
++	virtual sf::FloatRect getCollisionBounds() const override;
++	virtual CollisionProfile getCollisionProfile() const override;
++
++	virtual void takeDamage(int damage);
++	virtual void onDeath();
++	virtual bool isDead() const;
++
+ protected:
+ 	void initBody(const sf::Vector2f& size, const sf::Color& colour);
+ 
+ 	sf::RectangleShape e_body;
+ 	sf::Vector2f e_startPos;
+ 	sf::Vector2f e_target{ 0.f, 0.f };
++
++	CollisionProfile e_collisionProfile;
++
++	// entity stats
++	int e_health;
++	bool e_isDead;
+ };
+ 
+diff --git a/project-rival/project-rival/Game.cpp b/project-rival/project-rival/Game.cpp
+index 930f363..b508309 100644
+--- a/project-rival/project-rival/Game.cpp
++++ b/project-rival/project-rival/Game.cpp
+@@ -119,10 +119,48 @@ void Game::update(double dt)
+ 	const Vector2f mousePosF = m_window.mapPixelToCoords(mousePos);
+ 
+ 	InputManager::update();
++
++	// Update player and enemies
+ 	m_player.update(dt, mousePosF);
+-	for (auto& enemy : m_enemies) {
++	for (auto enemy_it = m_enemies.begin(); enemy_it != m_enemies.end();)
++	{
++		auto& enemy = *enemy_it;
+ 		enemy->setTarget(m_player.getPosition());
+ 		enemy->update(dt);
++
++		// Check collision with player
++		if (CollisionCheck::areColliding(m_player, *enemy)) {
++			cout << "Player collided with enemy!\n";
++			m_player.takeDamage(10);
++		}
++
++		// Check if enemy is dead and remove if so
++		if (enemy->isDead())
++		{
++			enemy_it = m_enemies.erase(enemy_it);
++		}
++		else
++			enemy_it++;
++	}
++
++	// Collision checks
++	// Check player projectiles against enemies
++	for (auto& bullet : m_player.getProjectiles()) 
++	{
++		if(!bullet || bullet->shouldDestroy())
++			continue;
++
++		for (auto& enemy : m_enemies) {
++			if (!enemy || enemy->isDead())
++				continue;
++
++			if (CollisionCheck::areColliding(*bullet, *enemy))
++			{
++				enemy->takeDamage(bullet->applyDamage());
++				bullet->destroy();
++				break; // gets rid of bug where bullet hits multiple enemies
++			}
++		}
+ 	}
+ }
+ 
+@@ -148,7 +186,7 @@ void Game::gameStart()
+ 	for (int i = 0; i < 5; i++)
+ 	{
+ 		sf::Vector2f randEnemyPos{ static_cast<float>(rand() % ScreenSize::s_width), static_cast<float>(rand() % ScreenSize::s_height) };
+-		m_enemies.push_back(std::make_unique<GruntEnemy>(randEnemyPos));
+-		m_enemies.push_back(std::make_unique<TurretEnemy>(randEnemyPos));
++		m_enemies.push_back(std::make_unique<GruntEnemy>(randEnemyPos, 150));
++		m_enemies.push_back(std::make_unique<TurretEnemy>(randEnemyPos, 250));
+ 	}
+ }
+diff --git a/project-rival/project-rival/Game.h b/project-rival/project-rival/Game.h
+index 322b007..4bd8d67 100644
+--- a/project-rival/project-rival/Game.h
++++ b/project-rival/project-rival/Game.h
+@@ -48,7 +48,7 @@ protected:
+ 	sf::Font m_arialFont{ "ASSETS/FONTS/ariblk.ttf" };
+ 	sf::RenderWindow m_window;
+ 
+-	player m_player;
++	Player m_player;
+ 
+ 	std::vector<std::unique_ptr<Enemy>> m_enemies;
+ 
+diff --git a/project-rival/project-rival/GruntEnemy.cpp b/project-rival/project-rival/GruntEnemy.cpp
+index af974cd..5792a1e 100644
+--- a/project-rival/project-rival/GruntEnemy.cpp
++++ b/project-rival/project-rival/GruntEnemy.cpp
+@@ -8,8 +8,8 @@ namespace
+ 	}
+ }
+ 
+-GruntEnemy::GruntEnemy(const sf::Vector2f pos)
+-	:Enemy(pos)
++GruntEnemy::GruntEnemy(const sf::Vector2f pos, int totalHealth)
++	:Enemy(pos, totalHealth)
+ {
+ 	initBody(sf::Vector2f(50.f, 50.f), sf::Color::Red);
+ 	init();
+diff --git a/project-rival/project-rival/GruntEnemy.h b/project-rival/project-rival/GruntEnemy.h
+index fd8ccb0..c88e7fb 100644
+--- a/project-rival/project-rival/GruntEnemy.h
++++ b/project-rival/project-rival/GruntEnemy.h
+@@ -4,7 +4,7 @@
+ class GruntEnemy : public Enemy
+ {
+ public: 
+-	GruntEnemy(const sf::Vector2f pos);
++	GruntEnemy(const sf::Vector2f pos, int totalHealth);
+ 	~GruntEnemy() = default;
+ 
+ 	void init() override;
+diff --git a/project-rival/project-rival/NormalBulletProjectile.cpp b/project-rival/project-rival/NormalBulletProjectile.cpp
+index c084a8e..2d19070 100644
+--- a/project-rival/project-rival/NormalBulletProjectile.cpp
++++ b/project-rival/project-rival/NormalBulletProjectile.cpp
+@@ -1,7 +1,7 @@
+ #include "NormalBulletProjectile.h"
+ 
+-NormalBulletProjectile::NormalBulletProjectile(sf::Vector2f spawnPoint, sf::Vector2f direction) :
+-	Projectile(spawnPoint, nbp_lifetime), nbp_dir(direction)
++NormalBulletProjectile::NormalBulletProjectile(sf::Vector2f spawnPoint, sf::Vector2f direction, bool isFromPlayer) :
++	Projectile(spawnPoint, nbp_lifetime, isFromPlayer), nbp_dir(direction)
+ {
+ 	init();
+ }
+@@ -12,6 +12,9 @@ void NormalBulletProjectile::init()
+ 		nbp_dir = nbp_dir.normalized();
+ 	else
+ 		destroy();
++
++	// set damage
++	p_damage = 1;
+ }
+ 
+ void NormalBulletProjectile::update(double dt)
+diff --git a/project-rival/project-rival/NormalBulletProjectile.h b/project-rival/project-rival/NormalBulletProjectile.h
+index fb6aa95..abda1d8 100644
+--- a/project-rival/project-rival/NormalBulletProjectile.h
++++ b/project-rival/project-rival/NormalBulletProjectile.h
+@@ -4,7 +4,7 @@
+ class NormalBulletProjectile : public Projectile
+ {
+ public:
+-	NormalBulletProjectile(sf::Vector2f spawnPoint, sf::Vector2f direction);
++	NormalBulletProjectile(sf::Vector2f spawnPoint, sf::Vector2f direction, bool isFromPlayer);
+ 	~NormalBulletProjectile() = default;
+ 
+ 	void init() override;
+diff --git a/project-rival/project-rival/Projectile.cpp b/project-rival/project-rival/Projectile.cpp
+index 9346966..7edb8d8 100644
+--- a/project-rival/project-rival/Projectile.cpp
++++ b/project-rival/project-rival/Projectile.cpp
+@@ -1,9 +1,22 @@
+ #include "Projectile.h"
+ 
+-Projectile::Projectile(sf::Vector2f spawnPoint, float lifetime) :
+-	p_spawnPoint(spawnPoint), p_lifetime(lifetime)
++Projectile::Projectile(sf::Vector2f spawnPoint, float lifetime, bool isFromPlayer) :
++	p_spawnPoint(spawnPoint), p_lifetime(lifetime), p_isFromPlayer(isFromPlayer)
+ {
+ 	init_body();
++
++	if(isFromPlayer)
++	{
++		p_collisionProfile.layer = CollisionLayer::PLAYER_BULLET_LAYER;
++		p_collisionProfile.mask = CollisionLayer::ENEMY_LAYER;
++	}
++	else
++	{
++		p_collisionProfile.layer = CollisionLayer::ENEMY_BULLET_LAYER;
++		p_collisionProfile.mask = CollisionLayer::PLAYER_LAYER;
++	}
++	// add other collision masks for environment (e.g. walls)
++	// like so ----> p_collisionProfile.mask |= CollisionLayer::LEVEL_LAYER;
+ }
+ 
+ void Projectile::render(sf::RenderWindow& window)
+@@ -11,11 +24,26 @@ void Projectile::render(sf::RenderWindow& window)
+ 	window.draw(p_body);
+ }
+ 
++sf::FloatRect Projectile::getCollisionBounds() const
++{
++	return p_body.getGlobalBounds();
++}
++
++CollisionProfile Projectile::getCollisionProfile() const
++{
++	return p_collisionProfile;
++}
++
+ bool Projectile::shouldDestroy() const
+ {
+ 	return p_shouldDestroy;
+ }
+ 
++int Projectile::applyDamage() const
++{
++	return p_damage;
++}
++
+ void Projectile::init_body()
+ {
+ 	p_body.setSize(sf::Vector2f(10.f, 10.f));
+diff --git a/project-rival/project-rival/Projectile.h b/project-rival/project-rival/Projectile.h
+index 9d3827b..ff9ba7c 100644
+--- a/project-rival/project-rival/Projectile.h
++++ b/project-rival/project-rival/Projectile.h
+@@ -1,21 +1,29 @@
+ #pragma once
+ #include "SFML/Graphics.hpp"
+-class Projectile
++
++#include "Collision.h"
++
++class Projectile : public ICollidable
+ {
+ public:
+-	Projectile(sf::Vector2f spawnPoint, float lifetime);
++	Projectile(sf::Vector2f spawnPoint, float lifetime, bool isFromPlayer);
+ 	virtual ~Projectile() = default;
+ 
+ 	virtual void init() = 0;
+ 	virtual void update(double dt) = 0;
+ 	virtual void render(sf::RenderWindow& window);
+ 
++	virtual sf::FloatRect getCollisionBounds() const override;
++	virtual CollisionProfile getCollisionProfile() const override;
++
+ 	virtual bool shouldDestroy() const;
+ 
++	virtual int applyDamage() const;
++	virtual void destroy();
++
+ protected:
+ 	void init_body();
+ 	virtual void onExpire(float dt);
+-	virtual void destroy();
+ 
+ 	bool p_shouldDestroy{ false };
+ 
+@@ -23,6 +31,11 @@ protected:
+ 	sf::Vector2f p_spawnPoint;
+ 	sf::Vector2f p_target;
+ 
++	bool p_isFromPlayer;
++	CollisionProfile p_collisionProfile;
++
+ 	float p_lifetime{ 50.f };
++
++	int p_damage;	// set damage in sub classes
+ };
+ 
+diff --git a/project-rival/project-rival/TurretEnemy.cpp b/project-rival/project-rival/TurretEnemy.cpp
+index 23b3d99..29ac6f1 100644
+--- a/project-rival/project-rival/TurretEnemy.cpp
++++ b/project-rival/project-rival/TurretEnemy.cpp
+@@ -1,7 +1,7 @@
+ #include "TurretEnemy.h"
+ 
+-TurretEnemy::TurretEnemy(const sf::Vector2f pos)
+-	:Enemy(pos)
++TurretEnemy::TurretEnemy(const sf::Vector2f pos, int totalHealth)
++	:Enemy(pos, totalHealth)
+ {
+ 	initBody(sf::Vector2f(50.f, 50.f), sf::Color::Blue);
+ 	init();
+diff --git a/project-rival/project-rival/TurretEnemy.h b/project-rival/project-rival/TurretEnemy.h
+index 108e865..634040a 100644
+--- a/project-rival/project-rival/TurretEnemy.h
++++ b/project-rival/project-rival/TurretEnemy.h
+@@ -4,7 +4,7 @@
+ class TurretEnemy : public Enemy
+ {
+ public:
+-	TurretEnemy(const sf::Vector2f pos);
++	TurretEnemy(const sf::Vector2f pos, int totalHealth);
+ 	~TurretEnemy() = default;
+ 
+ 	void init() override;
+diff --git a/project-rival/project-rival/player.cpp b/project-rival/project-rival/player.cpp
+index 671e0ae..aa7b7f3 100644
+--- a/project-rival/project-rival/player.cpp
++++ b/project-rival/project-rival/player.cpp
+@@ -8,23 +8,22 @@ namespace {
+ 	}
+ }
+ 
+-player::player()
++Player::Player()
+ {
+ 	init();
+ }
+ 
+-player::~player()
++Player::~Player()
+ {
+ }
+ 
+-void player::init()
++void Player::init()
+ {
+ 	//body
+ 	p_body.setSize(Vector2f(50.f, 75.f));
+ 	Vector2f size = p_body.getSize();
+ 	p_body.setFillColor(Color::Green);
+ 	p_body.setOrigin(size / 2.f);
+-	p_body.setPosition(Vector2f(25., 25.f));
+ 
+ 	//physics
+ 	p_velocity = Vector2f(0.f, 0.f);
+@@ -37,9 +36,15 @@ void player::init()
+ 	p_reticle.setOutlineThickness(2.f);
+ 	p_reticle.setPosition(p_body.getPosition() + p_reticleDistance * p_aimDir);
+ 	p_reticleDistance = 150.f;
++
++	//collision
++	p_collisionProfile.layer = CollisionLayer::PLAYER_LAYER;
++	p_collisionProfile.mask = CollisionLayer::ENEMY_LAYER | CollisionLayer::ENEMY_BULLET_LAYER;
++
++	reset();
+ }
+ 
+-void player::update(double dt, const Vector2f& mousePos)
++void Player::update(double dt, const Vector2f& mousePos)
+ {
+ 	handleMovement(dt);
+ 	handleAiming(mousePos);
+@@ -47,6 +52,7 @@ void player::update(double dt, const Vector2f& mousePos)
+ 	if (InputManager::pad().rightTrigger()) InputManager::pad().setRumble(0.2f, 0.8f);
+ 	else InputManager::pad().setRumble(0.0f, 0.0f);
+ 
++	// Update projectiles and remove any that should be destroyed
+ 	for (auto bullet_it = p_projectiles.begin(); bullet_it != p_projectiles.end(); )
+ 	{
+ 		auto& bullet = *bullet_it;
+@@ -64,7 +70,7 @@ void player::update(double dt, const Vector2f& mousePos)
+ }
+ 
+ 
+-void player::render(RenderWindow& window)
++void Player::render(RenderWindow& window)
+ {
+ 	window.draw(p_body);
+ 	window.draw(p_reticle);
+@@ -73,12 +79,28 @@ void player::render(RenderWindow& window)
+ 		bullet->render(window);
+ }
+ 
+-void player::reset()
++const Vector2f Player::getPosition() const
++{
++	return p_body.getPosition();
++}
++
++sf::FloatRect Player::getCollisionBounds() const
+ {
+-	p_body.setPosition(Vector2f(50., 50.f));
++	return p_body.getGlobalBounds();
+ }
+ 
+-void player::handleMovement(double dt)
++CollisionProfile Player::getCollisionProfile() const
++{
++	return p_collisionProfile;
++}
++
++void Player::reset()
++{
++	p_body.setPosition(Vector2f(500, 500.f));
++	p_health = 1000;
++}
++
++void Player::handleMovement(double dt)
+ {
+ 	//--------- movement logic ---------//
+ 	Vector2f direction{ 0.f, 0.f };
+@@ -105,7 +127,7 @@ void player::handleMovement(double dt)
+ 	p_body.move(p_velocity * static_cast<float>(dt));
+ }
+ 
+-void player::handleAiming(const Vector2f mousePos)
++void Player::handleAiming(const Vector2f mousePos)
+ {
+ 	//--------- aiming logic ---------//
+ 	
+@@ -135,7 +157,21 @@ void player::handleAiming(const Vector2f mousePos)
+ 	//--------- shooting logic ---------// -> this will move to weapon class when made
+ 	if (InputManager::pad().rightTrigger() || Mouse::isButtonPressed(Mouse::Button::Left))
+ 	{
+-		std::unique_ptr<NormalBulletProjectile> newBullet = std::make_unique<NormalBulletProjectile>(p_body.getPosition(), p_aimDir);
++		std::unique_ptr<NormalBulletProjectile> newBullet = std::make_unique<NormalBulletProjectile>(p_body.getPosition(), p_aimDir, true);
+ 		p_projectiles.push_back(std::move(newBullet));
+ 	}
+ }
++
++void Player::takeDamage(int damage)
++{
++	p_health -= damage;
++	if (p_health <= 0)
++	{
++		reset();
++	}
++}
++
++std::vector<std::unique_ptr<Projectile>>& Player::getProjectiles()
++{
++	return p_projectiles;
++}
+diff --git a/project-rival/project-rival/player.h b/project-rival/project-rival/player.h
+index 6ca6499..da30f5a 100644
+--- a/project-rival/project-rival/player.h
++++ b/project-rival/project-rival/player.h
+@@ -2,25 +2,35 @@
+ #include <SFML/Graphics.hpp>
+ #include <Windows.h>
+ #include <Xinput.h>
++
+ #include "Projectile.h"
++#include "Collision.h"
+ 
+ using namespace sf;
+ 
+-class player
++class Player : public ICollidable
+ {
+ public:
+-	player();
+-	~player();
++	Player();
++	~Player();
+ 
+ 	void init();
+ 	void update(double dt, const Vector2f& mousePos);
+ 	void render(RenderWindow& window);
+ 
+-	const Vector2f getPosition() const { return p_body.getPosition(); }
++	const Vector2f getPosition() const;
++	sf::FloatRect getCollisionBounds() const override;
++	CollisionProfile getCollisionProfile() const override;
++
+ 
+ 	void handleMovement(double dt);
+ 	void handleAiming(const Vector2f mousePos);
+ 
++	void takeDamage(int damage);
++
++	// this functions will likely move to weapon class when made
++	std::vector<std::unique_ptr<Projectile>>& getProjectiles();
++
+ private:
+ 	// FUNCTIONS
+ 	void reset();
+@@ -39,6 +49,12 @@ private:
+ 	float p_reticleDistance;
+ 	Vector2f p_prevMousePos;
+ 
++	// collsion
++	CollisionProfile p_collisionProfile;
++
++	// entity stats
++	int p_health;
++
+ 	// projectiles --> test. this will move to weapon class when made
+ 	std::vector<std::unique_ptr<Projectile>> p_projectiles;
+ };
+diff --git a/project-rival/project-rival/project-rival.vcxproj b/project-rival/project-rival/project-rival.vcxproj
+index 0b16d1b..cee6a85 100644
+--- a/project-rival/project-rival/project-rival.vcxproj
++++ b/project-rival/project-rival/project-rival.vcxproj
+@@ -20,6 +20,7 @@
+   </ItemGroup>
+   <ItemGroup>
+     <ClCompile Include="ArriveBehaviour.cpp" />
++    <ClCompile Include="Collision.cpp" />
+     <ClCompile Include="NormalBulletProjectile.cpp" />
+     <ClCompile Include="Projectile.cpp" />
+     <ClCompile Include="Enemy.cpp" />
+@@ -34,6 +35,7 @@
+   </ItemGroup>
+   <ItemGroup>
+     <ClInclude Include="ArriveBehaviour.h" />
++    <ClInclude Include="Collision.h" />
+     <ClInclude Include="NormalBulletProjectile.h" />
+     <ClInclude Include="Projectile.h" />
+     <ClInclude Include="Enemy.h" />
+@@ -66,9 +68,9 @@
+     <None Include="..\automation\prompts\player-aiming-mouse-right-stick-reticle-context.md" />
+     <None Include="..\automation\prompts\steering-enemy-seek-step-by-step-context.md" />
+     <None Include="..\automation\scripts\merge-summary-generator.ps1" />
+-    <None Include="..\automation\scripts\staged-dump.ps1" />
+   </ItemGroup>
+   <ItemGroup>
++    <Text Include="..\automation\scripts\output\aiming-merge-changes.txt" />
+     <Text Include="..\automation\scripts\output\enemies-merge-changes.txt" />
+   </ItemGroup>
+   <PropertyGroup Label="Globals">
+diff --git a/project-rival/project-rival/project-rival.vcxproj.filters b/project-rival/project-rival/project-rival.vcxproj.filters
+index cb6832d..1ccf64b 100644
+--- a/project-rival/project-rival/project-rival.vcxproj.filters
++++ b/project-rival/project-rival/project-rival.vcxproj.filters
+@@ -40,6 +40,15 @@
+     <Filter Include="Header Files\Enemies">
+       <UniqueIdentifier>{641a97c9-ec20-499b-a847-eae07285cfdb}</UniqueIdentifier>
+     </Filter>
++    <Filter Include="Resource Files\AUTOMATIONS\Agent">
++      <UniqueIdentifier>{63056c86-90e2-4897-abae-e538dd6536ac}</UniqueIdentifier>
++    </Filter>
++    <Filter Include="Resource Files\AUTOMATIONS\Scripts">
++      <UniqueIdentifier>{25290212-7808-4d9b-93d3-2c9d0ccc6259}</UniqueIdentifier>
++    </Filter>
++    <Filter Include="Header Files\Projectiles">
++      <UniqueIdentifier>{b9295663-bd23-4a50-bb5f-6ae5e6710b01}</UniqueIdentifier>
++    </Filter>
+   </ItemGroup>
+   <ItemGroup>
+     <ClCompile Include="main.cpp">
+@@ -72,6 +81,15 @@
+     <ClCompile Include="TurretEnemy.cpp">
+       <Filter>Header Files\Enemies</Filter>
+     </ClCompile>
++    <ClCompile Include="Projectile.cpp">
++      <Filter>Header Files\Abs.Classes</Filter>
++    </ClCompile>
++    <ClCompile Include="NormalBulletProjectile.cpp">
++      <Filter>Header Files\Projectiles</Filter>
++    </ClCompile>
++    <ClCompile Include="Collision.cpp">
++      <Filter>Header Files\Abs.Interfaces</Filter>
++    </ClCompile>
+   </ItemGroup>
+   <ItemGroup>
+     <ClInclude Include="Game.h">
+@@ -104,6 +122,15 @@
+     <ClInclude Include="TurretEnemy.h">
+       <Filter>Header Files\Enemies</Filter>
+     </ClInclude>
++    <ClInclude Include="Projectile.h">
++      <Filter>Header Files\Abs.Classes</Filter>
++    </ClInclude>
++    <ClInclude Include="NormalBulletProjectile.h">
++      <Filter>Header Files\Projectiles</Filter>
++    </ClInclude>
++    <ClInclude Include="Collision.h">
++      <Filter>Header Files\Abs.Interfaces</Filter>
++    </ClInclude>
+   </ItemGroup>
+   <ItemGroup>
+     <Image Include="ASSETS\IMAGES\SFML-LOGO.png">
+@@ -116,17 +143,24 @@
+     </Font>
+   </ItemGroup>
+   <ItemGroup>
+-    <None Include="..\docs\Project\Project Proposal Form.docx">
+-      <Filter>Resource Files\DOCUMENTATION</Filter>
+-    </None>
+-    <None Include="..\automation\prompts\steering-enemy-seek-step-by-step-context.md">
+-      <Filter>Resource Files\AUTOMATIONS</Filter>
++    <None Include="..\automation\prompts\docs-architecture-development-log-context.md">
++      <Filter>Resource Files\AUTOMATIONS\Agent</Filter>
+     </None>
+     <None Include="..\automation\prompts\git-staged-changes-to-commit-context.md">
+-      <Filter>Resource Files\AUTOMATIONS</Filter>
++      <Filter>Resource Files\AUTOMATIONS\Agent</Filter>
+     </None>
+-    <None Include="..\automation\prompts\docs-architecture-development-log-context.md">
+-      <Filter>Resource Files\AUTOMATIONS</Filter>
++    <None Include="..\automation\prompts\player-aiming-mouse-right-stick-reticle-context.md">
++      <Filter>Resource Files\AUTOMATIONS\Agent</Filter>
+     </None>
++    <None Include="..\automation\prompts\steering-enemy-seek-step-by-step-context.md">
++      <Filter>Resource Files\AUTOMATIONS\Agent</Filter>
++    </None>
++    <None Include="..\automation\scripts\merge-summary-generator.ps1">
++      <Filter>Resource Files\AUTOMATIONS\Scripts</Filter>
++    </None>
++  </ItemGroup>
++  <ItemGroup>
++    <Text Include="..\automation\scripts\output\aiming-merge-changes.txt" />
++    <Text Include="..\automation\scripts\output\enemies-merge-changes.txt" />
+   </ItemGroup>
+ </Project>
+\ No newline at end of file
+
+===== STAGED FILE CONTENTS (index blobs; skips deletions + binaries) =====
+
+===== FILE: project-rival/automation/prompts/collision-layers-masks-bullet-enemy-context.md =====
+# Collision system context (layers+masks, bullet hits enemy)
+
+[Back to contents](#contents)
+
+## Contents
+1. [Goal of this thread](#goal-of-this-thread)
+2. [Current project structure (relevant bits)](#current-project-structure-relevant-bits)
+3. [Decisions already made](#decisions-already-made)
+4. [Current implementation state (as of this chat)](#current-implementation-state-as-of-this-chat)
+5. [What to change next (recommended minimal fixes)](#what-to-change-next-recommended-minimal-fixes)
+6. [Notes / pitfalls spotted](#notes--pitfalls-spotted)
+
+---
+
+## Goal of this thread
+Establish a **bare-bones** collision system for the SFML game that supports:
+
+- Player fires a bullet
+- Bullet hits an enemy
+- Enemy **recognizes the collision** (takes damage / reacts)
+
+No environmental collision, triggers, broadphase, or complex response rules yet.
+
+[Back to contents](#contents)
+
+---
+
+## Current project structure (relevant bits)
+Ownership in gameplay code:
+
+- `Game` owns enemies: `std::vector<std::unique_ptr<Enemy>> m_enemies;` in `project-rival/Game.h`.
+- `Player` owns bullets/projectiles: `std::vector<std::unique_ptr<Projectile>> p_projectiles;` in `project-rival/player.h`.
+
+Implication:
+
+- The simplest place to perform collision checks is in `Game::update(double dt)` **after** player/enemy updates (because `Game` can see both lists).
+
+[Back to contents](#contents)
+
+---
+
+## Decisions already made
+Design preferences and decisions agreed during this chat:
+
+- **Filtering:** Use **layers + masks** (bitmask filtering). Avoid a global 2D collision matrix unless strongly justified.
+- **Geometry:** Basic AABB overlap is fine for now.
+- **Response:** Keep it minimal. Interfaces can be used as **small capability interfaces** (e.g., `IDamageable`) but avoid interface explosion. For now, a simple `takeDamage(int)` is acceptable.
+- **Ownership:** Keep bullets owned by `Player` for now; expose them to `Game` for collision checks.
+
+[Back to contents](#contents)
+
+---
+
+## Current implementation state (as of this chat)
+### Collision data contract
+A shared collision contract exists:
+
+- `project-rival/Collision.h`
+  - `enum CollisionLayer` is implemented as **bitflags** (`PLAYER_LAYER`, `ENEMY_LAYER`, `PLAYER_BULLET_LAYER`, `ENEMY_BULLET_LAYER`).
+  - `struct CollisionProfile { CollisionLayer layer; uint32_t mask; bool canCollideWith(...) }`
+  - `class ICollidable` exposes:
+    - `virtual sf::FloatRect getCollisionBounds() const = 0;`
+    - `virtual CollisionProfile getCollisionProfile() const = 0;`
+
+### Entities
+- `project-rival/player.h` / `project-rival/player.cpp`
+  - `Player : public ICollidable`
+  - `p_collisionProfile.layer = PLAYER_LAYER;`
+  - `p_collisionProfile.mask = ENEMY_LAYER | ENEMY_BULLET_LAYER;`
+  - `takeDamage(int)` implemented
+  - `getProjectiles()` returns `p_projectiles`
+
+- `project-rival/Enemy.h` / `project-rival/Enemy.cpp`
+  - `Enemy : public ICollidable`
+  - `e_collisionProfile.layer = ENEMY_LAYER;`
+  - `e_collisionProfile.mask = PLAYER_LAYER | PLAYER_BULLET_LAYER;`
+  - `takeDamage(int)`, `isDead()`, `onDeath()` implemented
+
+- `project-rival/Projectile.h` / `project-rival/Projectile.cpp`
+  - `Projectile : public ICollidable`
+  - Constructor takes `bool isFromPlayer` and sets:
+    - if from player: `layer = PLAYER_BULLET_LAYER`, `mask = ENEMY_LAYER`
+    - else: `layer = ENEMY_BULLET_LAYER`, `mask = PLAYER_LAYER`
+  - `applyDamage()` returns `p_damage` (int)
+  - `destroy()` sets `p_shouldDestroy = true`
+
+### Where collision is currently performed
+- `project-rival/Game.cpp`
+  - Collision checks are performed directly inside `Game::update(double dt)`.
+  - Geometry test currently uses **center-point containment**, e.g.:
+    - `enemyBounds.contains(playerBounds.getCenter())`
+    - `bulletBounds.contains(enemyBounds.getCenter())`
+
+This was called out as the main reason the system "technically works" but feels unreliable/unintuitive.
+
+[Back to contents](#contents)
+
+---
+
+## What to change next (recommended minimal fixes)
+### 1) Fix geometry test: use bounds overlap, not `contains(center)`
+Replace the containment checks with AABB overlap:
+
+- SFML 3: `a.findIntersection(b).has_value()`
+
+### 2) Centralize collision logic into one helper
+Add a single reusable function (suggested name):
+
+- `bool areColliding(const ICollidable& a, const ICollidable& b)`
+
+Responsibilities:
+
+- Read both profiles
+- Filter using `CollisionProfile::canCollideWith`
+- Perform AABB overlap check
+
+Use this helper in `Game::update` for:
+
+- Enemy vs Player
+- Bullet vs Enemy
+
+### 3) Bullet vs enemy response logic
+On successful collision:
+
+- Enemy: `enemy->takeDamage(bullet->applyDamage())`
+- Bullet: `bullet->destroy()` and `break` to prevent multi-hit in the same frame
+
+Bullet cleanup:
+
+- `Player::update` already erases bullets when `shouldDestroy()` becomes true (so bullets are removed next update).
+
+### 4) Fix small correctness issues in `Collision.h`
+- `canCollideWith`: compare bitwise results to `0u` (not `CollisionLayer::NONE` on an unscoped enum).
+- Use `1u << n` for enum constants.
+- Consider default initialization for `CollisionProfile` fields.
+
+### 5) Fix `Player::getProjectiles()` declaration
+In `project-rival/player.h`, the return type was observed as `std::vector<std::unique_ptr<Projectile>>& const getProjectiles();` which should be corrected to:
+
+- `std::vector<std::unique_ptr<Projectile>>& getProjectiles();`
+
+[Back to contents](#contents)
+
+---
+
+## Notes / pitfalls spotted
+- Center containment misses many overlaps and produces false negatives/positives.
+- After calling `bullet->destroy()`, ensure the bullet doesnΓÇÖt keep checking and hitting multiple enemies in the same frame (add `if (bullet->shouldDestroy())` guard and/or `break`).
+- Dead enemy cleanup: currently enemies are erased during the main enemy update loop. If bullets can kill enemies after that loop, those deaths may not be erased until the next frame unless an additional cleanup pass is added.
+- `Collision.h` include path uses `"Sfml/Graphics.hpp"` (case mismatch vs `SFML`)ΓÇöworks on Windows, but not portable.
+
+[Back to contents](#contents)
+
+===== FILE: project-rival/docs/Architecture/01-project-structure.md =====
+# 1) Project structure
+
+[Back to architecture index](README.md)
+
+Most gameplay code is inside `project-rival/`.
+
+## Suggested mental model (categories)
+
+### Core / game loop
+
+- `main.cpp`
+- `Game.h` / `Game.cpp`
+
+### Collision
+
+- `Collision.h` / `Collision.cpp`
+
+### Entities
+
+- `player.h` / `player.cpp`
+- `Enemy.h` / `Enemy.cpp` (base class)
+- `GruntEnemy.h` / `GruntEnemy.cpp` (moves using steering)
+- `TurretEnemy.h` / `TurretEnemy.cpp` (static enemy placeholder)
+
+### Input
+
+- `InputManager.h` / `InputManager.cpp`
+- `Gamepad.h` / `Gamepad.cpp`
+
+### Combat / projectiles (early prototype)
+
+- `Projectile.h` / `Projectile.cpp` (base class)
+- `NormalBulletProjectile.h` / `NormalBulletProjectile.cpp` (simple bullet)
+
+### AI / Movement
+
+- `Steering.h`
+
+- `SeekBehaviour.h` / `SeekBehaviour.cpp`
+- `ArriveBehaviour.h` / `ArriveBehaviour.cpp`
+
+This category list is mainly to keep the codebase readable as the number of files grows.
+
+===== FILE: project-rival/docs/Architecture/02-player.md =====
+# 2) Player
+
+[Back to architecture index](README.md)
+
+`Player` (declared in `player.h` / implemented in `player.cpp`) represents the controllable character.
+
+## Responsibilities (current)
+
+- Owns its SFML shape (`p_body`)
+- Reads input (keyboard or gamepad, via `InputManager`)
+- Moves by updating velocity and applying it every update
+- Exposes its position (used as an enemy target)
+
+Also:
+
+- Implements `ICollidable` (so it can participate in collision checks)
+- Has health + `takeDamage(...)` (currently resets when health reaches 0)
+
+Also (current prototype features):
+
+- Aiming (mouse or right stick)
+- Shooting simple projectiles
+
+## Movement (high level)
+
+Movement is handled in `Player::handleMovement(double dt)`:
+
+- build a `direction` vector from input
+  - controller: use `InputManager::pad().leftStick()`
+  - keyboard: WASD
+- normalize it so diagonal movement isnΓÇÖt faster
+- set `p_velocity = direction * p_moveSpeed`
+- move by `p_velocity * dt`
+
+Note: `dt` is expected to be **seconds**.
+
+## Aiming + shooting (high level)
+
+- Aiming:
+  - controller: uses the right stick (`InputManager::pad().rightStick()`)
+  - mouse: uses the direction from player ΓåÆ mouse position
+- A small ΓÇ£reticleΓÇ¥ is drawn in front of the player to show aim direction.
+- Shooting:
+  - right trigger or left mouse button spawns a `NormalBulletProjectile`
+  - projectiles are currently owned by the player (temporary; likely to move into a weapon system later)
+
+## Used by other systems
+
+Enemies use the player position as a target (via `m_player.getPosition()`).
+
+Game code also reads the player's projectiles via `m_player.getProjectiles()` for bullet-vs-enemy collision.
+
+===== FILE: project-rival/docs/Architecture/03-input.md =====
+# 3) Input (high level)
+
+[Back to architecture index](README.md)
+
+The input code is split into two parts:
+
+- `InputManager`: a static helper that owns a `Gamepad`
+- `Gamepad`: a small wrapper around XInput
+
+## `InputManager`
+
+Typical usage:
+
+- call `InputManager::update()` once per frame
+- then read input through `InputManager::pad()`
+
+In `Game::update(dt)`, the current mouse position is also read from the window and passed into `Player::update(...)` for aiming.
+
+## `Gamepad`
+
+Exposes:
+
+- sticks as `sf::Vector2f` in `[-1..1]`
+- triggers in `[0..1]`
+- button states (`down`, `pressed`, `released`)
+- rumble (`setRumble`)
+
+Current gameplay usage examples:
+
+- left stick: movement
+- right stick or mouse: aiming
+- right trigger or left mouse button: shoot
+
+Also applies deadzones to reduce controller drift.
+
+===== FILE: project-rival/docs/Architecture/04-enemy.md =====
+# 4) Enemies (current state)
+
+[Back to architecture index](README.md)
+
+The project currently has an enemy **base class** (`Enemy`) and a couple of concrete enemy types.
+
+## `Enemy` (base class)
+
+`Enemy` (in `Enemy.h/.cpp`) is an **abstract base class** (it has pure virtual functions), so it cannot be instantiated directly.
+
+It provides:
+
+- a visible SFML body (`sf::RectangleShape`)
+- common setup via `initBody(...)`
+- a shared `render(...)`
+- a shared `e_target` member that derived enemies can use
+
+It also implements `ICollidable` and includes basic ΓÇ£combatΓÇ¥ state:
+
+- collision profile (layer/mask)
+- health (`takeDamage(...)`)
+- death flag (`isDead()`)
+
+Currently, enemies collide with:
+
+- the player
+- player-fired bullets
+
+Derived classes must implement:
+
+- `init()`
+- `update(double dt)`
+- `setTarget(const sf::Vector2f& target)`
+
+## `GruntEnemy`
+
+`GruntEnemy` (in `GruntEnemy.h/.cpp`) is a steering-driven moving enemy.
+
+- Owns a `SteeringAgent`
+- Owns both `SeekBehaviour` and `ArriveBehaviour`
+- Auto-switches between behaviours based on distance to target (hysteresis via enter/exit distances)
+
+## `TurretEnemy`
+
+`TurretEnemy` (in `TurretEnemy.h/.cpp`) is currently a placeholder enemy that:
+
+- has a body
+- stores a target (`setTarget` updates `e_target`)
+- does not yet implement any attack or aiming logic
+
+## How enemies are used in the game
+
+In `Game`, enemies are stored as `std::vector<std::unique_ptr<Enemy>>`.
+
+Each update:
+
+- the target is set to the player position (`enemy->setTarget(m_player.getPosition())`)
+- then each enemy is updated (`enemy->update(dt)`)
+
+Collision + damage (current approach):
+
+- If player collides with an enemy, the player takes damage.
+- Player projectiles are checked against enemies; on hit:
+  - enemy takes damage
+  - projectile is destroyed
+- Dead enemies are removed from the `m_enemies` list.
+
+## Likely next steps
+
+- Add actual turret behaviour (aiming / firing / cooldown) for `TurretEnemy`.
+- Consider making enemy tuning values configurable (speed/acceleration/radii) per enemy type.
+
+===== FILE: project-rival/docs/Architecture/07-projectiles.md =====
+# 7) Projectiles (prototype)
+
+[Back to architecture index](README.md)
+
+The project has an early projectile system used for simple shooting.
+
+## `Projectile` (base class)
+
+`Projectile` (in `Projectile.h/.cpp`) is an abstract base class.
+
+It provides:
+
+- a visible body (`sf::RectangleShape`)
+- a lifetime timer (`p_lifetime`)
+- `shouldDestroy()` so owners can remove expired projectiles
+- `render(...)`
+
+It also implements `ICollidable` so projectiles can participate in collision checks.
+
+Projectiles also set a collision profile based on who fired them:
+
+- player-fired bullets collide with enemies
+- enemy-fired bullets collide with the player
+
+Derived projectiles are expected to:
+
+- implement `init()`
+- implement `update(double dt)`
+- call `onExpire(dt)` if they want lifetime-based cleanup
+
+## `NormalBulletProjectile`
+
+`NormalBulletProjectile` is a simple bullet:
+
+- stores a direction
+- moves at a fixed speed each update
+- expires after a short lifetime
+
+It also sets a basic damage value (`applyDamage()`).
+
+## Current ownership
+
+Right now, the `Player` owns a `std::vector<std::unique_ptr<Projectile>>` and spawns bullets when the player shoots.
+
+This is marked in code as ΓÇ£testΓÇ¥ and can later be moved to a weapon system.
+
+===== FILE: project-rival/docs/Architecture/08-collision-and-damage.md =====
+# 8) Collision + damage (current approach)
+
+[Back to architecture index](README.md)
+
+This project uses a simple collision system with **layers** and **masks** to filter which objects can collide.
+
+## Collision layers and masks
+
+Defined in `Collision.h`:
+
+- `CollisionLayer` (bit flags)
+  - examples: `PLAYER_LAYER`, `ENEMY_LAYER`, `PLAYER_BULLET_LAYER`
+- `CollisionProfile`
+  - `layer`: what this object *is*
+  - `mask`: what this object *can collide with*
+
+Two objects are allowed to collide if:
+
+- AΓÇÖs mask contains BΓÇÖs layer **and**
+- BΓÇÖs mask contains AΓÇÖs layer
+
+## `ICollidable` (capability interface)
+
+Also in `Collision.h`:
+
+- `ICollidable` requires:
+  - `getCollisionBounds()` (an `sf::FloatRect`)
+  - `getCollisionProfile()`
+
+Current gameplay types that implement it:
+
+- `Player`
+- `Enemy` (and all enemy subclasses)
+- `Projectile` (and bullet subclasses)
+
+## Collision checks
+
+`CollisionCheck::areColliding(a, b)` (in `Collision.cpp`) does:
+
+1. layer/mask filtering (`CollisionProfile::canCollideWith`)
+2. bounding box intersection test (SFML rectangles)
+
+## Damage flow (high level)
+
+Right now, the main damage logic lives in `Game::update(dt)`:
+
+- Player vs enemy collision ΓåÆ `m_player.takeDamage(...)`
+- Player bullets vs enemies:
+  - `enemy->takeDamage(bullet->applyDamage())`
+  - `bullet->destroy()`
+- If an enemy reports `isDead()` it is removed from the enemies list.
+
+===== FILE: project-rival/docs/Architecture/README.md =====
+# Architecture
+
+A high-level, beginner-friendly overview of how the main gameplay-related code is organized.
+
+[Back to docs index](../README.md)
+
+## Table of contents
+
+1. [Project structure](01-project-structure.md)
+2. [Player](02-player.md)
+3. [Input (high level)](03-input.md)
+4. [Enemies (current state)](04-enemy.md)
+5. [Steering (AI) + OOP concepts](05-steering-oop.md)
+6. [Coding / design conventions](06-coding-conventions.md)
+7. [Projectiles (prototype)](07-projectiles.md)
+8. [Collision + damage](08-collision-and-damage.md)
+
+===== FILE: project-rival/project-rival/Collision.cpp =====
+#include "Collision.h"
+
+bool CollisionCheck::areColliding(const ICollidable& entity_A, const ICollidable& entity_B)
+{
+	const CollisionProfile pa = entity_A.getCollisionProfile();
+	const CollisionProfile pb = entity_B.getCollisionProfile();
+
+	const sf::FloatRect cba = entity_A.getCollisionBounds();
+	const sf::FloatRect cbb = entity_B.getCollisionBounds();
+
+
+	if (pa.canCollideWith(pb))
+	{
+		bool isIntersecting = cba.findIntersection(cbb).has_value();
+		return isIntersecting;
+	}
+	else
+		return false;
+}
+
+===== FILE: project-rival/project-rival/Collision.h =====
+#pragma once
+#include "Sfml/Graphics.hpp"
+
+enum CollisionLayer : uint32_t
+{
+	NONE = 0,
+
+	PLAYER_LAYER = 1 << 0,
+	ENEMY_LAYER = 1 << 1,
+	PLAYER_BULLET_LAYER = 1 << 2,
+	ENEMY_BULLET_LAYER = 1 << 3,
+};
+
+struct CollisionProfile
+{
+	CollisionLayer layer;
+	uint32_t mask;
+
+	bool canCollideWith(const CollisionProfile& other) const
+	{
+		//  check if the other object's layer is in our mask AND also if our layer is in the other object's mask.
+		return (((mask & other.layer) != CollisionLayer::NONE) && ((other.mask & layer) != CollisionLayer::NONE));
+	}
+};
+
+class ICollidable
+{
+public:
+	virtual ~ICollidable() = default;
+
+	virtual sf::FloatRect getCollisionBounds() const = 0;
+	virtual CollisionProfile getCollisionProfile() const = 0;
+};
+
+class CollisionCheck {
+	public:
+		static bool areColliding(const ICollidable& entity_A, const ICollidable& entity_B);
+};
+
+===== FILE: project-rival/project-rival/Enemy.cpp =====
+#include "Enemy.h"
+using namespace sf;
+
+Enemy::Enemy(const sf::Vector2f startPos, int totalHealth) :
+	e_startPos(startPos), e_health(totalHealth)
+{
+	e_isDead = false;
+
+	e_collisionProfile.layer = CollisionLayer::ENEMY_LAYER;
+	e_collisionProfile.mask = CollisionLayer::PLAYER_LAYER | CollisionLayer::PLAYER_BULLET_LAYER;
+}
+
+void Enemy::initBody(const sf::Vector2f& size, const sf::Color& colour)
+{
+	//--------- body setup ---------//
+	e_body.setSize(size);
+	e_body.setFillColor(colour);
+	e_body.setOrigin(size / 2.f);
+	e_body.setPosition(e_startPos);
+}
+
+void Enemy::render(sf::RenderWindow& window)
+{
+	window.draw(e_body);
+}
+
+sf::FloatRect Enemy::getCollisionBounds() const
+{
+	return e_body.getGlobalBounds();
+}
+
+CollisionProfile Enemy::getCollisionProfile() const
+{
+	return e_collisionProfile;
+}
+
+void Enemy::takeDamage(int damage)
+{
+	e_health -= damage;
+	if (e_health <= 0)
+		onDeath();
+}
+
+void Enemy::onDeath()
+{
+	e_isDead = true;
+}
+
+bool Enemy::isDead() const
+{
+	return e_isDead;
+}
+
+===== FILE: project-rival/project-rival/Enemy.h =====
+#pragma once
+#include<iostream>
+#include <SFML/graphics.hpp>
+
+#include "SeekBehaviour.h"
+#include "ArriveBehaviour.h"
+
+#include "Collision.h"
+
+class Enemy : public ICollidable
+{
+public:
+	Enemy(const sf::Vector2f startPos, int totalHealth);
+
+	virtual void init() = 0;
+	virtual void update(double dt) = 0;
+	virtual void render(sf::RenderWindow& window);
+
+	virtual void setTarget(const Vector2f& target) = 0;
+
+	virtual sf::FloatRect getCollisionBounds() const override;
+	virtual CollisionProfile getCollisionProfile() const override;
+
+	virtual void takeDamage(int damage);
+	virtual void onDeath();
+	virtual bool isDead() const;
+
+protected:
+	void initBody(const sf::Vector2f& size, const sf::Color& colour);
+
+	sf::RectangleShape e_body;
+	sf::Vector2f e_startPos;
+	sf::Vector2f e_target{ 0.f, 0.f };
+
+	CollisionProfile e_collisionProfile;
+
+	// entity stats
+	int e_health;
+	bool e_isDead;
+};
+
+
+===== FILE: project-rival/project-rival/Game.cpp =====
+#include "Game.h"
+#include "InputManager.h"
+#include "GruntEnemy.h"
+#include "TurretEnemy.h"
+#include <iostream>
+
+// Our target FPS
+static double const FPS{ 60.0f };
+
+////////////////////////////////////////////////////////////
+Game::Game()
+	: m_window(sf::VideoMode(sf::Vector2u(ScreenSize::s_width, ScreenSize::s_height), 32), "FYP: Dungeonish Crawler", sf::Style::Default)
+{
+	srand(time(NULL));
+	init();
+}
+
+////////////////////////////////////////////////////////////
+void Game::init()
+{
+	// Really only necessary is our target FPS is greater than 60.
+	m_window.setVerticalSyncEnabled(true);
+	
+	if (!m_arialFont.openFromFile("ASSETS/FONTS/ariblk.ttf"))
+	{
+		std::cout << "Error loading font file";
+	}
+
+#ifdef TEST_FPS
+	x_updateFPS.setFont(m_arialFont);
+	x_updateFPS.setPosition(sf::Vector2f(20, 300));
+	x_updateFPS.setCharacterSize(24);
+	x_updateFPS.setFillColor(sf::Color::White);
+	x_drawFPS.setFont(m_arialFont);
+	x_drawFPS.setPosition(sf::Vector2f(20, 350));
+	x_drawFPS.setCharacterSize(24);
+	x_drawFPS.setFillColor(sf::Color::White);
+#endif
+
+	gameStart();
+}
+
+////////////////////////////////////////////////////////////
+void Game::run()
+{
+	sf::Clock clock;
+	sf::Time timeSinceLastUpdate = sf::Time::Zero;
+	
+	sf::Time timePerFrame = sf::seconds(1.0f / FPS); // 60 fps
+	while (m_window.isOpen())
+	{
+		processEvents(); // as many as possible
+		timeSinceLastUpdate += clock.restart();
+		while (timeSinceLastUpdate > timePerFrame)
+		{
+			timeSinceLastUpdate -= timePerFrame;
+			processEvents(); // at least 60 fps
+			update(timePerFrame.asSeconds()); //60 fps
+#ifdef TEST_FPS
+			x_secondTime += timePerFrame;
+			x_updateFrameCount++;
+			if (x_secondTime.asSeconds() > 1)
+			{
+				std::string updatesPS = "UPS " + std::to_string(x_updateFrameCount - 1);
+				x_updateFPS.setString(updatesPS);
+				std::string drawsPS = "DPS " + std::to_string(x_drawFrameCount);
+				x_drawFPS.setString(drawsPS);
+				x_updateFrameCount = 0;
+				x_drawFrameCount = 0;
+				x_secondTime = sf::Time::Zero;
+			}
+#endif
+		}
+		render(); // as many as possible
+#ifdef TEST_FPS
+		x_drawFrameCount++;
+#endif
+	}
+}
+
+////////////////////////////////////////////////////////////
+void Game::processEvents()
+{
+    while (const std::optional event = m_window.pollEvent())
+    {
+        if (event->is<sf::Event::Closed>())
+        {
+            m_window.close();
+        }
+        processGameEvents(*event);
+    }
+}
+
+
+////////////////////////////////////////////////////////////
+void Game::processGameEvents(const sf::Event& event)
+{
+	if (const auto* keyPressed = event.getIf<sf::Event::KeyPressed>())
+	{
+		switch (keyPressed->scancode)
+		{
+		case sf::Keyboard::Scancode::Escape:
+			m_window.close();
+			break;
+		case sf::Keyboard::Scancode::Up:
+			// Up key was pressed...
+			break;
+		default:
+			break;
+		}
+	}
+}
+
+
+////////////////////////////////////////////////////////////
+void Game::update(double dt)
+{
+	const Vector2i mousePos = Mouse::getPosition(m_window);
+	const Vector2f mousePosF = m_window.mapPixelToCoords(mousePos);
+
+	InputManager::update();
+
+	// Update player and enemies
+	m_player.update(dt, mousePosF);
+	for (auto enemy_it = m_enemies.begin(); enemy_it != m_enemies.end();)
+	{
+		auto& enemy = *enemy_it;
+		enemy->setTarget(m_player.getPosition());
+		enemy->update(dt);
+
+		// Check collision with player
+		if (CollisionCheck::areColliding(m_player, *enemy)) {
+			cout << "Player collided with enemy!\n";
+			m_player.takeDamage(10);
+		}
+
+		// Check if enemy is dead and remove if so
+		if (enemy->isDead())
+		{
+			enemy_it = m_enemies.erase(enemy_it);
+		}
+		else
+			enemy_it++;
+	}
+
+	// Collision checks
+	// Check player projectiles against enemies
+	for (auto& bullet : m_player.getProjectiles()) 
+	{
+		if(!bullet || bullet->shouldDestroy())
+			continue;
+
+		for (auto& enemy : m_enemies) {
+			if (!enemy || enemy->isDead())
+				continue;
+
+			if (CollisionCheck::areColliding(*bullet, *enemy))
+			{
+				enemy->takeDamage(bullet->applyDamage());
+				bullet->destroy();
+				break; // gets rid of bug where bullet hits multiple enemies
+			}
+		}
+	}
+}
+
+////////////////////////////////////////////////////////////
+void Game::render()
+{
+	m_window.clear(sf::Color(0, 0, 0, 0));
+	m_player.render(m_window);
+	for (auto& enemy : m_enemies) {
+		enemy->render(m_window);
+	}
+
+#ifdef TEST_FPS
+	m_window.draw(x_updateFPS); //ups is 60 and dps is 61
+	m_window.draw(x_drawFPS);
+#endif
+	m_window.display();
+}
+
+
+void Game::gameStart()
+{
+	for (int i = 0; i < 5; i++)
+	{
+		sf::Vector2f randEnemyPos{ static_cast<float>(rand() % ScreenSize::s_width), static_cast<float>(rand() % ScreenSize::s_height) };
+		m_enemies.push_back(std::make_unique<GruntEnemy>(randEnemyPos, 150));
+		m_enemies.push_back(std::make_unique<TurretEnemy>(randEnemyPos, 250));
+	}
+}
+
+===== FILE: project-rival/project-rival/Game.h =====
+#pragma once
+
+// If VS Debug build is enabled, then any block of code enclosed within 
+//  the preprocessor directive #ifdef TEST_FPS is compiled and executed.
+#ifdef _DEBUG
+#define TEST_FPS
+#endif // _DEBUG
+
+#include <SFML/Graphics.hpp>
+#include <string>
+
+#include "player.h"
+#include "Enemy.h"
+
+using namespace std;
+using namespace sf;
+
+/// <summary>
+/// @author OA-O
+/// @date November 2025
+/// @version 1.0
+/// 
+/// </summary>
+
+struct ScreenSize
+{
+public:
+	static const int s_width{ 1440 };
+
+	static const int s_height{ 900 };
+};
+
+class Game
+{
+public:
+	Game();
+	void run();
+
+protected:
+	void init();
+	void update(double dt);
+
+	void render();
+
+	void processEvents();
+	void processGameEvents(const sf::Event&);
+
+	sf::Font m_arialFont{ "ASSETS/FONTS/ariblk.ttf" };
+	sf::RenderWindow m_window;
+
+	Player m_player;
+
+	std::vector<std::unique_ptr<Enemy>> m_enemies;
+
+#ifdef TEST_FPS
+	sf::Text x_updateFPS{ m_arialFont };	// text used to display updates per second.
+	sf::Text x_drawFPS{  m_arialFont };	// text used to display draw calls per second.
+	sf::Time x_secondTime{ sf::Time::Zero };			// counter used to establish when a second has passed.
+	int x_updateFrameCount{ 0 };						// updates per second counter.
+	int x_drawFrameCount{ 0 };							// draws per second counter.
+#endif // TEST_FPS
+
+
+private:
+	void gameStart();
+};
+
+===== FILE: project-rival/project-rival/GruntEnemy.cpp =====
+#include "GruntEnemy.h"
+
+namespace
+{
+	float length(const sf::Vector2f& v) //magnitude (line length of the vector)
+	{
+		return std::sqrt(v.x * v.x + v.y * v.y);
+	}
+}
+
+GruntEnemy::GruntEnemy(const sf::Vector2f pos, int totalHealth)
+	:Enemy(pos, totalHealth)
+{
+	initBody(sf::Vector2f(50.f, 50.f), sf::Color::Red);
+	init();
+}
+
+void GruntEnemy::init()
+{
+	//--------- steering setup ---------//
+	e_agent.position = e_body.getPosition();
+	e_agent.velocity = Vector2f(0.f, 0.f);
+	e_agent.maxSpeed = 200.f; //consider making this a parameter of the constructor if we want different types of enemies with different speeds.
+	e_agent.maxAcceleration = 100.f; //consider making this a parameter of the constructor if we want different types of enemies with different accelerations.
+
+	e_currBehaviour = &e_seek; //default behaviour is seek, but we can change this later with setBehaviour() if we want to test other behaviours.
+
+	//--------- behaviour setup ---------//
+	// Derive switching distances from a "gap" value to avoid jittering when switching behaviours
+	const float base = std::max(e_arrive.getSlowRadius(), e_arrive.getStopRadius());
+	const float gap = 100.f;
+	e_arriveEnterDist = base;
+	e_arriveExitDist = base + gap;
+}
+
+void GruntEnemy::update(double dt)
+{
+	if (e_currBehaviour != nullptr)
+	{
+		const float disToTarget = length(e_target - e_agent.position);
+
+		// Auto Switchin behaviours
+		if (e_currBehaviour == &e_seek) {
+			if (disToTarget <= e_arriveEnterDist)
+			{
+				e_currBehaviour = &e_arrive;
+			}
+		}
+		else if (e_currBehaviour == &e_arrive) {
+			if (disToTarget > e_arriveExitDist)
+			{
+				e_currBehaviour = &e_seek;
+			}
+		}
+
+		float dtS = static_cast<float>(dt);
+
+		// 1) Get the steering (acceleration) from the current behaviour.
+		const Vector2f steering = e_currBehaviour->getSteering(e_agent);
+
+		// 2) v = v + a * dt
+		e_agent.velocity += steering * dtS;
+
+		// 3) Clamp velocity to max speed.
+		const float speed = length(e_agent.velocity);
+		if (speed > e_agent.maxSpeed && speed > 0.f) {
+			e_agent.velocity = (e_agent.velocity / speed) * e_agent.maxSpeed;
+		}
+
+		// 4) p = p + v * dt
+		e_agent.position += e_agent.velocity * dtS;
+
+		e_body.setPosition(e_agent.position);
+	}
+}
+
+void GruntEnemy::setTarget(const Vector2f& target)
+{
+	e_target = target;
+
+	e_seek.setTarget(target);
+	e_arrive.setTarget(target);
+}
+
+
+===== FILE: project-rival/project-rival/GruntEnemy.h =====
+#pragma once
+#include "Enemy.h"
+
+class GruntEnemy : public Enemy
+{
+public: 
+	GruntEnemy(const sf::Vector2f pos, int totalHealth);
+	~GruntEnemy() = default;
+
+	void init() override;
+	void update(double dt) override;
+	void setTarget(const Vector2f& target) override;
+
+
+private:
+	SteeringAgent e_agent;
+	SeekBehaviour e_seek{ Vector2f(0.f,0.f) };
+	ArriveBehaviour e_arrive{ Vector2f(0.f,0.f), 500.f, 250.f };
+	ISteeringBehaviour* e_currBehaviour{ nullptr };
+
+	float e_arriveEnterDist;
+	float e_arriveExitDist;
+};
+
+
+===== FILE: project-rival/project-rival/NormalBulletProjectile.cpp =====
+#include "NormalBulletProjectile.h"
+
+NormalBulletProjectile::NormalBulletProjectile(sf::Vector2f spawnPoint, sf::Vector2f direction, bool isFromPlayer) :
+	Projectile(spawnPoint, nbp_lifetime, isFromPlayer), nbp_dir(direction)
+{
+	init();
+}
+
+void NormalBulletProjectile::init()
+{
+	if (nbp_dir != sf::Vector2f{ 0.f,0.f })
+		nbp_dir = nbp_dir.normalized();
+	else
+		destroy();
+
+	// set damage
+	p_damage = 1;
+}
+
+void NormalBulletProjectile::update(double dt)
+{
+	float dtf = static_cast<float>(dt);
+	p_body.move(nbp_dir * nbp_speed * dtf);
+	onExpire(dtf);
+}
+
+===== FILE: project-rival/project-rival/NormalBulletProjectile.h =====
+#pragma once
+#include "Projectile.h"
+
+class NormalBulletProjectile : public Projectile
+{
+public:
+	NormalBulletProjectile(sf::Vector2f spawnPoint, sf::Vector2f direction, bool isFromPlayer);
+	~NormalBulletProjectile() = default;
+
+	void init() override;
+	void update(double dt) override;
+
+private:
+	static constexpr float nbp_lifetime = 5.f; // need this to be initialised at the samee time as projectile
+	sf::Vector2f nbp_dir;
+	float nbp_speed{ 500.f };
+};
+
+
+===== FILE: project-rival/project-rival/Projectile.cpp =====
+#include "Projectile.h"
+
+Projectile::Projectile(sf::Vector2f spawnPoint, float lifetime, bool isFromPlayer) :
+	p_spawnPoint(spawnPoint), p_lifetime(lifetime), p_isFromPlayer(isFromPlayer)
+{
+	init_body();
+
+	if(isFromPlayer)
+	{
+		p_collisionProfile.layer = CollisionLayer::PLAYER_BULLET_LAYER;
+		p_collisionProfile.mask = CollisionLayer::ENEMY_LAYER;
+	}
+	else
+	{
+		p_collisionProfile.layer = CollisionLayer::ENEMY_BULLET_LAYER;
+		p_collisionProfile.mask = CollisionLayer::PLAYER_LAYER;
+	}
+	// add other collision masks for environment (e.g. walls)
+	// like so ----> p_collisionProfile.mask |= CollisionLayer::LEVEL_LAYER;
+}
+
+void Projectile::render(sf::RenderWindow& window)
+{
+	window.draw(p_body);
+}
+
+sf::FloatRect Projectile::getCollisionBounds() const
+{
+	return p_body.getGlobalBounds();
+}
+
+CollisionProfile Projectile::getCollisionProfile() const
+{
+	return p_collisionProfile;
+}
+
+bool Projectile::shouldDestroy() const
+{
+	return p_shouldDestroy;
+}
+
+int Projectile::applyDamage() const
+{
+	return p_damage;
+}
+
+void Projectile::init_body()
+{
+	p_body.setSize(sf::Vector2f(10.f, 10.f));
+	p_body.setFillColor(sf::Color::White);
+	p_body.setOrigin(p_body.getSize() / 2.f);
+	p_body.setPosition(p_spawnPoint);
+}
+
+void Projectile::onExpire(float dt)
+{
+	p_lifetime -= dt;
+	if (p_lifetime <= 0.f)
+		destroy();
+}
+
+void Projectile::destroy()
+{
+	p_shouldDestroy = true;
+}
+
+
+===== FILE: project-rival/project-rival/Projectile.h =====
+#pragma once
+#include "SFML/Graphics.hpp"
+
+#include "Collision.h"
+
+class Projectile : public ICollidable
+{
+public:
+	Projectile(sf::Vector2f spawnPoint, float lifetime, bool isFromPlayer);
+	virtual ~Projectile() = default;
+
+	virtual void init() = 0;
+	virtual void update(double dt) = 0;
+	virtual void render(sf::RenderWindow& window);
+
+	virtual sf::FloatRect getCollisionBounds() const override;
+	virtual CollisionProfile getCollisionProfile() const override;
+
+	virtual bool shouldDestroy() const;
+
+	virtual int applyDamage() const;
+	virtual void destroy();
+
+protected:
+	void init_body();
+	virtual void onExpire(float dt);
+
+	bool p_shouldDestroy{ false };
+
+	sf::RectangleShape p_body;
+	sf::Vector2f p_spawnPoint;
+	sf::Vector2f p_target;
+
+	bool p_isFromPlayer;
+	CollisionProfile p_collisionProfile;
+
+	float p_lifetime{ 50.f };
+
+	int p_damage;	// set damage in sub classes
+};
+
+
+===== FILE: project-rival/project-rival/TurretEnemy.cpp =====
+#include "TurretEnemy.h"
+
+TurretEnemy::TurretEnemy(const sf::Vector2f pos, int totalHealth)
+	:Enemy(pos, totalHealth)
+{
+	initBody(sf::Vector2f(50.f, 50.f), sf::Color::Blue);
+	init();
+}
+
+void TurretEnemy::init()
+{
+}
+
+void TurretEnemy::update(double dt)
+{
+}
+
+void TurretEnemy::setTarget(const Vector2f& target)
+{
+	e_target = target;
+}
+
+===== FILE: project-rival/project-rival/TurretEnemy.h =====
+#pragma once
+#include "Enemy.h"
+
+class TurretEnemy : public Enemy
+{
+public:
+	TurretEnemy(const sf::Vector2f pos, int totalHealth);
+	~TurretEnemy() = default;
+
+	void init() override;
+	void update(double dt) override;
+	void setTarget(const Vector2f& target) override;
+
+private:
+
+};
+
+
+===== FILE: project-rival/project-rival/player.cpp =====
+#include "player.h"
+#include "InputManager.h"
+#include "NormalBulletProjectile.h"
+
+namespace {
+	float length(const Vector2f& v) {
+		return std::sqrt(v.x * v.x + v.y * v.y);
+	}
+}
+
+Player::Player()
+{
+	init();
+}
+
+Player::~Player()
+{
+}
+
+void Player::init()
+{
+	//body
+	p_body.setSize(Vector2f(50.f, 75.f));
+	Vector2f size = p_body.getSize();
+	p_body.setFillColor(Color::Green);
+	p_body.setOrigin(size / 2.f);
+
+	//physics
+	p_velocity = Vector2f(0.f, 0.f);
+
+	//reticle
+	p_reticle.setRadius(10.f);
+	p_reticle.setOrigin(Vector2f(p_reticle.getRadius(), p_reticle.getRadius()));
+	p_reticle.setFillColor(Color::Transparent);
+	p_reticle.setOutlineColor(Color::Yellow);
+	p_reticle.setOutlineThickness(2.f);
+	p_reticle.setPosition(p_body.getPosition() + p_reticleDistance * p_aimDir);
+	p_reticleDistance = 150.f;
+
+	//collision
+	p_collisionProfile.layer = CollisionLayer::PLAYER_LAYER;
+	p_collisionProfile.mask = CollisionLayer::ENEMY_LAYER | CollisionLayer::ENEMY_BULLET_LAYER;
+
+	reset();
+}
+
+void Player::update(double dt, const Vector2f& mousePos)
+{
+	handleMovement(dt);
+	handleAiming(mousePos);
+
+	if (InputManager::pad().rightTrigger()) InputManager::pad().setRumble(0.2f, 0.8f);
+	else InputManager::pad().setRumble(0.0f, 0.0f);
+
+	// Update projectiles and remove any that should be destroyed
+	for (auto bullet_it = p_projectiles.begin(); bullet_it != p_projectiles.end(); )
+	{
+		auto& bullet = *bullet_it;
+		bullet->update(dt);
+
+		if (bullet->shouldDestroy())
+		{
+			bullet_it = p_projectiles.erase(bullet_it);
+		}
+		else
+		{
+			bullet_it++;
+		}
+	}
+}
+
+
+void Player::render(RenderWindow& window)
+{
+	window.draw(p_body);
+	window.draw(p_reticle);
+
+	for (const auto& bullet : p_projectiles)
+		bullet->render(window);
+}
+
+const Vector2f Player::getPosition() const
+{
+	return p_body.getPosition();
+}
+
+sf::FloatRect Player::getCollisionBounds() const
+{
+	return p_body.getGlobalBounds();
+}
+
+CollisionProfile Player::getCollisionProfile() const
+{
+	return p_collisionProfile;
+}
+
+void Player::reset()
+{
+	p_body.setPosition(Vector2f(500, 500.f));
+	p_health = 1000;
+}
+
+void Player::handleMovement(double dt)
+{
+	//--------- movement logic ---------//
+	Vector2f direction{ 0.f, 0.f };
+
+	const Vector2f ls = InputManager::pad().leftStick();
+	const bool isControllerActive = (ls.x != 0.f || ls.y != 0.f);
+
+	if (isControllerActive) // Gamepad input
+	{
+		direction += ls.normalized();
+	}
+	else // Keyboard input
+	{
+		if (Keyboard::isKeyPressed(Keyboard::Key::W)) { direction.y -= 1.f; }
+		if (Keyboard::isKeyPressed(Keyboard::Key::S)) { direction.y += 1.f; }
+		if (Keyboard::isKeyPressed(Keyboard::Key::A)) { direction.x -= 1.f; }
+		if (Keyboard::isKeyPressed(Keyboard::Key::D)) { direction.x += 1.f; }
+
+		if (direction.x != 0.f || direction.y != 0.f)
+			direction = direction.normalized();
+	}
+
+	p_velocity = direction * p_moveSpeed;
+	p_body.move(p_velocity * static_cast<float>(dt));
+}
+
+void Player::handleAiming(const Vector2f mousePos)
+{
+	//--------- aiming logic ---------//
+	
+	// Are we on Controller or Mouse
+	const Vector2f rs = InputManager::pad().rightStick();
+	const bool isRSMoved = (rs.x != 0.f || rs.y != 0.f);
+
+	const Vector2f mouseDelta = mousePos - p_prevMousePos;
+	const bool isMouseMoved = (length(mouseDelta) > 0.5f);
+
+	if (isRSMoved) p_isController = true;
+	else if (isMouseMoved) p_isController = false;
+
+	// Calculate and normalise aim direction
+	Vector2f aimVector;
+	if (p_isController) aimVector = rs;
+	else aimVector = mousePos - p_body.getPosition();
+
+	if (aimVector != Vector2f(0.f, 0.f))	// avoid crash out on controller since we can't normalise a zero vector
+		p_aimDir = aimVector.normalized();
+	else p_aimDir = Vector2f(0.f, 0.f);
+
+	p_reticle.setPosition(p_body.getPosition() + p_aimDir * p_reticleDistance);
+
+	p_prevMousePos = mousePos;
+
+	//--------- shooting logic ---------// -> this will move to weapon class when made
+	if (InputManager::pad().rightTrigger() || Mouse::isButtonPressed(Mouse::Button::Left))
+	{
+		std::unique_ptr<NormalBulletProjectile> newBullet = std::make_unique<NormalBulletProjectile>(p_body.getPosition(), p_aimDir, true);
+		p_projectiles.push_back(std::move(newBullet));
+	}
+}
+
+void Player::takeDamage(int damage)
+{
+	p_health -= damage;
+	if (p_health <= 0)
+	{
+		reset();
+	}
+}
+
+std::vector<std::unique_ptr<Projectile>>& Player::getProjectiles()
+{
+	return p_projectiles;
+}
+
+===== FILE: project-rival/project-rival/player.h =====
+#pragma once
+#include <SFML/Graphics.hpp>
+#include <Windows.h>
+#include <Xinput.h>
+
+#include "Projectile.h"
+#include "Collision.h"
+
+using namespace sf;
+
+class Player : public ICollidable
+{
+public:
+	Player();
+	~Player();
+
+	void init();
+	void update(double dt, const Vector2f& mousePos);
+	void render(RenderWindow& window);
+
+	const Vector2f getPosition() const;
+	sf::FloatRect getCollisionBounds() const override;
+	CollisionProfile getCollisionProfile() const override;
+
+
+	void handleMovement(double dt);
+	void handleAiming(const Vector2f mousePos);
+
+	void takeDamage(int damage);
+
+	// this functions will likely move to weapon class when made
+	std::vector<std::unique_ptr<Projectile>>& getProjectiles();
+
+private:
+	// FUNCTIONS
+	void reset();
+
+	// VARIABLES
+	RectangleShape p_body;
+
+	Vector2f p_velocity{ 0.f, 0.f };
+	float p_moveSpeed{ 200.f };
+
+	bool p_isController;
+
+	// reticle
+	CircleShape p_reticle;
+	Vector2f p_aimDir{ 0.f,0.f };
+	float p_reticleDistance;
+	Vector2f p_prevMousePos;
+
+	// collsion
+	CollisionProfile p_collisionProfile;
+
+	// entity stats
+	int p_health;
+
+	// projectiles --> test. this will move to weapon class when made
+	std::vector<std::unique_ptr<Projectile>> p_projectiles;
+};
+
+
+===== FILE: project-rival/project-rival/project-rival.vcxproj =====
+∩╗┐<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="ArriveBehaviour.cpp" />
+    <ClCompile Include="Collision.cpp" />
+    <ClCompile Include="NormalBulletProjectile.cpp" />
+    <ClCompile Include="Projectile.cpp" />
+    <ClCompile Include="Enemy.cpp" />
+    <ClCompile Include="Game.cpp" />
+    <ClCompile Include="Gamepad.cpp" />
+    <ClCompile Include="GruntEnemy.cpp" />
+    <ClCompile Include="InputManager.cpp" />
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="player.cpp" />
+    <ClCompile Include="SeekBehaviour.cpp" />
+    <ClCompile Include="TurretEnemy.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="ArriveBehaviour.h" />
+    <ClInclude Include="Collision.h" />
+    <ClInclude Include="NormalBulletProjectile.h" />
+    <ClInclude Include="Projectile.h" />
+    <ClInclude Include="Enemy.h" />
+    <ClInclude Include="Game.h" />
+    <ClInclude Include="Gamepad.h" />
+    <ClInclude Include="GruntEnemy.h" />
+    <ClInclude Include="InputManager.h" />
+    <ClInclude Include="player.h" />
+    <ClInclude Include="SeekBehaviour.h" />
+    <ClInclude Include="Steering.h" />
+    <ClInclude Include="TurretEnemy.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="ASSETS\IMAGES\SFML-LOGO.png">
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</DeploymentContent>
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</DeploymentContent>
+    </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <Font Include="ASSETS\FONTS\ariblk.ttf">
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</DeploymentContent>
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</DeploymentContent>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</ExcludedFromBuild>
+    </Font>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\automation\prompts\docs-architecture-development-log-context.md" />
+    <None Include="..\automation\prompts\git-staged-changes-to-commit-context.md" />
+    <None Include="..\automation\prompts\player-aiming-mouse-right-stick-reticle-context.md" />
+    <None Include="..\automation\prompts\steering-enemy-seek-step-by-step-context.md" />
+    <None Include="..\automation\scripts\merge-summary-generator.ps1" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="..\automation\scripts\output\aiming-merge-changes.txt" />
+    <Text Include="..\automation\scripts\output\enemies-merge-changes.txt" />
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>15.0</VCProjectVersion>
+    <ProjectGuid>{72f74580-4c0c-4adc-be48-d33f3c5aa1ef}</ProjectGuid>
+    <RootNamespace>project_rival</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v145</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v145</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v145</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v145</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup />
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>$(SFML_SDK)/include</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <AdditionalLibraryDirectories>$(SFML_SDK)\lib</AdditionalLibraryDirectories>
+      <AdditionalDependencies>xinput.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>true</SDLCheck>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>$(SFML_SDK)/include</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalLibraryDirectories>$(SFML_SDK)\lib</AdditionalLibraryDirectories>
+      <AdditionalDependencies>xinput.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+    </ClCompile>
+    <Link>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
+
+===== FILE: project-rival/project-rival/project-rival.vcxproj.filters =====
+∩╗┐<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Resource Files\FONTS">
+      <UniqueIdentifier>{b5e82806-bf9b-4fdf-b17c-c35282c021a5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\IMAGES">
+      <UniqueIdentifier>{1d793ccc-0d22-4eea-8d0e-c5b5a5270a40}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Input">
+      <UniqueIdentifier>{492c6b32-40d8-4a9f-8d7b-f4959ad27b73}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Abs.Interfaces">
+      <UniqueIdentifier>{fc0fe863-09ef-468e-aaa5-2881e53dd4b7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Abs.Classes">
+      <UniqueIdentifier>{0c6e4511-7f0a-4e12-afe0-7425cf365a97}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Behaviours">
+      <UniqueIdentifier>{b532eab4-ae76-449b-9ec6-96913d08a763}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\DOCUMENTATION">
+      <UniqueIdentifier>{432d37c5-2336-4597-a4da-e09c882032eb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\AUTOMATIONS">
+      <UniqueIdentifier>{b8e2caa8-ed7f-45de-ace6-9451eb9edab4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Enemies">
+      <UniqueIdentifier>{641a97c9-ec20-499b-a847-eae07285cfdb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\AUTOMATIONS\Agent">
+      <UniqueIdentifier>{63056c86-90e2-4897-abae-e538dd6536ac}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\AUTOMATIONS\Scripts">
+      <UniqueIdentifier>{25290212-7808-4d9b-93d3-2c9d0ccc6259}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Projectiles">
+      <UniqueIdentifier>{b9295663-bd23-4a50-bb5f-6ae5e6710b01}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Game.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="player.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="InputManager.cpp">
+      <Filter>Header Files\Input</Filter>
+    </ClCompile>
+    <ClCompile Include="Gamepad.cpp">
+      <Filter>Header Files\Input</Filter>
+    </ClCompile>
+    <ClCompile Include="SeekBehaviour.cpp">
+      <Filter>Header Files\Behaviours</Filter>
+    </ClCompile>
+    <ClCompile Include="ArriveBehaviour.cpp">
+      <Filter>Header Files\Behaviours</Filter>
+    </ClCompile>
+    <ClCompile Include="Enemy.cpp">
+      <Filter>Header Files\Abs.Classes</Filter>
+    </ClCompile>
+    <ClCompile Include="GruntEnemy.cpp">
+      <Filter>Header Files\Enemies</Filter>
+    </ClCompile>
+    <ClCompile Include="TurretEnemy.cpp">
+      <Filter>Header Files\Enemies</Filter>
+    </ClCompile>
+    <ClCompile Include="Projectile.cpp">
+      <Filter>Header Files\Abs.Classes</Filter>
+    </ClCompile>
+    <ClCompile Include="NormalBulletProjectile.cpp">
+      <Filter>Header Files\Projectiles</Filter>
+    </ClCompile>
+    <ClCompile Include="Collision.cpp">
+      <Filter>Header Files\Abs.Interfaces</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Game.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="player.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="InputManager.h">
+      <Filter>Header Files\Input</Filter>
+    </ClInclude>
+    <ClInclude Include="Gamepad.h">
+      <Filter>Header Files\Input</Filter>
+    </ClInclude>
+    <ClInclude Include="SeekBehaviour.h">
+      <Filter>Header Files\Behaviours</Filter>
+    </ClInclude>
+    <ClInclude Include="Steering.h">
+      <Filter>Header Files\Abs.Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="ArriveBehaviour.h">
+      <Filter>Header Files\Behaviours</Filter>
+    </ClInclude>
+    <ClInclude Include="Enemy.h">
+      <Filter>Header Files\Abs.Classes</Filter>
+    </ClInclude>
+    <ClInclude Include="GruntEnemy.h">
+      <Filter>Header Files\Enemies</Filter>
+    </ClInclude>
+    <ClInclude Include="TurretEnemy.h">
+      <Filter>Header Files\Enemies</Filter>
+    </ClInclude>
+    <ClInclude Include="Projectile.h">
+      <Filter>Header Files\Abs.Classes</Filter>
+    </ClInclude>
+    <ClInclude Include="NormalBulletProjectile.h">
+      <Filter>Header Files\Projectiles</Filter>
+    </ClInclude>
+    <ClInclude Include="Collision.h">
+      <Filter>Header Files\Abs.Interfaces</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="ASSETS\IMAGES\SFML-LOGO.png">
+      <Filter>Resource Files\IMAGES</Filter>
+    </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <Font Include="ASSETS\FONTS\ariblk.ttf">
+      <Filter>Resource Files\FONTS</Filter>
+    </Font>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\automation\prompts\docs-architecture-development-log-context.md">
+      <Filter>Resource Files\AUTOMATIONS\Agent</Filter>
+    </None>
+    <None Include="..\automation\prompts\git-staged-changes-to-commit-context.md">
+      <Filter>Resource Files\AUTOMATIONS\Agent</Filter>
+    </None>
+    <None Include="..\automation\prompts\player-aiming-mouse-right-stick-reticle-context.md">
+      <Filter>Resource Files\AUTOMATIONS\Agent</Filter>
+    </None>
+    <None Include="..\automation\prompts\steering-enemy-seek-step-by-step-context.md">
+      <Filter>Resource Files\AUTOMATIONS\Agent</Filter>
+    </None>
+    <None Include="..\automation\scripts\merge-summary-generator.ps1">
+      <Filter>Resource Files\AUTOMATIONS\Scripts</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="..\automation\scripts\output\aiming-merge-changes.txt" />
+    <Text Include="..\automation\scripts\output\enemies-merge-changes.txt" />
+  </ItemGroup>
+</Project>
+

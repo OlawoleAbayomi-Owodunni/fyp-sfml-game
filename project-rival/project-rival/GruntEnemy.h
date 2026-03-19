@@ -4,7 +4,7 @@
 class GruntEnemy : public Enemy
 {
 public: 
-	GruntEnemy(const sf::Vector2f pos);
+	GruntEnemy(const sf::Vector2f pos, int totalHealth);
 	~GruntEnemy() = default;
 
 	void init() override;

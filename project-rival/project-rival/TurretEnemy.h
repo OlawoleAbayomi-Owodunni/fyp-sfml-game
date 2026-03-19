@@ -4,7 +4,7 @@
 class TurretEnemy : public Enemy
 {
 public:
-	TurretEnemy(const sf::Vector2f pos);
+	TurretEnemy(const sf::Vector2f pos, int totalHealth);
 	~TurretEnemy() = default;
 
 	void init() override;

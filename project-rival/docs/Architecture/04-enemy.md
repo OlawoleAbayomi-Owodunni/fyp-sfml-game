@@ -15,6 +15,17 @@ It provides:
 - a shared `render(...)`
 - a shared `e_target` member that derived enemies can use
 
+It also implements `ICollidable` and includes basic “combat” state:
+
+- collision profile (layer/mask)
+- health (`takeDamage(...)`)
+- death flag (`isDead()`)
+
+Currently, enemies collide with:
+
+- the player
+- player-fired bullets
+
 Derived classes must implement:
 
 - `init()`
@@ -45,6 +56,14 @@ Each update:
 
 - the target is set to the player position (`enemy->setTarget(m_player.getPosition())`)
 - then each enemy is updated (`enemy->update(dt)`)
+
+Collision + damage (current approach):
+
+- If player collides with an enemy, the player takes damage.
+- Player projectiles are checked against enemies; on hit:
+  - enemy takes damage
+  - projectile is destroyed
+- Dead enemies are removed from the `m_enemies` list.
 
 ## Likely next steps
 

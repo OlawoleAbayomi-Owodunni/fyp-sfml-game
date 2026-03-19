@@ -15,6 +15,13 @@ It provides:
 - `shouldDestroy()` so owners can remove expired projectiles
 - `render(...)`
 
+It also implements `ICollidable` so projectiles can participate in collision checks.
+
+Projectiles also set a collision profile based on who fired them:
+
+- player-fired bullets collide with enemies
+- enemy-fired bullets collide with the player
+
 Derived projectiles are expected to:
 
 - implement `init()`
@@ -29,8 +36,10 @@ Derived projectiles are expected to:
 - moves at a fixed speed each update
 - expires after a short lifetime
 
+It also sets a basic damage value (`applyDamage()`).
+
 ## Current ownership
 
-Right now, the `player` owns a `std::vector<std::unique_ptr<Projectile>>` and spawns bullets when the player shoots.
+Right now, the `Player` owns a `std::vector<std::unique_ptr<Projectile>>` and spawns bullets when the player shoots.
 
 This is marked in code as “test” and can later be moved to a weapon system.

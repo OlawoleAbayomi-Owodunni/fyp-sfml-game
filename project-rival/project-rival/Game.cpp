@@ -119,10 +119,48 @@ void Game::update(double dt)
 	const Vector2f mousePosF = m_window.mapPixelToCoords(mousePos);
 
 	InputManager::update();
+
+	// Update player and enemies
 	m_player.update(dt, mousePosF);
-	for (auto& enemy : m_enemies) {
+	for (auto enemy_it = m_enemies.begin(); enemy_it != m_enemies.end();)
+	{
+		auto& enemy = *enemy_it;
 		enemy->setTarget(m_player.getPosition());
 		enemy->update(dt);
+
+		// Check collision with player
+		if (CollisionCheck::areColliding(m_player, *enemy)) {
+			cout << "Player collided with enemy!\n";
+			m_player.takeDamage(10);
+		}
+
+		// Check if enemy is dead and remove if so
+		if (enemy->isDead())
+		{
+			enemy_it = m_enemies.erase(enemy_it);
+		}
+		else
+			enemy_it++;
+	}
+
+	// Collision checks
+	// Check player projectiles against enemies
+	for (auto& bullet : m_player.getProjectiles()) 
+	{
+		if(!bullet || bullet->shouldDestroy())
+			continue;
+
+		for (auto& enemy : m_enemies) {
+			if (!enemy || enemy->isDead())
+				continue;
+
+			if (CollisionCheck::areColliding(*bullet, *enemy))
+			{
+				enemy->takeDamage(bullet->applyDamage());
+				bullet->destroy();
+				break; // gets rid of bug where bullet hits multiple enemies
+			}
+		}
 	}
 }
 
@@ -148,7 +186,7 @@ void Game::gameStart()
 	for (int i = 0; i < 5; i++)
 	{
 		sf::Vector2f randEnemyPos{ static_cast<float>(rand() % ScreenSize::s_width), static_cast<float>(rand() % ScreenSize::s_height) };
-		m_enemies.push_back(std::make_unique<GruntEnemy>(randEnemyPos));
-		m_enemies.push_back(std::make_unique<TurretEnemy>(randEnemyPos));
+		m_enemies.push_back(std::make_unique<GruntEnemy>(randEnemyPos, 150));
+		m_enemies.push_back(std::make_unique<TurretEnemy>(randEnemyPos, 250));
 	}
 }

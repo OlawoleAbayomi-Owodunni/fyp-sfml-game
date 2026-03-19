@@ -8,23 +8,22 @@ namespace {
 	}
 }
 
-player::player()
+Player::Player()
 {
 	init();
 }
 
-player::~player()
+Player::~Player()
 {
 }
 
-void player::init()
+void Player::init()
 {
 	//body
 	p_body.setSize(Vector2f(50.f, 75.f));
 	Vector2f size = p_body.getSize();
 	p_body.setFillColor(Color::Green);
 	p_body.setOrigin(size / 2.f);
-	p_body.setPosition(Vector2f(25., 25.f));
 
 	//physics
 	p_velocity = Vector2f(0.f, 0.f);
@@ -37,9 +36,15 @@ void player::init()
 	p_reticle.setOutlineThickness(2.f);
 	p_reticle.setPosition(p_body.getPosition() + p_reticleDistance * p_aimDir);
 	p_reticleDistance = 150.f;
+
+	//collision
+	p_collisionProfile.layer = CollisionLayer::PLAYER_LAYER;
+	p_collisionProfile.mask = CollisionLayer::ENEMY_LAYER | CollisionLayer::ENEMY_BULLET_LAYER;
+
+	reset();
 }
 
-void player::update(double dt, const Vector2f& mousePos)
+void Player::update(double dt, const Vector2f& mousePos)
 {
 	handleMovement(dt);
 	handleAiming(mousePos);
@@ -47,6 +52,7 @@ void player::update(double dt, const Vector2f& mousePos)
 	if (InputManager::pad().rightTrigger()) InputManager::pad().setRumble(0.2f, 0.8f);
 	else InputManager::pad().setRumble(0.0f, 0.0f);
 
+	// Update projectiles and remove any that should be destroyed
 	for (auto bullet_it = p_projectiles.begin(); bullet_it != p_projectiles.end(); )
 	{
 		auto& bullet = *bullet_it;
@@ -64,7 +70,7 @@ void player::update(double dt, const Vector2f& mousePos)
 }
 
 
-void player::render(RenderWindow& window)
+void Player::render(RenderWindow& window)
 {
 	window.draw(p_body);
 	window.draw(p_reticle);
@@ -73,12 +79,28 @@ void player::render(RenderWindow& window)
 		bullet->render(window);
 }
 
-void player::reset()
+const Vector2f Player::getPosition() const
 {
-	p_body.setPosition(Vector2f(50., 50.f));
+	return p_body.getPosition();
 }
 
-void player::handleMovement(double dt)
+sf::FloatRect Player::getCollisionBounds() const
+{
+	return p_body.getGlobalBounds();
+}
+
+CollisionProfile Player::getCollisionProfile() const
+{
+	return p_collisionProfile;
+}
+
+void Player::reset()
+{
+	p_body.setPosition(Vector2f(500, 500.f));
+	p_health = 1000;
+}
+
+void Player::handleMovement(double dt)
 {
 	//--------- movement logic ---------//
 	Vector2f direction{ 0.f, 0.f };
@@ -105,7 +127,7 @@ void player::handleMovement(double dt)
 	p_body.move(p_velocity * static_cast<float>(dt));
 }
 
-void player::handleAiming(const Vector2f mousePos)
+void Player::handleAiming(const Vector2f mousePos)
 {
 	//--------- aiming logic ---------//
 	
@@ -135,7 +157,21 @@ void player::handleAiming(const Vector2f mousePos)
 	//--------- shooting logic ---------// -> this will move to weapon class when made
 	if (InputManager::pad().rightTrigger() || Mouse::isButtonPressed(Mouse::Button::Left))
 	{
-		std::unique_ptr<NormalBulletProjectile> newBullet = std::make_unique<NormalBulletProjectile>(p_body.getPosition(), p_aimDir);
+		std::unique_ptr<NormalBulletProjectile> newBullet = std::make_unique<NormalBulletProjectile>(p_body.getPosition(), p_aimDir, true);
 		p_projectiles.push_back(std::move(newBullet));
 	}
+}
+
+void Player::takeDamage(int damage)
+{
+	p_health -= damage;
+	if (p_health <= 0)
+	{
+		reset();
+	}
+}
+
+std::vector<std::unique_ptr<Projectile>>& Player::getProjectiles()
+{
+	return p_projectiles;
 }

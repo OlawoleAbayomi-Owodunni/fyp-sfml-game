@@ -4,7 +4,7 @@
 class NormalBulletProjectile : public Projectile
 {
 public:
-	NormalBulletProjectile(sf::Vector2f spawnPoint, sf::Vector2f direction);
+	NormalBulletProjectile(sf::Vector2f spawnPoint, sf::Vector2f direction, bool isFromPlayer);
 	~NormalBulletProjectile() = default;
 
 	void init() override;
