@@ -39,7 +39,7 @@ void Player::init()
 
 	//collision
 	p_collisionProfile.layer = CollisionLayer::PLAYER_LAYER;
-	p_collisionProfile.mask = CollisionLayer::ENEMY_LAYER | CollisionLayer::ENEMY_BULLET_LAYER | CollisionLayer::WALL_LAYER;
+	p_collisionProfile.mask = CollisionLayer::ENEMY_LAYER | CollisionLayer::ENEMY_BULLET_LAYER | CollisionLayer::WALL_LAYER | CollisionLayer::PORTAL_TRIGGER_LAYER;
 
 	p_maxHealth = 100;
 
@@ -94,6 +94,11 @@ sf::FloatRect Player::getCollisionBounds() const
 CollisionProfile Player::getCollisionProfile() const
 {
 	return p_collisionProfile;
+}
+
+void Player::setSpawnPosition(const Vector2f& spawnPos)
+{
+	p_body.setPosition(spawnPos);
 }
 
 void Player::reset()
@@ -171,11 +176,6 @@ void Player::takeDamage(int damage)
 	{
 		reset();
 	}
-}
-
-void Player::hitWall(sf::Vector2f oldPos)
-{
-	p_body.setPosition(oldPos);
 }
 
 void Player::hitWall(sf::Vector2f oldPos)

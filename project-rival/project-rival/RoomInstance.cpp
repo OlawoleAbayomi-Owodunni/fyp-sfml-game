@@ -9,18 +9,18 @@ void RoomInstance::buildFromPlan(const RoomPlan& plan, const sf::Vector2f& world
 		return;
 
 	const float tileSize = plan.tileSize;
-	
+
 	// initialise each tile
 	for (int row = 0; row < plan.height; row++) {
 		for (int col = 0; col < plan.width; col++) {
 			const Tile tile = plan.getTile(row, col);
 			if (tile == Tile::WALL) {
-			// setup wall
-			sf::RectangleShape wall;
-			wall.setSize(sf::Vector2f(tileSize, tileSize));
-			wall.setOrigin(wall.getSize() / 2.f);
-			wall.setPosition(worldPos + sf::Vector2f(col * tileSize, row * tileSize));
-			wall.setFillColor(sf::Color(100, 100, 100)); // grey walls
+				// setup wall
+				sf::RectangleShape wall;
+				wall.setSize(sf::Vector2f(tileSize, tileSize));
+				wall.setOrigin(wall.getSize() / 2.f);
+				wall.setPosition(worldPos + sf::Vector2f(col * tileSize, row * tileSize));
+				wall.setFillColor(sf::Color(100, 100, 100)); // grey walls
 
 				ri_staticShapes.push_back(wall);
 
@@ -28,24 +28,50 @@ void RoomInstance::buildFromPlan(const RoomPlan& plan, const sf::Vector2f& world
 				StaticCollision collider(wall.getGlobalBounds(), CollisionLayer::WALL_LAYER,
 					CollisionLayer::PLAYER_LAYER | CollisionLayer::ENEMY_LAYER | CollisionLayer::PLAYER_BULLET_LAYER | CollisionLayer::ENEMY_BULLET_LAYER);
 
-			ri_staticColliders.push_back(collider);
-		}
+				ri_staticColliders.push_back(collider);
+			}
 		}
 	}
 	// initialise spawners (DEBUG)
 	for (auto& spawner : plan.spawners) {
+		// setup spawn point shape
 		sf::RectangleShape spawnPoint;
 		spawnPoint.setSize(sf::Vector2f(tileSize, tileSize) / 8.f);
 		spawnPoint.setOrigin(spawnPoint.getSize() / 2.f);
 		spawnPoint.setPosition(worldPos + static_cast<sf::Vector2f>(spawner.tilePos) * tileSize);
+
 		if (spawner.type == SpawnerType::PlayerSpawner) {
-			spawnPoint.setFillColor(sf::Color(0, 255, 0)); // green for player spawn
+			spawnPoint.setFillColor(sf::Color::Green);
 		}
 		else if (spawner.type == SpawnerType::EnemySpawner) {
-			spawnPoint.setFillColor(sf::Color(255, 0, 0)); // red for enemy spawn
+			spawnPoint.setFillColor(sf::Color::Red);
+		}
+		else if (spawner.type == SpawnerType::PortalSpawner) {
+			spawnPoint.setFillColor(sf::Color::Blue);
 		}
 
 		ri_staticShapes.push_back(spawnPoint);
+	}
+	// initialise triggers (DEBUG)
+	for (auto& trigger : plan.triggers) {
+		// setup trigger shape
+		sf::RectangleShape triggerShape;
+		if (trigger.type == TriggerType::PortalTrigger) {
+			triggerShape.setSize(sf::Vector2f(tileSize, tileSize) * 3.f); // 3x the size of a tile
+			triggerShape.setFillColor(sf::Color(0, 0, 255, 100)); // semi-transparent blue for portal trigger
+		}
+		triggerShape.setOrigin(triggerShape.getSize() / 2.f);
+		triggerShape.setPosition(worldPos + static_cast<sf::Vector2f>(trigger.tilePos) * tileSize);
+
+		ri_staticShapes.push_back(triggerShape);
+
+		// setup collider for trigger
+		StaticCollision collider;
+		if (trigger.type == TriggerType::PortalTrigger) {
+			collider = StaticCollision(triggerShape.getGlobalBounds(), CollisionLayer::PORTAL_TRIGGER_LAYER,
+				CollisionLayer::PLAYER_LAYER);
+		}
+		ri_staticColliders.push_back(collider);
 	}
 }
 

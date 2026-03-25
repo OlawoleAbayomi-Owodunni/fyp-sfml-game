@@ -22,6 +22,7 @@ public:
 	sf::FloatRect getCollisionBounds() const override;
 	CollisionProfile getCollisionProfile() const override;
 
+	void setSpawnPosition(const Vector2f& spawnPos);
 
 	void handleMovement(double dt);
 	void handleAiming(const Vector2f mousePos);

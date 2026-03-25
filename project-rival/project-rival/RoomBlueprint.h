@@ -33,11 +33,23 @@ struct DoorPlan {
 
 enum SpawnerType {
 	PlayerSpawner,
-	EnemySpawner
+	EnemySpawner,
+	PortalSpawner
 };
 
 struct SpawnerPlan {
 	SpawnerType type;
+	sf::Vector2i tilePos;
+};
+
+enum TriggerType {
+	None,
+	RoomEnteredTrigger,
+	PortalTrigger
+};
+
+struct TriggerPlan {
+	TriggerType type;
 	sf::Vector2i tilePos;
 };
 
@@ -56,6 +68,7 @@ struct RoomPlan {
 	std::vector<Tile> tileMap;	// formula for 1D index: row * width + column
 	std::vector<DoorPlan> doors;
 	std::vector<SpawnerPlan> spawners;
+	std::vector<TriggerPlan> triggers;
 	
 	bool isValid() const {
 		if (width > 0 && height > 0 && (tileMap.size() == width * height))

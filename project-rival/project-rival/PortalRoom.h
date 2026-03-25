@@ -1,7 +1,7 @@
 #pragma once
 #include "RoomBlueprint.h"
 
-class SpawnRoom : public IRoomGenerator
+class PortalRoom : public IRoomGenerator
 {
 public:
 	RoomPlan generateRoom(int id, RoomType type, int seed) override;

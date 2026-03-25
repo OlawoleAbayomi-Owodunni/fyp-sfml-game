@@ -5,7 +5,7 @@ RoomPlan CombatRoom::generateRoom(int id, RoomType type, int seed)
 	RoomPlan room;
 	// Meta data
 	room.id = id;
-	room.type = type;
+	room.type = RoomType::COMBAT;
 	room.seed = seed;
 		// -> note here that this is where the height and width will be determined based on the type
 	//height 10-12; width 15-20

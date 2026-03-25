@@ -16,6 +16,10 @@ enum CollisionLayer : uint32_t
 
 	// World Environment layers
 
+	// Trigger layers
+	PORTAL_TRIGGER_LAYER = 1 << 5,
+	ROOM_ENTERED_TRIGGER_LAYER = 1 << 6,
+
 	ALL = 0xFFFFFFFF
 };
 
