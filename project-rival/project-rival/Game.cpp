@@ -281,6 +281,22 @@ void Game::generateRoom()
 	m_activeRoomPlan = m_combatRoom.generateRoom(0, RoomType::COMBAT, 0);
 
 	sf::Vector2f roomWorldPos{ 100.f, 100.f };
-
 	m_activeRoomInstance.buildFromPlan(m_activeRoomPlan, roomWorldPos);
+
+	m_enemies.clear();
+
+	//Enemy Spawner
+	int totalEnemyTypes = EnemyType::COUNT;
+	for (auto& spawnPoint : m_activeRoomPlan.spawners)
+	{
+		if (spawnPoint.type == SpawnerType::EnemySpawner) {
+			Vector2f spawnPos = roomWorldPos + static_cast<Vector2f>(spawnPoint.tilePos) * m_activeRoomPlan.tileSize;
+			
+			int enemyToSpawn = rand() % totalEnemyTypes;
+			if (enemyToSpawn == 0)
+				m_enemies.push_back(std::make_unique<GruntEnemy>(spawnPos, 150));
+			else if (enemyToSpawn == 1)
+				m_enemies.push_back(std::make_unique<TurretEnemy>(spawnPos, 250));
+		}
+	}
 }
