@@ -10,18 +10,20 @@ At a high level:
 
 1. Poll window events.
 2. Read input (`InputManager::update()`).
-3. Update player:
+3. Handle game management input (exit / restart).
+4. Update player:
    - movement
    - aiming
    - spawn/update projectiles
-4. Update enemies:
+5. Update enemies:
    - steering-based movement
    - target updates
-5. Resolve collisions:
+6. Resolve collisions:
    - player vs enemies
    - bullets vs enemies
-   - objects vs walls
-6. Render:
+   - player/enemies/bullets vs walls
+	- player vs portal trigger
+7. Render:
    - room
    - player
    - enemies
@@ -30,3 +32,4 @@ At a high level:
 ## Notes
 
 - Collision checks currently use AABB intersection + layer/mask filtering.
+- Current wall response is simple rollback for player/enemies and bullet destruction.

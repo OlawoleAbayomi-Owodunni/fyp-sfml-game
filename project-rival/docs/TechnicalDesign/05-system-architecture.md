@@ -16,6 +16,7 @@ This chapter summarizes the major subsystems, who owns what, and how data flows.
 
 - `Game` owns the top-level SFML window and drives update + render.
 - `Game` is the best place for “systems” that require access to multiple owners (e.g., player bullets vs enemies).
+- `Game` also owns the active room state and handles spawning enemies from room spawner tiles.
 
 ### Input
 
@@ -41,6 +42,7 @@ This chapter summarizes the major subsystems, who owns what, and how data flows.
 
 - Layer/mask filtering using `CollisionLayer` + `CollisionProfile`.
 - AABB intersection checks via `CollisionCheck::areColliding(...)`.
+- Collision response is currently handled at a high level (rollback for player/enemies; destroy bullets on wall hit).
 
 ### Rooms / generation
 
@@ -67,3 +69,8 @@ Data flow example:
 - `Game` updates player and enemies.
 - `Game` checks collisions (player/enemy, bullets/enemy, objects vs walls).
 - `Game` renders room → player → enemies.
+
+Game management input:
+
+- Exit: `Escape` or controller `Start`
+- Restart: `R` or controller `Select`

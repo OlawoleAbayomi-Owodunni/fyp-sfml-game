@@ -31,8 +31,11 @@ Current implementation:
 
 - `CombatRoom` (`CombatRoom.h/.cpp`)
   - generates outer walls
+  - randomly chooses a room size (currently: height ~10–13, width ~15–20)
   - randomly places interior obstacles (“pillars”)
   - randomly places enemy spawners
+
+Obstacle/spawn counts are derived from the interior size (via `interiorArea`).
 
 Note: `RoomPlan` includes a `seed` field, but `CombatRoom` currently uses `rand()` for generation.
 
@@ -44,7 +47,17 @@ Note: `RoomPlan` includes a `seed` field, but `CombatRoom` currently uses `rand(
 - wall colliders (`StaticCollision`) with `WALL_LAYER`
 - small debug shapes for spawner tiles
 
+Anything marked as `Tile::WALL` becomes a wall shape + a wall collider (outer walls and interior obstacles).
+
 This is where room geometry becomes “real” (drawn/collidable) in the world.
+
+## Game integration (current)
+
+In `Game`:
+
+- `generateRoom()` creates a `RoomPlan` and builds a `RoomInstance`.
+- Enemy spawner tiles in the plan are used to spawn actual `Enemy` instances.
+- The room instance is rendered before the entities.
 
 ## Likely next steps
 

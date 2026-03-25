@@ -22,6 +22,8 @@ Projectiles also set a collision profile based on who fired them:
 - player-fired bullets collide with enemies
 - enemy-fired bullets collide with the player
 
+They also collide with walls (`WALL_LAYER`) and are destroyed on impact.
+
 Derived projectiles are expected to:
 
 - implement `init()`
@@ -37,6 +39,8 @@ Derived projectiles are expected to:
 - expires after a short lifetime
 
 It also sets a basic damage value (`applyDamage()`).
+
+(Current `NormalBulletProjectile` damage is set to 10.)
 
 ## Current ownership
 

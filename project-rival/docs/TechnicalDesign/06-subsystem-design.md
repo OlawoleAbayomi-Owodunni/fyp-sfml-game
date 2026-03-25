@@ -16,6 +16,11 @@ Key concepts:
 - `CollisionProfile` (layer + mask).
 - `ICollidable` (bounds + profile).
 
+Current behaviour:
+
+- Collision checks are centralized in `Game::update(dt)` using `CollisionCheck::areColliding(...)`.
+- Response is currently a simple rollback for player/enemies (`hitWall(oldPos)`) and destruction for projectiles.
+
 Extension points:
 
 - Replace basic “rollback” collision response with axis-separated slide.
@@ -41,6 +46,13 @@ Extension points:
 - Add doors and room-to-room connections.
 - Seeded deterministic dungeon/floor graph generation.
 
+Current behaviour:
+
+- `CombatRoom` currently chooses a random width/height in a small range.
+- Spawn points and obstacle density are derived from interior size (via `interiorArea`).
+- `RoomInstance` converts all `Tile::WALL` tiles (outer walls + obstacles) into wall shapes + `StaticCollision` colliders.
+- `Game::generateRoom()` spawns enemies at `RoomPlan.spawners` (world position = `roomWorldPos + tilePos * tileSize`).
+
 ## Combat / projectiles
 
 Core files:
@@ -52,6 +64,11 @@ Key behaviours:
 
 - Projectiles move each update and can expire or be destroyed on collision.
 - Damage is provided via `applyDamage()`.
+
+Current behaviour:
+
+- Player bullets are destroyed when they hit walls.
+- `NormalBulletProjectile` currently applies 10 damage.
 
 Extension points:
 
@@ -69,6 +86,11 @@ Core files:
 Key algorithms:
 
 - Steering-based movement (seek/arrive) with behaviour switching based on distance.
+
+Current behaviour:
+
+- Enemies track max health (`e_maxHealth`) and can be reset to their start state via `Enemy::reset()`.
+- Enemies respond to wall collisions via `hitWall(oldPos)` (e.g., `GruntEnemy` rolls back).
 
 Extension points:
 

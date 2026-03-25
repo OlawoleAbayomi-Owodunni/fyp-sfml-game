@@ -12,10 +12,15 @@ This chapter describes what state exists, who owns it, and what might need savin
 - `Player`:
   - transform/velocity
   - current projectiles
-  - health
+  - health (`p_health` / `p_maxHealth`)
 - `Enemy`:
-  - health/dead flag
+  - health/dead flag (`e_health` / `e_maxHealth`)
   - steering state
+
+Additional notes:
+
+- `RoomPlan.spawners` are tile-space markers used to spawn runtime entities when a room is generated.
+- Wall collisions currently use a rollback approach by storing “old position” for player/enemies.
 
 ## Procedural generation state
 

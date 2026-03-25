@@ -48,6 +48,16 @@ Room generation builds wall colliders using `StaticCollision`:
 - walls use `WALL_LAYER`
 - their mask allows collisions with player, enemies, and bullets
 
+## Collision response (current)
+
+At the moment, collision response is a simple "rollback":
+
+- `Player::hitWall(oldPos)` sets the player back to the old position.
+- `Enemy::hitWall(oldPos)` is implemented per enemy type (e.g., `GruntEnemy` rolls back).
+- Projectiles are destroyed when they hit a wall.
+
+(A more advanced response like sliding can be added later.)
+
 ## Damage flow (high level)
 
 Right now, the main damage logic lives in `Game::update(dt)`:

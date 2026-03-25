@@ -31,4 +31,9 @@ Current gameplay usage examples:
 - right stick or mouse: aiming
 - right trigger or left mouse button: shoot
 
+High-level game controls (in `Game::gameInput()`):
+
+- Exit: `Escape` or controller `Start`
+- Restart run: `R` or controller `Select`
+
 Also applies deadzones to reduce controller drift.

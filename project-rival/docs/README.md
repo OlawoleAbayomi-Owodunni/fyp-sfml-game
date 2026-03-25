@@ -5,6 +5,7 @@ This folder contains short docs for the project.
 ## Start here
 
 - Architecture: [docs/Architecture/README.md](Architecture/README.md)
+- Technical design: [docs/TechnicalDesign/README.md](TechnicalDesign/README.md)
 - Development log: [docs/DEVELOPMENT_LOG.md](DEVELOPMENT_LOG.md)
 
 ## Other references
