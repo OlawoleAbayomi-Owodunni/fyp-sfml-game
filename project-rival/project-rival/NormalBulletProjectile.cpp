@@ -14,7 +14,7 @@ void NormalBulletProjectile::init()
 		destroy();
 
 	// set damage
-	p_damage = 1;
+	p_damage = 10;
 }
 
 void NormalBulletProjectile::update(double dt)

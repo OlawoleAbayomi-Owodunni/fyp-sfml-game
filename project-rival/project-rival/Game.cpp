@@ -119,19 +119,34 @@ void Game::update(double dt)
 	const Vector2f mousePosF = m_window.mapPixelToCoords(mousePos);
 
 	InputManager::update();
+	
+	// Game manager controls
+	gameInput();
 
 	// Update player and enemies
+	Vector2f oldPlayerPos = m_player.getPosition();
 	m_player.update(dt, mousePosF);
+
 	for (auto enemy_it = m_enemies.begin(); enemy_it != m_enemies.end();)
 	{
 		auto& enemy = *enemy_it;
+		Vector2f oldEnemyPos = enemy->getPosition();
 		enemy->setTarget(m_player.getPosition());
 		enemy->update(dt);
 
-		// Check collision with player
+		// Check collision with player and wall
+		// Enemy -> Player
 		if (CollisionCheck::areColliding(m_player, *enemy)) {
 			cout << "Player collided with enemy!\n";
 			m_player.takeDamage(10);
+		}
+		// Enemy -> Wall
+		for (auto& wall : m_activeRoomInstance.getStaticCollisions()) {
+			if (CollisionCheck::areColliding(*enemy, wall))
+			{
+				enemy->hitWall(oldEnemyPos);
+				break;
+			}
 		}
 
 		// Check if enemy is dead and remove if so
@@ -147,20 +162,56 @@ void Game::update(double dt)
 	// Check player projectiles against enemies
 	for (auto& bullet : m_player.getProjectiles()) 
 	{
-		if(!bullet || bullet->shouldDestroy())
+		if(bullet->shouldDestroy())
 			continue;
 
 		for (auto& enemy : m_enemies) {
-			if (!enemy || enemy->isDead())
+			if (enemy->isDead())
 				continue;
 
+			// Bullet -> Enemy
 			if (CollisionCheck::areColliding(*bullet, *enemy))
 			{
 				enemy->takeDamage(bullet->applyDamage());
 				bullet->destroy();
-				break; // gets rid of bug where bullet hits multiple enemies
+				break;
 			}
 		}
+	}
+
+	// Check static environment against player, enmies and projectiles
+	for (auto& wall : m_activeRoomInstance.getStaticCollisions())
+	{
+		// Wall -> Player
+		if (CollisionCheck::areColliding(m_player, wall))
+		{
+			m_player.hitWall(oldPlayerPos);
+		}
+
+		// Wall -> Player Projectiles
+		for (auto& bullet : m_player.getProjectiles())
+		{
+			if (bullet->shouldDestroy())
+				continue;
+
+			if (CollisionCheck::areColliding(*bullet, wall))
+			{
+				bullet->destroy();
+				break;
+			}
+		}
+	}
+}
+
+void Game::gameInput()
+{
+	if (Keyboard::isKeyPressed(Keyboard::Key::Escape) || InputManager::pad().pressed(GamepadButton::Start))
+	{
+		m_window.close();
+	}
+	if (Keyboard::isKeyPressed(Keyboard::Key::R) || InputManager::pad().pressed(GamepadButton::Select))
+	{
+		gameStart();
 	}
 }
 
@@ -168,6 +219,9 @@ void Game::update(double dt)
 void Game::render()
 {
 	m_window.clear(sf::Color(0, 0, 0, 0));
+
+	m_activeRoomInstance.render(m_window);
+
 	m_player.render(m_window);
 	for (auto& enemy : m_enemies) {
 		enemy->render(m_window);
@@ -180,13 +234,44 @@ void Game::render()
 	m_window.display();
 }
 
+void Game::resetGame()
+{
+	m_player.init();
+
+	m_enemies.clear();
+
+	m_combatRoom;
+	m_activeRoomPlan;
+	m_activeRoomInstance.reset();
+}
 
 void Game::gameStart()
 {
-	for (int i = 0; i < 5; i++)
+	resetGame();
+	generateRoom();
+}
+
+void Game::generateRoom()
+{
+	m_activeRoomPlan = m_combatRoom.generateRoom(0, RoomType::COMBAT, 0);
+
+	sf::Vector2f roomWorldPos{ 50.f, 50.f };
+	m_activeRoomInstance.buildFromPlan(m_activeRoomPlan, roomWorldPos);
+
+	m_enemies.clear();
+
+	//Enemy Spawner
+	int totalEnemyTypes = EnemyType::COUNT;
+	for (auto& spawnPoint : m_activeRoomPlan.spawners)
 	{
-		sf::Vector2f randEnemyPos{ static_cast<float>(rand() % ScreenSize::s_width), static_cast<float>(rand() % ScreenSize::s_height) };
-		m_enemies.push_back(std::make_unique<GruntEnemy>(randEnemyPos, 150));
-		m_enemies.push_back(std::make_unique<TurretEnemy>(randEnemyPos, 250));
+		if (spawnPoint.type == SpawnerType::EnemySpawner) {
+			Vector2f spawnPos = roomWorldPos + static_cast<Vector2f>(spawnPoint.tilePos) * m_activeRoomPlan.tileSize;
+			
+			int enemyToSpawn = rand() % totalEnemyTypes;
+			if (enemyToSpawn == 0)
+				m_enemies.push_back(std::make_unique<GruntEnemy>(spawnPos, 150));
+			else if (enemyToSpawn == 1)
+				m_enemies.push_back(std::make_unique<TurretEnemy>(spawnPos, 250));
+		}
 	}
 }

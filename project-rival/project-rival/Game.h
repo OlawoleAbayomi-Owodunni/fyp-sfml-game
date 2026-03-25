@@ -12,6 +12,9 @@
 #include "player.h"
 #include "Enemy.h"
 
+#include "RoomInstance.h"
+#include "CombatRoom.h"
+
 using namespace std;
 using namespace sf;
 
@@ -40,6 +43,8 @@ protected:
 	void init();
 	void update(double dt);
 
+	void gameInput();
+
 	void render();
 
 	void processEvents();
@@ -52,6 +57,10 @@ protected:
 
 	std::vector<std::unique_ptr<Enemy>> m_enemies;
 
+	CombatRoom m_combatRoom;	
+	RoomPlan m_activeRoomPlan;
+	RoomInstance m_activeRoomInstance;
+
 #ifdef TEST_FPS
 	sf::Text x_updateFPS{ m_arialFont };	// text used to display updates per second.
 	sf::Text x_drawFPS{  m_arialFont };	// text used to display draw calls per second.
@@ -62,5 +71,8 @@ protected:
 
 
 private:
+	void resetGame();
 	void gameStart();
+
+	void generateRoom();
 };

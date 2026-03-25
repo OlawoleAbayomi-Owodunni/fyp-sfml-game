@@ -82,3 +82,9 @@ void GruntEnemy::setTarget(const Vector2f& target)
 	e_arrive.setTarget(target);
 }
 
+void GruntEnemy::hitWall(sf::Vector2f oldPos)
+{
+	e_agent.position = oldPos;
+	e_body.setPosition(e_agent.position);
+}
+

@@ -5,10 +5,18 @@ enum CollisionLayer : uint32_t
 {
 	NONE = 0,
 
+	// Entity layers
 	PLAYER_LAYER = 1 << 0,
 	ENEMY_LAYER = 1 << 1,
 	PLAYER_BULLET_LAYER = 1 << 2,
 	ENEMY_BULLET_LAYER = 1 << 3,
+
+	// Static Environment layers
+	WALL_LAYER = 1 << 4,
+
+	// World Environment layers
+
+	ALL = 0xFFFFFFFF
 };
 
 struct CollisionProfile

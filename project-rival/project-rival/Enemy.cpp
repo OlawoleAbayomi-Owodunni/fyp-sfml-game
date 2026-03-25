@@ -2,12 +2,13 @@
 using namespace sf;
 
 Enemy::Enemy(const sf::Vector2f startPos, int totalHealth) :
-	e_startPos(startPos), e_health(totalHealth)
+	e_startPos(startPos), e_maxHealth(totalHealth)
 {
+	e_health = e_maxHealth;
 	e_isDead = false;
 
 	e_collisionProfile.layer = CollisionLayer::ENEMY_LAYER;
-	e_collisionProfile.mask = CollisionLayer::PLAYER_LAYER | CollisionLayer::PLAYER_BULLET_LAYER;
+	e_collisionProfile.mask = CollisionLayer::PLAYER_LAYER | CollisionLayer::PLAYER_BULLET_LAYER | CollisionLayer::WALL_LAYER;
 }
 
 void Enemy::initBody(const sf::Vector2f& size, const sf::Color& colour)
@@ -22,6 +23,18 @@ void Enemy::initBody(const sf::Vector2f& size, const sf::Color& colour)
 void Enemy::render(sf::RenderWindow& window)
 {
 	window.draw(e_body);
+}
+
+void Enemy::reset()
+{
+	e_body.setPosition(e_startPos);
+	e_health = e_maxHealth;
+	e_isDead = false;
+}
+
+sf::Vector2f Enemy::getPosition() const
+{
+	return e_body.getPosition();
 }
 
 sf::FloatRect Enemy::getCollisionBounds() const

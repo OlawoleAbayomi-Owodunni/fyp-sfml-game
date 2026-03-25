@@ -15,6 +15,13 @@ Most gameplay code is inside `project-rival/`.
 
 - `Collision.h` / `Collision.cpp`
 
+### Rooms / procedural generation
+
+- `RoomBlueprint.h` (RoomPlan + tiles + spawners + generator interface)
+- `CombatRoom.h` / `CombatRoom.cpp` (combat room generator)
+- `RoomInstance.h` / `RoomInstance.cpp` (builds a drawable room + wall colliders)
+- `StaticCollision.h` / `StaticCollision.cpp` (colliders for walls/geometry)
+
 ### Entities
 
 - `player.h` / `player.cpp`

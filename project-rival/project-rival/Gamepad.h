@@ -10,7 +10,7 @@ enum class GamepadButton : uint16_t
 	Y,
 	LeftShoulder,
 	RightShoulder,
-	Back,
+	Select,
 	Start,
 	LeftThumb,
 	RightThumb,

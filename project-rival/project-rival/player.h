@@ -28,6 +28,8 @@ public:
 
 	void takeDamage(int damage);
 
+	void hitWall(sf::Vector2f oldPos);
+
 	// this functions will likely move to weapon class when made
 	std::vector<std::unique_ptr<Projectile>>& getProjectiles();
 
@@ -53,6 +55,7 @@ private:
 	CollisionProfile p_collisionProfile;
 
 	// entity stats
+	int p_maxHealth;
 	int p_health;
 
 	// projectiles --> test. this will move to weapon class when made

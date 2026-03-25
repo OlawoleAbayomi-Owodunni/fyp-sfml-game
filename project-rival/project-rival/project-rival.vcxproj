@@ -21,6 +21,7 @@
   <ItemGroup>
     <ClCompile Include="ArriveBehaviour.cpp" />
     <ClCompile Include="Collision.cpp" />
+    <ClCompile Include="CombatRoom.cpp" />
     <ClCompile Include="NormalBulletProjectile.cpp" />
     <ClCompile Include="Projectile.cpp" />
     <ClCompile Include="Enemy.cpp" />
@@ -30,12 +31,15 @@
     <ClCompile Include="InputManager.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="player.cpp" />
+    <ClCompile Include="RoomInstance.cpp" />
     <ClCompile Include="SeekBehaviour.cpp" />
+    <ClCompile Include="StaticCollision.cpp" />
     <ClCompile Include="TurretEnemy.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ArriveBehaviour.h" />
     <ClInclude Include="Collision.h" />
+    <ClInclude Include="CombatRoom.h" />
     <ClInclude Include="NormalBulletProjectile.h" />
     <ClInclude Include="Projectile.h" />
     <ClInclude Include="Enemy.h" />
@@ -44,7 +48,10 @@
     <ClInclude Include="GruntEnemy.h" />
     <ClInclude Include="InputManager.h" />
     <ClInclude Include="player.h" />
+    <ClInclude Include="RoomBlueprint.h" />
+    <ClInclude Include="RoomInstance.h" />
     <ClInclude Include="SeekBehaviour.h" />
+    <ClInclude Include="StaticCollision.h" />
     <ClInclude Include="Steering.h" />
     <ClInclude Include="TurretEnemy.h" />
   </ItemGroup>
@@ -68,9 +75,11 @@
     <None Include="..\automation\prompts\player-aiming-mouse-right-stick-reticle-context.md" />
     <None Include="..\automation\prompts\steering-enemy-seek-step-by-step-context.md" />
     <None Include="..\automation\scripts\merge-summary-generator.ps1" />
+    <None Include="automation\prompts\level-architecture-roomplan-generator-builder-static-colliders-context.md" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="..\automation\scripts\output\aiming-merge-changes.txt" />
+    <Text Include="..\automation\scripts\output\collisions-merge-changes.txt" />
     <Text Include="..\automation\scripts\output\enemies-merge-changes.txt" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

@@ -1,0 +1,5545 @@
+===== LOCAL COMMITS (origin/main..HEAD) =====
+
+
+===== FEATURE COMMITS (main..levels) (what will be squashed) =====
+
+2026-03-24 1e5f379 level collision mask added to player]
+
+
+2026-03-24 475d995 Room blueprint setup
+
+
+2026-03-24 f0a1f52 Basic Combat room data setup
+
+
+2026-03-24 a9ad4f4 fixed mistakes with tilemap initialisation
+
+
+2026-03-25 d67f1e4 Combat Room Generated with collisions with walls
+
+
+2026-03-25 a368c2e Enemies spawn in at spawn points
+
+
+2026-03-25 2b644bf different room sizes
+
+
+2026-03-25 6ad62de Obstacles within combat rooms
+
+
+2026-03-25 b87f945 Level elements generated based on size
+
+
+2026-03-25 d78c80a DOCS UPDATE: Combat Room Genereation architecture docs
+
+
+===== FEATURE PATCH (per commit; main..levels) =====
+
+commit 1e5f379a1f2310de0ea0b5aa1300ec470bfb3ffb
+Author: WollyTech <ayolawole@gmail.com>
+Date:   Tue Mar 24 04:59:04 2026 +0000
+
+    level collision mask added to player]
+
+diff --git a/project-rival/project-rival/Collision.h b/project-rival/project-rival/Collision.h
+index 8dee883..a4dd235 100644
+--- a/project-rival/project-rival/Collision.h
++++ b/project-rival/project-rival/Collision.h
+@@ -5,10 +5,16 @@ enum CollisionLayer : uint32_t
+ {
+ 	NONE = 0,
+ 
++	// Entity layers
+ 	PLAYER_LAYER = 1 << 0,
+ 	ENEMY_LAYER = 1 << 1,
+ 	PLAYER_BULLET_LAYER = 1 << 2,
+ 	ENEMY_BULLET_LAYER = 1 << 3,
++
++	// Static Environment layers
++	WALL_LAYER = 1 << 4,
++
++	// World Environment layers
+ };
+ 
+ struct CollisionProfile
+diff --git a/project-rival/project-rival/RoomBlueprint.h b/project-rival/project-rival/RoomBlueprint.h
+new file mode 100644
+index 0000000..6f70f09
+--- /dev/null
++++ b/project-rival/project-rival/RoomBlueprint.h
+@@ -0,0 +1 @@
++#pragma once
+diff --git a/project-rival/project-rival/automation/prompts/level-architecture-roomplan-generator-builder-static-colliders-context.md b/project-rival/project-rival/automation/prompts/level-architecture-roomplan-generator-builder-static-colliders-context.md
+new file mode 100644
+index 0000000..ae351b0
+--- /dev/null
++++ b/project-rival/project-rival/automation/prompts/level-architecture-roomplan-generator-builder-static-colliders-context.md
+@@ -0,0 +1,120 @@
++# Context: Level architecture (Dungeon/Floor/Room) + RoomPlan/Generator/Builder + static collider tiles (SFML / C++)
++
++## Contents
++1. [High-level goal](#high-level-goal)
++2. [User preferences / working style](#user-preferences--working-style)
++3. [Current codebase state (relevant pieces)](#current-codebase-state-relevant-pieces)
++4. [Design decisions reached in this chat](#design-decisions-reached-in-this-chat)
++5. [Incremental implementation plan (agreed)](#incremental-implementation-plan-agreed)
++6. [What is already done](#what-is-already-done)
++7. [Next step to implement](#next-step-to-implement)
++
++---
++
++## High-level goal
++Implement a roguelike-style procedural architecture:
++
++- `Dungeon -> Floors -> Rooms`
++- Floors are generated as graphs (nodes=rooms, edges=connections), then embedded into 2D layout.
++- Rooms are built from tile-data (walls/floors/doors) and spawn markers.
++- Static room geometry (walls/obstacles) should support collision for player/enemies.
++
++Immediate objective: get a minimal room pipeline working end-to-end:
++
++1. Create a `RoomPlan` (blueprint data)
++2. Generate a test plan (hard-coded first)
++3. Build runtime wall colliders from tiles
++4. Resolve player vs wall collisions
++
++---
++
++## User preferences / working style
++- Prefer **incremental, buildable steps** (tutorial style) with some coding theory sprinkled in to justify decisions.
++- Each step should compile/run and be clearly an extension of the previous.
++- Avoid introducing advanced concepts without explanation.
++- User cares about **consistency** between architectural advice and code examples.
++
++---
++
++## Current codebase state (relevant pieces)
++
++### Game loop
++- `Game::update(double dt)` runs at fixed ~60 FPS and passes `dt` in **seconds**.
++- `Game` currently updates:
++  - `Player` (movement + aiming + bullets)
++  - `Enemy` instances (grunt steering + turret placeholder)
++  - collision checks: `Player vs Enemy`, `Player bullets vs Enemy`
++
++### Collision system
++- `ICollidable` exposes:
++  - `sf::FloatRect getCollisionBounds() const`
++  - `CollisionProfile getCollisionProfile() const`
++- `CollisionCheck::areColliding(a,b)`:
++  - checks layer/mask compatibility
++  - checks bounds intersection
++
++### Entities
++- `Player` and `Enemy` derive from `ICollidable`.
++- Collision filtering uses layers/masks.
++
++---
++
++## Design decisions reached in this chat
++
++### Floor/room connectivity
++- Floor topology should be represented as a **graph**.
++  - Node = room descriptor
++  - Edge = connection/door between rooms
++- Adjacency structure is recommended for neighbor queries.
++  - `unordered_map<roomId, vector<neighborId>>` is flexible for sparse IDs.
++  - `vector<vector<int>>` is simpler/faster if room IDs are dense `0..N-1`.
++
++### Level elements / tiles vs objects
++- Static geometry (walls/floors/most obstacles) should be represented as **tile data** in a room grid.
++- Runtime collision should be built from that data as a list of **static colliders**.
++  - Keep it lightweight (no per-tile AI/update).
++- Stateful/interactable objects (barrels, chests, shrines) should be spawned as normal game objects.
++
++### Room pipeline (preferred)
++- Use a 3-stage pipeline:
++  1. `RoomPlan` (blueprint/data)
++  2. `IRoomGenerator` (algorithm that fills a `RoomPlan` based on `RoomType`)
++  3. `RoomBuilder` (converts `RoomPlan` into runtime representation: wall colliders + visuals + spawns)
++
++---
++
++## Incremental implementation plan (agreed)
++1. Add collision layer for walls (`WALL_LAYER`).
++2. Add `RoomPlan` types (tiles/doors/markers) with no runtime wiring.
++3. Add generator interface + one hard-coded generator (e.g., combat room).
++4. Add builder that produces:
++   - `std::vector<sf::FloatRect>` solid wall colliders (from wall tiles)
++   - optional debug visuals for walls/floor
++5. Wire into `Game`:
++   - build a test room in `gameStart()`
++   - in `update()`, resolve `Player` vs room solids
++   - in `render()`, draw room debug visuals
++6. Improve collision response from "rollback" to "axis-separated slide".
++
++---
++
++## What is already done
++- Step 1 completed: `project-rival/Collision.h` updated to include:
++  - `WALL_LAYER = 1 << 4`
++  - Extra grouping comments for entity/static environment layers.
++
++No runtime behavior changes were made yet.
++
++---
++
++## Next step to implement
++**Step 2:** create `RoomPlan` (header-only for now) and add it to the Visual Studio project.
++
++Suggested file:
++- `project-rival/RoomPlan.h`
++  - `RoomType`, `TileType`
++  - door definition(s) (tile position + direction + locked)
++  - spawn markers (tile-space)
++  - `RoomPlan` with `width/height/tileSize/seed`, `tiles` (1D), helper `getTile`/`setTile`, and `isValid()`
++
++After Step 2 builds, proceed to Step 3 (hard-coded generator).
+diff --git a/project-rival/project-rival/project-rival.vcxproj b/project-rival/project-rival/project-rival.vcxproj
+index cee6a85..d4f086a 100644
+--- a/project-rival/project-rival/project-rival.vcxproj
++++ b/project-rival/project-rival/project-rival.vcxproj
+@@ -71,6 +71,7 @@
+   </ItemGroup>
+   <ItemGroup>
+     <Text Include="..\automation\scripts\output\aiming-merge-changes.txt" />
++    <Text Include="..\automation\scripts\output\collisions-merge-changes.txt" />
+     <Text Include="..\automation\scripts\output\enemies-merge-changes.txt" />
+   </ItemGroup>
+   <PropertyGroup Label="Globals">
+
+commit 475d9955c7c675dbd67d54e566eec8a5ef4799b4
+Author: WollyTech <ayolawole@gmail.com>
+Date:   Tue Mar 24 05:17:43 2026 +0000
+
+    Room blueprint setup
+
+diff --git a/project-rival/project-rival/RoomBlueprint.h b/project-rival/project-rival/RoomBlueprint.h
+index 6f70f09..6ae318c 100644
+--- a/project-rival/project-rival/RoomBlueprint.h
++++ b/project-rival/project-rival/RoomBlueprint.h
+@@ -1 +1,71 @@
+ #pragma once
++#include "SFML/Graphics.hpp"
++
++enum RoomType {
++	SPAWN,
++	PORTAL,
++	COMBAT
++};
++
++enum TileType {
++	Empty,
++
++	FLOOR,
++	WALL,
++	DOOR
++};
++
++enum DoorDirection {
++	NORTH,
++	SOUTH,
++	EAST,
++	WEST
++};
++
++struct DoorPlan {
++	sf::Vector2i tilePos;
++	DoorDirection direction;
++
++	bool isLocked;
++};
++
++enum SpawnerType {
++	PlayerSpawner,
++	EnemySpawner
++};
++
++struct SpawnerPlan {
++	SpawnerType type;
++	sf::Vector2i tilePos;
++};
++
++struct RoomPlan {
++	// Room metadata
++	int id;
++	RoomType type;
++
++	// Room representation
++	int width;
++	int height;	// formula: column * height + row
++	float tileSize;
++
++	// Room layout
++	std::vector<TileType> tileMap;
++	std::vector<DoorPlan> doors;
++	std::vector<SpawnerPlan> spawners;
++
++	bool isValid() {
++		if (width > 0 && height > 0 && (tileMap.size() == width * height))
++			return true;
++		else
++			return false;
++	}
++
++	TileType getTile(int row, int column) const {
++		return tileMap[column * height + row];
++	}
++
++	void setTile(int row, int column, TileType type) {
++		tileMap[column * height + row] = type;
++	}
++};
+\ No newline at end of file
+
+commit f0a1f522bf9aefc18f13b7dc45c8e1ed0abd7d00
+Author: WollyTech <ayolawole@gmail.com>
+Date:   Tue Mar 24 13:35:48 2026 +0000
+
+    Basic Combat room data setup
+
+diff --git a/project-rival/project-rival/CombatRoom.cpp b/project-rival/project-rival/CombatRoom.cpp
+new file mode 100644
+index 0000000..64c09a0
+--- /dev/null
++++ b/project-rival/project-rival/CombatRoom.cpp
+@@ -0,0 +1,35 @@
++#include "CombatRoom.h"
++
++CombatRoom::CombatRoom(int width, int height) 
++	: cr_height(height), cr_width(width)
++{
++}
++
++RoomPlan CombatRoom::generateRoom(int id, RoomType type, int seed)
++{
++	RoomPlan room;
++	// Meta data
++	room.id = id;
++	room.type = type;
++	room.seed = seed;
++	
++	// tile map initialisation
++	room.tileMap.assign(cr_height * cr_width, TileType::FLOOR);
++
++	// tile map construction
++	// outer walls
++	for (int col = 0; col < cr_width; col++)
++	{
++		room.setTile(0, col, TileType::WALL);
++		room.setTile(cr_height - 1, col, TileType::WALL);
++	}
++	for (int row = 0; row < cr_height; row++)
++	{
++		room.setTile(row, 0, TileType::WALL);
++		room.setTile(row, cr_width - 1, TileType::WALL);
++	}
++
++	// yet to do: room geometry like pillars via walls, doors, spawners, etc.
++
++	return room;
++}
+diff --git a/project-rival/project-rival/CombatRoom.h b/project-rival/project-rival/CombatRoom.h
+new file mode 100644
+index 0000000..96427d2
+--- /dev/null
++++ b/project-rival/project-rival/CombatRoom.h
+@@ -0,0 +1,16 @@
++#pragma once
++#include "RoomBlueprint.h"
++
++class CombatRoom : public IRoomGenerator
++{
++public:
++	// Temporary constructor parameters to determine a good range of sizes for combat rooms. Eventually, the room generator should be able to determine its own size based on the type and seed, and the parameters can be removed.
++	CombatRoom(int width, int height);
++
++	RoomPlan generateRoom(int id, RoomType type, int seed) override;
++
++private:
++	int cr_width;
++	int cr_height;
++};
++
+diff --git a/project-rival/project-rival/RoomBlueprint.h b/project-rival/project-rival/RoomBlueprint.h
+index 6ae318c..2a94bab 100644
+--- a/project-rival/project-rival/RoomBlueprint.h
++++ b/project-rival/project-rival/RoomBlueprint.h
+@@ -43,17 +43,18 @@ struct RoomPlan {
+ 	// Room metadata
+ 	int id;
+ 	RoomType type;
++	int seed;	// for stuctured random generation of room layout and contents
+ 
+ 	// Room representation
+ 	int width;
+-	int height;	// formula: column * height + row
+-	float tileSize;
++	int height;	
++	float tileSize = 64.f;
+ 
+ 	// Room layout
+-	std::vector<TileType> tileMap;
++	std::vector<TileType> tileMap;	// formula for 1D index: row * width + column
+ 	std::vector<DoorPlan> doors;
+ 	std::vector<SpawnerPlan> spawners;
+-
++	
+ 	bool isValid() {
+ 		if (width > 0 && height > 0 && (tileMap.size() == width * height))
+ 			return true;
+@@ -62,10 +63,20 @@ struct RoomPlan {
+ 	}
+ 
+ 	TileType getTile(int row, int column) const {
+-		return tileMap[column * height + row];
++		return tileMap[row * width + column];
+ 	}
+ 
+ 	void setTile(int row, int column, TileType type) {
+ 		tileMap[column * height + row] = type;
+ 	}
++};
++
++class IRoomGenerator 
++{
++public:
++	virtual ~IRoomGenerator() = default;
++
++	// a few things to note about the parameters:
++	// id, type and seed are fine for passing through
++	virtual RoomPlan generateRoom(int id, RoomType type, int seed) = 0;
+ };
+\ No newline at end of file
+
+commit a9ad4f4dba255ffc24bc8c034217fbc1df82eda1
+Author: WollyTech <ayolawole@gmail.com>
+Date:   Tue Mar 24 13:43:35 2026 +0000
+
+    fixed mistakes with tilemap initialisation
+
+diff --git a/project-rival/project-rival/CombatRoom.cpp b/project-rival/project-rival/CombatRoom.cpp
+index 64c09a0..4609b8c 100644
+--- a/project-rival/project-rival/CombatRoom.cpp
++++ b/project-rival/project-rival/CombatRoom.cpp
+@@ -12,21 +12,24 @@ RoomPlan CombatRoom::generateRoom(int id, RoomType type, int seed)
+ 	room.id = id;
+ 	room.type = type;
+ 	room.seed = seed;
+-	
++		// -> note here that this is where the height and width will be determined based on the type
++	room.height = cr_height;
++	room.width = cr_width;
++
+ 	// tile map initialisation
+-	room.tileMap.assign(cr_height * cr_width, TileType::FLOOR);
++	room.tileMap.assign(room.height * room.width, TileType::FLOOR);
+ 
+ 	// tile map construction
+ 	// outer walls
+-	for (int col = 0; col < cr_width; col++)
++	for (int col = 0; col < room.width; col++)
+ 	{
+-		room.setTile(0, col, TileType::WALL);
+-		room.setTile(cr_height - 1, col, TileType::WALL);
++		room.setTile(0, col, TileType::WALL);				// top row
++		room.setTile(room.height - 1, col, TileType::WALL);	// bottom row
+ 	}
+-	for (int row = 0; row < cr_height; row++)
++	for (int row = 0; row < room.height; row++)
+ 	{
+-		room.setTile(row, 0, TileType::WALL);
+-		room.setTile(row, cr_width - 1, TileType::WALL);
++		room.setTile(row, 0, TileType::WALL);				// left column
++		room.setTile(row, cr_width - 1, TileType::WALL);	// right column
+ 	}
+ 
+ 	// yet to do: room geometry like pillars via walls, doors, spawners, etc.
+diff --git a/project-rival/project-rival/RoomBlueprint.h b/project-rival/project-rival/RoomBlueprint.h
+index 2a94bab..aa0bd8b 100644
+--- a/project-rival/project-rival/RoomBlueprint.h
++++ b/project-rival/project-rival/RoomBlueprint.h
+@@ -67,7 +67,7 @@ struct RoomPlan {
+ 	}
+ 
+ 	void setTile(int row, int column, TileType type) {
+-		tileMap[column * height + row] = type;
++		tileMap[row * width + column] = type;
+ 	}
+ };
+ 
+
+commit d67f1e44d5fea589b46f71907f2810b73786f1a6
+Author: WollyTech <ayolawole@gmail.com>
+Date:   Wed Mar 25 03:14:05 2026 +0000
+
+    Combat Room Generated with collisions with walls
+
+diff --git a/project-rival/project-rival/Collision.h b/project-rival/project-rival/Collision.h
+index a4dd235..ad541df 100644
+--- a/project-rival/project-rival/Collision.h
++++ b/project-rival/project-rival/Collision.h
+@@ -15,6 +15,8 @@ enum CollisionLayer : uint32_t
+ 	WALL_LAYER = 1 << 4,
+ 
+ 	// World Environment layers
++
++	ALL = 0xFFFFFFFF
+ };
+ 
+ struct CollisionProfile
+diff --git a/project-rival/project-rival/CombatRoom.cpp b/project-rival/project-rival/CombatRoom.cpp
+index 4609b8c..2c8ceba 100644
+--- a/project-rival/project-rival/CombatRoom.cpp
++++ b/project-rival/project-rival/CombatRoom.cpp
+@@ -17,19 +17,19 @@ RoomPlan CombatRoom::generateRoom(int id, RoomType type, int seed)
+ 	room.width = cr_width;
+ 
+ 	// tile map initialisation
+-	room.tileMap.assign(room.height * room.width, TileType::FLOOR);
++	room.tileMap.assign(room.height * room.width, Tile::FLOOR);
+ 
+ 	// tile map construction
+ 	// outer walls
+ 	for (int col = 0; col < room.width; col++)
+ 	{
+-		room.setTile(0, col, TileType::WALL);				// top row
+-		room.setTile(room.height - 1, col, TileType::WALL);	// bottom row
++		room.setTile(0, col, Tile::WALL);				// top row
++		room.setTile(room.height - 1, col, Tile::WALL);	// bottom row
+ 	}
+ 	for (int row = 0; row < room.height; row++)
+ 	{
+-		room.setTile(row, 0, TileType::WALL);				// left column
+-		room.setTile(row, cr_width - 1, TileType::WALL);	// right column
++		room.setTile(row, 0, Tile::WALL);				// left column
++		room.setTile(row, cr_width - 1, Tile::WALL);	// right column
+ 	}
+ 
+ 	// yet to do: room geometry like pillars via walls, doors, spawners, etc.
+diff --git a/project-rival/project-rival/Enemy.cpp b/project-rival/project-rival/Enemy.cpp
+index 8792e63..025cf27 100644
+--- a/project-rival/project-rival/Enemy.cpp
++++ b/project-rival/project-rival/Enemy.cpp
+@@ -7,7 +7,7 @@ Enemy::Enemy(const sf::Vector2f startPos, int totalHealth) :
+ 	e_isDead = false;
+ 
+ 	e_collisionProfile.layer = CollisionLayer::ENEMY_LAYER;
+-	e_collisionProfile.mask = CollisionLayer::PLAYER_LAYER | CollisionLayer::PLAYER_BULLET_LAYER;
++	e_collisionProfile.mask = CollisionLayer::PLAYER_LAYER | CollisionLayer::PLAYER_BULLET_LAYER | CollisionLayer::WALL_LAYER;
+ }
+ 
+ void Enemy::initBody(const sf::Vector2f& size, const sf::Color& colour)
+@@ -24,6 +24,11 @@ void Enemy::render(sf::RenderWindow& window)
+ 	window.draw(e_body);
+ }
+ 
++sf::Vector2f Enemy::getPosition() const
++{
++	return e_body.getPosition();
++}
++
+ sf::FloatRect Enemy::getCollisionBounds() const
+ {
+ 	return e_body.getGlobalBounds();
+diff --git a/project-rival/project-rival/Enemy.h b/project-rival/project-rival/Enemy.h
+index 58ad4e4..08d42f6 100644
+--- a/project-rival/project-rival/Enemy.h
++++ b/project-rival/project-rival/Enemy.h
+@@ -16,11 +16,15 @@ public:
+ 	virtual void update(double dt) = 0;
+ 	virtual void render(sf::RenderWindow& window);
+ 
++	virtual sf::Vector2f getPosition() const;
++
+ 	virtual void setTarget(const Vector2f& target) = 0;
+ 
+ 	virtual sf::FloatRect getCollisionBounds() const override;
+ 	virtual CollisionProfile getCollisionProfile() const override;
+ 
++	virtual void hitWall(sf::Vector2f oldPos) = 0;
++
+ 	virtual void takeDamage(int damage);
+ 	virtual void onDeath();
+ 	virtual bool isDead() const;
+diff --git a/project-rival/project-rival/Game.cpp b/project-rival/project-rival/Game.cpp
+index b508309..9321bd9 100644
+--- a/project-rival/project-rival/Game.cpp
++++ b/project-rival/project-rival/Game.cpp
+@@ -121,18 +121,30 @@ void Game::update(double dt)
+ 	InputManager::update();
+ 
+ 	// Update player and enemies
++	Vector2f oldPlayerPos = m_player.getPosition();
+ 	m_player.update(dt, mousePosF);
++
+ 	for (auto enemy_it = m_enemies.begin(); enemy_it != m_enemies.end();)
+ 	{
+ 		auto& enemy = *enemy_it;
++		Vector2f oldEnemyPos = enemy->getPosition();
+ 		enemy->setTarget(m_player.getPosition());
+ 		enemy->update(dt);
+ 
+-		// Check collision with player
++		// Check collision with player and wall
++		// Enemy -> Player
+ 		if (CollisionCheck::areColliding(m_player, *enemy)) {
+ 			cout << "Player collided with enemy!\n";
+ 			m_player.takeDamage(10);
+ 		}
++		// Enemy -> Wall
++		for (auto& wall : m_activeRoomInstance.getStaticCollisions()) {
++			if (CollisionCheck::areColliding(*enemy, wall))
++			{
++				enemy->hitWall(oldEnemyPos);
++				break;
++			}
++		}
+ 
+ 		// Check if enemy is dead and remove if so
+ 		if (enemy->isDead())
+@@ -147,18 +159,42 @@ void Game::update(double dt)
+ 	// Check player projectiles against enemies
+ 	for (auto& bullet : m_player.getProjectiles()) 
+ 	{
+-		if(!bullet || bullet->shouldDestroy())
++		if(bullet->shouldDestroy())
+ 			continue;
+ 
+ 		for (auto& enemy : m_enemies) {
+-			if (!enemy || enemy->isDead())
++			if (enemy->isDead())
+ 				continue;
+ 
++			// Bullet -> Enemy
+ 			if (CollisionCheck::areColliding(*bullet, *enemy))
+ 			{
+ 				enemy->takeDamage(bullet->applyDamage());
+ 				bullet->destroy();
+-				break; // gets rid of bug where bullet hits multiple enemies
++				break;
++			}
++		}
++	}
++
++	// Check static environment against player, enmies and projectiles
++	for (auto& wall : m_activeRoomInstance.getStaticCollisions())
++	{
++		// Wall -> Player
++		if (CollisionCheck::areColliding(m_player, wall))
++		{
++			m_player.hitWall(oldPlayerPos);
++		}
++
++		// Wall -> Player Projectiles
++		for (auto& bullet : m_player.getProjectiles())
++		{
++			if (bullet->shouldDestroy())
++				continue;
++
++			if (CollisionCheck::areColliding(*bullet, wall))
++			{
++				bullet->destroy();
++				break;
+ 			}
+ 		}
+ 	}
+@@ -168,6 +204,9 @@ void Game::update(double dt)
+ void Game::render()
+ {
+ 	m_window.clear(sf::Color(0, 0, 0, 0));
++
++	m_activeRoomInstance.render(m_window);
++
+ 	m_player.render(m_window);
+ 	for (auto& enemy : m_enemies) {
+ 		enemy->render(m_window);
+@@ -183,6 +222,8 @@ void Game::render()
+ 
+ void Game::gameStart()
+ {
++	generateRoom();
++
+ 	for (int i = 0; i < 5; i++)
+ 	{
+ 		sf::Vector2f randEnemyPos{ static_cast<float>(rand() % ScreenSize::s_width), static_cast<float>(rand() % ScreenSize::s_height) };
+@@ -190,3 +231,12 @@ void Game::gameStart()
+ 		m_enemies.push_back(std::make_unique<TurretEnemy>(randEnemyPos, 250));
+ 	}
+ }
++
++void Game::generateRoom()
++{
++	m_activeRoomPlan = m_combatRoom.generateRoom(0, RoomType::COMBAT, 0);
++
++	sf::Vector2f roomWorldPos{ 100.f, 100.f };
++
++	m_activeRoomInstance.buildFromPlan(m_activeRoomPlan, roomWorldPos);
++}
+diff --git a/project-rival/project-rival/Game.h b/project-rival/project-rival/Game.h
+index 4bd8d67..4cad8d8 100644
+--- a/project-rival/project-rival/Game.h
++++ b/project-rival/project-rival/Game.h
+@@ -12,6 +12,9 @@
+ #include "player.h"
+ #include "Enemy.h"
+ 
++#include "RoomInstance.h"
++#include "CombatRoom.h"
++
+ using namespace std;
+ using namespace sf;
+ 
+@@ -52,6 +55,10 @@ protected:
+ 
+ 	std::vector<std::unique_ptr<Enemy>> m_enemies;
+ 
++	CombatRoom m_combatRoom{ 14,9 };
++	RoomPlan m_activeRoomPlan;
++	RoomInstance m_activeRoomInstance;
++
+ #ifdef TEST_FPS
+ 	sf::Text x_updateFPS{ m_arialFont };	// text used to display updates per second.
+ 	sf::Text x_drawFPS{  m_arialFont };	// text used to display draw calls per second.
+@@ -63,4 +70,6 @@ protected:
+ 
+ private:
+ 	void gameStart();
++
++	void generateRoom();
+ };
+diff --git a/project-rival/project-rival/GruntEnemy.cpp b/project-rival/project-rival/GruntEnemy.cpp
+index 5792a1e..8239fd8 100644
+--- a/project-rival/project-rival/GruntEnemy.cpp
++++ b/project-rival/project-rival/GruntEnemy.cpp
+@@ -82,3 +82,9 @@ void GruntEnemy::setTarget(const Vector2f& target)
+ 	e_arrive.setTarget(target);
+ }
+ 
++void GruntEnemy::hitWall(sf::Vector2f oldPos)
++{
++	e_agent.position = oldPos;
++	e_body.setPosition(e_agent.position);
++}
++
+diff --git a/project-rival/project-rival/GruntEnemy.h b/project-rival/project-rival/GruntEnemy.h
+index c88e7fb..fb75828 100644
+--- a/project-rival/project-rival/GruntEnemy.h
++++ b/project-rival/project-rival/GruntEnemy.h
+@@ -11,6 +11,7 @@ public:
+ 	void update(double dt) override;
+ 	void setTarget(const Vector2f& target) override;
+ 
++	void hitWall(sf::Vector2f oldPos) override;
+ 
+ private:
+ 	SteeringAgent e_agent;
+diff --git a/project-rival/project-rival/Projectile.cpp b/project-rival/project-rival/Projectile.cpp
+index 7edb8d8..ef55ea4 100644
+--- a/project-rival/project-rival/Projectile.cpp
++++ b/project-rival/project-rival/Projectile.cpp
+@@ -17,6 +17,7 @@ Projectile::Projectile(sf::Vector2f spawnPoint, float lifetime, bool isFromPlaye
+ 	}
+ 	// add other collision masks for environment (e.g. walls)
+ 	// like so ----> p_collisionProfile.mask |= CollisionLayer::LEVEL_LAYER;
++	p_collisionProfile.mask |= CollisionLayer::WALL_LAYER;
+ }
+ 
+ void Projectile::render(sf::RenderWindow& window)
+diff --git a/project-rival/project-rival/RoomBlueprint.h b/project-rival/project-rival/RoomBlueprint.h
+index aa0bd8b..2b5ddbe 100644
+--- a/project-rival/project-rival/RoomBlueprint.h
++++ b/project-rival/project-rival/RoomBlueprint.h
+@@ -7,7 +7,7 @@ enum RoomType {
+ 	COMBAT
+ };
+ 
+-enum TileType {
++enum Tile {
+ 	Empty,
+ 
+ 	FLOOR,
+@@ -48,25 +48,25 @@ struct RoomPlan {
+ 	// Room representation
+ 	int width;
+ 	int height;	
+-	float tileSize = 64.f;
++	float tileSize = 78.f;
+ 
+ 	// Room layout
+-	std::vector<TileType> tileMap;	// formula for 1D index: row * width + column
++	std::vector<Tile> tileMap;	// formula for 1D index: row * width + column
+ 	std::vector<DoorPlan> doors;
+ 	std::vector<SpawnerPlan> spawners;
+ 	
+-	bool isValid() {
++	bool isValid() const {
+ 		if (width > 0 && height > 0 && (tileMap.size() == width * height))
+ 			return true;
+ 		else
+ 			return false;
+ 	}
+ 
+-	TileType getTile(int row, int column) const {
++	Tile getTile(int row, int column) const {
+ 		return tileMap[row * width + column];
+ 	}
+ 
+-	void setTile(int row, int column, TileType type) {
++	void setTile(int row, int column, Tile type) {
+ 		tileMap[row * width + column] = type;
+ 	}
+ };
+diff --git a/project-rival/project-rival/RoomInstance.cpp b/project-rival/project-rival/RoomInstance.cpp
+new file mode 100644
+index 0000000..3ec77c8
+--- /dev/null
++++ b/project-rival/project-rival/RoomInstance.cpp
+@@ -0,0 +1,49 @@
++#include "RoomInstance.h"
++
++void RoomInstance::buildFromPlan(const RoomPlan& plan, const sf::Vector2f& worldPos)
++{
++	ri_staticColliders.clear();
++	ri_staticShapes.clear();
++
++	if (!plan.isValid())
++		return;
++
++	const float tileSize = plan.tileSize;
++	
++	// initialise each tile
++	for (int row = 0; row < plan.height; row++) {
++		for (int col = 0; col < plan.width; col++) {
++			const Tile tile = plan.getTile(row, col);
++			if (tile != Tile::WALL)
++				continue;
++
++			// setup wall
++			sf::RectangleShape wall;
++			wall.setSize(sf::Vector2f(tileSize, tileSize));
++			wall.setOrigin(wall.getSize() / 2.f);
++			wall.setPosition(worldPos + sf::Vector2f(col * tileSize, row * tileSize));
++			wall.setFillColor(sf::Color(100, 100, 100)); // grey walls
++
++			ri_staticShapes.push_back(wall);
++
++			//setup collider for wall
++			StaticCollision collider(wall.getGlobalBounds(), CollisionLayer::WALL_LAYER,
++				CollisionLayer::PLAYER_LAYER | CollisionLayer::ENEMY_LAYER | CollisionLayer::PLAYER_BULLET_LAYER | CollisionLayer::ENEMY_BULLET_LAYER);
++
++			ri_staticColliders.push_back(collider);
++		}
++	}
++}
++
++const std::vector<StaticCollision>& RoomInstance::getStaticCollisions()
++{
++	return ri_staticColliders;
++}
++
++void RoomInstance::render(sf::RenderWindow& window)
++{
++	for (auto& shape : ri_staticShapes)
++	{
++		window.draw(shape);
++	}
++}
+diff --git a/project-rival/project-rival/RoomInstance.h b/project-rival/project-rival/RoomInstance.h
+new file mode 100644
+index 0000000..0bd522c
+--- /dev/null
++++ b/project-rival/project-rival/RoomInstance.h
+@@ -0,0 +1,19 @@
++#pragma once
++#include "RoomBlueprint.h"
++#include "StaticCollision.h"
++#include "SFML/Graphics.hpp"
++
++class RoomInstance
++{
++public:
++	void buildFromPlan(const RoomPlan& plan, const sf::Vector2f& worldPos);
++	
++	const std::vector<StaticCollision>& getStaticCollisions();
++
++	void render(sf::RenderWindow& window);
++
++private:
++	std::vector<StaticCollision> ri_staticColliders;
++	std::vector<sf::RectangleShape> ri_staticShapes;
++};
++
+diff --git a/project-rival/project-rival/StaticCollision.cpp b/project-rival/project-rival/StaticCollision.cpp
+new file mode 100644
+index 0000000..95d2269
+--- /dev/null
++++ b/project-rival/project-rival/StaticCollision.cpp
+@@ -0,0 +1,18 @@
++#include "StaticCollision.h"
++
++StaticCollision::StaticCollision(const sf::FloatRect& bounds, CollisionLayer layer, uint32_t mask)
++	: sc_bounds(bounds), sc_profile({ layer, mask })
++{
++	sc_profile.layer = layer;
++	sc_profile.mask = mask;
++}
++
++sf::FloatRect StaticCollision::getCollisionBounds() const
++{
++	return sc_bounds;
++}
++
++CollisionProfile StaticCollision::getCollisionProfile() const
++{
++	return sc_profile;
++}
+diff --git a/project-rival/project-rival/StaticCollision.h b/project-rival/project-rival/StaticCollision.h
+new file mode 100644
+index 0000000..6e07ea6
+--- /dev/null
++++ b/project-rival/project-rival/StaticCollision.h
+@@ -0,0 +1,17 @@
++#pragma once
++#include "Collision.h"
++
++class StaticCollision : public ICollidable
++{
++public:
++	StaticCollision() = default;
++	StaticCollision(const sf::FloatRect& bounds, CollisionLayer layer, uint32_t mask);
++
++	sf::FloatRect getCollisionBounds() const override;
++	CollisionProfile getCollisionProfile() const override;
++
++private:
++	sf::FloatRect sc_bounds;
++	CollisionProfile sc_profile;
++};
++
+diff --git a/project-rival/project-rival/TurretEnemy.cpp b/project-rival/project-rival/TurretEnemy.cpp
+index 29ac6f1..feed17d 100644
+--- a/project-rival/project-rival/TurretEnemy.cpp
++++ b/project-rival/project-rival/TurretEnemy.cpp
+@@ -19,3 +19,7 @@ void TurretEnemy::setTarget(const Vector2f& target)
+ {
+ 	e_target = target;
+ }
++
++void TurretEnemy::hitWall(sf::Vector2f oldPos)
++{
++}
+diff --git a/project-rival/project-rival/TurretEnemy.h b/project-rival/project-rival/TurretEnemy.h
+index 634040a..d24b75f 100644
+--- a/project-rival/project-rival/TurretEnemy.h
++++ b/project-rival/project-rival/TurretEnemy.h
+@@ -11,6 +11,8 @@ public:
+ 	void update(double dt) override;
+ 	void setTarget(const Vector2f& target) override;
+ 
++	void hitWall(sf::Vector2f oldPos) override;
++
+ private:
+ 
+ };
+diff --git a/project-rival/project-rival/player.cpp b/project-rival/project-rival/player.cpp
+index aa7b7f3..26b581c 100644
+--- a/project-rival/project-rival/player.cpp
++++ b/project-rival/project-rival/player.cpp
+@@ -39,7 +39,7 @@ void Player::init()
+ 
+ 	//collision
+ 	p_collisionProfile.layer = CollisionLayer::PLAYER_LAYER;
+-	p_collisionProfile.mask = CollisionLayer::ENEMY_LAYER | CollisionLayer::ENEMY_BULLET_LAYER;
++	p_collisionProfile.mask = CollisionLayer::ENEMY_LAYER | CollisionLayer::ENEMY_BULLET_LAYER | CollisionLayer::WALL_LAYER;
+ 
+ 	reset();
+ }
+@@ -171,6 +171,11 @@ void Player::takeDamage(int damage)
+ 	}
+ }
+ 
++void Player::hitWall(sf::Vector2f oldPos)
++{
++	p_body.setPosition(oldPos);
++}
++
+ std::vector<std::unique_ptr<Projectile>>& Player::getProjectiles()
+ {
+ 	return p_projectiles;
+diff --git a/project-rival/project-rival/player.h b/project-rival/project-rival/player.h
+index da30f5a..95136a3 100644
+--- a/project-rival/project-rival/player.h
++++ b/project-rival/project-rival/player.h
+@@ -28,6 +28,8 @@ public:
+ 
+ 	void takeDamage(int damage);
+ 
++	void hitWall(sf::Vector2f oldPos);
++
+ 	// this functions will likely move to weapon class when made
+ 	std::vector<std::unique_ptr<Projectile>>& getProjectiles();
+ 
+diff --git a/project-rival/project-rival/project-rival.vcxproj b/project-rival/project-rival/project-rival.vcxproj
+index d4f086a..dac0e66 100644
+--- a/project-rival/project-rival/project-rival.vcxproj
++++ b/project-rival/project-rival/project-rival.vcxproj
+@@ -21,6 +21,7 @@
+   <ItemGroup>
+     <ClCompile Include="ArriveBehaviour.cpp" />
+     <ClCompile Include="Collision.cpp" />
++    <ClCompile Include="CombatRoom.cpp" />
+     <ClCompile Include="NormalBulletProjectile.cpp" />
+     <ClCompile Include="Projectile.cpp" />
+     <ClCompile Include="Enemy.cpp" />
+@@ -30,12 +31,15 @@
+     <ClCompile Include="InputManager.cpp" />
+     <ClCompile Include="main.cpp" />
+     <ClCompile Include="player.cpp" />
++    <ClCompile Include="RoomInstance.cpp" />
+     <ClCompile Include="SeekBehaviour.cpp" />
++    <ClCompile Include="StaticCollision.cpp" />
+     <ClCompile Include="TurretEnemy.cpp" />
+   </ItemGroup>
+   <ItemGroup>
+     <ClInclude Include="ArriveBehaviour.h" />
+     <ClInclude Include="Collision.h" />
++    <ClInclude Include="CombatRoom.h" />
+     <ClInclude Include="NormalBulletProjectile.h" />
+     <ClInclude Include="Projectile.h" />
+     <ClInclude Include="Enemy.h" />
+@@ -44,7 +48,10 @@
+     <ClInclude Include="GruntEnemy.h" />
+     <ClInclude Include="InputManager.h" />
+     <ClInclude Include="player.h" />
++    <ClInclude Include="RoomBlueprint.h" />
++    <ClInclude Include="RoomInstance.h" />
+     <ClInclude Include="SeekBehaviour.h" />
++    <ClInclude Include="StaticCollision.h" />
+     <ClInclude Include="Steering.h" />
+     <ClInclude Include="TurretEnemy.h" />
+   </ItemGroup>
+@@ -68,6 +75,7 @@
+     <None Include="..\automation\prompts\player-aiming-mouse-right-stick-reticle-context.md" />
+     <None Include="..\automation\prompts\steering-enemy-seek-step-by-step-context.md" />
+     <None Include="..\automation\scripts\merge-summary-generator.ps1" />
++    <None Include="automation\prompts\level-architecture-roomplan-generator-builder-static-colliders-context.md" />
+   </ItemGroup>
+   <ItemGroup>
+     <Text Include="..\automation\scripts\output\aiming-merge-changes.txt" />
+diff --git a/project-rival/project-rival/project-rival.vcxproj.filters b/project-rival/project-rival/project-rival.vcxproj.filters
+index 1ccf64b..809c5fc 100644
+--- a/project-rival/project-rival/project-rival.vcxproj.filters
++++ b/project-rival/project-rival/project-rival.vcxproj.filters
+@@ -49,6 +49,18 @@
+     <Filter Include="Header Files\Projectiles">
+       <UniqueIdentifier>{b9295663-bd23-4a50-bb5f-6ae5e6710b01}</UniqueIdentifier>
+     </Filter>
++    <Filter Include="Header Files\Levels">
++      <UniqueIdentifier>{127c1998-b90e-4d19-9042-548546c299e2}</UniqueIdentifier>
++    </Filter>
++    <Filter Include="Header Files\Levels\Rooms">
++      <UniqueIdentifier>{6315f94b-1a02-4312-8a70-232932c97a70}</UniqueIdentifier>
++    </Filter>
++    <Filter Include="Header Files\Levels\Collision">
++      <UniqueIdentifier>{39c9ab2c-a81f-4afe-83a4-1376aef9f6c4}</UniqueIdentifier>
++    </Filter>
++    <Filter Include="Resource Files\DOCUMENTATION\Git Summaries">
++      <UniqueIdentifier>{d0a212c5-440c-41a1-8f2b-6fde83f55d70}</UniqueIdentifier>
++    </Filter>
+   </ItemGroup>
+   <ItemGroup>
+     <ClCompile Include="main.cpp">
+@@ -90,6 +102,15 @@
+     <ClCompile Include="Collision.cpp">
+       <Filter>Header Files\Abs.Interfaces</Filter>
+     </ClCompile>
++    <ClCompile Include="StaticCollision.cpp">
++      <Filter>Header Files\Levels\Collision</Filter>
++    </ClCompile>
++    <ClCompile Include="CombatRoom.cpp">
++      <Filter>Header Files\Levels\Rooms</Filter>
++    </ClCompile>
++    <ClCompile Include="RoomInstance.cpp">
++      <Filter>Header Files\Levels</Filter>
++    </ClCompile>
+   </ItemGroup>
+   <ItemGroup>
+     <ClInclude Include="Game.h">
+@@ -131,6 +152,18 @@
+     <ClInclude Include="Collision.h">
+       <Filter>Header Files\Abs.Interfaces</Filter>
+     </ClInclude>
++    <ClInclude Include="RoomBlueprint.h">
++      <Filter>Header Files\Abs.Interfaces</Filter>
++    </ClInclude>
++    <ClInclude Include="StaticCollision.h">
++      <Filter>Header Files\Levels\Collision</Filter>
++    </ClInclude>
++    <ClInclude Include="CombatRoom.h">
++      <Filter>Header Files\Levels\Rooms</Filter>
++    </ClInclude>
++    <ClInclude Include="RoomInstance.h">
++      <Filter>Header Files\Levels</Filter>
++    </ClInclude>
+   </ItemGroup>
+   <ItemGroup>
+     <Image Include="ASSETS\IMAGES\SFML-LOGO.png">
+@@ -158,9 +191,19 @@
+     <None Include="..\automation\scripts\merge-summary-generator.ps1">
+       <Filter>Resource Files\AUTOMATIONS\Scripts</Filter>
+     </None>
++    <None Include="automation\prompts\level-architecture-roomplan-generator-builder-static-colliders-context.md">
++      <Filter>Resource Files\AUTOMATIONS\Agent</Filter>
++    </None>
+   </ItemGroup>
+   <ItemGroup>
+-    <Text Include="..\automation\scripts\output\aiming-merge-changes.txt" />
+-    <Text Include="..\automation\scripts\output\enemies-merge-changes.txt" />
++    <Text Include="..\automation\scripts\output\aiming-merge-changes.txt">
++      <Filter>Resource Files\DOCUMENTATION\Git Summaries</Filter>
++    </Text>
++    <Text Include="..\automation\scripts\output\collisions-merge-changes.txt">
++      <Filter>Resource Files\DOCUMENTATION\Git Summaries</Filter>
++    </Text>
++    <Text Include="..\automation\scripts\output\enemies-merge-changes.txt">
++      <Filter>Resource Files\DOCUMENTATION\Git Summaries</Filter>
++    </Text>
+   </ItemGroup>
+ </Project>
+\ No newline at end of file
+
+commit a368c2efe2a02fc638b4af0effdba22db42adf2c
+Author: WollyTech <ayolawole@gmail.com>
+Date:   Wed Mar 25 05:11:20 2026 +0000
+
+    Enemies spawn in at spawn points
+
+diff --git a/project-rival/project-rival/CombatRoom.cpp b/project-rival/project-rival/CombatRoom.cpp
+index 2c8ceba..cec065b 100644
+--- a/project-rival/project-rival/CombatRoom.cpp
++++ b/project-rival/project-rival/CombatRoom.cpp
+@@ -32,7 +32,32 @@ RoomPlan CombatRoom::generateRoom(int id, RoomType type, int seed)
+ 		room.setTile(row, cr_width - 1, Tile::WALL);	// right column
+ 	}
+ 
+-	// yet to do: room geometry like pillars via walls, doors, spawners, etc.
++	// Pillars
++
++	generateSpawnPoints(room);
++
++	// yet to do: room geometry like pillars via walls, doors, etc.
+ 
+ 	return room;
+ }
++
++void CombatRoom::generateSpawnPoints(RoomPlan& room)
++{
++	// Spawners
++	int totalEnemies = rand() % 5 + 3;	// random number of enemies between 3 and 7 for now but to be based on the seed later
++	std::vector<sf::Vector2i> occupiedPositions;
++	for (int i = 0; i < totalEnemies; i++)
++	{
++		sf::Vector2i randPos = { rand() % (room.width - 2) + 1, rand() % (room.height - 2) + 1 }; // random position within the room, excluding walls
++
++		Tile tileAtPos = room.getTile(randPos.y, randPos.x);
++		while (tileAtPos == Tile::WALL ||
++			std::find(occupiedPositions.begin(), occupiedPositions.end(), randPos) != occupiedPositions.end())
++		{
++			randPos = { rand() % (room.width - 2) + 1, rand() % (room.height - 2) + 1 };
++		}
++
++		room.spawners.push_back({ SpawnerType::EnemySpawner, randPos });
++		occupiedPositions.push_back(randPos);
++	}
++}
+diff --git a/project-rival/project-rival/CombatRoom.h b/project-rival/project-rival/CombatRoom.h
+index 96427d2..3e5c192 100644
+--- a/project-rival/project-rival/CombatRoom.h
++++ b/project-rival/project-rival/CombatRoom.h
+@@ -9,6 +9,8 @@ public:
+ 
+ 	RoomPlan generateRoom(int id, RoomType type, int seed) override;
+ 
++	void generateSpawnPoints(RoomPlan& room) override;
++
+ private:
+ 	int cr_width;
+ 	int cr_height;
+diff --git a/project-rival/project-rival/Enemy.cpp b/project-rival/project-rival/Enemy.cpp
+index 025cf27..2b3c203 100644
+--- a/project-rival/project-rival/Enemy.cpp
++++ b/project-rival/project-rival/Enemy.cpp
+@@ -2,8 +2,9 @@
+ using namespace sf;
+ 
+ Enemy::Enemy(const sf::Vector2f startPos, int totalHealth) :
+-	e_startPos(startPos), e_health(totalHealth)
++	e_startPos(startPos), e_maxHealth(totalHealth)
+ {
++	e_health = e_maxHealth;
+ 	e_isDead = false;
+ 
+ 	e_collisionProfile.layer = CollisionLayer::ENEMY_LAYER;
+@@ -24,6 +25,13 @@ void Enemy::render(sf::RenderWindow& window)
+ 	window.draw(e_body);
+ }
+ 
++void Enemy::reset()
++{
++	e_body.setPosition(e_startPos);
++	e_health = e_maxHealth;
++	e_isDead = false;
++}
++
+ sf::Vector2f Enemy::getPosition() const
+ {
+ 	return e_body.getPosition();
+diff --git a/project-rival/project-rival/Enemy.h b/project-rival/project-rival/Enemy.h
+index 08d42f6..5efdb91 100644
+--- a/project-rival/project-rival/Enemy.h
++++ b/project-rival/project-rival/Enemy.h
+@@ -7,6 +7,14 @@
+ 
+ #include "Collision.h"
+ 
++enum EnemyType
++{
++	GRUNT,
++	TURRET,
++
++	COUNT
++};
++
+ class Enemy : public ICollidable
+ {
+ public:
+@@ -15,6 +23,7 @@ public:
+ 	virtual void init() = 0;
+ 	virtual void update(double dt) = 0;
+ 	virtual void render(sf::RenderWindow& window);
++	virtual void reset();
+ 
+ 	virtual sf::Vector2f getPosition() const;
+ 
+@@ -39,6 +48,7 @@ protected:
+ 	CollisionProfile e_collisionProfile;
+ 
+ 	// entity stats
++	int e_maxHealth;
+ 	int e_health;
+ 	bool e_isDead;
+ };
+diff --git a/project-rival/project-rival/Game.cpp b/project-rival/project-rival/Game.cpp
+index 9321bd9..d086d30 100644
+--- a/project-rival/project-rival/Game.cpp
++++ b/project-rival/project-rival/Game.cpp
+@@ -119,6 +119,9 @@ void Game::update(double dt)
+ 	const Vector2f mousePosF = m_window.mapPixelToCoords(mousePos);
+ 
+ 	InputManager::update();
++	
++	// Game manager controls
++	gameInput();
+ 
+ 	// Update player and enemies
+ 	Vector2f oldPlayerPos = m_player.getPosition();
+@@ -200,6 +203,18 @@ void Game::update(double dt)
+ 	}
+ }
+ 
++void Game::gameInput()
++{
++	if (Keyboard::isKeyPressed(Keyboard::Key::Escape) || InputManager::pad().pressed(GamepadButton::Start))
++	{
++		m_window.close();
++	}
++	if (Keyboard::isKeyPressed(Keyboard::Key::R) || InputManager::pad().pressed(GamepadButton::Select))
++	{
++		gameStart();
++	}
++}
++
+ ////////////////////////////////////////////////////////////
+ void Game::render()
+ {
+@@ -219,17 +234,21 @@ void Game::render()
+ 	m_window.display();
+ }
+ 
++void Game::resetGame()
++{
++	m_player.init();
++
++	m_enemies.clear();
++
++	m_combatRoom;
++	m_activeRoomPlan;
++	m_activeRoomInstance.reset();
++}
+ 
+ void Game::gameStart()
+ {
++	resetGame();
+ 	generateRoom();
+-
+-	for (int i = 0; i < 5; i++)
+-	{
+-		sf::Vector2f randEnemyPos{ static_cast<float>(rand() % ScreenSize::s_width), static_cast<float>(rand() % ScreenSize::s_height) };
+-		m_enemies.push_back(std::make_unique<GruntEnemy>(randEnemyPos, 150));
+-		m_enemies.push_back(std::make_unique<TurretEnemy>(randEnemyPos, 250));
+-	}
+ }
+ 
+ void Game::generateRoom()
+@@ -237,6 +256,22 @@ void Game::generateRoom()
+ 	m_activeRoomPlan = m_combatRoom.generateRoom(0, RoomType::COMBAT, 0);
+ 
+ 	sf::Vector2f roomWorldPos{ 100.f, 100.f };
+-
+ 	m_activeRoomInstance.buildFromPlan(m_activeRoomPlan, roomWorldPos);
++
++	m_enemies.clear();
++
++	//Enemy Spawner
++	int totalEnemyTypes = EnemyType::COUNT;
++	for (auto& spawnPoint : m_activeRoomPlan.spawners)
++	{
++		if (spawnPoint.type == SpawnerType::EnemySpawner) {
++			Vector2f spawnPos = roomWorldPos + static_cast<Vector2f>(spawnPoint.tilePos) * m_activeRoomPlan.tileSize;
++			
++			int enemyToSpawn = rand() % totalEnemyTypes;
++			if (enemyToSpawn == 0)
++				m_enemies.push_back(std::make_unique<GruntEnemy>(spawnPos, 150));
++			else if (enemyToSpawn == 1)
++				m_enemies.push_back(std::make_unique<TurretEnemy>(spawnPos, 250));
++		}
++	}
+ }
+diff --git a/project-rival/project-rival/Game.h b/project-rival/project-rival/Game.h
+index 4cad8d8..d901f67 100644
+--- a/project-rival/project-rival/Game.h
++++ b/project-rival/project-rival/Game.h
+@@ -43,6 +43,8 @@ protected:
+ 	void init();
+ 	void update(double dt);
+ 
++	void gameInput();
++
+ 	void render();
+ 
+ 	void processEvents();
+@@ -69,6 +71,7 @@ protected:
+ 
+ 
+ private:
++	void resetGame();
+ 	void gameStart();
+ 
+ 	void generateRoom();
+diff --git a/project-rival/project-rival/Gamepad.cpp b/project-rival/project-rival/Gamepad.cpp
+index 0fa83fd..71d3c5e 100644
+--- a/project-rival/project-rival/Gamepad.cpp
++++ b/project-rival/project-rival/Gamepad.cpp
+@@ -95,7 +95,7 @@ uint16_t Gamepad::toXInputMask(GamepadButton button)
+ 	case GamepadButton::Y: return XINPUT_GAMEPAD_Y;
+ 	case GamepadButton::LeftShoulder: return XINPUT_GAMEPAD_LEFT_SHOULDER;
+ 	case GamepadButton::RightShoulder: return XINPUT_GAMEPAD_RIGHT_SHOULDER;
+-	case GamepadButton::Back: return XINPUT_GAMEPAD_BACK;
++	case GamepadButton::Select: return XINPUT_GAMEPAD_BACK;
+ 	case GamepadButton::Start: return XINPUT_GAMEPAD_START;
+ 	case GamepadButton::LeftThumb: return XINPUT_GAMEPAD_LEFT_THUMB;
+ 	case GamepadButton::RightThumb: return XINPUT_GAMEPAD_RIGHT_THUMB;
+diff --git a/project-rival/project-rival/Gamepad.h b/project-rival/project-rival/Gamepad.h
+index fce69c2..cc67075 100644
+--- a/project-rival/project-rival/Gamepad.h
++++ b/project-rival/project-rival/Gamepad.h
+@@ -10,7 +10,7 @@ enum class GamepadButton : uint16_t
+ 	Y,
+ 	LeftShoulder,
+ 	RightShoulder,
+-	Back,
++	Select,
+ 	Start,
+ 	LeftThumb,
+ 	RightThumb,
+diff --git a/project-rival/project-rival/NormalBulletProjectile.cpp b/project-rival/project-rival/NormalBulletProjectile.cpp
+index 2d19070..48ae4ae 100644
+--- a/project-rival/project-rival/NormalBulletProjectile.cpp
++++ b/project-rival/project-rival/NormalBulletProjectile.cpp
+@@ -14,7 +14,7 @@ void NormalBulletProjectile::init()
+ 		destroy();
+ 
+ 	// set damage
+-	p_damage = 1;
++	p_damage = 10;
+ }
+ 
+ void NormalBulletProjectile::update(double dt)
+diff --git a/project-rival/project-rival/RoomBlueprint.h b/project-rival/project-rival/RoomBlueprint.h
+index 2b5ddbe..b78bc1b 100644
+--- a/project-rival/project-rival/RoomBlueprint.h
++++ b/project-rival/project-rival/RoomBlueprint.h
+@@ -79,4 +79,5 @@ public:
+ 	// a few things to note about the parameters:
+ 	// id, type and seed are fine for passing through
+ 	virtual RoomPlan generateRoom(int id, RoomType type, int seed) = 0;
++	virtual void generateSpawnPoints(RoomPlan& roomPlan) = 0;
+ };
+\ No newline at end of file
+diff --git a/project-rival/project-rival/RoomInstance.cpp b/project-rival/project-rival/RoomInstance.cpp
+index 3ec77c8..ff64b61 100644
+--- a/project-rival/project-rival/RoomInstance.cpp
++++ b/project-rival/project-rival/RoomInstance.cpp
+@@ -14,24 +14,38 @@ void RoomInstance::buildFromPlan(const RoomPlan& plan, const sf::Vector2f& world
+ 	for (int row = 0; row < plan.height; row++) {
+ 		for (int col = 0; col < plan.width; col++) {
+ 			const Tile tile = plan.getTile(row, col);
+-			if (tile != Tile::WALL)
+-				continue;
++			if (tile == Tile::WALL) {
++				// setup wall
++				sf::RectangleShape wall;
++				wall.setSize(sf::Vector2f(tileSize, tileSize));
++				wall.setOrigin(wall.getSize() / 2.f);
++				wall.setPosition(worldPos + sf::Vector2f(col * tileSize, row * tileSize));
++				wall.setFillColor(sf::Color(100, 100, 100)); // grey walls
+ 
+-			// setup wall
+-			sf::RectangleShape wall;
+-			wall.setSize(sf::Vector2f(tileSize, tileSize));
+-			wall.setOrigin(wall.getSize() / 2.f);
+-			wall.setPosition(worldPos + sf::Vector2f(col * tileSize, row * tileSize));
+-			wall.setFillColor(sf::Color(100, 100, 100)); // grey walls
++				ri_staticShapes.push_back(wall);
+ 
+-			ri_staticShapes.push_back(wall);
++				//setup collider for wall
++				StaticCollision collider(wall.getGlobalBounds(), CollisionLayer::WALL_LAYER,
++					CollisionLayer::PLAYER_LAYER | CollisionLayer::ENEMY_LAYER | CollisionLayer::PLAYER_BULLET_LAYER | CollisionLayer::ENEMY_BULLET_LAYER);
+ 
+-			//setup collider for wall
+-			StaticCollision collider(wall.getGlobalBounds(), CollisionLayer::WALL_LAYER,
+-				CollisionLayer::PLAYER_LAYER | CollisionLayer::ENEMY_LAYER | CollisionLayer::PLAYER_BULLET_LAYER | CollisionLayer::ENEMY_BULLET_LAYER);
+-
+-			ri_staticColliders.push_back(collider);
++				ri_staticColliders.push_back(collider);
++			}
++		}
++	}
++	// initialise spawners (DEBUG)
++	for (auto& spawner : plan.spawners) {
++		sf::RectangleShape spawnPoint;
++		spawnPoint.setSize(sf::Vector2f(tileSize, tileSize) / 8.f);
++		spawnPoint.setOrigin(spawnPoint.getSize() / 2.f);
++		spawnPoint.setPosition(worldPos + static_cast<sf::Vector2f>(spawner.tilePos) * tileSize);
++		if (spawner.type == SpawnerType::PlayerSpawner) {
++			spawnPoint.setFillColor(sf::Color(0, 255, 0)); // green for player spawn
+ 		}
++		else if (spawner.type == SpawnerType::EnemySpawner) {
++			spawnPoint.setFillColor(sf::Color(255, 0, 0)); // red for enemy spawn
++		}
++
++		ri_staticShapes.push_back(spawnPoint);
+ 	}
+ }
+ 
+@@ -47,3 +61,9 @@ void RoomInstance::render(sf::RenderWindow& window)
+ 		window.draw(shape);
+ 	}
+ }
++
++void RoomInstance::reset()
++{
++	ri_staticColliders.clear();
++	ri_staticShapes.clear();
++}
+diff --git a/project-rival/project-rival/RoomInstance.h b/project-rival/project-rival/RoomInstance.h
+index 0bd522c..ad7f641 100644
+--- a/project-rival/project-rival/RoomInstance.h
++++ b/project-rival/project-rival/RoomInstance.h
+@@ -12,6 +12,8 @@ public:
+ 
+ 	void render(sf::RenderWindow& window);
+ 
++	void reset();
++
+ private:
+ 	std::vector<StaticCollision> ri_staticColliders;
+ 	std::vector<sf::RectangleShape> ri_staticShapes;
+diff --git a/project-rival/project-rival/player.cpp b/project-rival/project-rival/player.cpp
+index 26b581c..7755e19 100644
+--- a/project-rival/project-rival/player.cpp
++++ b/project-rival/project-rival/player.cpp
+@@ -97,7 +97,7 @@ CollisionProfile Player::getCollisionProfile() const
+ void Player::reset()
+ {
+ 	p_body.setPosition(Vector2f(500, 500.f));
+-	p_health = 1000;
++	p_health = p_maxHealth;
+ }
+ 
+ void Player::handleMovement(double dt)
+diff --git a/project-rival/project-rival/player.h b/project-rival/project-rival/player.h
+index 95136a3..8307799 100644
+--- a/project-rival/project-rival/player.h
++++ b/project-rival/project-rival/player.h
+@@ -55,6 +55,7 @@ private:
+ 	CollisionProfile p_collisionProfile;
+ 
+ 	// entity stats
++	int p_maxHealth;
+ 	int p_health;
+ 
+ 	// projectiles --> test. this will move to weapon class when made
+
+commit 2b644bfc4b5a3ecd5f3ee00d1ea31c0ef86d6cc6
+Author: WollyTech <ayolawole@gmail.com>
+Date:   Wed Mar 25 05:39:48 2026 +0000
+
+    different room sizes
+
+diff --git a/project-rival/project-rival/CombatRoom.cpp b/project-rival/project-rival/CombatRoom.cpp
+index cec065b..42d7537 100644
+--- a/project-rival/project-rival/CombatRoom.cpp
++++ b/project-rival/project-rival/CombatRoom.cpp
+@@ -1,10 +1,5 @@
+ #include "CombatRoom.h"
+ 
+-CombatRoom::CombatRoom(int width, int height) 
+-	: cr_height(height), cr_width(width)
+-{
+-}
+-
+ RoomPlan CombatRoom::generateRoom(int id, RoomType type, int seed)
+ {
+ 	RoomPlan room;
+@@ -13,8 +8,9 @@ RoomPlan CombatRoom::generateRoom(int id, RoomType type, int seed)
+ 	room.type = type;
+ 	room.seed = seed;
+ 		// -> note here that this is where the height and width will be determined based on the type
+-	room.height = cr_height;
+-	room.width = cr_width;
++	//height 10-12; width 15-20
++	room.height = rand() % 4 + 10;
++	room.width = rand() % 6 + 15;
+ 
+ 	// tile map initialisation
+ 	room.tileMap.assign(room.height * room.width, Tile::FLOOR);
+@@ -29,11 +25,12 @@ RoomPlan CombatRoom::generateRoom(int id, RoomType type, int seed)
+ 	for (int row = 0; row < room.height; row++)
+ 	{
+ 		room.setTile(row, 0, Tile::WALL);				// left column
+-		room.setTile(row, cr_width - 1, Tile::WALL);	// right column
++		room.setTile(row, room.width - 1, Tile::WALL);	// right column
+ 	}
+ 
+ 	// Pillars
+ 
++	// Spawners
+ 	generateSpawnPoints(room);
+ 
+ 	// yet to do: room geometry like pillars via walls, doors, etc.
+@@ -43,7 +40,7 @@ RoomPlan CombatRoom::generateRoom(int id, RoomType type, int seed)
+ 
+ void CombatRoom::generateSpawnPoints(RoomPlan& room)
+ {
+-	// Spawners
++	// Enemy Spawner
+ 	int totalEnemies = rand() % 5 + 3;	// random number of enemies between 3 and 7 for now but to be based on the seed later
+ 	std::vector<sf::Vector2i> occupiedPositions;
+ 	for (int i = 0; i < totalEnemies; i++)
+diff --git a/project-rival/project-rival/CombatRoom.h b/project-rival/project-rival/CombatRoom.h
+index 3e5c192..3f20185 100644
+--- a/project-rival/project-rival/CombatRoom.h
++++ b/project-rival/project-rival/CombatRoom.h
+@@ -4,15 +4,8 @@
+ class CombatRoom : public IRoomGenerator
+ {
+ public:
+-	// Temporary constructor parameters to determine a good range of sizes for combat rooms. Eventually, the room generator should be able to determine its own size based on the type and seed, and the parameters can be removed.
+-	CombatRoom(int width, int height);
+-
+ 	RoomPlan generateRoom(int id, RoomType type, int seed) override;
+-
+ 	void generateSpawnPoints(RoomPlan& room) override;
+ 
+-private:
+-	int cr_width;
+-	int cr_height;
+ };
+ 
+diff --git a/project-rival/project-rival/Game.cpp b/project-rival/project-rival/Game.cpp
+index d086d30..c8d2820 100644
+--- a/project-rival/project-rival/Game.cpp
++++ b/project-rival/project-rival/Game.cpp
+@@ -255,7 +255,7 @@ void Game::generateRoom()
+ {
+ 	m_activeRoomPlan = m_combatRoom.generateRoom(0, RoomType::COMBAT, 0);
+ 
+-	sf::Vector2f roomWorldPos{ 100.f, 100.f };
++	sf::Vector2f roomWorldPos{ 50.f, 50.f };
+ 	m_activeRoomInstance.buildFromPlan(m_activeRoomPlan, roomWorldPos);
+ 
+ 	m_enemies.clear();
+diff --git a/project-rival/project-rival/Game.h b/project-rival/project-rival/Game.h
+index d901f67..b5fe655 100644
+--- a/project-rival/project-rival/Game.h
++++ b/project-rival/project-rival/Game.h
+@@ -57,7 +57,7 @@ protected:
+ 
+ 	std::vector<std::unique_ptr<Enemy>> m_enemies;
+ 
+-	CombatRoom m_combatRoom{ 14,9 };
++	CombatRoom m_combatRoom;	
+ 	RoomPlan m_activeRoomPlan;
+ 	RoomInstance m_activeRoomInstance;
+ 
+diff --git a/project-rival/project-rival/RoomBlueprint.h b/project-rival/project-rival/RoomBlueprint.h
+index b78bc1b..977bbce 100644
+--- a/project-rival/project-rival/RoomBlueprint.h
++++ b/project-rival/project-rival/RoomBlueprint.h
+@@ -48,7 +48,7 @@ struct RoomPlan {
+ 	// Room representation
+ 	int width;
+ 	int height;	
+-	float tileSize = 78.f;
++	float tileSize = 64.f;
+ 
+ 	// Room layout
+ 	std::vector<Tile> tileMap;	// formula for 1D index: row * width + column
+diff --git a/project-rival/project-rival/player.cpp b/project-rival/project-rival/player.cpp
+index 7755e19..47e1f36 100644
+--- a/project-rival/project-rival/player.cpp
++++ b/project-rival/project-rival/player.cpp
+@@ -41,6 +41,8 @@ void Player::init()
+ 	p_collisionProfile.layer = CollisionLayer::PLAYER_LAYER;
+ 	p_collisionProfile.mask = CollisionLayer::ENEMY_LAYER | CollisionLayer::ENEMY_BULLET_LAYER | CollisionLayer::WALL_LAYER;
+ 
++	p_maxHealth = 100;
++
+ 	reset();
+ }
+ 
+
+commit 6ad62de381fd243968f8f439b02f7b14dbf237d3
+Author: WollyTech <ayolawole@gmail.com>
+Date:   Wed Mar 25 08:19:49 2026 +0000
+
+    Obstacles within combat rooms
+
+diff --git a/project-rival/project-rival/CombatRoom.cpp b/project-rival/project-rival/CombatRoom.cpp
+index 42d7537..0611f92 100644
+--- a/project-rival/project-rival/CombatRoom.cpp
++++ b/project-rival/project-rival/CombatRoom.cpp
+@@ -29,15 +29,63 @@ RoomPlan CombatRoom::generateRoom(int id, RoomType type, int seed)
+ 	}
+ 
+ 	// Pillars
++	generateObstacles(room, 3);
+ 
+ 	// Spawners
+ 	generateSpawnPoints(room);
+ 
+-	// yet to do: room geometry like pillars via walls, doors, etc.
++	// yet to do: room geometry like doors, etc.
+ 
+ 	return room;
+ }
+ 
++void CombatRoom::generateObstacles(RoomPlan& room, int maxPillars)
++{
++	int pillarCount = rand() % (maxPillars + 1);
++
++	for (int i = 0; i < pillarCount; i++)
++	{
++		int size = rand() % 2 + 1; // 1x1 or 2x2
++
++		const int minRow = 1;
++		const int maxRow = room.height - size - 1;
++		const int minCol = 1;
++		const int maxCol = room.width - size - 1;
++
++		if (maxRow <= minRow || maxCol <= minCol)
++			break;	// not enough space for pillars, skip
++
++		bool placed = false;
++		for (int attempts = 0; attempts < 50 && !placed; attempts++)
++		{
++			int randRow = rand() % (maxRow - minRow + 1) + minRow;
++			int randCol = rand() % (maxCol - minCol + 1) + minCol;
++
++			// Check if space is clear for the pillar
++			bool canPlace = true;
++			for (int x = 0; x < size && canPlace; x++) {
++				for (int y = 0; y < size && canPlace; y++) {	// x & y are offsets from the top-left corner of the pillar (if size is 2, we need to check the tile and the one to the right/below)
++					if (room.getTile(randRow + x, randCol + y) != Tile::FLOOR) {
++						canPlace = false;
++					}
++				}
++			}
++
++			if (!canPlace)
++				continue;	// space is not clear, try another position
++
++			// Place the pillar
++			for (int x = 0; x < size; x++) {
++				for (int y = 0; y < size; y++) {
++					room.setTile(randRow + x, randCol + y, Tile::WALL);
++				}
++			}
++
++			placed = true;
++		}
++	}
++}
++
+ void CombatRoom::generateSpawnPoints(RoomPlan& room)
+ {
+ 	// Enemy Spawner
+@@ -52,6 +100,7 @@ void CombatRoom::generateSpawnPoints(RoomPlan& room)
+ 			std::find(occupiedPositions.begin(), occupiedPositions.end(), randPos) != occupiedPositions.end())
+ 		{
+ 			randPos = { rand() % (room.width - 2) + 1, rand() % (room.height - 2) + 1 };
++			tileAtPos = room.getTile(randPos.y, randPos.x);
+ 		}
+ 
+ 		room.spawners.push_back({ SpawnerType::EnemySpawner, randPos });
+diff --git a/project-rival/project-rival/CombatRoom.h b/project-rival/project-rival/CombatRoom.h
+index 3f20185..b864aad 100644
+--- a/project-rival/project-rival/CombatRoom.h
++++ b/project-rival/project-rival/CombatRoom.h
+@@ -5,6 +5,7 @@ class CombatRoom : public IRoomGenerator
+ {
+ public:
+ 	RoomPlan generateRoom(int id, RoomType type, int seed) override;
++	void generateObstacles(RoomPlan& room, int maxPillars);
+ 	void generateSpawnPoints(RoomPlan& room) override;
+ 
+ };
+diff --git a/project-rival/project-rival/RoomBlueprint.h b/project-rival/project-rival/RoomBlueprint.h
+index 977bbce..6fdd758 100644
+--- a/project-rival/project-rival/RoomBlueprint.h
++++ b/project-rival/project-rival/RoomBlueprint.h
+@@ -1,5 +1,7 @@
+ #pragma once
+ #include "SFML/Graphics.hpp"
++#include <vector>
++#include <algorithm>
+ 
+ enum RoomType {
+ 	SPAWN,
+
+commit b87f945315c86b72b39a09aa2d5894a37ffe2e33
+Author: WollyTech <ayolawole@gmail.com>
+Date:   Wed Mar 25 09:14:30 2026 +0000
+
+    Level elements generated based on size
+
+diff --git a/project-rival/project-rival/CombatRoom.cpp b/project-rival/project-rival/CombatRoom.cpp
+index 0611f92..715998b 100644
+--- a/project-rival/project-rival/CombatRoom.cpp
++++ b/project-rival/project-rival/CombatRoom.cpp
+@@ -28,19 +28,25 @@ RoomPlan CombatRoom::generateRoom(int id, RoomType type, int seed)
+ 		room.setTile(row, room.width - 1, Tile::WALL);	// right column
+ 	}
+ 
++	const int interiorWidth = room.width - 2;
++	const int interiorHeight = room.height - 2;
++	const int interiorArea = interiorWidth * interiorHeight;
++	
+ 	// Pillars
+-	generateObstacles(room, 3);
++	generateObstacles(room, interiorArea);
+ 
+ 	// Spawners
+-	generateSpawnPoints(room);
++	generateSpawnPoints(room, interiorArea);
+ 
+ 	// yet to do: room geometry like doors, etc.
+ 
+ 	return room;
+ }
+ 
+-void CombatRoom::generateObstacles(RoomPlan& room, int maxPillars)
++void CombatRoom::generateObstacles(RoomPlan& room, int interiorArea)
+ {
++	int maxPillars = interiorArea / (room.tileSize / 2);	// 1 pillar per half tile size of interior space, rounded down
++
+ 	int pillarCount = rand() % (maxPillars + 1);
+ 
+ 	for (int i = 0; i < pillarCount; i++)
+@@ -86,10 +92,17 @@ void CombatRoom::generateObstacles(RoomPlan& room, int maxPillars)
+ 	}
+ }
+ 
+-void CombatRoom::generateSpawnPoints(RoomPlan& room)
++void CombatRoom::generateSpawnPoints(RoomPlan& room, int interiorArea)
+ {
+ 	// Enemy Spawner
+-	int totalEnemies = rand() % 5 + 3;	// random number of enemies between 3 and 7 for now but to be based on the seed later
++	const int minEnemies = 1 + interiorArea / (room.tileSize * 2);
++	int maxEnemies = 10 + interiorArea / (room.tileSize / 2);
++
++	if (maxEnemies < minEnemies)
++		maxEnemies = minEnemies;
++
++	int totalEnemies = minEnemies + (rand() % ((maxEnemies - minEnemies) + 1));
++
+ 	std::vector<sf::Vector2i> occupiedPositions;
+ 	for (int i = 0; i < totalEnemies; i++)
+ 	{
+diff --git a/project-rival/project-rival/CombatRoom.h b/project-rival/project-rival/CombatRoom.h
+index b864aad..7021a2b 100644
+--- a/project-rival/project-rival/CombatRoom.h
++++ b/project-rival/project-rival/CombatRoom.h
+@@ -5,8 +5,8 @@ class CombatRoom : public IRoomGenerator
+ {
+ public:
+ 	RoomPlan generateRoom(int id, RoomType type, int seed) override;
+-	void generateObstacles(RoomPlan& room, int maxPillars);
+-	void generateSpawnPoints(RoomPlan& room) override;
++	void generateObstacles(RoomPlan& room, int interiorArea);
++	void generateSpawnPoints(RoomPlan& room, int interiorArea) override;
+ 
+ };
+ 
+diff --git a/project-rival/project-rival/RoomBlueprint.h b/project-rival/project-rival/RoomBlueprint.h
+index 6fdd758..9af53df 100644
+--- a/project-rival/project-rival/RoomBlueprint.h
++++ b/project-rival/project-rival/RoomBlueprint.h
+@@ -81,5 +81,5 @@ public:
+ 	// a few things to note about the parameters:
+ 	// id, type and seed are fine for passing through
+ 	virtual RoomPlan generateRoom(int id, RoomType type, int seed) = 0;
+-	virtual void generateSpawnPoints(RoomPlan& roomPlan) = 0;
++	virtual void generateSpawnPoints(RoomPlan& roomPlan, int interiorArea) = 0;
+ };
+\ No newline at end of file
+
+commit d78c80adbd8dbfe183cc515b954953d36743a831
+Author: WollyTech <ayolawole@gmail.com>
+Date:   Wed Mar 25 09:31:49 2026 +0000
+
+    DOCS UPDATE: Combat Room Genereation architecture docs
+
+diff --git a/project-rival/docs/Architecture/01-project-structure.md b/project-rival/docs/Architecture/01-project-structure.md
+index 374e70c..8efa3f8 100644
+--- a/project-rival/docs/Architecture/01-project-structure.md
++++ b/project-rival/docs/Architecture/01-project-structure.md
+@@ -15,6 +15,13 @@ Most gameplay code is inside `project-rival/`.
+ 
+ - `Collision.h` / `Collision.cpp`
+ 
++### Rooms / procedural generation
++
++- `RoomBlueprint.h` (RoomPlan + tiles + spawners + generator interface)
++- `CombatRoom.h` / `CombatRoom.cpp` (combat room generator)
++- `RoomInstance.h` / `RoomInstance.cpp` (builds a drawable room + wall colliders)
++- `StaticCollision.h` / `StaticCollision.cpp` (colliders for walls/geometry)
++
+ ### Entities
+ 
+ - `player.h` / `player.cpp`
+diff --git a/project-rival/docs/Architecture/08-collision-and-damage.md b/project-rival/docs/Architecture/08-collision-and-damage.md
+index 1bc66e0..e77d047 100644
+--- a/project-rival/docs/Architecture/08-collision-and-damage.md
++++ b/project-rival/docs/Architecture/08-collision-and-damage.md
+@@ -9,7 +9,7 @@ This project uses a simple collision system with **layers** and **masks** to fil
+ Defined in `Collision.h`:
+ 
+ - `CollisionLayer` (bit flags)
+-  - examples: `PLAYER_LAYER`, `ENEMY_LAYER`, `PLAYER_BULLET_LAYER`
++  - examples: `PLAYER_LAYER`, `ENEMY_LAYER`, `PLAYER_BULLET_LAYER`, `WALL_LAYER`
+ - `CollisionProfile`
+   - `layer`: what this object *is*
+   - `mask`: what this object *can collide with*
+@@ -32,6 +32,7 @@ Current gameplay types that implement it:
+ - `Player`
+ - `Enemy` (and all enemy subclasses)
+ - `Projectile` (and bullet subclasses)
++- `StaticCollision` (used for walls/room geometry)
+ 
+ ## Collision checks
+ 
+@@ -40,6 +41,13 @@ Current gameplay types that implement it:
+ 1. layer/mask filtering (`CollisionProfile::canCollideWith`)
+ 2. bounding box intersection test (SFML rectangles)
+ 
++## Static collisions (walls)
++
++Room generation builds wall colliders using `StaticCollision`:
++
++- walls use `WALL_LAYER`
++- their mask allows collisions with player, enemies, and bullets
++
+ ## Damage flow (high level)
+ 
+ Right now, the main damage logic lives in `Game::update(dt)`:
+diff --git a/project-rival/docs/Architecture/09-rooms-and-generation.md b/project-rival/docs/Architecture/09-rooms-and-generation.md
+new file mode 100644
+index 0000000..948052b
+--- /dev/null
++++ b/project-rival/docs/Architecture/09-rooms-and-generation.md
+@@ -0,0 +1,53 @@
++# 9) Rooms + procedural generation (current state)
++
++[Back to architecture index](README.md)
++
++The project has an early “rooms” system built around a **data plan → runtime instance** workflow.
++
++## `RoomPlan` (data)
++
++Defined in `RoomBlueprint.h`:
++
++- `RoomPlan` describes a room **without any SFML objects**.
++- It contains:
++  - metadata: `id`, `type`, `seed`
++  - size: `width`, `height`, `tileSize`
++  - layout: `tileMap` (1D array), plus `doors` and `spawners`
++
++The tile map uses a 1D index:
++
++- `index = row * width + column`
++
++Helper functions:
++
++- `getTile(row, col)`
++- `setTile(row, col, type)`
++
++## Room generators (`IRoomGenerator`)
++
++`IRoomGenerator` is an interface that can create a `RoomPlan`.
++
++Current implementation:
++
++- `CombatRoom` (`CombatRoom.h/.cpp`)
++  - generates outer walls
++  - randomly places interior obstacles (“pillars”)
++  - randomly places enemy spawners
++
++Note: `RoomPlan` includes a `seed` field, but `CombatRoom` currently uses `rand()` for generation.
++
++## `RoomInstance` (runtime)
++
++`RoomInstance` (`RoomInstance.h/.cpp`) builds SFML objects from a `RoomPlan`:
++
++- wall shapes (for rendering)
++- wall colliders (`StaticCollision`) with `WALL_LAYER`
++- small debug shapes for spawner tiles
++
++This is where room geometry becomes “real” (drawn/collidable) in the world.
++
++## Likely next steps
++
++- Decide what parts of generation should be deterministic (seed-based) vs “random each run”.
++- Add door geometry and room-to-room connections.
++- Add collision resolution against wall colliders (right now walls are generated + colliders exist, but movement resolution may still be pending).
+diff --git a/project-rival/docs/Architecture/README.md b/project-rival/docs/Architecture/README.md
+index 07eeb51..06a3575 100644
+--- a/project-rival/docs/Architecture/README.md
++++ b/project-rival/docs/Architecture/README.md
+@@ -14,3 +14,4 @@ A high-level, beginner-friendly overview of how the main gameplay-related code i
+ 6. [Coding / design conventions](06-coding-conventions.md)
+ 7. [Projectiles (prototype)](07-projectiles.md)
+ 8. [Collision + damage](08-collision-and-damage.md)
++9. [Rooms + procedural generation](09-rooms-and-generation.md)
+
+===== STAGED DIFF SUMMARY (git diff --cached --name-status) =====
+
+M	project-rival/docs/Architecture/01-project-structure.md
+M	project-rival/docs/Architecture/08-collision-and-damage.md
+A	project-rival/docs/Architecture/09-rooms-and-generation.md
+M	project-rival/docs/Architecture/README.md
+M	project-rival/project-rival/Collision.h
+A	project-rival/project-rival/CombatRoom.cpp
+A	project-rival/project-rival/CombatRoom.h
+M	project-rival/project-rival/Enemy.cpp
+M	project-rival/project-rival/Enemy.h
+M	project-rival/project-rival/Game.cpp
+M	project-rival/project-rival/Game.h
+M	project-rival/project-rival/Gamepad.cpp
+M	project-rival/project-rival/Gamepad.h
+M	project-rival/project-rival/GruntEnemy.cpp
+M	project-rival/project-rival/GruntEnemy.h
+M	project-rival/project-rival/NormalBulletProjectile.cpp
+M	project-rival/project-rival/Projectile.cpp
+A	project-rival/project-rival/RoomBlueprint.h
+A	project-rival/project-rival/RoomInstance.cpp
+A	project-rival/project-rival/RoomInstance.h
+A	project-rival/project-rival/StaticCollision.cpp
+A	project-rival/project-rival/StaticCollision.h
+M	project-rival/project-rival/TurretEnemy.cpp
+M	project-rival/project-rival/TurretEnemy.h
+A	project-rival/project-rival/automation/prompts/level-architecture-roomplan-generator-builder-static-colliders-context.md
+M	project-rival/project-rival/player.cpp
+M	project-rival/project-rival/player.h
+M	project-rival/project-rival/project-rival.vcxproj
+M	project-rival/project-rival/project-rival.vcxproj.filters
+
+===== STAGED PATCH (git diff --cached; what will be committed on main) =====
+
+diff --git a/project-rival/docs/Architecture/01-project-structure.md b/project-rival/docs/Architecture/01-project-structure.md
+index 374e70c..8efa3f8 100644
+--- a/project-rival/docs/Architecture/01-project-structure.md
++++ b/project-rival/docs/Architecture/01-project-structure.md
+@@ -15,6 +15,13 @@ Most gameplay code is inside `project-rival/`.
+ 
+ - `Collision.h` / `Collision.cpp`
+ 
++### Rooms / procedural generation
++
++- `RoomBlueprint.h` (RoomPlan + tiles + spawners + generator interface)
++- `CombatRoom.h` / `CombatRoom.cpp` (combat room generator)
++- `RoomInstance.h` / `RoomInstance.cpp` (builds a drawable room + wall colliders)
++- `StaticCollision.h` / `StaticCollision.cpp` (colliders for walls/geometry)
++
+ ### Entities
+ 
+ - `player.h` / `player.cpp`
+diff --git a/project-rival/docs/Architecture/08-collision-and-damage.md b/project-rival/docs/Architecture/08-collision-and-damage.md
+index 1bc66e0..e77d047 100644
+--- a/project-rival/docs/Architecture/08-collision-and-damage.md
++++ b/project-rival/docs/Architecture/08-collision-and-damage.md
+@@ -9,7 +9,7 @@ This project uses a simple collision system with **layers** and **masks** to fil
+ Defined in `Collision.h`:
+ 
+ - `CollisionLayer` (bit flags)
+-  - examples: `PLAYER_LAYER`, `ENEMY_LAYER`, `PLAYER_BULLET_LAYER`
++  - examples: `PLAYER_LAYER`, `ENEMY_LAYER`, `PLAYER_BULLET_LAYER`, `WALL_LAYER`
+ - `CollisionProfile`
+   - `layer`: what this object *is*
+   - `mask`: what this object *can collide with*
+@@ -32,6 +32,7 @@ Current gameplay types that implement it:
+ - `Player`
+ - `Enemy` (and all enemy subclasses)
+ - `Projectile` (and bullet subclasses)
++- `StaticCollision` (used for walls/room geometry)
+ 
+ ## Collision checks
+ 
+@@ -40,6 +41,13 @@ Current gameplay types that implement it:
+ 1. layer/mask filtering (`CollisionProfile::canCollideWith`)
+ 2. bounding box intersection test (SFML rectangles)
+ 
++## Static collisions (walls)
++
++Room generation builds wall colliders using `StaticCollision`:
++
++- walls use `WALL_LAYER`
++- their mask allows collisions with player, enemies, and bullets
++
+ ## Damage flow (high level)
+ 
+ Right now, the main damage logic lives in `Game::update(dt)`:
+diff --git a/project-rival/docs/Architecture/09-rooms-and-generation.md b/project-rival/docs/Architecture/09-rooms-and-generation.md
+new file mode 100644
+index 0000000..948052b
+--- /dev/null
++++ b/project-rival/docs/Architecture/09-rooms-and-generation.md
+@@ -0,0 +1,53 @@
++# 9) Rooms + procedural generation (current state)
++
++[Back to architecture index](README.md)
++
++The project has an early “rooms” system built around a **data plan → runtime instance** workflow.
++
++## `RoomPlan` (data)
++
++Defined in `RoomBlueprint.h`:
++
++- `RoomPlan` describes a room **without any SFML objects**.
++- It contains:
++  - metadata: `id`, `type`, `seed`
++  - size: `width`, `height`, `tileSize`
++  - layout: `tileMap` (1D array), plus `doors` and `spawners`
++
++The tile map uses a 1D index:
++
++- `index = row * width + column`
++
++Helper functions:
++
++- `getTile(row, col)`
++- `setTile(row, col, type)`
++
++## Room generators (`IRoomGenerator`)
++
++`IRoomGenerator` is an interface that can create a `RoomPlan`.
++
++Current implementation:
++
++- `CombatRoom` (`CombatRoom.h/.cpp`)
++  - generates outer walls
++  - randomly places interior obstacles (“pillars”)
++  - randomly places enemy spawners
++
++Note: `RoomPlan` includes a `seed` field, but `CombatRoom` currently uses `rand()` for generation.
++
++## `RoomInstance` (runtime)
++
++`RoomInstance` (`RoomInstance.h/.cpp`) builds SFML objects from a `RoomPlan`:
++
++- wall shapes (for rendering)
++- wall colliders (`StaticCollision`) with `WALL_LAYER`
++- small debug shapes for spawner tiles
++
++This is where room geometry becomes “real” (drawn/collidable) in the world.
++
++## Likely next steps
++
++- Decide what parts of generation should be deterministic (seed-based) vs “random each run”.
++- Add door geometry and room-to-room connections.
++- Add collision resolution against wall colliders (right now walls are generated + colliders exist, but movement resolution may still be pending).
+diff --git a/project-rival/docs/Architecture/README.md b/project-rival/docs/Architecture/README.md
+index 07eeb51..06a3575 100644
+--- a/project-rival/docs/Architecture/README.md
++++ b/project-rival/docs/Architecture/README.md
+@@ -14,3 +14,4 @@ A high-level, beginner-friendly overview of how the main gameplay-related code i
+ 6. [Coding / design conventions](06-coding-conventions.md)
+ 7. [Projectiles (prototype)](07-projectiles.md)
+ 8. [Collision + damage](08-collision-and-damage.md)
++9. [Rooms + procedural generation](09-rooms-and-generation.md)
+diff --git a/project-rival/project-rival/Collision.h b/project-rival/project-rival/Collision.h
+index 8dee883..ad541df 100644
+--- a/project-rival/project-rival/Collision.h
++++ b/project-rival/project-rival/Collision.h
+@@ -5,10 +5,18 @@ enum CollisionLayer : uint32_t
+ {
+ 	NONE = 0,
+ 
++	// Entity layers
+ 	PLAYER_LAYER = 1 << 0,
+ 	ENEMY_LAYER = 1 << 1,
+ 	PLAYER_BULLET_LAYER = 1 << 2,
+ 	ENEMY_BULLET_LAYER = 1 << 3,
++
++	// Static Environment layers
++	WALL_LAYER = 1 << 4,
++
++	// World Environment layers
++
++	ALL = 0xFFFFFFFF
+ };
+ 
+ struct CollisionProfile
+diff --git a/project-rival/project-rival/CombatRoom.cpp b/project-rival/project-rival/CombatRoom.cpp
+new file mode 100644
+index 0000000..715998b
+--- /dev/null
++++ b/project-rival/project-rival/CombatRoom.cpp
+@@ -0,0 +1,122 @@
++#include "CombatRoom.h"
++
++RoomPlan CombatRoom::generateRoom(int id, RoomType type, int seed)
++{
++	RoomPlan room;
++	// Meta data
++	room.id = id;
++	room.type = type;
++	room.seed = seed;
++		// -> note here that this is where the height and width will be determined based on the type
++	//height 10-12; width 15-20
++	room.height = rand() % 4 + 10;
++	room.width = rand() % 6 + 15;
++
++	// tile map initialisation
++	room.tileMap.assign(room.height * room.width, Tile::FLOOR);
++
++	// tile map construction
++	// outer walls
++	for (int col = 0; col < room.width; col++)
++	{
++		room.setTile(0, col, Tile::WALL);				// top row
++		room.setTile(room.height - 1, col, Tile::WALL);	// bottom row
++	}
++	for (int row = 0; row < room.height; row++)
++	{
++		room.setTile(row, 0, Tile::WALL);				// left column
++		room.setTile(row, room.width - 1, Tile::WALL);	// right column
++	}
++
++	const int interiorWidth = room.width - 2;
++	const int interiorHeight = room.height - 2;
++	const int interiorArea = interiorWidth * interiorHeight;
++	
++	// Pillars
++	generateObstacles(room, interiorArea);
++
++	// Spawners
++	generateSpawnPoints(room, interiorArea);
++
++	// yet to do: room geometry like doors, etc.
++
++	return room;
++}
++
++void CombatRoom::generateObstacles(RoomPlan& room, int interiorArea)
++{
++	int maxPillars = interiorArea / (room.tileSize / 2);	// 1 pillar per half tile size of interior space, rounded down
++
++	int pillarCount = rand() % (maxPillars + 1);
++
++	for (int i = 0; i < pillarCount; i++)
++	{
++		int size = rand() % 2 + 1; // 1x1 or 2x2
++
++		const int minRow = 1;
++		const int maxRow = room.height - size - 1;
++		const int minCol = 1;
++		const int maxCol = room.width - size - 1;
++
++		if (maxRow <= minRow || maxCol <= minCol)
++			break;	// not enough space for pillars, skip
++
++		bool placed = false;
++		for (int attempts = 0; attempts < 50 && !placed; attempts++)
++		{
++			int randRow = rand() % (maxRow - minRow + 1) + minRow;
++			int randCol = rand() % (maxCol - minCol + 1) + minCol;
++
++			// Check if space is clear for the pillar
++			bool canPlace = true;
++			for (int x = 0; x < size && canPlace; x++) {
++				for (int y = 0; y < size && canPlace; y++) {	// x & y are offsets from the top-left corner of the pillar (if size is 2, we need to check the tile and the one to the right/below)
++					if (room.getTile(randRow + x, randCol + y) != Tile::FLOOR) {
++						canPlace = false;
++					}
++				}
++			}
++
++			if (!canPlace)
++				continue;	// space is not clear, try another position
++
++			// Place the pillar
++			for (int x = 0; x < size; x++) {
++				for (int y = 0; y < size; y++) {
++					room.setTile(randRow + x, randCol + y, Tile::WALL);
++				}
++			}
++
++			placed = true;
++		}
++	}
++}
++
++void CombatRoom::generateSpawnPoints(RoomPlan& room, int interiorArea)
++{
++	// Enemy Spawner
++	const int minEnemies = 1 + interiorArea / (room.tileSize * 2);
++	int maxEnemies = 10 + interiorArea / (room.tileSize / 2);
++
++	if (maxEnemies < minEnemies)
++		maxEnemies = minEnemies;
++
++	int totalEnemies = minEnemies + (rand() % ((maxEnemies - minEnemies) + 1));
++
++	std::vector<sf::Vector2i> occupiedPositions;
++	for (int i = 0; i < totalEnemies; i++)
++	{
++		sf::Vector2i randPos = { rand() % (room.width - 2) + 1, rand() % (room.height - 2) + 1 }; // random position within the room, excluding walls
++
++		Tile tileAtPos = room.getTile(randPos.y, randPos.x);
++		while (tileAtPos == Tile::WALL ||
++			std::find(occupiedPositions.begin(), occupiedPositions.end(), randPos) != occupiedPositions.end())
++		{
++			randPos = { rand() % (room.width - 2) + 1, rand() % (room.height - 2) + 1 };
++			tileAtPos = room.getTile(randPos.y, randPos.x);
++		}
++
++		room.spawners.push_back({ SpawnerType::EnemySpawner, randPos });
++		occupiedPositions.push_back(randPos);
++	}
++}
+diff --git a/project-rival/project-rival/CombatRoom.h b/project-rival/project-rival/CombatRoom.h
+new file mode 100644
+index 0000000..7021a2b
+--- /dev/null
++++ b/project-rival/project-rival/CombatRoom.h
+@@ -0,0 +1,12 @@
++#pragma once
++#include "RoomBlueprint.h"
++
++class CombatRoom : public IRoomGenerator
++{
++public:
++	RoomPlan generateRoom(int id, RoomType type, int seed) override;
++	void generateObstacles(RoomPlan& room, int interiorArea);
++	void generateSpawnPoints(RoomPlan& room, int interiorArea) override;
++
++};
++
+diff --git a/project-rival/project-rival/Enemy.cpp b/project-rival/project-rival/Enemy.cpp
+index 8792e63..2b3c203 100644
+--- a/project-rival/project-rival/Enemy.cpp
++++ b/project-rival/project-rival/Enemy.cpp
+@@ -2,12 +2,13 @@
+ using namespace sf;
+ 
+ Enemy::Enemy(const sf::Vector2f startPos, int totalHealth) :
+-	e_startPos(startPos), e_health(totalHealth)
++	e_startPos(startPos), e_maxHealth(totalHealth)
+ {
++	e_health = e_maxHealth;
+ 	e_isDead = false;
+ 
+ 	e_collisionProfile.layer = CollisionLayer::ENEMY_LAYER;
+-	e_collisionProfile.mask = CollisionLayer::PLAYER_LAYER | CollisionLayer::PLAYER_BULLET_LAYER;
++	e_collisionProfile.mask = CollisionLayer::PLAYER_LAYER | CollisionLayer::PLAYER_BULLET_LAYER | CollisionLayer::WALL_LAYER;
+ }
+ 
+ void Enemy::initBody(const sf::Vector2f& size, const sf::Color& colour)
+@@ -24,6 +25,18 @@ void Enemy::render(sf::RenderWindow& window)
+ 	window.draw(e_body);
+ }
+ 
++void Enemy::reset()
++{
++	e_body.setPosition(e_startPos);
++	e_health = e_maxHealth;
++	e_isDead = false;
++}
++
++sf::Vector2f Enemy::getPosition() const
++{
++	return e_body.getPosition();
++}
++
+ sf::FloatRect Enemy::getCollisionBounds() const
+ {
+ 	return e_body.getGlobalBounds();
+diff --git a/project-rival/project-rival/Enemy.h b/project-rival/project-rival/Enemy.h
+index 58ad4e4..5efdb91 100644
+--- a/project-rival/project-rival/Enemy.h
++++ b/project-rival/project-rival/Enemy.h
+@@ -7,6 +7,14 @@
+ 
+ #include "Collision.h"
+ 
++enum EnemyType
++{
++	GRUNT,
++	TURRET,
++
++	COUNT
++};
++
+ class Enemy : public ICollidable
+ {
+ public:
+@@ -15,12 +23,17 @@ public:
+ 	virtual void init() = 0;
+ 	virtual void update(double dt) = 0;
+ 	virtual void render(sf::RenderWindow& window);
++	virtual void reset();
++
++	virtual sf::Vector2f getPosition() const;
+ 
+ 	virtual void setTarget(const Vector2f& target) = 0;
+ 
+ 	virtual sf::FloatRect getCollisionBounds() const override;
+ 	virtual CollisionProfile getCollisionProfile() const override;
+ 
++	virtual void hitWall(sf::Vector2f oldPos) = 0;
++
+ 	virtual void takeDamage(int damage);
+ 	virtual void onDeath();
+ 	virtual bool isDead() const;
+@@ -35,6 +48,7 @@ protected:
+ 	CollisionProfile e_collisionProfile;
+ 
+ 	// entity stats
++	int e_maxHealth;
+ 	int e_health;
+ 	bool e_isDead;
+ };
+diff --git a/project-rival/project-rival/Game.cpp b/project-rival/project-rival/Game.cpp
+index b508309..c8d2820 100644
+--- a/project-rival/project-rival/Game.cpp
++++ b/project-rival/project-rival/Game.cpp
+@@ -119,20 +119,35 @@ void Game::update(double dt)
+ 	const Vector2f mousePosF = m_window.mapPixelToCoords(mousePos);
+ 
+ 	InputManager::update();
++	
++	// Game manager controls
++	gameInput();
+ 
+ 	// Update player and enemies
++	Vector2f oldPlayerPos = m_player.getPosition();
+ 	m_player.update(dt, mousePosF);
++
+ 	for (auto enemy_it = m_enemies.begin(); enemy_it != m_enemies.end();)
+ 	{
+ 		auto& enemy = *enemy_it;
++		Vector2f oldEnemyPos = enemy->getPosition();
+ 		enemy->setTarget(m_player.getPosition());
+ 		enemy->update(dt);
+ 
+-		// Check collision with player
++		// Check collision with player and wall
++		// Enemy -> Player
+ 		if (CollisionCheck::areColliding(m_player, *enemy)) {
+ 			cout << "Player collided with enemy!\n";
+ 			m_player.takeDamage(10);
+ 		}
++		// Enemy -> Wall
++		for (auto& wall : m_activeRoomInstance.getStaticCollisions()) {
++			if (CollisionCheck::areColliding(*enemy, wall))
++			{
++				enemy->hitWall(oldEnemyPos);
++				break;
++			}
++		}
+ 
+ 		// Check if enemy is dead and remove if so
+ 		if (enemy->isDead())
+@@ -147,27 +162,66 @@ void Game::update(double dt)
+ 	// Check player projectiles against enemies
+ 	for (auto& bullet : m_player.getProjectiles()) 
+ 	{
+-		if(!bullet || bullet->shouldDestroy())
++		if(bullet->shouldDestroy())
+ 			continue;
+ 
+ 		for (auto& enemy : m_enemies) {
+-			if (!enemy || enemy->isDead())
++			if (enemy->isDead())
+ 				continue;
+ 
++			// Bullet -> Enemy
+ 			if (CollisionCheck::areColliding(*bullet, *enemy))
+ 			{
+ 				enemy->takeDamage(bullet->applyDamage());
+ 				bullet->destroy();
+-				break; // gets rid of bug where bullet hits multiple enemies
++				break;
+ 			}
+ 		}
+ 	}
++
++	// Check static environment against player, enmies and projectiles
++	for (auto& wall : m_activeRoomInstance.getStaticCollisions())
++	{
++		// Wall -> Player
++		if (CollisionCheck::areColliding(m_player, wall))
++		{
++			m_player.hitWall(oldPlayerPos);
++		}
++
++		// Wall -> Player Projectiles
++		for (auto& bullet : m_player.getProjectiles())
++		{
++			if (bullet->shouldDestroy())
++				continue;
++
++			if (CollisionCheck::areColliding(*bullet, wall))
++			{
++				bullet->destroy();
++				break;
++			}
++		}
++	}
++}
++
++void Game::gameInput()
++{
++	if (Keyboard::isKeyPressed(Keyboard::Key::Escape) || InputManager::pad().pressed(GamepadButton::Start))
++	{
++		m_window.close();
++	}
++	if (Keyboard::isKeyPressed(Keyboard::Key::R) || InputManager::pad().pressed(GamepadButton::Select))
++	{
++		gameStart();
++	}
+ }
+ 
+ ////////////////////////////////////////////////////////////
+ void Game::render()
+ {
+ 	m_window.clear(sf::Color(0, 0, 0, 0));
++
++	m_activeRoomInstance.render(m_window);
++
+ 	m_player.render(m_window);
+ 	for (auto& enemy : m_enemies) {
+ 		enemy->render(m_window);
+@@ -180,13 +234,44 @@ void Game::render()
+ 	m_window.display();
+ }
+ 
++void Game::resetGame()
++{
++	m_player.init();
++
++	m_enemies.clear();
++
++	m_combatRoom;
++	m_activeRoomPlan;
++	m_activeRoomInstance.reset();
++}
+ 
+ void Game::gameStart()
+ {
+-	for (int i = 0; i < 5; i++)
++	resetGame();
++	generateRoom();
++}
++
++void Game::generateRoom()
++{
++	m_activeRoomPlan = m_combatRoom.generateRoom(0, RoomType::COMBAT, 0);
++
++	sf::Vector2f roomWorldPos{ 50.f, 50.f };
++	m_activeRoomInstance.buildFromPlan(m_activeRoomPlan, roomWorldPos);
++
++	m_enemies.clear();
++
++	//Enemy Spawner
++	int totalEnemyTypes = EnemyType::COUNT;
++	for (auto& spawnPoint : m_activeRoomPlan.spawners)
+ 	{
+-		sf::Vector2f randEnemyPos{ static_cast<float>(rand() % ScreenSize::s_width), static_cast<float>(rand() % ScreenSize::s_height) };
+-		m_enemies.push_back(std::make_unique<GruntEnemy>(randEnemyPos, 150));
+-		m_enemies.push_back(std::make_unique<TurretEnemy>(randEnemyPos, 250));
++		if (spawnPoint.type == SpawnerType::EnemySpawner) {
++			Vector2f spawnPos = roomWorldPos + static_cast<Vector2f>(spawnPoint.tilePos) * m_activeRoomPlan.tileSize;
++			
++			int enemyToSpawn = rand() % totalEnemyTypes;
++			if (enemyToSpawn == 0)
++				m_enemies.push_back(std::make_unique<GruntEnemy>(spawnPos, 150));
++			else if (enemyToSpawn == 1)
++				m_enemies.push_back(std::make_unique<TurretEnemy>(spawnPos, 250));
++		}
+ 	}
+ }
+diff --git a/project-rival/project-rival/Game.h b/project-rival/project-rival/Game.h
+index 4bd8d67..b5fe655 100644
+--- a/project-rival/project-rival/Game.h
++++ b/project-rival/project-rival/Game.h
+@@ -12,6 +12,9 @@
+ #include "player.h"
+ #include "Enemy.h"
+ 
++#include "RoomInstance.h"
++#include "CombatRoom.h"
++
+ using namespace std;
+ using namespace sf;
+ 
+@@ -40,6 +43,8 @@ protected:
+ 	void init();
+ 	void update(double dt);
+ 
++	void gameInput();
++
+ 	void render();
+ 
+ 	void processEvents();
+@@ -52,6 +57,10 @@ protected:
+ 
+ 	std::vector<std::unique_ptr<Enemy>> m_enemies;
+ 
++	CombatRoom m_combatRoom;	
++	RoomPlan m_activeRoomPlan;
++	RoomInstance m_activeRoomInstance;
++
+ #ifdef TEST_FPS
+ 	sf::Text x_updateFPS{ m_arialFont };	// text used to display updates per second.
+ 	sf::Text x_drawFPS{  m_arialFont };	// text used to display draw calls per second.
+@@ -62,5 +71,8 @@ protected:
+ 
+ 
+ private:
++	void resetGame();
+ 	void gameStart();
++
++	void generateRoom();
+ };
+diff --git a/project-rival/project-rival/Gamepad.cpp b/project-rival/project-rival/Gamepad.cpp
+index 0fa83fd..71d3c5e 100644
+--- a/project-rival/project-rival/Gamepad.cpp
++++ b/project-rival/project-rival/Gamepad.cpp
+@@ -95,7 +95,7 @@ uint16_t Gamepad::toXInputMask(GamepadButton button)
+ 	case GamepadButton::Y: return XINPUT_GAMEPAD_Y;
+ 	case GamepadButton::LeftShoulder: return XINPUT_GAMEPAD_LEFT_SHOULDER;
+ 	case GamepadButton::RightShoulder: return XINPUT_GAMEPAD_RIGHT_SHOULDER;
+-	case GamepadButton::Back: return XINPUT_GAMEPAD_BACK;
++	case GamepadButton::Select: return XINPUT_GAMEPAD_BACK;
+ 	case GamepadButton::Start: return XINPUT_GAMEPAD_START;
+ 	case GamepadButton::LeftThumb: return XINPUT_GAMEPAD_LEFT_THUMB;
+ 	case GamepadButton::RightThumb: return XINPUT_GAMEPAD_RIGHT_THUMB;
+diff --git a/project-rival/project-rival/Gamepad.h b/project-rival/project-rival/Gamepad.h
+index fce69c2..cc67075 100644
+--- a/project-rival/project-rival/Gamepad.h
++++ b/project-rival/project-rival/Gamepad.h
+@@ -10,7 +10,7 @@ enum class GamepadButton : uint16_t
+ 	Y,
+ 	LeftShoulder,
+ 	RightShoulder,
+-	Back,
++	Select,
+ 	Start,
+ 	LeftThumb,
+ 	RightThumb,
+diff --git a/project-rival/project-rival/GruntEnemy.cpp b/project-rival/project-rival/GruntEnemy.cpp
+index 5792a1e..8239fd8 100644
+--- a/project-rival/project-rival/GruntEnemy.cpp
++++ b/project-rival/project-rival/GruntEnemy.cpp
+@@ -82,3 +82,9 @@ void GruntEnemy::setTarget(const Vector2f& target)
+ 	e_arrive.setTarget(target);
+ }
+ 
++void GruntEnemy::hitWall(sf::Vector2f oldPos)
++{
++	e_agent.position = oldPos;
++	e_body.setPosition(e_agent.position);
++}
++
+diff --git a/project-rival/project-rival/GruntEnemy.h b/project-rival/project-rival/GruntEnemy.h
+index c88e7fb..fb75828 100644
+--- a/project-rival/project-rival/GruntEnemy.h
++++ b/project-rival/project-rival/GruntEnemy.h
+@@ -11,6 +11,7 @@ public:
+ 	void update(double dt) override;
+ 	void setTarget(const Vector2f& target) override;
+ 
++	void hitWall(sf::Vector2f oldPos) override;
+ 
+ private:
+ 	SteeringAgent e_agent;
+diff --git a/project-rival/project-rival/NormalBulletProjectile.cpp b/project-rival/project-rival/NormalBulletProjectile.cpp
+index 2d19070..48ae4ae 100644
+--- a/project-rival/project-rival/NormalBulletProjectile.cpp
++++ b/project-rival/project-rival/NormalBulletProjectile.cpp
+@@ -14,7 +14,7 @@ void NormalBulletProjectile::init()
+ 		destroy();
+ 
+ 	// set damage
+-	p_damage = 1;
++	p_damage = 10;
+ }
+ 
+ void NormalBulletProjectile::update(double dt)
+diff --git a/project-rival/project-rival/Projectile.cpp b/project-rival/project-rival/Projectile.cpp
+index 7edb8d8..ef55ea4 100644
+--- a/project-rival/project-rival/Projectile.cpp
++++ b/project-rival/project-rival/Projectile.cpp
+@@ -17,6 +17,7 @@ Projectile::Projectile(sf::Vector2f spawnPoint, float lifetime, bool isFromPlaye
+ 	}
+ 	// add other collision masks for environment (e.g. walls)
+ 	// like so ----> p_collisionProfile.mask |= CollisionLayer::LEVEL_LAYER;
++	p_collisionProfile.mask |= CollisionLayer::WALL_LAYER;
+ }
+ 
+ void Projectile::render(sf::RenderWindow& window)
+diff --git a/project-rival/project-rival/RoomBlueprint.h b/project-rival/project-rival/RoomBlueprint.h
+new file mode 100644
+index 0000000..9af53df
+--- /dev/null
++++ b/project-rival/project-rival/RoomBlueprint.h
+@@ -0,0 +1,85 @@
++#pragma once
++#include "SFML/Graphics.hpp"
++#include <vector>
++#include <algorithm>
++
++enum RoomType {
++	SPAWN,
++	PORTAL,
++	COMBAT
++};
++
++enum Tile {
++	Empty,
++
++	FLOOR,
++	WALL,
++	DOOR
++};
++
++enum DoorDirection {
++	NORTH,
++	SOUTH,
++	EAST,
++	WEST
++};
++
++struct DoorPlan {
++	sf::Vector2i tilePos;
++	DoorDirection direction;
++
++	bool isLocked;
++};
++
++enum SpawnerType {
++	PlayerSpawner,
++	EnemySpawner
++};
++
++struct SpawnerPlan {
++	SpawnerType type;
++	sf::Vector2i tilePos;
++};
++
++struct RoomPlan {
++	// Room metadata
++	int id;
++	RoomType type;
++	int seed;	// for stuctured random generation of room layout and contents
++
++	// Room representation
++	int width;
++	int height;	
++	float tileSize = 64.f;
++
++	// Room layout
++	std::vector<Tile> tileMap;	// formula for 1D index: row * width + column
++	std::vector<DoorPlan> doors;
++	std::vector<SpawnerPlan> spawners;
++	
++	bool isValid() const {
++		if (width > 0 && height > 0 && (tileMap.size() == width * height))
++			return true;
++		else
++			return false;
++	}
++
++	Tile getTile(int row, int column) const {
++		return tileMap[row * width + column];
++	}
++
++	void setTile(int row, int column, Tile type) {
++		tileMap[row * width + column] = type;
++	}
++};
++
++class IRoomGenerator 
++{
++public:
++	virtual ~IRoomGenerator() = default;
++
++	// a few things to note about the parameters:
++	// id, type and seed are fine for passing through
++	virtual RoomPlan generateRoom(int id, RoomType type, int seed) = 0;
++	virtual void generateSpawnPoints(RoomPlan& roomPlan, int interiorArea) = 0;
++};
+\ No newline at end of file
+diff --git a/project-rival/project-rival/RoomInstance.cpp b/project-rival/project-rival/RoomInstance.cpp
+new file mode 100644
+index 0000000..ff64b61
+--- /dev/null
++++ b/project-rival/project-rival/RoomInstance.cpp
+@@ -0,0 +1,69 @@
++#include "RoomInstance.h"
++
++void RoomInstance::buildFromPlan(const RoomPlan& plan, const sf::Vector2f& worldPos)
++{
++	ri_staticColliders.clear();
++	ri_staticShapes.clear();
++
++	if (!plan.isValid())
++		return;
++
++	const float tileSize = plan.tileSize;
++	
++	// initialise each tile
++	for (int row = 0; row < plan.height; row++) {
++		for (int col = 0; col < plan.width; col++) {
++			const Tile tile = plan.getTile(row, col);
++			if (tile == Tile::WALL) {
++				// setup wall
++				sf::RectangleShape wall;
++				wall.setSize(sf::Vector2f(tileSize, tileSize));
++				wall.setOrigin(wall.getSize() / 2.f);
++				wall.setPosition(worldPos + sf::Vector2f(col * tileSize, row * tileSize));
++				wall.setFillColor(sf::Color(100, 100, 100)); // grey walls
++
++				ri_staticShapes.push_back(wall);
++
++				//setup collider for wall
++				StaticCollision collider(wall.getGlobalBounds(), CollisionLayer::WALL_LAYER,
++					CollisionLayer::PLAYER_LAYER | CollisionLayer::ENEMY_LAYER | CollisionLayer::PLAYER_BULLET_LAYER | CollisionLayer::ENEMY_BULLET_LAYER);
++
++				ri_staticColliders.push_back(collider);
++			}
++		}
++	}
++	// initialise spawners (DEBUG)
++	for (auto& spawner : plan.spawners) {
++		sf::RectangleShape spawnPoint;
++		spawnPoint.setSize(sf::Vector2f(tileSize, tileSize) / 8.f);
++		spawnPoint.setOrigin(spawnPoint.getSize() / 2.f);
++		spawnPoint.setPosition(worldPos + static_cast<sf::Vector2f>(spawner.tilePos) * tileSize);
++		if (spawner.type == SpawnerType::PlayerSpawner) {
++			spawnPoint.setFillColor(sf::Color(0, 255, 0)); // green for player spawn
++		}
++		else if (spawner.type == SpawnerType::EnemySpawner) {
++			spawnPoint.setFillColor(sf::Color(255, 0, 0)); // red for enemy spawn
++		}
++
++		ri_staticShapes.push_back(spawnPoint);
++	}
++}
++
++const std::vector<StaticCollision>& RoomInstance::getStaticCollisions()
++{
++	return ri_staticColliders;
++}
++
++void RoomInstance::render(sf::RenderWindow& window)
++{
++	for (auto& shape : ri_staticShapes)
++	{
++		window.draw(shape);
++	}
++}
++
++void RoomInstance::reset()
++{
++	ri_staticColliders.clear();
++	ri_staticShapes.clear();
++}
+diff --git a/project-rival/project-rival/RoomInstance.h b/project-rival/project-rival/RoomInstance.h
+new file mode 100644
+index 0000000..ad7f641
+--- /dev/null
++++ b/project-rival/project-rival/RoomInstance.h
+@@ -0,0 +1,21 @@
++#pragma once
++#include "RoomBlueprint.h"
++#include "StaticCollision.h"
++#include "SFML/Graphics.hpp"
++
++class RoomInstance
++{
++public:
++	void buildFromPlan(const RoomPlan& plan, const sf::Vector2f& worldPos);
++	
++	const std::vector<StaticCollision>& getStaticCollisions();
++
++	void render(sf::RenderWindow& window);
++
++	void reset();
++
++private:
++	std::vector<StaticCollision> ri_staticColliders;
++	std::vector<sf::RectangleShape> ri_staticShapes;
++};
++
+diff --git a/project-rival/project-rival/StaticCollision.cpp b/project-rival/project-rival/StaticCollision.cpp
+new file mode 100644
+index 0000000..95d2269
+--- /dev/null
++++ b/project-rival/project-rival/StaticCollision.cpp
+@@ -0,0 +1,18 @@
++#include "StaticCollision.h"
++
++StaticCollision::StaticCollision(const sf::FloatRect& bounds, CollisionLayer layer, uint32_t mask)
++	: sc_bounds(bounds), sc_profile({ layer, mask })
++{
++	sc_profile.layer = layer;
++	sc_profile.mask = mask;
++}
++
++sf::FloatRect StaticCollision::getCollisionBounds() const
++{
++	return sc_bounds;
++}
++
++CollisionProfile StaticCollision::getCollisionProfile() const
++{
++	return sc_profile;
++}
+diff --git a/project-rival/project-rival/StaticCollision.h b/project-rival/project-rival/StaticCollision.h
+new file mode 100644
+index 0000000..6e07ea6
+--- /dev/null
++++ b/project-rival/project-rival/StaticCollision.h
+@@ -0,0 +1,17 @@
++#pragma once
++#include "Collision.h"
++
++class StaticCollision : public ICollidable
++{
++public:
++	StaticCollision() = default;
++	StaticCollision(const sf::FloatRect& bounds, CollisionLayer layer, uint32_t mask);
++
++	sf::FloatRect getCollisionBounds() const override;
++	CollisionProfile getCollisionProfile() const override;
++
++private:
++	sf::FloatRect sc_bounds;
++	CollisionProfile sc_profile;
++};
++
+diff --git a/project-rival/project-rival/TurretEnemy.cpp b/project-rival/project-rival/TurretEnemy.cpp
+index 29ac6f1..feed17d 100644
+--- a/project-rival/project-rival/TurretEnemy.cpp
++++ b/project-rival/project-rival/TurretEnemy.cpp
+@@ -19,3 +19,7 @@ void TurretEnemy::setTarget(const Vector2f& target)
+ {
+ 	e_target = target;
+ }
++
++void TurretEnemy::hitWall(sf::Vector2f oldPos)
++{
++}
+diff --git a/project-rival/project-rival/TurretEnemy.h b/project-rival/project-rival/TurretEnemy.h
+index 634040a..d24b75f 100644
+--- a/project-rival/project-rival/TurretEnemy.h
++++ b/project-rival/project-rival/TurretEnemy.h
+@@ -11,6 +11,8 @@ public:
+ 	void update(double dt) override;
+ 	void setTarget(const Vector2f& target) override;
+ 
++	void hitWall(sf::Vector2f oldPos) override;
++
+ private:
+ 
+ };
+diff --git a/project-rival/project-rival/automation/prompts/level-architecture-roomplan-generator-builder-static-colliders-context.md b/project-rival/project-rival/automation/prompts/level-architecture-roomplan-generator-builder-static-colliders-context.md
+new file mode 100644
+index 0000000..ae351b0
+--- /dev/null
++++ b/project-rival/project-rival/automation/prompts/level-architecture-roomplan-generator-builder-static-colliders-context.md
+@@ -0,0 +1,120 @@
++# Context: Level architecture (Dungeon/Floor/Room) + RoomPlan/Generator/Builder + static collider tiles (SFML / C++)
++
++## Contents
++1. [High-level goal](#high-level-goal)
++2. [User preferences / working style](#user-preferences--working-style)
++3. [Current codebase state (relevant pieces)](#current-codebase-state-relevant-pieces)
++4. [Design decisions reached in this chat](#design-decisions-reached-in-this-chat)
++5. [Incremental implementation plan (agreed)](#incremental-implementation-plan-agreed)
++6. [What is already done](#what-is-already-done)
++7. [Next step to implement](#next-step-to-implement)
++
++---
++
++## High-level goal
++Implement a roguelike-style procedural architecture:
++
++- `Dungeon -> Floors -> Rooms`
++- Floors are generated as graphs (nodes=rooms, edges=connections), then embedded into 2D layout.
++- Rooms are built from tile-data (walls/floors/doors) and spawn markers.
++- Static room geometry (walls/obstacles) should support collision for player/enemies.
++
++Immediate objective: get a minimal room pipeline working end-to-end:
++
++1. Create a `RoomPlan` (blueprint data)
++2. Generate a test plan (hard-coded first)
++3. Build runtime wall colliders from tiles
++4. Resolve player vs wall collisions
++
++---
++
++## User preferences / working style
++- Prefer **incremental, buildable steps** (tutorial style) with some coding theory sprinkled in to justify decisions.
++- Each step should compile/run and be clearly an extension of the previous.
++- Avoid introducing advanced concepts without explanation.
++- User cares about **consistency** between architectural advice and code examples.
++
++---
++
++## Current codebase state (relevant pieces)
++
++### Game loop
++- `Game::update(double dt)` runs at fixed ~60 FPS and passes `dt` in **seconds**.
++- `Game` currently updates:
++  - `Player` (movement + aiming + bullets)
++  - `Enemy` instances (grunt steering + turret placeholder)
++  - collision checks: `Player vs Enemy`, `Player bullets vs Enemy`
++
++### Collision system
++- `ICollidable` exposes:
++  - `sf::FloatRect getCollisionBounds() const`
++  - `CollisionProfile getCollisionProfile() const`
++- `CollisionCheck::areColliding(a,b)`:
++  - checks layer/mask compatibility
++  - checks bounds intersection
++
++### Entities
++- `Player` and `Enemy` derive from `ICollidable`.
++- Collision filtering uses layers/masks.
++
++---
++
++## Design decisions reached in this chat
++
++### Floor/room connectivity
++- Floor topology should be represented as a **graph**.
++  - Node = room descriptor
++  - Edge = connection/door between rooms
++- Adjacency structure is recommended for neighbor queries.
++  - `unordered_map<roomId, vector<neighborId>>` is flexible for sparse IDs.
++  - `vector<vector<int>>` is simpler/faster if room IDs are dense `0..N-1`.
++
++### Level elements / tiles vs objects
++- Static geometry (walls/floors/most obstacles) should be represented as **tile data** in a room grid.
++- Runtime collision should be built from that data as a list of **static colliders**.
++  - Keep it lightweight (no per-tile AI/update).
++- Stateful/interactable objects (barrels, chests, shrines) should be spawned as normal game objects.
++
++### Room pipeline (preferred)
++- Use a 3-stage pipeline:
++  1. `RoomPlan` (blueprint/data)
++  2. `IRoomGenerator` (algorithm that fills a `RoomPlan` based on `RoomType`)
++  3. `RoomBuilder` (converts `RoomPlan` into runtime representation: wall colliders + visuals + spawns)
++
++---
++
++## Incremental implementation plan (agreed)
++1. Add collision layer for walls (`WALL_LAYER`).
++2. Add `RoomPlan` types (tiles/doors/markers) with no runtime wiring.
++3. Add generator interface + one hard-coded generator (e.g., combat room).
++4. Add builder that produces:
++   - `std::vector<sf::FloatRect>` solid wall colliders (from wall tiles)
++   - optional debug visuals for walls/floor
++5. Wire into `Game`:
++   - build a test room in `gameStart()`
++   - in `update()`, resolve `Player` vs room solids
++   - in `render()`, draw room debug visuals
++6. Improve collision response from "rollback" to "axis-separated slide".
++
++---
++
++## What is already done
++- Step 1 completed: `project-rival/Collision.h` updated to include:
++  - `WALL_LAYER = 1 << 4`
++  - Extra grouping comments for entity/static environment layers.
++
++No runtime behavior changes were made yet.
++
++---
++
++## Next step to implement
++**Step 2:** create `RoomPlan` (header-only for now) and add it to the Visual Studio project.
++
++Suggested file:
++- `project-rival/RoomPlan.h`
++  - `RoomType`, `TileType`
++  - door definition(s) (tile position + direction + locked)
++  - spawn markers (tile-space)
++  - `RoomPlan` with `width/height/tileSize/seed`, `tiles` (1D), helper `getTile`/`setTile`, and `isValid()`
++
++After Step 2 builds, proceed to Step 3 (hard-coded generator).
+diff --git a/project-rival/project-rival/player.cpp b/project-rival/project-rival/player.cpp
+index aa7b7f3..47e1f36 100644
+--- a/project-rival/project-rival/player.cpp
++++ b/project-rival/project-rival/player.cpp
+@@ -39,7 +39,9 @@ void Player::init()
+ 
+ 	//collision
+ 	p_collisionProfile.layer = CollisionLayer::PLAYER_LAYER;
+-	p_collisionProfile.mask = CollisionLayer::ENEMY_LAYER | CollisionLayer::ENEMY_BULLET_LAYER;
++	p_collisionProfile.mask = CollisionLayer::ENEMY_LAYER | CollisionLayer::ENEMY_BULLET_LAYER | CollisionLayer::WALL_LAYER;
++
++	p_maxHealth = 100;
+ 
+ 	reset();
+ }
+@@ -97,7 +99,7 @@ CollisionProfile Player::getCollisionProfile() const
+ void Player::reset()
+ {
+ 	p_body.setPosition(Vector2f(500, 500.f));
+-	p_health = 1000;
++	p_health = p_maxHealth;
+ }
+ 
+ void Player::handleMovement(double dt)
+@@ -171,6 +173,11 @@ void Player::takeDamage(int damage)
+ 	}
+ }
+ 
++void Player::hitWall(sf::Vector2f oldPos)
++{
++	p_body.setPosition(oldPos);
++}
++
+ std::vector<std::unique_ptr<Projectile>>& Player::getProjectiles()
+ {
+ 	return p_projectiles;
+diff --git a/project-rival/project-rival/player.h b/project-rival/project-rival/player.h
+index da30f5a..8307799 100644
+--- a/project-rival/project-rival/player.h
++++ b/project-rival/project-rival/player.h
+@@ -28,6 +28,8 @@ public:
+ 
+ 	void takeDamage(int damage);
+ 
++	void hitWall(sf::Vector2f oldPos);
++
+ 	// this functions will likely move to weapon class when made
+ 	std::vector<std::unique_ptr<Projectile>>& getProjectiles();
+ 
+@@ -53,6 +55,7 @@ private:
+ 	CollisionProfile p_collisionProfile;
+ 
+ 	// entity stats
++	int p_maxHealth;
+ 	int p_health;
+ 
+ 	// projectiles --> test. this will move to weapon class when made
+diff --git a/project-rival/project-rival/project-rival.vcxproj b/project-rival/project-rival/project-rival.vcxproj
+index cee6a85..dac0e66 100644
+--- a/project-rival/project-rival/project-rival.vcxproj
++++ b/project-rival/project-rival/project-rival.vcxproj
+@@ -21,6 +21,7 @@
+   <ItemGroup>
+     <ClCompile Include="ArriveBehaviour.cpp" />
+     <ClCompile Include="Collision.cpp" />
++    <ClCompile Include="CombatRoom.cpp" />
+     <ClCompile Include="NormalBulletProjectile.cpp" />
+     <ClCompile Include="Projectile.cpp" />
+     <ClCompile Include="Enemy.cpp" />
+@@ -30,12 +31,15 @@
+     <ClCompile Include="InputManager.cpp" />
+     <ClCompile Include="main.cpp" />
+     <ClCompile Include="player.cpp" />
++    <ClCompile Include="RoomInstance.cpp" />
+     <ClCompile Include="SeekBehaviour.cpp" />
++    <ClCompile Include="StaticCollision.cpp" />
+     <ClCompile Include="TurretEnemy.cpp" />
+   </ItemGroup>
+   <ItemGroup>
+     <ClInclude Include="ArriveBehaviour.h" />
+     <ClInclude Include="Collision.h" />
++    <ClInclude Include="CombatRoom.h" />
+     <ClInclude Include="NormalBulletProjectile.h" />
+     <ClInclude Include="Projectile.h" />
+     <ClInclude Include="Enemy.h" />
+@@ -44,7 +48,10 @@
+     <ClInclude Include="GruntEnemy.h" />
+     <ClInclude Include="InputManager.h" />
+     <ClInclude Include="player.h" />
++    <ClInclude Include="RoomBlueprint.h" />
++    <ClInclude Include="RoomInstance.h" />
+     <ClInclude Include="SeekBehaviour.h" />
++    <ClInclude Include="StaticCollision.h" />
+     <ClInclude Include="Steering.h" />
+     <ClInclude Include="TurretEnemy.h" />
+   </ItemGroup>
+@@ -68,9 +75,11 @@
+     <None Include="..\automation\prompts\player-aiming-mouse-right-stick-reticle-context.md" />
+     <None Include="..\automation\prompts\steering-enemy-seek-step-by-step-context.md" />
+     <None Include="..\automation\scripts\merge-summary-generator.ps1" />
++    <None Include="automation\prompts\level-architecture-roomplan-generator-builder-static-colliders-context.md" />
+   </ItemGroup>
+   <ItemGroup>
+     <Text Include="..\automation\scripts\output\aiming-merge-changes.txt" />
++    <Text Include="..\automation\scripts\output\collisions-merge-changes.txt" />
+     <Text Include="..\automation\scripts\output\enemies-merge-changes.txt" />
+   </ItemGroup>
+   <PropertyGroup Label="Globals">
+diff --git a/project-rival/project-rival/project-rival.vcxproj.filters b/project-rival/project-rival/project-rival.vcxproj.filters
+index 1ccf64b..809c5fc 100644
+--- a/project-rival/project-rival/project-rival.vcxproj.filters
++++ b/project-rival/project-rival/project-rival.vcxproj.filters
+@@ -49,6 +49,18 @@
+     <Filter Include="Header Files\Projectiles">
+       <UniqueIdentifier>{b9295663-bd23-4a50-bb5f-6ae5e6710b01}</UniqueIdentifier>
+     </Filter>
++    <Filter Include="Header Files\Levels">
++      <UniqueIdentifier>{127c1998-b90e-4d19-9042-548546c299e2}</UniqueIdentifier>
++    </Filter>
++    <Filter Include="Header Files\Levels\Rooms">
++      <UniqueIdentifier>{6315f94b-1a02-4312-8a70-232932c97a70}</UniqueIdentifier>
++    </Filter>
++    <Filter Include="Header Files\Levels\Collision">
++      <UniqueIdentifier>{39c9ab2c-a81f-4afe-83a4-1376aef9f6c4}</UniqueIdentifier>
++    </Filter>
++    <Filter Include="Resource Files\DOCUMENTATION\Git Summaries">
++      <UniqueIdentifier>{d0a212c5-440c-41a1-8f2b-6fde83f55d70}</UniqueIdentifier>
++    </Filter>
+   </ItemGroup>
+   <ItemGroup>
+     <ClCompile Include="main.cpp">
+@@ -90,6 +102,15 @@
+     <ClCompile Include="Collision.cpp">
+       <Filter>Header Files\Abs.Interfaces</Filter>
+     </ClCompile>
++    <ClCompile Include="StaticCollision.cpp">
++      <Filter>Header Files\Levels\Collision</Filter>
++    </ClCompile>
++    <ClCompile Include="CombatRoom.cpp">
++      <Filter>Header Files\Levels\Rooms</Filter>
++    </ClCompile>
++    <ClCompile Include="RoomInstance.cpp">
++      <Filter>Header Files\Levels</Filter>
++    </ClCompile>
+   </ItemGroup>
+   <ItemGroup>
+     <ClInclude Include="Game.h">
+@@ -131,6 +152,18 @@
+     <ClInclude Include="Collision.h">
+       <Filter>Header Files\Abs.Interfaces</Filter>
+     </ClInclude>
++    <ClInclude Include="RoomBlueprint.h">
++      <Filter>Header Files\Abs.Interfaces</Filter>
++    </ClInclude>
++    <ClInclude Include="StaticCollision.h">
++      <Filter>Header Files\Levels\Collision</Filter>
++    </ClInclude>
++    <ClInclude Include="CombatRoom.h">
++      <Filter>Header Files\Levels\Rooms</Filter>
++    </ClInclude>
++    <ClInclude Include="RoomInstance.h">
++      <Filter>Header Files\Levels</Filter>
++    </ClInclude>
+   </ItemGroup>
+   <ItemGroup>
+     <Image Include="ASSETS\IMAGES\SFML-LOGO.png">
+@@ -158,9 +191,19 @@
+     <None Include="..\automation\scripts\merge-summary-generator.ps1">
+       <Filter>Resource Files\AUTOMATIONS\Scripts</Filter>
+     </None>
++    <None Include="automation\prompts\level-architecture-roomplan-generator-builder-static-colliders-context.md">
++      <Filter>Resource Files\AUTOMATIONS\Agent</Filter>
++    </None>
+   </ItemGroup>
+   <ItemGroup>
+-    <Text Include="..\automation\scripts\output\aiming-merge-changes.txt" />
+-    <Text Include="..\automation\scripts\output\enemies-merge-changes.txt" />
++    <Text Include="..\automation\scripts\output\aiming-merge-changes.txt">
++      <Filter>Resource Files\DOCUMENTATION\Git Summaries</Filter>
++    </Text>
++    <Text Include="..\automation\scripts\output\collisions-merge-changes.txt">
++      <Filter>Resource Files\DOCUMENTATION\Git Summaries</Filter>
++    </Text>
++    <Text Include="..\automation\scripts\output\enemies-merge-changes.txt">
++      <Filter>Resource Files\DOCUMENTATION\Git Summaries</Filter>
++    </Text>
+   </ItemGroup>
+ </Project>
+\ No newline at end of file
+
+===== STAGED FILE CONTENTS (index blobs; skips deletions + binaries) =====
+
+===== FILE: project-rival/docs/Architecture/01-project-structure.md =====
+# 1) Project structure
+
+[Back to architecture index](README.md)
+
+Most gameplay code is inside `project-rival/`.
+
+## Suggested mental model (categories)
+
+### Core / game loop
+
+- `main.cpp`
+- `Game.h` / `Game.cpp`
+
+### Collision
+
+- `Collision.h` / `Collision.cpp`
+
+### Rooms / procedural generation
+
+- `RoomBlueprint.h` (RoomPlan + tiles + spawners + generator interface)
+- `CombatRoom.h` / `CombatRoom.cpp` (combat room generator)
+- `RoomInstance.h` / `RoomInstance.cpp` (builds a drawable room + wall colliders)
+- `StaticCollision.h` / `StaticCollision.cpp` (colliders for walls/geometry)
+
+### Entities
+
+- `player.h` / `player.cpp`
+- `Enemy.h` / `Enemy.cpp` (base class)
+- `GruntEnemy.h` / `GruntEnemy.cpp` (moves using steering)
+- `TurretEnemy.h` / `TurretEnemy.cpp` (static enemy placeholder)
+
+### Input
+
+- `InputManager.h` / `InputManager.cpp`
+- `Gamepad.h` / `Gamepad.cpp`
+
+### Combat / projectiles (early prototype)
+
+- `Projectile.h` / `Projectile.cpp` (base class)
+- `NormalBulletProjectile.h` / `NormalBulletProjectile.cpp` (simple bullet)
+
+### AI / Movement
+
+- `Steering.h`
+
+- `SeekBehaviour.h` / `SeekBehaviour.cpp`
+- `ArriveBehaviour.h` / `ArriveBehaviour.cpp`
+
+This category list is mainly to keep the codebase readable as the number of files grows.
+
+===== FILE: project-rival/docs/Architecture/08-collision-and-damage.md =====
+# 8) Collision + damage (current approach)
+
+[Back to architecture index](README.md)
+
+This project uses a simple collision system with **layers** and **masks** to filter which objects can collide.
+
+## Collision layers and masks
+
+Defined in `Collision.h`:
+
+- `CollisionLayer` (bit flags)
+  - examples: `PLAYER_LAYER`, `ENEMY_LAYER`, `PLAYER_BULLET_LAYER`, `WALL_LAYER`
+- `CollisionProfile`
+  - `layer`: what this object *is*
+  - `mask`: what this object *can collide with*
+
+Two objects are allowed to collide if:
+
+- AΓÇÖs mask contains BΓÇÖs layer **and**
+- BΓÇÖs mask contains AΓÇÖs layer
+
+## `ICollidable` (capability interface)
+
+Also in `Collision.h`:
+
+- `ICollidable` requires:
+  - `getCollisionBounds()` (an `sf::FloatRect`)
+  - `getCollisionProfile()`
+
+Current gameplay types that implement it:
+
+- `Player`
+- `Enemy` (and all enemy subclasses)
+- `Projectile` (and bullet subclasses)
+- `StaticCollision` (used for walls/room geometry)
+
+## Collision checks
+
+`CollisionCheck::areColliding(a, b)` (in `Collision.cpp`) does:
+
+1. layer/mask filtering (`CollisionProfile::canCollideWith`)
+2. bounding box intersection test (SFML rectangles)
+
+## Static collisions (walls)
+
+Room generation builds wall colliders using `StaticCollision`:
+
+- walls use `WALL_LAYER`
+- their mask allows collisions with player, enemies, and bullets
+
+## Damage flow (high level)
+
+Right now, the main damage logic lives in `Game::update(dt)`:
+
+- Player vs enemy collision ΓåÆ `m_player.takeDamage(...)`
+- Player bullets vs enemies:
+  - `enemy->takeDamage(bullet->applyDamage())`
+  - `bullet->destroy()`
+- If an enemy reports `isDead()` it is removed from the enemies list.
+
+===== FILE: project-rival/docs/Architecture/09-rooms-and-generation.md =====
+# 9) Rooms + procedural generation (current state)
+
+[Back to architecture index](README.md)
+
+The project has an early ΓÇ£roomsΓÇ¥ system built around a **data plan ΓåÆ runtime instance** workflow.
+
+## `RoomPlan` (data)
+
+Defined in `RoomBlueprint.h`:
+
+- `RoomPlan` describes a room **without any SFML objects**.
+- It contains:
+  - metadata: `id`, `type`, `seed`
+  - size: `width`, `height`, `tileSize`
+  - layout: `tileMap` (1D array), plus `doors` and `spawners`
+
+The tile map uses a 1D index:
+
+- `index = row * width + column`
+
+Helper functions:
+
+- `getTile(row, col)`
+- `setTile(row, col, type)`
+
+## Room generators (`IRoomGenerator`)
+
+`IRoomGenerator` is an interface that can create a `RoomPlan`.
+
+Current implementation:
+
+- `CombatRoom` (`CombatRoom.h/.cpp`)
+  - generates outer walls
+  - randomly places interior obstacles (ΓÇ£pillarsΓÇ¥)
+  - randomly places enemy spawners
+
+Note: `RoomPlan` includes a `seed` field, but `CombatRoom` currently uses `rand()` for generation.
+
+## `RoomInstance` (runtime)
+
+`RoomInstance` (`RoomInstance.h/.cpp`) builds SFML objects from a `RoomPlan`:
+
+- wall shapes (for rendering)
+- wall colliders (`StaticCollision`) with `WALL_LAYER`
+- small debug shapes for spawner tiles
+
+This is where room geometry becomes ΓÇ£realΓÇ¥ (drawn/collidable) in the world.
+
+## Likely next steps
+
+- Decide what parts of generation should be deterministic (seed-based) vs ΓÇ£random each runΓÇ¥.
+- Add door geometry and room-to-room connections.
+- Add collision resolution against wall colliders (right now walls are generated + colliders exist, but movement resolution may still be pending).
+
+===== FILE: project-rival/docs/Architecture/README.md =====
+# Architecture
+
+A high-level, beginner-friendly overview of how the main gameplay-related code is organized.
+
+[Back to docs index](../README.md)
+
+## Table of contents
+
+1. [Project structure](01-project-structure.md)
+2. [Player](02-player.md)
+3. [Input (high level)](03-input.md)
+4. [Enemies (current state)](04-enemy.md)
+5. [Steering (AI) + OOP concepts](05-steering-oop.md)
+6. [Coding / design conventions](06-coding-conventions.md)
+7. [Projectiles (prototype)](07-projectiles.md)
+8. [Collision + damage](08-collision-and-damage.md)
+9. [Rooms + procedural generation](09-rooms-and-generation.md)
+
+===== FILE: project-rival/project-rival/Collision.h =====
+#pragma once
+#include "Sfml/Graphics.hpp"
+
+enum CollisionLayer : uint32_t
+{
+	NONE = 0,
+
+	// Entity layers
+	PLAYER_LAYER = 1 << 0,
+	ENEMY_LAYER = 1 << 1,
+	PLAYER_BULLET_LAYER = 1 << 2,
+	ENEMY_BULLET_LAYER = 1 << 3,
+
+	// Static Environment layers
+	WALL_LAYER = 1 << 4,
+
+	// World Environment layers
+
+	ALL = 0xFFFFFFFF
+};
+
+struct CollisionProfile
+{
+	CollisionLayer layer;
+	uint32_t mask;
+
+	bool canCollideWith(const CollisionProfile& other) const
+	{
+		//  check if the other object's layer is in our mask AND also if our layer is in the other object's mask.
+		return (((mask & other.layer) != CollisionLayer::NONE) && ((other.mask & layer) != CollisionLayer::NONE));
+	}
+};
+
+class ICollidable
+{
+public:
+	virtual ~ICollidable() = default;
+
+	virtual sf::FloatRect getCollisionBounds() const = 0;
+	virtual CollisionProfile getCollisionProfile() const = 0;
+};
+
+class CollisionCheck {
+	public:
+		static bool areColliding(const ICollidable& entity_A, const ICollidable& entity_B);
+};
+
+===== FILE: project-rival/project-rival/CombatRoom.cpp =====
+#include "CombatRoom.h"
+
+RoomPlan CombatRoom::generateRoom(int id, RoomType type, int seed)
+{
+	RoomPlan room;
+	// Meta data
+	room.id = id;
+	room.type = type;
+	room.seed = seed;
+		// -> note here that this is where the height and width will be determined based on the type
+	//height 10-12; width 15-20
+	room.height = rand() % 4 + 10;
+	room.width = rand() % 6 + 15;
+
+	// tile map initialisation
+	room.tileMap.assign(room.height * room.width, Tile::FLOOR);
+
+	// tile map construction
+	// outer walls
+	for (int col = 0; col < room.width; col++)
+	{
+		room.setTile(0, col, Tile::WALL);				// top row
+		room.setTile(room.height - 1, col, Tile::WALL);	// bottom row
+	}
+	for (int row = 0; row < room.height; row++)
+	{
+		room.setTile(row, 0, Tile::WALL);				// left column
+		room.setTile(row, room.width - 1, Tile::WALL);	// right column
+	}
+
+	const int interiorWidth = room.width - 2;
+	const int interiorHeight = room.height - 2;
+	const int interiorArea = interiorWidth * interiorHeight;
+	
+	// Pillars
+	generateObstacles(room, interiorArea);
+
+	// Spawners
+	generateSpawnPoints(room, interiorArea);
+
+	// yet to do: room geometry like doors, etc.
+
+	return room;
+}
+
+void CombatRoom::generateObstacles(RoomPlan& room, int interiorArea)
+{
+	int maxPillars = interiorArea / (room.tileSize / 2);	// 1 pillar per half tile size of interior space, rounded down
+
+	int pillarCount = rand() % (maxPillars + 1);
+
+	for (int i = 0; i < pillarCount; i++)
+	{
+		int size = rand() % 2 + 1; // 1x1 or 2x2
+
+		const int minRow = 1;
+		const int maxRow = room.height - size - 1;
+		const int minCol = 1;
+		const int maxCol = room.width - size - 1;
+
+		if (maxRow <= minRow || maxCol <= minCol)
+			break;	// not enough space for pillars, skip
+
+		bool placed = false;
+		for (int attempts = 0; attempts < 50 && !placed; attempts++)
+		{
+			int randRow = rand() % (maxRow - minRow + 1) + minRow;
+			int randCol = rand() % (maxCol - minCol + 1) + minCol;
+
+			// Check if space is clear for the pillar
+			bool canPlace = true;
+			for (int x = 0; x < size && canPlace; x++) {
+				for (int y = 0; y < size && canPlace; y++) {	// x & y are offsets from the top-left corner of the pillar (if size is 2, we need to check the tile and the one to the right/below)
+					if (room.getTile(randRow + x, randCol + y) != Tile::FLOOR) {
+						canPlace = false;
+					}
+				}
+			}
+
+			if (!canPlace)
+				continue;	// space is not clear, try another position
+
+			// Place the pillar
+			for (int x = 0; x < size; x++) {
+				for (int y = 0; y < size; y++) {
+					room.setTile(randRow + x, randCol + y, Tile::WALL);
+				}
+			}
+
+			placed = true;
+		}
+	}
+}
+
+void CombatRoom::generateSpawnPoints(RoomPlan& room, int interiorArea)
+{
+	// Enemy Spawner
+	const int minEnemies = 1 + interiorArea / (room.tileSize * 2);
+	int maxEnemies = 10 + interiorArea / (room.tileSize / 2);
+
+	if (maxEnemies < minEnemies)
+		maxEnemies = minEnemies;
+
+	int totalEnemies = minEnemies + (rand() % ((maxEnemies - minEnemies) + 1));
+
+	std::vector<sf::Vector2i> occupiedPositions;
+	for (int i = 0; i < totalEnemies; i++)
+	{
+		sf::Vector2i randPos = { rand() % (room.width - 2) + 1, rand() % (room.height - 2) + 1 }; // random position within the room, excluding walls
+
+		Tile tileAtPos = room.getTile(randPos.y, randPos.x);
+		while (tileAtPos == Tile::WALL ||
+			std::find(occupiedPositions.begin(), occupiedPositions.end(), randPos) != occupiedPositions.end())
+		{
+			randPos = { rand() % (room.width - 2) + 1, rand() % (room.height - 2) + 1 };
+			tileAtPos = room.getTile(randPos.y, randPos.x);
+		}
+
+		room.spawners.push_back({ SpawnerType::EnemySpawner, randPos });
+		occupiedPositions.push_back(randPos);
+	}
+}
+
+===== FILE: project-rival/project-rival/CombatRoom.h =====
+#pragma once
+#include "RoomBlueprint.h"
+
+class CombatRoom : public IRoomGenerator
+{
+public:
+	RoomPlan generateRoom(int id, RoomType type, int seed) override;
+	void generateObstacles(RoomPlan& room, int interiorArea);
+	void generateSpawnPoints(RoomPlan& room, int interiorArea) override;
+
+};
+
+
+===== FILE: project-rival/project-rival/Enemy.cpp =====
+#include "Enemy.h"
+using namespace sf;
+
+Enemy::Enemy(const sf::Vector2f startPos, int totalHealth) :
+	e_startPos(startPos), e_maxHealth(totalHealth)
+{
+	e_health = e_maxHealth;
+	e_isDead = false;
+
+	e_collisionProfile.layer = CollisionLayer::ENEMY_LAYER;
+	e_collisionProfile.mask = CollisionLayer::PLAYER_LAYER | CollisionLayer::PLAYER_BULLET_LAYER | CollisionLayer::WALL_LAYER;
+}
+
+void Enemy::initBody(const sf::Vector2f& size, const sf::Color& colour)
+{
+	//--------- body setup ---------//
+	e_body.setSize(size);
+	e_body.setFillColor(colour);
+	e_body.setOrigin(size / 2.f);
+	e_body.setPosition(e_startPos);
+}
+
+void Enemy::render(sf::RenderWindow& window)
+{
+	window.draw(e_body);
+}
+
+void Enemy::reset()
+{
+	e_body.setPosition(e_startPos);
+	e_health = e_maxHealth;
+	e_isDead = false;
+}
+
+sf::Vector2f Enemy::getPosition() const
+{
+	return e_body.getPosition();
+}
+
+sf::FloatRect Enemy::getCollisionBounds() const
+{
+	return e_body.getGlobalBounds();
+}
+
+CollisionProfile Enemy::getCollisionProfile() const
+{
+	return e_collisionProfile;
+}
+
+void Enemy::takeDamage(int damage)
+{
+	e_health -= damage;
+	if (e_health <= 0)
+		onDeath();
+}
+
+void Enemy::onDeath()
+{
+	e_isDead = true;
+}
+
+bool Enemy::isDead() const
+{
+	return e_isDead;
+}
+
+===== FILE: project-rival/project-rival/Enemy.h =====
+#pragma once
+#include<iostream>
+#include <SFML/graphics.hpp>
+
+#include "SeekBehaviour.h"
+#include "ArriveBehaviour.h"
+
+#include "Collision.h"
+
+enum EnemyType
+{
+	GRUNT,
+	TURRET,
+
+	COUNT
+};
+
+class Enemy : public ICollidable
+{
+public:
+	Enemy(const sf::Vector2f startPos, int totalHealth);
+
+	virtual void init() = 0;
+	virtual void update(double dt) = 0;
+	virtual void render(sf::RenderWindow& window);
+	virtual void reset();
+
+	virtual sf::Vector2f getPosition() const;
+
+	virtual void setTarget(const Vector2f& target) = 0;
+
+	virtual sf::FloatRect getCollisionBounds() const override;
+	virtual CollisionProfile getCollisionProfile() const override;
+
+	virtual void hitWall(sf::Vector2f oldPos) = 0;
+
+	virtual void takeDamage(int damage);
+	virtual void onDeath();
+	virtual bool isDead() const;
+
+protected:
+	void initBody(const sf::Vector2f& size, const sf::Color& colour);
+
+	sf::RectangleShape e_body;
+	sf::Vector2f e_startPos;
+	sf::Vector2f e_target{ 0.f, 0.f };
+
+	CollisionProfile e_collisionProfile;
+
+	// entity stats
+	int e_maxHealth;
+	int e_health;
+	bool e_isDead;
+};
+
+
+===== FILE: project-rival/project-rival/Game.cpp =====
+#include "Game.h"
+#include "InputManager.h"
+#include "GruntEnemy.h"
+#include "TurretEnemy.h"
+#include <iostream>
+
+// Our target FPS
+static double const FPS{ 60.0f };
+
+////////////////////////////////////////////////////////////
+Game::Game()
+	: m_window(sf::VideoMode(sf::Vector2u(ScreenSize::s_width, ScreenSize::s_height), 32), "FYP: Dungeonish Crawler", sf::Style::Default)
+{
+	srand(time(NULL));
+	init();
+}
+
+////////////////////////////////////////////////////////////
+void Game::init()
+{
+	// Really only necessary is our target FPS is greater than 60.
+	m_window.setVerticalSyncEnabled(true);
+	
+	if (!m_arialFont.openFromFile("ASSETS/FONTS/ariblk.ttf"))
+	{
+		std::cout << "Error loading font file";
+	}
+
+#ifdef TEST_FPS
+	x_updateFPS.setFont(m_arialFont);
+	x_updateFPS.setPosition(sf::Vector2f(20, 300));
+	x_updateFPS.setCharacterSize(24);
+	x_updateFPS.setFillColor(sf::Color::White);
+	x_drawFPS.setFont(m_arialFont);
+	x_drawFPS.setPosition(sf::Vector2f(20, 350));
+	x_drawFPS.setCharacterSize(24);
+	x_drawFPS.setFillColor(sf::Color::White);
+#endif
+
+	gameStart();
+}
+
+////////////////////////////////////////////////////////////
+void Game::run()
+{
+	sf::Clock clock;
+	sf::Time timeSinceLastUpdate = sf::Time::Zero;
+	
+	sf::Time timePerFrame = sf::seconds(1.0f / FPS); // 60 fps
+	while (m_window.isOpen())
+	{
+		processEvents(); // as many as possible
+		timeSinceLastUpdate += clock.restart();
+		while (timeSinceLastUpdate > timePerFrame)
+		{
+			timeSinceLastUpdate -= timePerFrame;
+			processEvents(); // at least 60 fps
+			update(timePerFrame.asSeconds()); //60 fps
+#ifdef TEST_FPS
+			x_secondTime += timePerFrame;
+			x_updateFrameCount++;
+			if (x_secondTime.asSeconds() > 1)
+			{
+				std::string updatesPS = "UPS " + std::to_string(x_updateFrameCount - 1);
+				x_updateFPS.setString(updatesPS);
+				std::string drawsPS = "DPS " + std::to_string(x_drawFrameCount);
+				x_drawFPS.setString(drawsPS);
+				x_updateFrameCount = 0;
+				x_drawFrameCount = 0;
+				x_secondTime = sf::Time::Zero;
+			}
+#endif
+		}
+		render(); // as many as possible
+#ifdef TEST_FPS
+		x_drawFrameCount++;
+#endif
+	}
+}
+
+////////////////////////////////////////////////////////////
+void Game::processEvents()
+{
+    while (const std::optional event = m_window.pollEvent())
+    {
+        if (event->is<sf::Event::Closed>())
+        {
+            m_window.close();
+        }
+        processGameEvents(*event);
+    }
+}
+
+
+////////////////////////////////////////////////////////////
+void Game::processGameEvents(const sf::Event& event)
+{
+	if (const auto* keyPressed = event.getIf<sf::Event::KeyPressed>())
+	{
+		switch (keyPressed->scancode)
+		{
+		case sf::Keyboard::Scancode::Escape:
+			m_window.close();
+			break;
+		case sf::Keyboard::Scancode::Up:
+			// Up key was pressed...
+			break;
+		default:
+			break;
+		}
+	}
+}
+
+
+////////////////////////////////////////////////////////////
+void Game::update(double dt)
+{
+	const Vector2i mousePos = Mouse::getPosition(m_window);
+	const Vector2f mousePosF = m_window.mapPixelToCoords(mousePos);
+
+	InputManager::update();
+	
+	// Game manager controls
+	gameInput();
+
+	// Update player and enemies
+	Vector2f oldPlayerPos = m_player.getPosition();
+	m_player.update(dt, mousePosF);
+
+	for (auto enemy_it = m_enemies.begin(); enemy_it != m_enemies.end();)
+	{
+		auto& enemy = *enemy_it;
+		Vector2f oldEnemyPos = enemy->getPosition();
+		enemy->setTarget(m_player.getPosition());
+		enemy->update(dt);
+
+		// Check collision with player and wall
+		// Enemy -> Player
+		if (CollisionCheck::areColliding(m_player, *enemy)) {
+			cout << "Player collided with enemy!\n";
+			m_player.takeDamage(10);
+		}
+		// Enemy -> Wall
+		for (auto& wall : m_activeRoomInstance.getStaticCollisions()) {
+			if (CollisionCheck::areColliding(*enemy, wall))
+			{
+				enemy->hitWall(oldEnemyPos);
+				break;
+			}
+		}
+
+		// Check if enemy is dead and remove if so
+		if (enemy->isDead())
+		{
+			enemy_it = m_enemies.erase(enemy_it);
+		}
+		else
+			enemy_it++;
+	}
+
+	// Collision checks
+	// Check player projectiles against enemies
+	for (auto& bullet : m_player.getProjectiles()) 
+	{
+		if(bullet->shouldDestroy())
+			continue;
+
+		for (auto& enemy : m_enemies) {
+			if (enemy->isDead())
+				continue;
+
+			// Bullet -> Enemy
+			if (CollisionCheck::areColliding(*bullet, *enemy))
+			{
+				enemy->takeDamage(bullet->applyDamage());
+				bullet->destroy();
+				break;
+			}
+		}
+	}
+
+	// Check static environment against player, enmies and projectiles
+	for (auto& wall : m_activeRoomInstance.getStaticCollisions())
+	{
+		// Wall -> Player
+		if (CollisionCheck::areColliding(m_player, wall))
+		{
+			m_player.hitWall(oldPlayerPos);
+		}
+
+		// Wall -> Player Projectiles
+		for (auto& bullet : m_player.getProjectiles())
+		{
+			if (bullet->shouldDestroy())
+				continue;
+
+			if (CollisionCheck::areColliding(*bullet, wall))
+			{
+				bullet->destroy();
+				break;
+			}
+		}
+	}
+}
+
+void Game::gameInput()
+{
+	if (Keyboard::isKeyPressed(Keyboard::Key::Escape) || InputManager::pad().pressed(GamepadButton::Start))
+	{
+		m_window.close();
+	}
+	if (Keyboard::isKeyPressed(Keyboard::Key::R) || InputManager::pad().pressed(GamepadButton::Select))
+	{
+		gameStart();
+	}
+}
+
+////////////////////////////////////////////////////////////
+void Game::render()
+{
+	m_window.clear(sf::Color(0, 0, 0, 0));
+
+	m_activeRoomInstance.render(m_window);
+
+	m_player.render(m_window);
+	for (auto& enemy : m_enemies) {
+		enemy->render(m_window);
+	}
+
+#ifdef TEST_FPS
+	m_window.draw(x_updateFPS); //ups is 60 and dps is 61
+	m_window.draw(x_drawFPS);
+#endif
+	m_window.display();
+}
+
+void Game::resetGame()
+{
+	m_player.init();
+
+	m_enemies.clear();
+
+	m_combatRoom;
+	m_activeRoomPlan;
+	m_activeRoomInstance.reset();
+}
+
+void Game::gameStart()
+{
+	resetGame();
+	generateRoom();
+}
+
+void Game::generateRoom()
+{
+	m_activeRoomPlan = m_combatRoom.generateRoom(0, RoomType::COMBAT, 0);
+
+	sf::Vector2f roomWorldPos{ 50.f, 50.f };
+	m_activeRoomInstance.buildFromPlan(m_activeRoomPlan, roomWorldPos);
+
+	m_enemies.clear();
+
+	//Enemy Spawner
+	int totalEnemyTypes = EnemyType::COUNT;
+	for (auto& spawnPoint : m_activeRoomPlan.spawners)
+	{
+		if (spawnPoint.type == SpawnerType::EnemySpawner) {
+			Vector2f spawnPos = roomWorldPos + static_cast<Vector2f>(spawnPoint.tilePos) * m_activeRoomPlan.tileSize;
+			
+			int enemyToSpawn = rand() % totalEnemyTypes;
+			if (enemyToSpawn == 0)
+				m_enemies.push_back(std::make_unique<GruntEnemy>(spawnPos, 150));
+			else if (enemyToSpawn == 1)
+				m_enemies.push_back(std::make_unique<TurretEnemy>(spawnPos, 250));
+		}
+	}
+}
+
+===== FILE: project-rival/project-rival/Game.h =====
+#pragma once
+
+// If VS Debug build is enabled, then any block of code enclosed within 
+//  the preprocessor directive #ifdef TEST_FPS is compiled and executed.
+#ifdef _DEBUG
+#define TEST_FPS
+#endif // _DEBUG
+
+#include <SFML/Graphics.hpp>
+#include <string>
+
+#include "player.h"
+#include "Enemy.h"
+
+#include "RoomInstance.h"
+#include "CombatRoom.h"
+
+using namespace std;
+using namespace sf;
+
+/// <summary>
+/// @author OA-O
+/// @date November 2025
+/// @version 1.0
+/// 
+/// </summary>
+
+struct ScreenSize
+{
+public:
+	static const int s_width{ 1440 };
+
+	static const int s_height{ 900 };
+};
+
+class Game
+{
+public:
+	Game();
+	void run();
+
+protected:
+	void init();
+	void update(double dt);
+
+	void gameInput();
+
+	void render();
+
+	void processEvents();
+	void processGameEvents(const sf::Event&);
+
+	sf::Font m_arialFont{ "ASSETS/FONTS/ariblk.ttf" };
+	sf::RenderWindow m_window;
+
+	Player m_player;
+
+	std::vector<std::unique_ptr<Enemy>> m_enemies;
+
+	CombatRoom m_combatRoom;	
+	RoomPlan m_activeRoomPlan;
+	RoomInstance m_activeRoomInstance;
+
+#ifdef TEST_FPS
+	sf::Text x_updateFPS{ m_arialFont };	// text used to display updates per second.
+	sf::Text x_drawFPS{  m_arialFont };	// text used to display draw calls per second.
+	sf::Time x_secondTime{ sf::Time::Zero };			// counter used to establish when a second has passed.
+	int x_updateFrameCount{ 0 };						// updates per second counter.
+	int x_drawFrameCount{ 0 };							// draws per second counter.
+#endif // TEST_FPS
+
+
+private:
+	void resetGame();
+	void gameStart();
+
+	void generateRoom();
+};
+
+===== FILE: project-rival/project-rival/Gamepad.cpp =====
+#include "Gamepad.h"
+#include <Windows.h>
+#include <Xinput.h>
+#include <algorithm>
+#include <cmath>
+
+Gamepad::Gamepad(unsigned int index)
+	: m_index(index)
+{
+}
+
+void Gamepad::setDeadzone(float leftStick, float rightStick)
+{
+	m_leftDeadzone = std::clamp(leftStick, 0.f, 0.95f);
+	m_rightDeadzone = std::clamp(rightStick, 0.f, 0.95f);
+}
+
+bool Gamepad::connected() const
+{
+	return m_connected;
+}
+
+float Gamepad::applyDeadzone(float value, float deadzone)
+{
+	if (std::fabs(value) < deadzone)
+		return 0.f;
+
+	const float sign = (value < 0.f) ? -1.f : 1.f;
+	const float scaled = (std::fabs(value) - deadzone) / (1.f - deadzone);
+	return sign * std::clamp(scaled, 0.f, 1.f);
+}
+
+void Gamepad::update()
+{
+	m_buttonsPrev = m_buttonsNow;
+
+	XINPUT_STATE state{};
+	const DWORD result = XInputGetState(m_index, &state);
+	m_connected = (result == ERROR_SUCCESS);
+
+	if (!m_connected)
+	{
+		m_buttonsNow = 0;
+		m_left = sf::Vector2f(0.f, 0.f);
+		m_right = sf::Vector2f(0.f, 0.f);
+		m_lt = 0.f;
+		m_rt = 0.f;
+		return;
+	}
+
+	m_buttonsNow = state.Gamepad.wButtons;
+
+	// sticks [-32768..32767] -> [-1..1]
+	const float lx = static_cast<float>(state.Gamepad.sThumbLX) / 32767.f;
+	const float ly = static_cast<float>(state.Gamepad.sThumbLY) / 32767.f;
+	const float rx = static_cast<float>(state.Gamepad.sThumbRX) / 32767.f;
+	const float ry = static_cast<float>(state.Gamepad.sThumbRY) / 32767.f;
+
+	// deadzone + SFML-friendly Y (up = -)
+	m_left = sf::Vector2f(applyDeadzone(lx, m_leftDeadzone), -applyDeadzone(ly, m_leftDeadzone));
+	m_right = sf::Vector2f(applyDeadzone(rx, m_rightDeadzone), -applyDeadzone(ry, m_rightDeadzone));
+
+	// triggers [0..255] -> [0..1]
+	m_lt = static_cast<float>(state.Gamepad.bLeftTrigger) / 255.f;
+	m_rt = static_cast<float>(state.Gamepad.bRightTrigger) / 255.f;
+}
+
+sf::Vector2f Gamepad::leftStick() const
+{
+	return m_left;
+}
+
+sf::Vector2f Gamepad::rightStick() const
+{
+	return m_right;
+}
+
+float Gamepad::leftTrigger() const
+{
+	return m_lt;
+}
+
+float Gamepad::rightTrigger() const
+{
+	return m_rt;
+}
+
+uint16_t Gamepad::toXInputMask(GamepadButton button)
+{
+	switch (button)
+	{
+	case GamepadButton::A: return XINPUT_GAMEPAD_A;
+	case GamepadButton::B: return XINPUT_GAMEPAD_B;
+	case GamepadButton::X: return XINPUT_GAMEPAD_X;
+	case GamepadButton::Y: return XINPUT_GAMEPAD_Y;
+	case GamepadButton::LeftShoulder: return XINPUT_GAMEPAD_LEFT_SHOULDER;
+	case GamepadButton::RightShoulder: return XINPUT_GAMEPAD_RIGHT_SHOULDER;
+	case GamepadButton::Select: return XINPUT_GAMEPAD_BACK;
+	case GamepadButton::Start: return XINPUT_GAMEPAD_START;
+	case GamepadButton::LeftThumb: return XINPUT_GAMEPAD_LEFT_THUMB;
+	case GamepadButton::RightThumb: return XINPUT_GAMEPAD_RIGHT_THUMB;
+	case GamepadButton::DPadUp: return XINPUT_GAMEPAD_DPAD_UP;
+	case GamepadButton::DPadDown: return XINPUT_GAMEPAD_DPAD_DOWN;
+	case GamepadButton::DPadLeft: return XINPUT_GAMEPAD_DPAD_LEFT;
+	case GamepadButton::DPadRight: return XINPUT_GAMEPAD_DPAD_RIGHT;
+	default: return 0;
+	}
+}
+
+bool Gamepad::down(GamepadButton button) const
+{
+	const uint16_t mask = toXInputMask(button);
+	return (m_buttonsNow & mask) != 0;
+}
+
+bool Gamepad::pressed(GamepadButton button) const
+{
+	const uint16_t mask = toXInputMask(button);
+	return ((m_buttonsNow & mask) != 0) && ((m_buttonsPrev & mask) == 0);
+}
+
+bool Gamepad::released(GamepadButton button) const
+{
+	const uint16_t mask = toXInputMask(button);
+	return ((m_buttonsNow & mask) == 0) && ((m_buttonsPrev & mask) != 0);
+}
+
+void Gamepad::setRumble(float lowFreq, float highFreq)
+{
+	if (!m_connected)
+		return;
+
+	lowFreq = std::clamp(lowFreq, 0.f, 1.f);
+	highFreq = std::clamp(highFreq, 0.f, 1.f);
+
+	XINPUT_VIBRATION vib{};
+	vib.wLeftMotorSpeed = static_cast<WORD>(lowFreq * 65535.f);
+	vib.wRightMotorSpeed = static_cast<WORD>(highFreq * 65535.f);
+
+	XInputSetState(m_index, &vib);
+}
+
+===== FILE: project-rival/project-rival/Gamepad.h =====
+#pragma once
+#include <SFML/System/Vector2.hpp>
+#include <cstdint>
+
+enum class GamepadButton : uint16_t
+{
+	A,
+	B,
+	X,
+	Y,
+	LeftShoulder,
+	RightShoulder,
+	Select,
+	Start,
+	LeftThumb,
+	RightThumb,
+	DPadUp,
+	DPadDown,
+	DPadLeft,
+	DPadRight
+};
+
+class Gamepad
+{
+public:
+	explicit Gamepad(unsigned int index = 0);
+
+	void update();
+	bool connected() const;
+
+	sf::Vector2f leftStick() const;   // normalized [-1..1], Y is SFML-friendly (up = -)
+	sf::Vector2f rightStick() const;  // normalized [-1..1], Y is SFML-friendly (up = -)
+
+	float leftTrigger() const;        // [0..1]
+	float rightTrigger() const;       // [0..1]
+
+	bool down(GamepadButton button) const;     // held
+	bool pressed(GamepadButton button) const;  // edge this frame
+	bool released(GamepadButton button) const; // edge this frame
+
+	void setRumble(float lowFreq, float highFreq); // [0..1] each
+
+	void setDeadzone(float leftStick, float rightStick);
+
+private:
+	static uint16_t toXInputMask(GamepadButton button);
+	static float applyDeadzone(float value, float deadzone);
+
+	unsigned int m_index{ 0 };
+	bool m_connected{ false };
+
+	// deadzones in normalized units
+	float m_leftDeadzone{ 0.50f };
+	float m_rightDeadzone{ 0.50f };
+
+	// cached state
+	uint16_t m_buttonsNow{ 0 };
+	uint16_t m_buttonsPrev{ 0 };
+
+	sf::Vector2f m_left{ 0.f, 0.f };
+	sf::Vector2f m_right{ 0.f, 0.f };
+
+	float m_lt{ 0.f };
+	float m_rt{ 0.f };
+};
+
+
+===== FILE: project-rival/project-rival/GruntEnemy.cpp =====
+#include "GruntEnemy.h"
+
+namespace
+{
+	float length(const sf::Vector2f& v) //magnitude (line length of the vector)
+	{
+		return std::sqrt(v.x * v.x + v.y * v.y);
+	}
+}
+
+GruntEnemy::GruntEnemy(const sf::Vector2f pos, int totalHealth)
+	:Enemy(pos, totalHealth)
+{
+	initBody(sf::Vector2f(50.f, 50.f), sf::Color::Red);
+	init();
+}
+
+void GruntEnemy::init()
+{
+	//--------- steering setup ---------//
+	e_agent.position = e_body.getPosition();
+	e_agent.velocity = Vector2f(0.f, 0.f);
+	e_agent.maxSpeed = 200.f; //consider making this a parameter of the constructor if we want different types of enemies with different speeds.
+	e_agent.maxAcceleration = 100.f; //consider making this a parameter of the constructor if we want different types of enemies with different accelerations.
+
+	e_currBehaviour = &e_seek; //default behaviour is seek, but we can change this later with setBehaviour() if we want to test other behaviours.
+
+	//--------- behaviour setup ---------//
+	// Derive switching distances from a "gap" value to avoid jittering when switching behaviours
+	const float base = std::max(e_arrive.getSlowRadius(), e_arrive.getStopRadius());
+	const float gap = 100.f;
+	e_arriveEnterDist = base;
+	e_arriveExitDist = base + gap;
+}
+
+void GruntEnemy::update(double dt)
+{
+	if (e_currBehaviour != nullptr)
+	{
+		const float disToTarget = length(e_target - e_agent.position);
+
+		// Auto Switchin behaviours
+		if (e_currBehaviour == &e_seek) {
+			if (disToTarget <= e_arriveEnterDist)
+			{
+				e_currBehaviour = &e_arrive;
+			}
+		}
+		else if (e_currBehaviour == &e_arrive) {
+			if (disToTarget > e_arriveExitDist)
+			{
+				e_currBehaviour = &e_seek;
+			}
+		}
+
+		float dtS = static_cast<float>(dt);
+
+		// 1) Get the steering (acceleration) from the current behaviour.
+		const Vector2f steering = e_currBehaviour->getSteering(e_agent);
+
+		// 2) v = v + a * dt
+		e_agent.velocity += steering * dtS;
+
+		// 3) Clamp velocity to max speed.
+		const float speed = length(e_agent.velocity);
+		if (speed > e_agent.maxSpeed && speed > 0.f) {
+			e_agent.velocity = (e_agent.velocity / speed) * e_agent.maxSpeed;
+		}
+
+		// 4) p = p + v * dt
+		e_agent.position += e_agent.velocity * dtS;
+
+		e_body.setPosition(e_agent.position);
+	}
+}
+
+void GruntEnemy::setTarget(const Vector2f& target)
+{
+	e_target = target;
+
+	e_seek.setTarget(target);
+	e_arrive.setTarget(target);
+}
+
+void GruntEnemy::hitWall(sf::Vector2f oldPos)
+{
+	e_agent.position = oldPos;
+	e_body.setPosition(e_agent.position);
+}
+
+
+===== FILE: project-rival/project-rival/GruntEnemy.h =====
+#pragma once
+#include "Enemy.h"
+
+class GruntEnemy : public Enemy
+{
+public: 
+	GruntEnemy(const sf::Vector2f pos, int totalHealth);
+	~GruntEnemy() = default;
+
+	void init() override;
+	void update(double dt) override;
+	void setTarget(const Vector2f& target) override;
+
+	void hitWall(sf::Vector2f oldPos) override;
+
+private:
+	SteeringAgent e_agent;
+	SeekBehaviour e_seek{ Vector2f(0.f,0.f) };
+	ArriveBehaviour e_arrive{ Vector2f(0.f,0.f), 500.f, 250.f };
+	ISteeringBehaviour* e_currBehaviour{ nullptr };
+
+	float e_arriveEnterDist;
+	float e_arriveExitDist;
+};
+
+
+===== FILE: project-rival/project-rival/NormalBulletProjectile.cpp =====
+#include "NormalBulletProjectile.h"
+
+NormalBulletProjectile::NormalBulletProjectile(sf::Vector2f spawnPoint, sf::Vector2f direction, bool isFromPlayer) :
+	Projectile(spawnPoint, nbp_lifetime, isFromPlayer), nbp_dir(direction)
+{
+	init();
+}
+
+void NormalBulletProjectile::init()
+{
+	if (nbp_dir != sf::Vector2f{ 0.f,0.f })
+		nbp_dir = nbp_dir.normalized();
+	else
+		destroy();
+
+	// set damage
+	p_damage = 10;
+}
+
+void NormalBulletProjectile::update(double dt)
+{
+	float dtf = static_cast<float>(dt);
+	p_body.move(nbp_dir * nbp_speed * dtf);
+	onExpire(dtf);
+}
+
+===== FILE: project-rival/project-rival/Projectile.cpp =====
+#include "Projectile.h"
+
+Projectile::Projectile(sf::Vector2f spawnPoint, float lifetime, bool isFromPlayer) :
+	p_spawnPoint(spawnPoint), p_lifetime(lifetime), p_isFromPlayer(isFromPlayer)
+{
+	init_body();
+
+	if(isFromPlayer)
+	{
+		p_collisionProfile.layer = CollisionLayer::PLAYER_BULLET_LAYER;
+		p_collisionProfile.mask = CollisionLayer::ENEMY_LAYER;
+	}
+	else
+	{
+		p_collisionProfile.layer = CollisionLayer::ENEMY_BULLET_LAYER;
+		p_collisionProfile.mask = CollisionLayer::PLAYER_LAYER;
+	}
+	// add other collision masks for environment (e.g. walls)
+	// like so ----> p_collisionProfile.mask |= CollisionLayer::LEVEL_LAYER;
+	p_collisionProfile.mask |= CollisionLayer::WALL_LAYER;
+}
+
+void Projectile::render(sf::RenderWindow& window)
+{
+	window.draw(p_body);
+}
+
+sf::FloatRect Projectile::getCollisionBounds() const
+{
+	return p_body.getGlobalBounds();
+}
+
+CollisionProfile Projectile::getCollisionProfile() const
+{
+	return p_collisionProfile;
+}
+
+bool Projectile::shouldDestroy() const
+{
+	return p_shouldDestroy;
+}
+
+int Projectile::applyDamage() const
+{
+	return p_damage;
+}
+
+void Projectile::init_body()
+{
+	p_body.setSize(sf::Vector2f(10.f, 10.f));
+	p_body.setFillColor(sf::Color::White);
+	p_body.setOrigin(p_body.getSize() / 2.f);
+	p_body.setPosition(p_spawnPoint);
+}
+
+void Projectile::onExpire(float dt)
+{
+	p_lifetime -= dt;
+	if (p_lifetime <= 0.f)
+		destroy();
+}
+
+void Projectile::destroy()
+{
+	p_shouldDestroy = true;
+}
+
+
+===== FILE: project-rival/project-rival/RoomBlueprint.h =====
+#pragma once
+#include "SFML/Graphics.hpp"
+#include <vector>
+#include <algorithm>
+
+enum RoomType {
+	SPAWN,
+	PORTAL,
+	COMBAT
+};
+
+enum Tile {
+	Empty,
+
+	FLOOR,
+	WALL,
+	DOOR
+};
+
+enum DoorDirection {
+	NORTH,
+	SOUTH,
+	EAST,
+	WEST
+};
+
+struct DoorPlan {
+	sf::Vector2i tilePos;
+	DoorDirection direction;
+
+	bool isLocked;
+};
+
+enum SpawnerType {
+	PlayerSpawner,
+	EnemySpawner
+};
+
+struct SpawnerPlan {
+	SpawnerType type;
+	sf::Vector2i tilePos;
+};
+
+struct RoomPlan {
+	// Room metadata
+	int id;
+	RoomType type;
+	int seed;	// for stuctured random generation of room layout and contents
+
+	// Room representation
+	int width;
+	int height;	
+	float tileSize = 64.f;
+
+	// Room layout
+	std::vector<Tile> tileMap;	// formula for 1D index: row * width + column
+	std::vector<DoorPlan> doors;
+	std::vector<SpawnerPlan> spawners;
+	
+	bool isValid() const {
+		if (width > 0 && height > 0 && (tileMap.size() == width * height))
+			return true;
+		else
+			return false;
+	}
+
+	Tile getTile(int row, int column) const {
+		return tileMap[row * width + column];
+	}
+
+	void setTile(int row, int column, Tile type) {
+		tileMap[row * width + column] = type;
+	}
+};
+
+class IRoomGenerator 
+{
+public:
+	virtual ~IRoomGenerator() = default;
+
+	// a few things to note about the parameters:
+	// id, type and seed are fine for passing through
+	virtual RoomPlan generateRoom(int id, RoomType type, int seed) = 0;
+	virtual void generateSpawnPoints(RoomPlan& roomPlan, int interiorArea) = 0;
+};
+
+===== FILE: project-rival/project-rival/RoomInstance.cpp =====
+#include "RoomInstance.h"
+
+void RoomInstance::buildFromPlan(const RoomPlan& plan, const sf::Vector2f& worldPos)
+{
+	ri_staticColliders.clear();
+	ri_staticShapes.clear();
+
+	if (!plan.isValid())
+		return;
+
+	const float tileSize = plan.tileSize;
+	
+	// initialise each tile
+	for (int row = 0; row < plan.height; row++) {
+		for (int col = 0; col < plan.width; col++) {
+			const Tile tile = plan.getTile(row, col);
+			if (tile == Tile::WALL) {
+				// setup wall
+				sf::RectangleShape wall;
+				wall.setSize(sf::Vector2f(tileSize, tileSize));
+				wall.setOrigin(wall.getSize() / 2.f);
+				wall.setPosition(worldPos + sf::Vector2f(col * tileSize, row * tileSize));
+				wall.setFillColor(sf::Color(100, 100, 100)); // grey walls
+
+				ri_staticShapes.push_back(wall);
+
+				//setup collider for wall
+				StaticCollision collider(wall.getGlobalBounds(), CollisionLayer::WALL_LAYER,
+					CollisionLayer::PLAYER_LAYER | CollisionLayer::ENEMY_LAYER | CollisionLayer::PLAYER_BULLET_LAYER | CollisionLayer::ENEMY_BULLET_LAYER);
+
+				ri_staticColliders.push_back(collider);
+			}
+		}
+	}
+	// initialise spawners (DEBUG)
+	for (auto& spawner : plan.spawners) {
+		sf::RectangleShape spawnPoint;
+		spawnPoint.setSize(sf::Vector2f(tileSize, tileSize) / 8.f);
+		spawnPoint.setOrigin(spawnPoint.getSize() / 2.f);
+		spawnPoint.setPosition(worldPos + static_cast<sf::Vector2f>(spawner.tilePos) * tileSize);
+		if (spawner.type == SpawnerType::PlayerSpawner) {
+			spawnPoint.setFillColor(sf::Color(0, 255, 0)); // green for player spawn
+		}
+		else if (spawner.type == SpawnerType::EnemySpawner) {
+			spawnPoint.setFillColor(sf::Color(255, 0, 0)); // red for enemy spawn
+		}
+
+		ri_staticShapes.push_back(spawnPoint);
+	}
+}
+
+const std::vector<StaticCollision>& RoomInstance::getStaticCollisions()
+{
+	return ri_staticColliders;
+}
+
+void RoomInstance::render(sf::RenderWindow& window)
+{
+	for (auto& shape : ri_staticShapes)
+	{
+		window.draw(shape);
+	}
+}
+
+void RoomInstance::reset()
+{
+	ri_staticColliders.clear();
+	ri_staticShapes.clear();
+}
+
+===== FILE: project-rival/project-rival/RoomInstance.h =====
+#pragma once
+#include "RoomBlueprint.h"
+#include "StaticCollision.h"
+#include "SFML/Graphics.hpp"
+
+class RoomInstance
+{
+public:
+	void buildFromPlan(const RoomPlan& plan, const sf::Vector2f& worldPos);
+	
+	const std::vector<StaticCollision>& getStaticCollisions();
+
+	void render(sf::RenderWindow& window);
+
+	void reset();
+
+private:
+	std::vector<StaticCollision> ri_staticColliders;
+	std::vector<sf::RectangleShape> ri_staticShapes;
+};
+
+
+===== FILE: project-rival/project-rival/StaticCollision.cpp =====
+#include "StaticCollision.h"
+
+StaticCollision::StaticCollision(const sf::FloatRect& bounds, CollisionLayer layer, uint32_t mask)
+	: sc_bounds(bounds), sc_profile({ layer, mask })
+{
+	sc_profile.layer = layer;
+	sc_profile.mask = mask;
+}
+
+sf::FloatRect StaticCollision::getCollisionBounds() const
+{
+	return sc_bounds;
+}
+
+CollisionProfile StaticCollision::getCollisionProfile() const
+{
+	return sc_profile;
+}
+
+===== FILE: project-rival/project-rival/StaticCollision.h =====
+#pragma once
+#include "Collision.h"
+
+class StaticCollision : public ICollidable
+{
+public:
+	StaticCollision() = default;
+	StaticCollision(const sf::FloatRect& bounds, CollisionLayer layer, uint32_t mask);
+
+	sf::FloatRect getCollisionBounds() const override;
+	CollisionProfile getCollisionProfile() const override;
+
+private:
+	sf::FloatRect sc_bounds;
+	CollisionProfile sc_profile;
+};
+
+
+===== FILE: project-rival/project-rival/TurretEnemy.cpp =====
+#include "TurretEnemy.h"
+
+TurretEnemy::TurretEnemy(const sf::Vector2f pos, int totalHealth)
+	:Enemy(pos, totalHealth)
+{
+	initBody(sf::Vector2f(50.f, 50.f), sf::Color::Blue);
+	init();
+}
+
+void TurretEnemy::init()
+{
+}
+
+void TurretEnemy::update(double dt)
+{
+}
+
+void TurretEnemy::setTarget(const Vector2f& target)
+{
+	e_target = target;
+}
+
+void TurretEnemy::hitWall(sf::Vector2f oldPos)
+{
+}
+
+===== FILE: project-rival/project-rival/TurretEnemy.h =====
+#pragma once
+#include "Enemy.h"
+
+class TurretEnemy : public Enemy
+{
+public:
+	TurretEnemy(const sf::Vector2f pos, int totalHealth);
+	~TurretEnemy() = default;
+
+	void init() override;
+	void update(double dt) override;
+	void setTarget(const Vector2f& target) override;
+
+	void hitWall(sf::Vector2f oldPos) override;
+
+private:
+
+};
+
+
+===== FILE: project-rival/project-rival/automation/prompts/level-architecture-roomplan-generator-builder-static-colliders-context.md =====
+# Context: Level architecture (Dungeon/Floor/Room) + RoomPlan/Generator/Builder + static collider tiles (SFML / C++)
+
+## Contents
+1. [High-level goal](#high-level-goal)
+2. [User preferences / working style](#user-preferences--working-style)
+3. [Current codebase state (relevant pieces)](#current-codebase-state-relevant-pieces)
+4. [Design decisions reached in this chat](#design-decisions-reached-in-this-chat)
+5. [Incremental implementation plan (agreed)](#incremental-implementation-plan-agreed)
+6. [What is already done](#what-is-already-done)
+7. [Next step to implement](#next-step-to-implement)
+
+---
+
+## High-level goal
+Implement a roguelike-style procedural architecture:
+
+- `Dungeon -> Floors -> Rooms`
+- Floors are generated as graphs (nodes=rooms, edges=connections), then embedded into 2D layout.
+- Rooms are built from tile-data (walls/floors/doors) and spawn markers.
+- Static room geometry (walls/obstacles) should support collision for player/enemies.
+
+Immediate objective: get a minimal room pipeline working end-to-end:
+
+1. Create a `RoomPlan` (blueprint data)
+2. Generate a test plan (hard-coded first)
+3. Build runtime wall colliders from tiles
+4. Resolve player vs wall collisions
+
+---
+
+## User preferences / working style
+- Prefer **incremental, buildable steps** (tutorial style) with some coding theory sprinkled in to justify decisions.
+- Each step should compile/run and be clearly an extension of the previous.
+- Avoid introducing advanced concepts without explanation.
+- User cares about **consistency** between architectural advice and code examples.
+
+---
+
+## Current codebase state (relevant pieces)
+
+### Game loop
+- `Game::update(double dt)` runs at fixed ~60 FPS and passes `dt` in **seconds**.
+- `Game` currently updates:
+  - `Player` (movement + aiming + bullets)
+  - `Enemy` instances (grunt steering + turret placeholder)
+  - collision checks: `Player vs Enemy`, `Player bullets vs Enemy`
+
+### Collision system
+- `ICollidable` exposes:
+  - `sf::FloatRect getCollisionBounds() const`
+  - `CollisionProfile getCollisionProfile() const`
+- `CollisionCheck::areColliding(a,b)`:
+  - checks layer/mask compatibility
+  - checks bounds intersection
+
+### Entities
+- `Player` and `Enemy` derive from `ICollidable`.
+- Collision filtering uses layers/masks.
+
+---
+
+## Design decisions reached in this chat
+
+### Floor/room connectivity
+- Floor topology should be represented as a **graph**.
+  - Node = room descriptor
+  - Edge = connection/door between rooms
+- Adjacency structure is recommended for neighbor queries.
+  - `unordered_map<roomId, vector<neighborId>>` is flexible for sparse IDs.
+  - `vector<vector<int>>` is simpler/faster if room IDs are dense `0..N-1`.
+
+### Level elements / tiles vs objects
+- Static geometry (walls/floors/most obstacles) should be represented as **tile data** in a room grid.
+- Runtime collision should be built from that data as a list of **static colliders**.
+  - Keep it lightweight (no per-tile AI/update).
+- Stateful/interactable objects (barrels, chests, shrines) should be spawned as normal game objects.
+
+### Room pipeline (preferred)
+- Use a 3-stage pipeline:
+  1. `RoomPlan` (blueprint/data)
+  2. `IRoomGenerator` (algorithm that fills a `RoomPlan` based on `RoomType`)
+  3. `RoomBuilder` (converts `RoomPlan` into runtime representation: wall colliders + visuals + spawns)
+
+---
+
+## Incremental implementation plan (agreed)
+1. Add collision layer for walls (`WALL_LAYER`).
+2. Add `RoomPlan` types (tiles/doors/markers) with no runtime wiring.
+3. Add generator interface + one hard-coded generator (e.g., combat room).
+4. Add builder that produces:
+   - `std::vector<sf::FloatRect>` solid wall colliders (from wall tiles)
+   - optional debug visuals for walls/floor
+5. Wire into `Game`:
+   - build a test room in `gameStart()`
+   - in `update()`, resolve `Player` vs room solids
+   - in `render()`, draw room debug visuals
+6. Improve collision response from "rollback" to "axis-separated slide".
+
+---
+
+## What is already done
+- Step 1 completed: `project-rival/Collision.h` updated to include:
+  - `WALL_LAYER = 1 << 4`
+  - Extra grouping comments for entity/static environment layers.
+
+No runtime behavior changes were made yet.
+
+---
+
+## Next step to implement
+**Step 2:** create `RoomPlan` (header-only for now) and add it to the Visual Studio project.
+
+Suggested file:
+- `project-rival/RoomPlan.h`
+  - `RoomType`, `TileType`
+  - door definition(s) (tile position + direction + locked)
+  - spawn markers (tile-space)
+  - `RoomPlan` with `width/height/tileSize/seed`, `tiles` (1D), helper `getTile`/`setTile`, and `isValid()`
+
+After Step 2 builds, proceed to Step 3 (hard-coded generator).
+
+===== FILE: project-rival/project-rival/player.cpp =====
+#include "player.h"
+#include "InputManager.h"
+#include "NormalBulletProjectile.h"
+
+namespace {
+	float length(const Vector2f& v) {
+		return std::sqrt(v.x * v.x + v.y * v.y);
+	}
+}
+
+Player::Player()
+{
+	init();
+}
+
+Player::~Player()
+{
+}
+
+void Player::init()
+{
+	//body
+	p_body.setSize(Vector2f(50.f, 75.f));
+	Vector2f size = p_body.getSize();
+	p_body.setFillColor(Color::Green);
+	p_body.setOrigin(size / 2.f);
+
+	//physics
+	p_velocity = Vector2f(0.f, 0.f);
+
+	//reticle
+	p_reticle.setRadius(10.f);
+	p_reticle.setOrigin(Vector2f(p_reticle.getRadius(), p_reticle.getRadius()));
+	p_reticle.setFillColor(Color::Transparent);
+	p_reticle.setOutlineColor(Color::Yellow);
+	p_reticle.setOutlineThickness(2.f);
+	p_reticle.setPosition(p_body.getPosition() + p_reticleDistance * p_aimDir);
+	p_reticleDistance = 150.f;
+
+	//collision
+	p_collisionProfile.layer = CollisionLayer::PLAYER_LAYER;
+	p_collisionProfile.mask = CollisionLayer::ENEMY_LAYER | CollisionLayer::ENEMY_BULLET_LAYER | CollisionLayer::WALL_LAYER;
+
+	p_maxHealth = 100;
+
+	reset();
+}
+
+void Player::update(double dt, const Vector2f& mousePos)
+{
+	handleMovement(dt);
+	handleAiming(mousePos);
+
+	if (InputManager::pad().rightTrigger()) InputManager::pad().setRumble(0.2f, 0.8f);
+	else InputManager::pad().setRumble(0.0f, 0.0f);
+
+	// Update projectiles and remove any that should be destroyed
+	for (auto bullet_it = p_projectiles.begin(); bullet_it != p_projectiles.end(); )
+	{
+		auto& bullet = *bullet_it;
+		bullet->update(dt);
+
+		if (bullet->shouldDestroy())
+		{
+			bullet_it = p_projectiles.erase(bullet_it);
+		}
+		else
+		{
+			bullet_it++;
+		}
+	}
+}
+
+
+void Player::render(RenderWindow& window)
+{
+	window.draw(p_body);
+	window.draw(p_reticle);
+
+	for (const auto& bullet : p_projectiles)
+		bullet->render(window);
+}
+
+const Vector2f Player::getPosition() const
+{
+	return p_body.getPosition();
+}
+
+sf::FloatRect Player::getCollisionBounds() const
+{
+	return p_body.getGlobalBounds();
+}
+
+CollisionProfile Player::getCollisionProfile() const
+{
+	return p_collisionProfile;
+}
+
+void Player::reset()
+{
+	p_body.setPosition(Vector2f(500, 500.f));
+	p_health = p_maxHealth;
+}
+
+void Player::handleMovement(double dt)
+{
+	//--------- movement logic ---------//
+	Vector2f direction{ 0.f, 0.f };
+
+	const Vector2f ls = InputManager::pad().leftStick();
+	const bool isControllerActive = (ls.x != 0.f || ls.y != 0.f);
+
+	if (isControllerActive) // Gamepad input
+	{
+		direction += ls.normalized();
+	}
+	else // Keyboard input
+	{
+		if (Keyboard::isKeyPressed(Keyboard::Key::W)) { direction.y -= 1.f; }
+		if (Keyboard::isKeyPressed(Keyboard::Key::S)) { direction.y += 1.f; }
+		if (Keyboard::isKeyPressed(Keyboard::Key::A)) { direction.x -= 1.f; }
+		if (Keyboard::isKeyPressed(Keyboard::Key::D)) { direction.x += 1.f; }
+
+		if (direction.x != 0.f || direction.y != 0.f)
+			direction = direction.normalized();
+	}
+
+	p_velocity = direction * p_moveSpeed;
+	p_body.move(p_velocity * static_cast<float>(dt));
+}
+
+void Player::handleAiming(const Vector2f mousePos)
+{
+	//--------- aiming logic ---------//
+	
+	// Are we on Controller or Mouse
+	const Vector2f rs = InputManager::pad().rightStick();
+	const bool isRSMoved = (rs.x != 0.f || rs.y != 0.f);
+
+	const Vector2f mouseDelta = mousePos - p_prevMousePos;
+	const bool isMouseMoved = (length(mouseDelta) > 0.5f);
+
+	if (isRSMoved) p_isController = true;
+	else if (isMouseMoved) p_isController = false;
+
+	// Calculate and normalise aim direction
+	Vector2f aimVector;
+	if (p_isController) aimVector = rs;
+	else aimVector = mousePos - p_body.getPosition();
+
+	if (aimVector != Vector2f(0.f, 0.f))	// avoid crash out on controller since we can't normalise a zero vector
+		p_aimDir = aimVector.normalized();
+	else p_aimDir = Vector2f(0.f, 0.f);
+
+	p_reticle.setPosition(p_body.getPosition() + p_aimDir * p_reticleDistance);
+
+	p_prevMousePos = mousePos;
+
+	//--------- shooting logic ---------// -> this will move to weapon class when made
+	if (InputManager::pad().rightTrigger() || Mouse::isButtonPressed(Mouse::Button::Left))
+	{
+		std::unique_ptr<NormalBulletProjectile> newBullet = std::make_unique<NormalBulletProjectile>(p_body.getPosition(), p_aimDir, true);
+		p_projectiles.push_back(std::move(newBullet));
+	}
+}
+
+void Player::takeDamage(int damage)
+{
+	p_health -= damage;
+	if (p_health <= 0)
+	{
+		reset();
+	}
+}
+
+void Player::hitWall(sf::Vector2f oldPos)
+{
+	p_body.setPosition(oldPos);
+}
+
+std::vector<std::unique_ptr<Projectile>>& Player::getProjectiles()
+{
+	return p_projectiles;
+}
+
+===== FILE: project-rival/project-rival/player.h =====
+#pragma once
+#include <SFML/Graphics.hpp>
+#include <Windows.h>
+#include <Xinput.h>
+
+#include "Projectile.h"
+#include "Collision.h"
+
+using namespace sf;
+
+class Player : public ICollidable
+{
+public:
+	Player();
+	~Player();
+
+	void init();
+	void update(double dt, const Vector2f& mousePos);
+	void render(RenderWindow& window);
+
+	const Vector2f getPosition() const;
+	sf::FloatRect getCollisionBounds() const override;
+	CollisionProfile getCollisionProfile() const override;
+
+
+	void handleMovement(double dt);
+	void handleAiming(const Vector2f mousePos);
+
+	void takeDamage(int damage);
+
+	void hitWall(sf::Vector2f oldPos);
+
+	// this functions will likely move to weapon class when made
+	std::vector<std::unique_ptr<Projectile>>& getProjectiles();
+
+private:
+	// FUNCTIONS
+	void reset();
+
+	// VARIABLES
+	RectangleShape p_body;
+
+	Vector2f p_velocity{ 0.f, 0.f };
+	float p_moveSpeed{ 200.f };
+
+	bool p_isController;
+
+	// reticle
+	CircleShape p_reticle;
+	Vector2f p_aimDir{ 0.f,0.f };
+	float p_reticleDistance;
+	Vector2f p_prevMousePos;
+
+	// collsion
+	CollisionProfile p_collisionProfile;
+
+	// entity stats
+	int p_maxHealth;
+	int p_health;
+
+	// projectiles --> test. this will move to weapon class when made
+	std::vector<std::unique_ptr<Projectile>> p_projectiles;
+};
+
+
+===== FILE: project-rival/project-rival/project-rival.vcxproj =====
+∩╗┐<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="ArriveBehaviour.cpp" />
+    <ClCompile Include="Collision.cpp" />
+    <ClCompile Include="CombatRoom.cpp" />
+    <ClCompile Include="NormalBulletProjectile.cpp" />
+    <ClCompile Include="Projectile.cpp" />
+    <ClCompile Include="Enemy.cpp" />
+    <ClCompile Include="Game.cpp" />
+    <ClCompile Include="Gamepad.cpp" />
+    <ClCompile Include="GruntEnemy.cpp" />
+    <ClCompile Include="InputManager.cpp" />
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="player.cpp" />
+    <ClCompile Include="RoomInstance.cpp" />
+    <ClCompile Include="SeekBehaviour.cpp" />
+    <ClCompile Include="StaticCollision.cpp" />
+    <ClCompile Include="TurretEnemy.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="ArriveBehaviour.h" />
+    <ClInclude Include="Collision.h" />
+    <ClInclude Include="CombatRoom.h" />
+    <ClInclude Include="NormalBulletProjectile.h" />
+    <ClInclude Include="Projectile.h" />
+    <ClInclude Include="Enemy.h" />
+    <ClInclude Include="Game.h" />
+    <ClInclude Include="Gamepad.h" />
+    <ClInclude Include="GruntEnemy.h" />
+    <ClInclude Include="InputManager.h" />
+    <ClInclude Include="player.h" />
+    <ClInclude Include="RoomBlueprint.h" />
+    <ClInclude Include="RoomInstance.h" />
+    <ClInclude Include="SeekBehaviour.h" />
+    <ClInclude Include="StaticCollision.h" />
+    <ClInclude Include="Steering.h" />
+    <ClInclude Include="TurretEnemy.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="ASSETS\IMAGES\SFML-LOGO.png">
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</DeploymentContent>
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</DeploymentContent>
+    </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <Font Include="ASSETS\FONTS\ariblk.ttf">
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</DeploymentContent>
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</DeploymentContent>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</ExcludedFromBuild>
+    </Font>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\automation\prompts\docs-architecture-development-log-context.md" />
+    <None Include="..\automation\prompts\git-staged-changes-to-commit-context.md" />
+    <None Include="..\automation\prompts\player-aiming-mouse-right-stick-reticle-context.md" />
+    <None Include="..\automation\prompts\steering-enemy-seek-step-by-step-context.md" />
+    <None Include="..\automation\scripts\merge-summary-generator.ps1" />
+    <None Include="automation\prompts\level-architecture-roomplan-generator-builder-static-colliders-context.md" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="..\automation\scripts\output\aiming-merge-changes.txt" />
+    <Text Include="..\automation\scripts\output\collisions-merge-changes.txt" />
+    <Text Include="..\automation\scripts\output\enemies-merge-changes.txt" />
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>15.0</VCProjectVersion>
+    <ProjectGuid>{72f74580-4c0c-4adc-be48-d33f3c5aa1ef}</ProjectGuid>
+    <RootNamespace>project_rival</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v145</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v145</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v145</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v145</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup />
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>$(SFML_SDK)/include</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <AdditionalLibraryDirectories>$(SFML_SDK)\lib</AdditionalLibraryDirectories>
+      <AdditionalDependencies>xinput.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>true</SDLCheck>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>$(SFML_SDK)/include</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalLibraryDirectories>$(SFML_SDK)\lib</AdditionalLibraryDirectories>
+      <AdditionalDependencies>xinput.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+    </ClCompile>
+    <Link>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
+
+===== FILE: project-rival/project-rival/project-rival.vcxproj.filters =====
+∩╗┐<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Resource Files\FONTS">
+      <UniqueIdentifier>{b5e82806-bf9b-4fdf-b17c-c35282c021a5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\IMAGES">
+      <UniqueIdentifier>{1d793ccc-0d22-4eea-8d0e-c5b5a5270a40}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Input">
+      <UniqueIdentifier>{492c6b32-40d8-4a9f-8d7b-f4959ad27b73}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Abs.Interfaces">
+      <UniqueIdentifier>{fc0fe863-09ef-468e-aaa5-2881e53dd4b7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Abs.Classes">
+      <UniqueIdentifier>{0c6e4511-7f0a-4e12-afe0-7425cf365a97}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Behaviours">
+      <UniqueIdentifier>{b532eab4-ae76-449b-9ec6-96913d08a763}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\DOCUMENTATION">
+      <UniqueIdentifier>{432d37c5-2336-4597-a4da-e09c882032eb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\AUTOMATIONS">
+      <UniqueIdentifier>{b8e2caa8-ed7f-45de-ace6-9451eb9edab4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Enemies">
+      <UniqueIdentifier>{641a97c9-ec20-499b-a847-eae07285cfdb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\AUTOMATIONS\Agent">
+      <UniqueIdentifier>{63056c86-90e2-4897-abae-e538dd6536ac}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\AUTOMATIONS\Scripts">
+      <UniqueIdentifier>{25290212-7808-4d9b-93d3-2c9d0ccc6259}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Projectiles">
+      <UniqueIdentifier>{b9295663-bd23-4a50-bb5f-6ae5e6710b01}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Levels">
+      <UniqueIdentifier>{127c1998-b90e-4d19-9042-548546c299e2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Levels\Rooms">
+      <UniqueIdentifier>{6315f94b-1a02-4312-8a70-232932c97a70}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Levels\Collision">
+      <UniqueIdentifier>{39c9ab2c-a81f-4afe-83a4-1376aef9f6c4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\DOCUMENTATION\Git Summaries">
+      <UniqueIdentifier>{d0a212c5-440c-41a1-8f2b-6fde83f55d70}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Game.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="player.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="InputManager.cpp">
+      <Filter>Header Files\Input</Filter>
+    </ClCompile>
+    <ClCompile Include="Gamepad.cpp">
+      <Filter>Header Files\Input</Filter>
+    </ClCompile>
+    <ClCompile Include="SeekBehaviour.cpp">
+      <Filter>Header Files\Behaviours</Filter>
+    </ClCompile>
+    <ClCompile Include="ArriveBehaviour.cpp">
+      <Filter>Header Files\Behaviours</Filter>
+    </ClCompile>
+    <ClCompile Include="Enemy.cpp">
+      <Filter>Header Files\Abs.Classes</Filter>
+    </ClCompile>
+    <ClCompile Include="GruntEnemy.cpp">
+      <Filter>Header Files\Enemies</Filter>
+    </ClCompile>
+    <ClCompile Include="TurretEnemy.cpp">
+      <Filter>Header Files\Enemies</Filter>
+    </ClCompile>
+    <ClCompile Include="Projectile.cpp">
+      <Filter>Header Files\Abs.Classes</Filter>
+    </ClCompile>
+    <ClCompile Include="NormalBulletProjectile.cpp">
+      <Filter>Header Files\Projectiles</Filter>
+    </ClCompile>
+    <ClCompile Include="Collision.cpp">
+      <Filter>Header Files\Abs.Interfaces</Filter>
+    </ClCompile>
+    <ClCompile Include="StaticCollision.cpp">
+      <Filter>Header Files\Levels\Collision</Filter>
+    </ClCompile>
+    <ClCompile Include="CombatRoom.cpp">
+      <Filter>Header Files\Levels\Rooms</Filter>
+    </ClCompile>
+    <ClCompile Include="RoomInstance.cpp">
+      <Filter>Header Files\Levels</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Game.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="player.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="InputManager.h">
+      <Filter>Header Files\Input</Filter>
+    </ClInclude>
+    <ClInclude Include="Gamepad.h">
+      <Filter>Header Files\Input</Filter>
+    </ClInclude>
+    <ClInclude Include="SeekBehaviour.h">
+      <Filter>Header Files\Behaviours</Filter>
+    </ClInclude>
+    <ClInclude Include="Steering.h">
+      <Filter>Header Files\Abs.Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="ArriveBehaviour.h">
+      <Filter>Header Files\Behaviours</Filter>
+    </ClInclude>
+    <ClInclude Include="Enemy.h">
+      <Filter>Header Files\Abs.Classes</Filter>
+    </ClInclude>
+    <ClInclude Include="GruntEnemy.h">
+      <Filter>Header Files\Enemies</Filter>
+    </ClInclude>
+    <ClInclude Include="TurretEnemy.h">
+      <Filter>Header Files\Enemies</Filter>
+    </ClInclude>
+    <ClInclude Include="Projectile.h">
+      <Filter>Header Files\Abs.Classes</Filter>
+    </ClInclude>
+    <ClInclude Include="NormalBulletProjectile.h">
+      <Filter>Header Files\Projectiles</Filter>
+    </ClInclude>
+    <ClInclude Include="Collision.h">
+      <Filter>Header Files\Abs.Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="RoomBlueprint.h">
+      <Filter>Header Files\Abs.Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="StaticCollision.h">
+      <Filter>Header Files\Levels\Collision</Filter>
+    </ClInclude>
+    <ClInclude Include="CombatRoom.h">
+      <Filter>Header Files\Levels\Rooms</Filter>
+    </ClInclude>
+    <ClInclude Include="RoomInstance.h">
+      <Filter>Header Files\Levels</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="ASSETS\IMAGES\SFML-LOGO.png">
+      <Filter>Resource Files\IMAGES</Filter>
+    </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <Font Include="ASSETS\FONTS\ariblk.ttf">
+      <Filter>Resource Files\FONTS</Filter>
+    </Font>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\automation\prompts\docs-architecture-development-log-context.md">
+      <Filter>Resource Files\AUTOMATIONS\Agent</Filter>
+    </None>
+    <None Include="..\automation\prompts\git-staged-changes-to-commit-context.md">
+      <Filter>Resource Files\AUTOMATIONS\Agent</Filter>
+    </None>
+    <None Include="..\automation\prompts\player-aiming-mouse-right-stick-reticle-context.md">
+      <Filter>Resource Files\AUTOMATIONS\Agent</Filter>
+    </None>
+    <None Include="..\automation\prompts\steering-enemy-seek-step-by-step-context.md">
+      <Filter>Resource Files\AUTOMATIONS\Agent</Filter>
+    </None>
+    <None Include="..\automation\scripts\merge-summary-generator.ps1">
+      <Filter>Resource Files\AUTOMATIONS\Scripts</Filter>
+    </None>
+    <None Include="automation\prompts\level-architecture-roomplan-generator-builder-static-colliders-context.md">
+      <Filter>Resource Files\AUTOMATIONS\Agent</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="..\automation\scripts\output\aiming-merge-changes.txt">
+      <Filter>Resource Files\DOCUMENTATION\Git Summaries</Filter>
+    </Text>
+    <Text Include="..\automation\scripts\output\collisions-merge-changes.txt">
+      <Filter>Resource Files\DOCUMENTATION\Git Summaries</Filter>
+    </Text>
+    <Text Include="..\automation\scripts\output\enemies-merge-changes.txt">
+      <Filter>Resource Files\DOCUMENTATION\Git Summaries</Filter>
+    </Text>
+  </ItemGroup>
+</Project>
+

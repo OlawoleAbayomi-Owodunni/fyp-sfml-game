@@ -49,6 +49,18 @@
     <Filter Include="Header Files\Projectiles">
       <UniqueIdentifier>{b9295663-bd23-4a50-bb5f-6ae5e6710b01}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Levels">
+      <UniqueIdentifier>{127c1998-b90e-4d19-9042-548546c299e2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Levels\Rooms">
+      <UniqueIdentifier>{6315f94b-1a02-4312-8a70-232932c97a70}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Levels\Collision">
+      <UniqueIdentifier>{39c9ab2c-a81f-4afe-83a4-1376aef9f6c4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\DOCUMENTATION\Git Summaries">
+      <UniqueIdentifier>{d0a212c5-440c-41a1-8f2b-6fde83f55d70}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -89,6 +101,15 @@
     </ClCompile>
     <ClCompile Include="Collision.cpp">
       <Filter>Header Files\Abs.Interfaces</Filter>
+    </ClCompile>
+    <ClCompile Include="StaticCollision.cpp">
+      <Filter>Header Files\Levels\Collision</Filter>
+    </ClCompile>
+    <ClCompile Include="CombatRoom.cpp">
+      <Filter>Header Files\Levels\Rooms</Filter>
+    </ClCompile>
+    <ClCompile Include="RoomInstance.cpp">
+      <Filter>Header Files\Levels</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -131,6 +152,18 @@
     <ClInclude Include="Collision.h">
       <Filter>Header Files\Abs.Interfaces</Filter>
     </ClInclude>
+    <ClInclude Include="RoomBlueprint.h">
+      <Filter>Header Files\Abs.Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="StaticCollision.h">
+      <Filter>Header Files\Levels\Collision</Filter>
+    </ClInclude>
+    <ClInclude Include="CombatRoom.h">
+      <Filter>Header Files\Levels\Rooms</Filter>
+    </ClInclude>
+    <ClInclude Include="RoomInstance.h">
+      <Filter>Header Files\Levels</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="ASSETS\IMAGES\SFML-LOGO.png">
@@ -158,9 +191,19 @@
     <None Include="..\automation\scripts\merge-summary-generator.ps1">
       <Filter>Resource Files\AUTOMATIONS\Scripts</Filter>
     </None>
+    <None Include="automation\prompts\level-architecture-roomplan-generator-builder-static-colliders-context.md">
+      <Filter>Resource Files\AUTOMATIONS\Agent</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="..\automation\scripts\output\aiming-merge-changes.txt" />
-    <Text Include="..\automation\scripts\output\enemies-merge-changes.txt" />
+    <Text Include="..\automation\scripts\output\aiming-merge-changes.txt">
+      <Filter>Resource Files\DOCUMENTATION\Git Summaries</Filter>
+    </Text>
+    <Text Include="..\automation\scripts\output\collisions-merge-changes.txt">
+      <Filter>Resource Files\DOCUMENTATION\Git Summaries</Filter>
+    </Text>
+    <Text Include="..\automation\scripts\output\enemies-merge-changes.txt">
+      <Filter>Resource Files\DOCUMENTATION\Git Summaries</Filter>
+    </Text>
   </ItemGroup>
 </Project>
