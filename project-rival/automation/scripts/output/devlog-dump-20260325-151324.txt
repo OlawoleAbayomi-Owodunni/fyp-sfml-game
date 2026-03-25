@@ -1,0 +1,179 @@
+===== DEVLOG DUMP (for generating a new entry) ====='n
+'n===== REPO CONTEXT ====='n
+Timestamp: 2026-03-25 15:13:24
+Repo root: C:/Users/ayola/Desktop/School/Y4/FYP/fyp-sfml-game
+Branch: main
+HEAD: f8e0d87
+
+## main...origin/main
+?? automation/scripts/devlog-dump.ps1
+?? automation/scripts/output/devlog-dump-20260325-151026.txt
+?? automation/scripts/output/devlog-dump-20260325-151324.txt
+'n===== DEVLOG ====='n
+Devlog path: docs/DEVELOPMENT_LOG.md
+Detected SinceHash: f2663af
+'n===== WHY / INTENT (fill in) ====='n
+Paste 2-5 bullets here when you send this output:
+- 
+'n===== COMMITS SINCE LAST DEVLOG ENTRY ====='n
+Range: f2663af..HEAD
+
+2026-01-22 a1be98e Controller Support
+
+M	project-rival/project-rival/Game.cpp
+A	project-rival/project-rival/Gamepad.cpp
+A	project-rival/project-rival/Gamepad.h
+A	project-rival/project-rival/InputManager.cpp
+A	project-rival/project-rival/InputManager.h
+M	project-rival/project-rival/player.cpp
+M	project-rival/project-rival/player.h
+M	project-rival/project-rival/project-rival.vcxproj
+M	project-rival/project-rival/project-rival.vcxproj.filters
+
+2026-03-15 843a16a FEATURE(enemies): steering behaviours, enemy types, and multi-enemy spawning - Add SteeringAgent + ISteeringBehaviour and implement Seek/Arrive behaviours - Refactor Enemy into an abstract base and add GruntEnemy/TurretEnemy implementations - Update Game to manage enemies via vector<unique_ptr<Enemy>>, spawn multiple enemies, and update/render in loops - Extend player movement with controller input/rumble and expose player position for targeting - Add architecture docs + development log and update VS project/filters + automation helpers
+
+A	project-rival/automation/prompts/docs-architecture-development-log-context.md
+A	project-rival/automation/prompts/git-staged-changes-to-commit-context.md
+A	project-rival/automation/prompts/steering-enemy-seek-step-by-step-context.md
+A	project-rival/automation/scripts/merge-summary-generator.ps1
+A	project-rival/automation/scripts/staged-dump.ps1
+A	project-rival/docs/Architecture/01-project-structure.md
+A	project-rival/docs/Architecture/02-player.md
+A	project-rival/docs/Architecture/03-input.md
+A	project-rival/docs/Architecture/04-enemy.md
+A	project-rival/docs/Architecture/05-steering-oop.md
+A	project-rival/docs/Architecture/06-coding-conventions.md
+A	project-rival/docs/Architecture/README.md
+A	project-rival/docs/DEVELOPMENT_LOG.md
+A	project-rival/docs/README.md
+A	project-rival/project-rival/ArriveBehaviour.cpp
+A	project-rival/project-rival/ArriveBehaviour.h
+A	project-rival/project-rival/Enemy.cpp
+A	project-rival/project-rival/Enemy.h
+M	project-rival/project-rival/Game.cpp
+M	project-rival/project-rival/Game.h
+A	project-rival/project-rival/GruntEnemy.cpp
+A	project-rival/project-rival/GruntEnemy.h
+A	project-rival/project-rival/SeekBehaviour.cpp
+A	project-rival/project-rival/SeekBehaviour.h
+A	project-rival/project-rival/Steering.h
+A	project-rival/project-rival/TurretEnemy.cpp
+A	project-rival/project-rival/TurretEnemy.h
+M	project-rival/project-rival/player.cpp
+M	project-rival/project-rival/player.h
+M	project-rival/project-rival/project-rival.vcxproj
+M	project-rival/project-rival/project-rival.vcxproj.filters
+
+2026-03-16 4c0f9e5 DOC UPDATE
+
+A	project-rival/automation/prompts/enemies-branch-changes.txt
+A	project-rival/automation/scripts/output/enemies-merge-changes.txt
+A	project-rival/automation/scripts/output/staged-files-dump.txt
+M	project-rival/docs/Architecture/01-project-structure.md
+M	project-rival/docs/Architecture/02-player.md
+M	project-rival/docs/Architecture/04-enemy.md
+M	project-rival/docs/Architecture/README.md
+M	project-rival/project-rival/project-rival.vcxproj
+
+2026-03-16 0b9219b Sprite files added
+
+A	project-rival/automation/prompts/player-aiming-mouse-right-stick-reticle-context.md
+A	project-rival/project-rival/ASSETS/SPRITES/LEVELS/Space station._32_2.psd
+
+2026-03-17 5b67edc FEATURE (Aiming): Added player aiming reticle and Projectile shooting prototype - Added Projectile abstrace base (lifetime/expiry + shouldDestroy + render) - Added NormalBulletProjectile and ability to move bullets - Implemented Player aiming via mouse or right stick with an aim reticle - Bullets now spawn when "Fired" -> left click or right trigger - Bullets despawn via destroy functionality - Updated Architecture Docs (added a projectile chapter and updated player/input notes)
+
+M	project-rival/automation/scripts/merge-summary-generator.ps1
+A	project-rival/automation/scripts/output/aiming-merge-changes.txt
+D	project-rival/automation/scripts/output/staged-files-dump.txt
+M	project-rival/docs/Architecture/01-project-structure.md
+M	project-rival/docs/Architecture/02-player.md
+M	project-rival/docs/Architecture/03-input.md
+A	project-rival/docs/Architecture/07-projectiles.md
+M	project-rival/docs/Architecture/README.md
+M	project-rival/project-rival/Enemy.cpp
+M	project-rival/project-rival/Enemy.h
+M	project-rival/project-rival/Game.cpp
+A	project-rival/project-rival/NormalBulletProjectile.cpp
+A	project-rival/project-rival/NormalBulletProjectile.h
+A	project-rival/project-rival/Projectile.cpp
+A	project-rival/project-rival/Projectile.h
+M	project-rival/project-rival/player.cpp
+M	project-rival/project-rival/player.h
+M	project-rival/project-rival/project-rival.vcxproj
+
+2026-03-19 ec7a87f FEATURE(Collisions): Added simple layer/mask collsions
+- Added 'CollisionLayer' bitflags, 'CollisionProfile', and 'ICollidable' interface
+- Added 'CollisionCheck::areColliding()' using layer/mask filtering and AABB intersection
+- Integrated collision profiles into Player, Enemy and Projectile classes
+- Added minimal health and damage system
+- Updated Architecture Docs to include new Collision Chapter
+
+A	project-rival/automation/prompts/collision-layers-masks-bullet-enemy-context.md
+A	project-rival/automation/scripts/output/collisions-merge-changes.txt
+M	project-rival/docs/Architecture/01-project-structure.md
+M	project-rival/docs/Architecture/02-player.md
+M	project-rival/docs/Architecture/03-input.md
+M	project-rival/docs/Architecture/04-enemy.md
+M	project-rival/docs/Architecture/07-projectiles.md
+A	project-rival/docs/Architecture/08-collision-and-damage.md
+M	project-rival/docs/Architecture/README.md
+A	project-rival/project-rival/Collision.cpp
+A	project-rival/project-rival/Collision.h
+M	project-rival/project-rival/Enemy.cpp
+M	project-rival/project-rival/Enemy.h
+M	project-rival/project-rival/Game.cpp
+M	project-rival/project-rival/Game.h
+M	project-rival/project-rival/GruntEnemy.cpp
+M	project-rival/project-rival/GruntEnemy.h
+M	project-rival/project-rival/NormalBulletProjectile.cpp
+M	project-rival/project-rival/NormalBulletProjectile.h
+M	project-rival/project-rival/Projectile.cpp
+M	project-rival/project-rival/Projectile.h
+M	project-rival/project-rival/TurretEnemy.cpp
+M	project-rival/project-rival/TurretEnemy.h
+M	project-rival/project-rival/player.cpp
+M	project-rival/project-rival/player.h
+M	project-rival/project-rival/project-rival.vcxproj
+M	project-rival/project-rival/project-rival.vcxproj.filters
+
+2026-03-25 f8e0d87 FEATURE(Levels): Gemerate combat rooms with wall colliders and enemy spawns
+- Added room blueprint data model and room generator interface
+- Implemented Combat Room generator
+- Added Wall layer and wired wall into existing layer/mask collision filtering
+- Built rooms via Room Instance and Static Collision
+- Game now generates and renders an active combat room
+- Enemies spawn from room spawn points
+- number of spawn points and obstacles derrived from room size
+- Added Debug controls for resetting the game to test procedural generation
+- Updated Architecture docs (room/generation chapter)
+
+A	project-rival/automation/scripts/output/combat-room-merge-changes.txt
+M	project-rival/docs/Architecture/01-project-structure.md
+M	project-rival/docs/Architecture/08-collision-and-damage.md
+A	project-rival/docs/Architecture/09-rooms-and-generation.md
+M	project-rival/docs/Architecture/README.md
+M	project-rival/project-rival/Collision.h
+A	project-rival/project-rival/CombatRoom.cpp
+A	project-rival/project-rival/CombatRoom.h
+M	project-rival/project-rival/Enemy.cpp
+M	project-rival/project-rival/Enemy.h
+M	project-rival/project-rival/Game.cpp
+M	project-rival/project-rival/Game.h
+M	project-rival/project-rival/Gamepad.cpp
+M	project-rival/project-rival/Gamepad.h
+M	project-rival/project-rival/GruntEnemy.cpp
+M	project-rival/project-rival/GruntEnemy.h
+M	project-rival/project-rival/NormalBulletProjectile.cpp
+M	project-rival/project-rival/Projectile.cpp
+A	project-rival/project-rival/RoomBlueprint.h
+A	project-rival/project-rival/RoomInstance.cpp
+A	project-rival/project-rival/RoomInstance.h
+A	project-rival/project-rival/StaticCollision.cpp
+A	project-rival/project-rival/StaticCollision.h
+M	project-rival/project-rival/TurretEnemy.cpp
+M	project-rival/project-rival/TurretEnemy.h
+A	project-rival/project-rival/automation/prompts/level-architecture-roomplan-generator-builder-static-colliders-context.md
+M	project-rival/project-rival/player.cpp
+M	project-rival/project-rival/player.h
+M	project-rival/project-rival/project-rival.vcxproj
+M	project-rival/project-rival/project-rival.vcxproj.filters

@@ -13,6 +13,90 @@ This document tracks technical progress over time in a supervisor-friendly way.
 
 ---
 
+## Week of 2026-03-25
+
+### Summary
+- Implemented early room/level generation for a combat room (variable size, obstacles, enemy spawn markers).
+- Added static wall colliders and integrated wall collision checks for player, enemies, and bullets.
+- Updated architecture docs to describe the new rooms pipeline and collision additions.
+
+### Technical notes
+- Added `RoomPlan` + `IRoomGenerator` contract in `RoomBlueprint.h`.
+- Implemented `CombatRoom` generator (outer walls, random interior obstacles, random enemy spawner tiles).
+- Added `RoomInstance` + `StaticCollision` to build renderable wall shapes and colliders from a `RoomPlan`.
+- Extended collision layers with `WALL_LAYER` and wired masks for entities/projectiles.
+- Updated `Game` to generate an active room, render it, spawn enemies at room spawn points, and handle basic wall collision rollback.
+
+### Evidence (commits)
+- `f8e0d87` — FEATURE(Levels): Generate combat rooms with wall colliders and enemy spawns
+
+---
+
+## Week of 2026-03-19
+
+### Summary
+- Introduced a minimal collision system using layers + masks.
+- Wired projectile-vs-enemy and player-vs-enemy collisions into the game loop with basic damage/death handling.
+
+### Technical notes
+- Added `ICollidable`, `CollisionLayer` bitflags, `CollisionProfile`, and `CollisionCheck::areColliding(...)`.
+- Integrated collision profiles into `Player`, `Enemy`, and `Projectile`.
+- Added basic health/damage plumbing (`takeDamage`, `isDead`) and bullet destruction on hit.
+
+### Evidence (commits)
+- `ec7a87f` — FEATURE(Collisions): Added simple layer/mask collisions
+
+---
+
+## Week of 2026-03-17
+
+### Summary
+- Added aiming (mouse or right stick) and a visible reticle for the player.
+- Added a basic projectile system so the player can shoot and bullets expire/clean up.
+
+### Technical notes
+- Added `Projectile` base class and `NormalBulletProjectile` implementation.
+- Updated `Game::update(dt)` to pass mouse world coordinates into `Player::update(dt, mousePos)`.
+- Updated architecture docs to document aiming + projectile ownership.
+
+### Evidence (commits)
+- `5b67edc` — FEATURE (Aiming): Added player aiming reticle and Projectile shooting prototype
+
+---
+
+## Week of 2026-03-16
+
+### Summary
+- Continued enemy system iteration and documentation updates.
+- Added early art/source sprite assets.
+
+### Technical notes
+- Updated architecture docs and committed generated merge summary artifacts.
+- Added sprite source file(s) under `ASSETS/SPRITES/`.
+
+### Evidence (commits)
+- `4c0f9e5` — DOC UPDATE
+- `0b9219b` — Sprite files added
+
+---
+
+## Week of 2026-03-15
+
+### Summary
+- Implemented steering-based enemy movement and introduced multiple enemy types.
+- Refactored game ownership to manage enemies via `std::vector<std::unique_ptr<Enemy>>`.
+
+### Technical notes
+- Added steering behaviours (seek/arrive) and a `SteeringAgent`.
+- Refactored `Enemy` into an abstract base and implemented `GruntEnemy` and `TurretEnemy`.
+- Updated `Game` to spawn/update/render enemies in loops and to set the player as the target.
+- Added high-level architecture documentation and automation helpers (staged/merge summaries).
+
+### Evidence (commits)
+- `843a16a` — FEATURE(enemies): steering behaviours, enemy types, and multi-enemy spawning
+
+---
+
 ## Week of 2026-01-22
 
 ### Summary
