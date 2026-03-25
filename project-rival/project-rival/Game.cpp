@@ -275,3 +275,12 @@ void Game::generateRoom()
 		}
 	}
 }
+
+void Game::generateRoom()
+{
+	m_activeRoomPlan = m_combatRoom.generateRoom(0, RoomType::COMBAT, 0);
+
+	sf::Vector2f roomWorldPos{ 100.f, 100.f };
+
+	m_activeRoomInstance.buildFromPlan(m_activeRoomPlan, roomWorldPos);
+}

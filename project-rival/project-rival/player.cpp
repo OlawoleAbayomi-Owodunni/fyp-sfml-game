@@ -178,6 +178,11 @@ void Player::hitWall(sf::Vector2f oldPos)
 	p_body.setPosition(oldPos);
 }
 
+void Player::hitWall(sf::Vector2f oldPos)
+{
+	p_body.setPosition(oldPos);
+}
+
 std::vector<std::unique_ptr<Projectile>>& Player::getProjectiles()
 {
 	return p_projectiles;

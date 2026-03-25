@@ -50,7 +50,7 @@ struct RoomPlan {
 	// Room representation
 	int width;
 	int height;	
-	float tileSize = 64.f;
+	float tileSize = 78.f;
 
 	// Room layout
 	std::vector<Tile> tileMap;	// formula for 1D index: row * width + column
