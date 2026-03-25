@@ -27,8 +27,6 @@ public:
 
 	virtual sf::Vector2f getPosition() const;
 
-	virtual sf::Vector2f getPosition() const;
-
 	virtual void setTarget(const Vector2f& target) = 0;
 
 	virtual sf::FloatRect getCollisionBounds() const override;

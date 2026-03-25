@@ -260,13 +260,6 @@ void Game::resetGame()
 	m_activeRoomInstance.reset();
 }
 
-	m_enemies.clear();
-
-	m_combatRoom;
-	m_activeRoomPlan;
-	m_activeRoomInstance.reset();
-}
-
 void Game::gameStart()
 {
 	resetGame();
