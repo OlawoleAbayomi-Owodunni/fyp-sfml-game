@@ -5,10 +5,10 @@ RoomPlan SpawnRoom::generateRoom(int id, RoomType type, int seed)
 	RoomPlan room;
 	// Meta data
 	room.id = id;
-	room.type = type;
+	room.type = RoomType::SPAWN;
 	room.seed = seed;
-	room.height = 8;
-	room.width = 8;
+	room.height = 11;
+	room.width = 11;
 
 	// tile map initialisation
 	room.tileMap.assign(room.height * room.width, Tile::FLOOR);
@@ -32,6 +32,8 @@ RoomPlan SpawnRoom::generateRoom(int id, RoomType type, int seed)
 
 	// Spawners
 	generateSpawnPoints(room, interiorArea);
+
+	return room;
 }
 
 void SpawnRoom::generateSpawnPoints(RoomPlan& roomPlan, int interiorArea)

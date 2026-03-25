@@ -1,0 +1,3659 @@
+===== LOCAL COMMITS (origin/main..HEAD) =====
+
+2026-03-25 e56b00f Spawn Room setup
+
+
+===== FEATURE COMMITS (main..levels) (what will be squashed) =====
+
+2026-03-24 b70d57b Basic Combat room data setup
+
+
+2026-03-25 da2bd37 Combat Room Generated with collisions with walls
+
+
+2026-03-25 87b2076 Enemies spawn in at spawn points
+
+
+2026-03-25 b1ae465 different room sizes
+
+
+2026-03-25 075e692 Portal room setup with Portal + Spawn Room spawns in player
+
+
+2026-03-25 55b39cf Combat Room Generated with collisions with walls
+
+
+2026-03-25 69705ec Enemies spawn in at spawn points
+
+
+2026-03-25 5190b97 different room sizes
+
+
+2026-03-25 aca9af6 minor fixes after rebase
+
+
+===== FEATURE PATCH (per commit; main..levels) =====
+
+commit b70d57b32b00f623462a65efc7f7608cf936fd51
+Author: WollyTech <ayolawole@gmail.com>
+Date:   Tue Mar 24 13:35:48 2026 +0000
+
+    Basic Combat room data setup
+
+diff --git a/project-rival/project-rival/CombatRoom.cpp b/project-rival/project-rival/CombatRoom.cpp
+index 715998b..4d83f74 100644
+--- a/project-rival/project-rival/CombatRoom.cpp
++++ b/project-rival/project-rival/CombatRoom.cpp
+@@ -11,7 +11,7 @@ RoomPlan CombatRoom::generateRoom(int id, RoomType type, int seed)
+ 	//height 10-12; width 15-20
+ 	room.height = rand() % 4 + 10;
+ 	room.width = rand() % 6 + 15;
+-
++	
+ 	// tile map initialisation
+ 	room.tileMap.assign(room.height * room.width, Tile::FLOOR);
+ 
+@@ -31,7 +31,7 @@ RoomPlan CombatRoom::generateRoom(int id, RoomType type, int seed)
+ 	const int interiorWidth = room.width - 2;
+ 	const int interiorHeight = room.height - 2;
+ 	const int interiorArea = interiorWidth * interiorHeight;
+-	
++
+ 	// Pillars
+ 	generateObstacles(room, interiorArea);
+ 
+
+commit da2bd37cdc70c546160ee69dbb727bbcdba3f9c2
+Author: WollyTech <ayolawole@gmail.com>
+Date:   Wed Mar 25 03:14:05 2026 +0000
+
+    Combat Room Generated with collisions with walls
+
+diff --git a/project-rival/project-rival/Enemy.h b/project-rival/project-rival/Enemy.h
+index 5efdb91..a5a0ccd 100644
+--- a/project-rival/project-rival/Enemy.h
++++ b/project-rival/project-rival/Enemy.h
+@@ -27,6 +27,8 @@ public:
+ 
+ 	virtual sf::Vector2f getPosition() const;
+ 
++	virtual sf::Vector2f getPosition() const;
++
+ 	virtual void setTarget(const Vector2f& target) = 0;
+ 
+ 	virtual sf::FloatRect getCollisionBounds() const override;
+diff --git a/project-rival/project-rival/Game.cpp b/project-rival/project-rival/Game.cpp
+index c8d2820..54a7441 100644
+--- a/project-rival/project-rival/Game.cpp
++++ b/project-rival/project-rival/Game.cpp
+@@ -275,3 +275,12 @@ void Game::generateRoom()
+ 		}
+ 	}
+ }
++
++void Game::generateRoom()
++{
++	m_activeRoomPlan = m_combatRoom.generateRoom(0, RoomType::COMBAT, 0);
++
++	sf::Vector2f roomWorldPos{ 100.f, 100.f };
++
++	m_activeRoomInstance.buildFromPlan(m_activeRoomPlan, roomWorldPos);
++}
+diff --git a/project-rival/project-rival/RoomBlueprint.h b/project-rival/project-rival/RoomBlueprint.h
+index 9af53df..47a7ecf 100644
+--- a/project-rival/project-rival/RoomBlueprint.h
++++ b/project-rival/project-rival/RoomBlueprint.h
+@@ -50,7 +50,7 @@ struct RoomPlan {
+ 	// Room representation
+ 	int width;
+ 	int height;	
+-	float tileSize = 64.f;
++	float tileSize = 78.f;
+ 
+ 	// Room layout
+ 	std::vector<Tile> tileMap;	// formula for 1D index: row * width + column
+diff --git a/project-rival/project-rival/RoomInstance.cpp b/project-rival/project-rival/RoomInstance.cpp
+index ff64b61..8977e2a 100644
+--- a/project-rival/project-rival/RoomInstance.cpp
++++ b/project-rival/project-rival/RoomInstance.cpp
+@@ -15,21 +15,21 @@ void RoomInstance::buildFromPlan(const RoomPlan& plan, const sf::Vector2f& world
+ 		for (int col = 0; col < plan.width; col++) {
+ 			const Tile tile = plan.getTile(row, col);
+ 			if (tile == Tile::WALL) {
+-				// setup wall
+-				sf::RectangleShape wall;
+-				wall.setSize(sf::Vector2f(tileSize, tileSize));
+-				wall.setOrigin(wall.getSize() / 2.f);
+-				wall.setPosition(worldPos + sf::Vector2f(col * tileSize, row * tileSize));
+-				wall.setFillColor(sf::Color(100, 100, 100)); // grey walls
++			// setup wall
++			sf::RectangleShape wall;
++			wall.setSize(sf::Vector2f(tileSize, tileSize));
++			wall.setOrigin(wall.getSize() / 2.f);
++			wall.setPosition(worldPos + sf::Vector2f(col * tileSize, row * tileSize));
++			wall.setFillColor(sf::Color(100, 100, 100)); // grey walls
+ 
+-				ri_staticShapes.push_back(wall);
++			ri_staticShapes.push_back(wall);
+ 
+-				//setup collider for wall
+-				StaticCollision collider(wall.getGlobalBounds(), CollisionLayer::WALL_LAYER,
+-					CollisionLayer::PLAYER_LAYER | CollisionLayer::ENEMY_LAYER | CollisionLayer::PLAYER_BULLET_LAYER | CollisionLayer::ENEMY_BULLET_LAYER);
++			//setup collider for wall
++			StaticCollision collider(wall.getGlobalBounds(), CollisionLayer::WALL_LAYER,
++				CollisionLayer::PLAYER_LAYER | CollisionLayer::ENEMY_LAYER | CollisionLayer::PLAYER_BULLET_LAYER | CollisionLayer::ENEMY_BULLET_LAYER);
+ 
+-				ri_staticColliders.push_back(collider);
+-			}
++			ri_staticColliders.push_back(collider);
++		}
+ 		}
+ 	}
+ 	// initialise spawners (DEBUG)
+diff --git a/project-rival/project-rival/player.cpp b/project-rival/project-rival/player.cpp
+index 47e1f36..ecc12ff 100644
+--- a/project-rival/project-rival/player.cpp
++++ b/project-rival/project-rival/player.cpp
+@@ -178,6 +178,11 @@ void Player::hitWall(sf::Vector2f oldPos)
+ 	p_body.setPosition(oldPos);
+ }
+ 
++void Player::hitWall(sf::Vector2f oldPos)
++{
++	p_body.setPosition(oldPos);
++}
++
+ std::vector<std::unique_ptr<Projectile>>& Player::getProjectiles()
+ {
+ 	return p_projectiles;
+
+commit 87b207638f189fba592ce14870ef9cabbb067832
+Author: WollyTech <ayolawole@gmail.com>
+Date:   Wed Mar 25 05:11:20 2026 +0000
+
+    Enemies spawn in at spawn points
+
+diff --git a/project-rival/project-rival/Game.cpp b/project-rival/project-rival/Game.cpp
+index 54a7441..1d2c81a 100644
+--- a/project-rival/project-rival/Game.cpp
++++ b/project-rival/project-rival/Game.cpp
+@@ -281,6 +281,22 @@ void Game::generateRoom()
+ 	m_activeRoomPlan = m_combatRoom.generateRoom(0, RoomType::COMBAT, 0);
+ 
+ 	sf::Vector2f roomWorldPos{ 100.f, 100.f };
+-
+ 	m_activeRoomInstance.buildFromPlan(m_activeRoomPlan, roomWorldPos);
++
++	m_enemies.clear();
++
++	//Enemy Spawner
++	int totalEnemyTypes = EnemyType::COUNT;
++	for (auto& spawnPoint : m_activeRoomPlan.spawners)
++	{
++		if (spawnPoint.type == SpawnerType::EnemySpawner) {
++			Vector2f spawnPos = roomWorldPos + static_cast<Vector2f>(spawnPoint.tilePos) * m_activeRoomPlan.tileSize;
++			
++			int enemyToSpawn = rand() % totalEnemyTypes;
++			if (enemyToSpawn == 0)
++				m_enemies.push_back(std::make_unique<GruntEnemy>(spawnPos, 150));
++			else if (enemyToSpawn == 1)
++				m_enemies.push_back(std::make_unique<TurretEnemy>(spawnPos, 250));
++		}
++	}
+ }
+diff --git a/project-rival/project-rival/RoomInstance.cpp b/project-rival/project-rival/RoomInstance.cpp
+index 8977e2a..2dbaac5 100644
+--- a/project-rival/project-rival/RoomInstance.cpp
++++ b/project-rival/project-rival/RoomInstance.cpp
+@@ -22,11 +22,11 @@ void RoomInstance::buildFromPlan(const RoomPlan& plan, const sf::Vector2f& world
+ 			wall.setPosition(worldPos + sf::Vector2f(col * tileSize, row * tileSize));
+ 			wall.setFillColor(sf::Color(100, 100, 100)); // grey walls
+ 
+-			ri_staticShapes.push_back(wall);
++				ri_staticShapes.push_back(wall);
+ 
+-			//setup collider for wall
+-			StaticCollision collider(wall.getGlobalBounds(), CollisionLayer::WALL_LAYER,
+-				CollisionLayer::PLAYER_LAYER | CollisionLayer::ENEMY_LAYER | CollisionLayer::PLAYER_BULLET_LAYER | CollisionLayer::ENEMY_BULLET_LAYER);
++				//setup collider for wall
++				StaticCollision collider(wall.getGlobalBounds(), CollisionLayer::WALL_LAYER,
++					CollisionLayer::PLAYER_LAYER | CollisionLayer::ENEMY_LAYER | CollisionLayer::PLAYER_BULLET_LAYER | CollisionLayer::ENEMY_BULLET_LAYER);
+ 
+ 			ri_staticColliders.push_back(collider);
+ 		}
+
+commit b1ae46502d898f7a257aaacb7bf982d4bcdacdd5
+Author: WollyTech <ayolawole@gmail.com>
+Date:   Wed Mar 25 05:39:48 2026 +0000
+
+    different room sizes
+
+diff --git a/project-rival/project-rival/RoomBlueprint.h b/project-rival/project-rival/RoomBlueprint.h
+index 47a7ecf..9af53df 100644
+--- a/project-rival/project-rival/RoomBlueprint.h
++++ b/project-rival/project-rival/RoomBlueprint.h
+@@ -50,7 +50,7 @@ struct RoomPlan {
+ 	// Room representation
+ 	int width;
+ 	int height;	
+-	float tileSize = 78.f;
++	float tileSize = 64.f;
+ 
+ 	// Room layout
+ 	std::vector<Tile> tileMap;	// formula for 1D index: row * width + column
+
+commit 075e692662a9318574ba9424792cc264b02647ad
+Author: WollyTech <ayolawole@gmail.com>
+Date:   Wed Mar 25 21:17:34 2026 +0000
+
+    Portal room setup with Portal + Spawn Room spawns in player
+
+diff --git a/project-rival/project-rival/Collision.h b/project-rival/project-rival/Collision.h
+index ad541df..479b8ec 100644
+--- a/project-rival/project-rival/Collision.h
++++ b/project-rival/project-rival/Collision.h
+@@ -16,6 +16,10 @@ enum CollisionLayer : uint32_t
+ 
+ 	// World Environment layers
+ 
++	// Trigger layers
++	PORTAL_TRIGGER_LAYER = 1 << 5,
++	ROOM_ENTERED_TRIGGER_LAYER = 1 << 6,
++
+ 	ALL = 0xFFFFFFFF
+ };
+ 
+diff --git a/project-rival/project-rival/CombatRoom.cpp b/project-rival/project-rival/CombatRoom.cpp
+index 4d83f74..790510b 100644
+--- a/project-rival/project-rival/CombatRoom.cpp
++++ b/project-rival/project-rival/CombatRoom.cpp
+@@ -5,7 +5,7 @@ RoomPlan CombatRoom::generateRoom(int id, RoomType type, int seed)
+ 	RoomPlan room;
+ 	// Meta data
+ 	room.id = id;
+-	room.type = type;
++	room.type = RoomType::COMBAT;
+ 	room.seed = seed;
+ 		// -> note here that this is where the height and width will be determined based on the type
+ 	//height 10-12; width 15-20
+diff --git a/project-rival/project-rival/Enemy.h b/project-rival/project-rival/Enemy.h
+index a5a0ccd..5efdb91 100644
+--- a/project-rival/project-rival/Enemy.h
++++ b/project-rival/project-rival/Enemy.h
+@@ -27,8 +27,6 @@ public:
+ 
+ 	virtual sf::Vector2f getPosition() const;
+ 
+-	virtual sf::Vector2f getPosition() const;
+-
+ 	virtual void setTarget(const Vector2f& target) = 0;
+ 
+ 	virtual sf::FloatRect getCollisionBounds() const override;
+diff --git a/project-rival/project-rival/Game.cpp b/project-rival/project-rival/Game.cpp
+index 1d2c81a..35cd2ca 100644
+--- a/project-rival/project-rival/Game.cpp
++++ b/project-rival/project-rival/Game.cpp
+@@ -134,7 +134,7 @@ void Game::update(double dt)
+ 		enemy->setTarget(m_player.getPosition());
+ 		enemy->update(dt);
+ 
+-		// Check collision with player and wall
++		// Check collision with player and collisionObject
+ 		// Enemy -> Player
+ 		if (CollisionCheck::areColliding(m_player, *enemy)) {
+ 			cout << "Player collided with enemy!\n";
+@@ -180,24 +180,38 @@ void Game::update(double dt)
+ 	}
+ 
+ 	// Check static environment against player, enmies and projectiles
+-	for (auto& wall : m_activeRoomInstance.getStaticCollisions())
++	for (auto& collisionObject : m_activeRoomInstance.getStaticCollisions())
+ 	{
+-		// Wall -> Player
+-		if (CollisionCheck::areColliding(m_player, wall))
++		// Wall collision checks
++		if (collisionObject.getCollisionProfile().layer == CollisionLayer::WALL_LAYER)
+ 		{
+-			m_player.hitWall(oldPlayerPos);
++			// Wall -> Player
++			if (CollisionCheck::areColliding(m_player, collisionObject))
++			{
++				m_player.hitWall(oldPlayerPos);
++			}
++
++			// Wall -> Player Projectiles
++			for (auto& bullet : m_player.getProjectiles())
++			{
++				if (bullet->shouldDestroy())
++					continue;
++
++				if (CollisionCheck::areColliding(*bullet, collisionObject))
++				{
++					bullet->destroy();
++					break;
++				}
++			}
+ 		}
+ 
+-		// Wall -> Player Projectiles
+-		for (auto& bullet : m_player.getProjectiles())
++		// Portal trigger checks
++		if (collisionObject.getCollisionProfile().layer == CollisionLayer::PORTAL_TRIGGER_LAYER)
+ 		{
+-			if (bullet->shouldDestroy())
+-				continue;
+-
+-			if (CollisionCheck::areColliding(*bullet, wall))
++			// Portal Trigger -> Player
++			if (CollisionCheck::areColliding(collisionObject, m_player))
+ 			{
+-				bullet->destroy();
+-				break;
++				cout << "Player Collided with Portal Trigger!\n";
+ 			}
+ 		}
+ 	}
+@@ -241,6 +255,7 @@ void Game::resetGame()
+ 	m_enemies.clear();
+ 
+ 	m_combatRoom;
++	m_spawnRoom;
+ 	m_activeRoomPlan;
+ 	m_activeRoomInstance.reset();
+ }
+@@ -253,50 +268,49 @@ void Game::gameStart()
+ 
+ void Game::generateRoom()
+ {
+-	m_activeRoomPlan = m_combatRoom.generateRoom(0, RoomType::COMBAT, 0);
++	m_activeRoomPlan = m_portalRoom.generateRoom(0, RoomType::PORTAL, 0);
+ 
+ 	sf::Vector2f roomWorldPos{ 50.f, 50.f };
+ 	m_activeRoomInstance.buildFromPlan(m_activeRoomPlan, roomWorldPos);
+ 
+ 	m_enemies.clear();
+ 
+-	//Enemy Spawner
+-	int totalEnemyTypes = EnemyType::COUNT;
+-	for (auto& spawnPoint : m_activeRoomPlan.spawners)
++	// Combat room Spawner
++	if(m_activeRoomPlan.type == RoomType::COMBAT)
+ 	{
+-		if (spawnPoint.type == SpawnerType::EnemySpawner) {
+-			Vector2f spawnPos = roomWorldPos + static_cast<Vector2f>(spawnPoint.tilePos) * m_activeRoomPlan.tileSize;
+-			
+-			int enemyToSpawn = rand() % totalEnemyTypes;
+-			if (enemyToSpawn == 0)
+-				m_enemies.push_back(std::make_unique<GruntEnemy>(spawnPos, 150));
+-			else if (enemyToSpawn == 1)
+-				m_enemies.push_back(std::make_unique<TurretEnemy>(spawnPos, 250));
++		int totalEnemyTypes = EnemyType::COUNT;
++		for (auto& spawnPoint : m_activeRoomPlan.spawners)
++		{
++			if (spawnPoint.type == SpawnerType::EnemySpawner) {
++				Vector2f spawnPos = roomWorldPos + static_cast<Vector2f>(spawnPoint.tilePos) * m_activeRoomPlan.tileSize;
++
++				int enemyToSpawn = rand() % totalEnemyTypes;
++				if (enemyToSpawn == 0)
++					m_enemies.push_back(std::make_unique<GruntEnemy>(spawnPos, 150));
++				else if (enemyToSpawn == 1)
++					m_enemies.push_back(std::make_unique<TurretEnemy>(spawnPos, 250));
++			}
+ 		}
+ 	}
+-}
+-
+-void Game::generateRoom()
+-{
+-	m_activeRoomPlan = m_combatRoom.generateRoom(0, RoomType::COMBAT, 0);
+-
+-	sf::Vector2f roomWorldPos{ 100.f, 100.f };
+-	m_activeRoomInstance.buildFromPlan(m_activeRoomPlan, roomWorldPos);
+-
+-	m_enemies.clear();
+-
+-	//Enemy Spawner
+-	int totalEnemyTypes = EnemyType::COUNT;
+-	for (auto& spawnPoint : m_activeRoomPlan.spawners)
++	// Spawn room Spawner
++	if (m_activeRoomPlan.type == RoomType::SPAWN)
+ 	{
+-		if (spawnPoint.type == SpawnerType::EnemySpawner) {
+-			Vector2f spawnPos = roomWorldPos + static_cast<Vector2f>(spawnPoint.tilePos) * m_activeRoomPlan.tileSize;
+-			
+-			int enemyToSpawn = rand() % totalEnemyTypes;
+-			if (enemyToSpawn == 0)
+-				m_enemies.push_back(std::make_unique<GruntEnemy>(spawnPos, 150));
+-			else if (enemyToSpawn == 1)
+-				m_enemies.push_back(std::make_unique<TurretEnemy>(spawnPos, 250));
++		for (auto& spawnPoint : m_activeRoomPlan.spawners)
++		{
++			if (spawnPoint.type == SpawnerType::PlayerSpawner) {
++				Vector2f spawnPos = roomWorldPos + static_cast<Vector2f>(spawnPoint.tilePos) * m_activeRoomPlan.tileSize;
++				m_player.setSpawnPosition(spawnPos);
++			}
+ 		}
+ 	}
++	//// Portal room Spawner
++	//if (m_activeRoomPlan.type == RoomType::PORTAL)
++	//{
++	//	for(auto& spawnPoint:m_activeRoomPlan.spawners){
++	//		if(spawnPoint.type == SpawnerType::PortalSpawner){
++	//			Vector2f spawnPos = roomWorldPos + static_cast<Vector2f>(spawnPoint.tilePos) * m_activeRoomPlan.tileSize;
++
++	//		}
++	//	}
++	//}
+ }
+diff --git a/project-rival/project-rival/Game.h b/project-rival/project-rival/Game.h
+index b5fe655..cb36130 100644
+--- a/project-rival/project-rival/Game.h
++++ b/project-rival/project-rival/Game.h
+@@ -14,6 +14,8 @@
+ 
+ #include "RoomInstance.h"
+ #include "CombatRoom.h"
++#include "SpawnRoom.h"
++#include "PortalRoom.h"
+ 
+ using namespace std;
+ using namespace sf;
+@@ -57,7 +59,9 @@ protected:
+ 
+ 	std::vector<std::unique_ptr<Enemy>> m_enemies;
+ 
+-	CombatRoom m_combatRoom;	
++	CombatRoom m_combatRoom;
++	SpawnRoom m_spawnRoom;
++	PortalRoom m_portalRoom;
+ 	RoomPlan m_activeRoomPlan;
+ 	RoomInstance m_activeRoomInstance;
+ 
+diff --git a/project-rival/project-rival/PortalRoom.cpp b/project-rival/project-rival/PortalRoom.cpp
+new file mode 100644
+index 0000000..bee9da5
+--- /dev/null
++++ b/project-rival/project-rival/PortalRoom.cpp
+@@ -0,0 +1,46 @@
++#include "PortalRoom.h"
++
++RoomPlan PortalRoom::generateRoom(int id, RoomType type, int seed)
++{
++	RoomPlan plan;
++	// Meta data
++	plan.id = id;
++	plan.type = RoomType::PORTAL;
++	plan.seed = seed;
++	plan.width = 11;
++	plan.height = 11;
++
++	// Tile map initialisation
++	plan.tileMap.assign(plan.height * plan.width, Tile::FLOOR);
++
++	// Tile map construction
++	// Outer walls
++	for (int col = 0; col < plan.width; col++)
++	{
++		plan.setTile(0, col, Tile::WALL);				// top row
++		plan.setTile(plan.height - 1, col, Tile::WALL);	// bottom row
++	}
++	for (int row = 0; row < plan.height; row++)
++	{
++		plan.setTile(row, 0, Tile::WALL);				// left column
++		plan.setTile(row, plan.width - 1, Tile::WALL);	// right column
++	}
++
++	const int interiorWidth = plan.width - 2;
++	const int interiorHeight = plan.height - 2;
++	const int interiorArea = interiorWidth * interiorHeight;
++
++	// Spawners
++	generateSpawnPoints(plan, interiorArea);
++
++	return plan;
++}
++
++void PortalRoom::generateSpawnPoints(RoomPlan& roomPlan, int interiorArea)
++{
++	// Portal Spawner
++	sf::Vector2i roomCenter = sf::Vector2i(roomPlan.width, roomPlan.height) / 2;
++	roomPlan.spawners.push_back({ SpawnerType::PortalSpawner, roomCenter });
++	// Portal Trigger
++	roomPlan.triggers.push_back({ TriggerType::PortalTrigger, roomCenter });
++}
+diff --git a/project-rival/project-rival/PortalRoom.h b/project-rival/project-rival/PortalRoom.h
+new file mode 100644
+index 0000000..ae2d7aa
+--- /dev/null
++++ b/project-rival/project-rival/PortalRoom.h
+@@ -0,0 +1,10 @@
++#pragma once
++#include "RoomBlueprint.h"
++
++class PortalRoom : public IRoomGenerator
++{
++public:
++	RoomPlan generateRoom(int id, RoomType type, int seed) override;
++	void generateSpawnPoints(RoomPlan& roomPlan, int interiorArea) override;
++};
++
+diff --git a/project-rival/project-rival/RoomBlueprint.h b/project-rival/project-rival/RoomBlueprint.h
+index 9af53df..523f912 100644
+--- a/project-rival/project-rival/RoomBlueprint.h
++++ b/project-rival/project-rival/RoomBlueprint.h
+@@ -33,7 +33,8 @@ struct DoorPlan {
+ 
+ enum SpawnerType {
+ 	PlayerSpawner,
+-	EnemySpawner
++	EnemySpawner,
++	PortalSpawner
+ };
+ 
+ struct SpawnerPlan {
+@@ -41,6 +42,17 @@ struct SpawnerPlan {
+ 	sf::Vector2i tilePos;
+ };
+ 
++enum TriggerType {
++	None,
++	RoomEnteredTrigger,
++	PortalTrigger
++};
++
++struct TriggerPlan {
++	TriggerType type;
++	sf::Vector2i tilePos;
++};
++
+ struct RoomPlan {
+ 	// Room metadata
+ 	int id;
+@@ -56,6 +68,7 @@ struct RoomPlan {
+ 	std::vector<Tile> tileMap;	// formula for 1D index: row * width + column
+ 	std::vector<DoorPlan> doors;
+ 	std::vector<SpawnerPlan> spawners;
++	std::vector<TriggerPlan> triggers;
+ 	
+ 	bool isValid() const {
+ 		if (width > 0 && height > 0 && (tileMap.size() == width * height))
+diff --git a/project-rival/project-rival/RoomInstance.cpp b/project-rival/project-rival/RoomInstance.cpp
+index 2dbaac5..b321c35 100644
+--- a/project-rival/project-rival/RoomInstance.cpp
++++ b/project-rival/project-rival/RoomInstance.cpp
+@@ -9,18 +9,18 @@ void RoomInstance::buildFromPlan(const RoomPlan& plan, const sf::Vector2f& world
+ 		return;
+ 
+ 	const float tileSize = plan.tileSize;
+-	
++
+ 	// initialise each tile
+ 	for (int row = 0; row < plan.height; row++) {
+ 		for (int col = 0; col < plan.width; col++) {
+ 			const Tile tile = plan.getTile(row, col);
+ 			if (tile == Tile::WALL) {
+-			// setup wall
+-			sf::RectangleShape wall;
+-			wall.setSize(sf::Vector2f(tileSize, tileSize));
+-			wall.setOrigin(wall.getSize() / 2.f);
+-			wall.setPosition(worldPos + sf::Vector2f(col * tileSize, row * tileSize));
+-			wall.setFillColor(sf::Color(100, 100, 100)); // grey walls
++				// setup wall
++				sf::RectangleShape wall;
++				wall.setSize(sf::Vector2f(tileSize, tileSize));
++				wall.setOrigin(wall.getSize() / 2.f);
++				wall.setPosition(worldPos + sf::Vector2f(col * tileSize, row * tileSize));
++				wall.setFillColor(sf::Color(100, 100, 100)); // grey walls
+ 
+ 				ri_staticShapes.push_back(wall);
+ 
+@@ -28,25 +28,51 @@ void RoomInstance::buildFromPlan(const RoomPlan& plan, const sf::Vector2f& world
+ 				StaticCollision collider(wall.getGlobalBounds(), CollisionLayer::WALL_LAYER,
+ 					CollisionLayer::PLAYER_LAYER | CollisionLayer::ENEMY_LAYER | CollisionLayer::PLAYER_BULLET_LAYER | CollisionLayer::ENEMY_BULLET_LAYER);
+ 
+-			ri_staticColliders.push_back(collider);
+-		}
++				ri_staticColliders.push_back(collider);
++			}
+ 		}
+ 	}
+ 	// initialise spawners (DEBUG)
+ 	for (auto& spawner : plan.spawners) {
++		// setup spawn point shape
+ 		sf::RectangleShape spawnPoint;
+ 		spawnPoint.setSize(sf::Vector2f(tileSize, tileSize) / 8.f);
+ 		spawnPoint.setOrigin(spawnPoint.getSize() / 2.f);
+ 		spawnPoint.setPosition(worldPos + static_cast<sf::Vector2f>(spawner.tilePos) * tileSize);
++
+ 		if (spawner.type == SpawnerType::PlayerSpawner) {
+-			spawnPoint.setFillColor(sf::Color(0, 255, 0)); // green for player spawn
++			spawnPoint.setFillColor(sf::Color::Green);
+ 		}
+ 		else if (spawner.type == SpawnerType::EnemySpawner) {
+-			spawnPoint.setFillColor(sf::Color(255, 0, 0)); // red for enemy spawn
++			spawnPoint.setFillColor(sf::Color::Red);
++		}
++		else if (spawner.type == SpawnerType::PortalSpawner) {
++			spawnPoint.setFillColor(sf::Color::Blue);
+ 		}
+ 
+ 		ri_staticShapes.push_back(spawnPoint);
+ 	}
++	// initialise triggers (DEBUG)
++	for (auto& trigger : plan.triggers) {
++		// setup trigger shape
++		sf::RectangleShape triggerShape;
++		if (trigger.type == TriggerType::PortalTrigger) {
++			triggerShape.setSize(sf::Vector2f(tileSize, tileSize) * 3.f); // 3x the size of a tile
++			triggerShape.setFillColor(sf::Color(0, 0, 255, 100)); // semi-transparent blue for portal trigger
++		}
++		triggerShape.setOrigin(triggerShape.getSize() / 2.f);
++		triggerShape.setPosition(worldPos + static_cast<sf::Vector2f>(trigger.tilePos) * tileSize);
++
++		ri_staticShapes.push_back(triggerShape);
++
++		// setup collider for trigger
++		StaticCollision collider;
++		if (trigger.type == TriggerType::PortalTrigger) {
++			collider = StaticCollision(triggerShape.getGlobalBounds(), CollisionLayer::PORTAL_TRIGGER_LAYER,
++				CollisionLayer::PLAYER_LAYER);
++		}
++		ri_staticColliders.push_back(collider);
++	}
+ }
+ 
+ const std::vector<StaticCollision>& RoomInstance::getStaticCollisions()
+diff --git a/project-rival/project-rival/SpawnRoom.cpp b/project-rival/project-rival/SpawnRoom.cpp
+index 58697a4..554c194 100644
+--- a/project-rival/project-rival/SpawnRoom.cpp
++++ b/project-rival/project-rival/SpawnRoom.cpp
+@@ -5,10 +5,10 @@ RoomPlan SpawnRoom::generateRoom(int id, RoomType type, int seed)
+ 	RoomPlan room;
+ 	// Meta data
+ 	room.id = id;
+-	room.type = type;
++	room.type = RoomType::SPAWN;
+ 	room.seed = seed;
+-	room.height = 8;
+-	room.width = 8;
++	room.height = 11;
++	room.width = 11;
+ 
+ 	// tile map initialisation
+ 	room.tileMap.assign(room.height * room.width, Tile::FLOOR);
+@@ -32,6 +32,8 @@ RoomPlan SpawnRoom::generateRoom(int id, RoomType type, int seed)
+ 
+ 	// Spawners
+ 	generateSpawnPoints(room, interiorArea);
++
++	return room;
+ }
+ 
+ void SpawnRoom::generateSpawnPoints(RoomPlan& roomPlan, int interiorArea)
+diff --git a/project-rival/project-rival/SpawnRoom.h b/project-rival/project-rival/SpawnRoom.h
+index 439f607..a1d6e2b 100644
+--- a/project-rival/project-rival/SpawnRoom.h
++++ b/project-rival/project-rival/SpawnRoom.h
+@@ -3,7 +3,7 @@
+ 
+ class SpawnRoom : public IRoomGenerator
+ {
+-	public:
++public:
+ 	RoomPlan generateRoom(int id, RoomType type, int seed) override;
+ 	void generateSpawnPoints(RoomPlan& roomPlan, int interiorArea) override;
+ };
+diff --git a/project-rival/project-rival/player.cpp b/project-rival/project-rival/player.cpp
+index ecc12ff..d229c78 100644
+--- a/project-rival/project-rival/player.cpp
++++ b/project-rival/project-rival/player.cpp
+@@ -39,7 +39,7 @@ void Player::init()
+ 
+ 	//collision
+ 	p_collisionProfile.layer = CollisionLayer::PLAYER_LAYER;
+-	p_collisionProfile.mask = CollisionLayer::ENEMY_LAYER | CollisionLayer::ENEMY_BULLET_LAYER | CollisionLayer::WALL_LAYER;
++	p_collisionProfile.mask = CollisionLayer::ENEMY_LAYER | CollisionLayer::ENEMY_BULLET_LAYER | CollisionLayer::WALL_LAYER | CollisionLayer::PORTAL_TRIGGER_LAYER;
+ 
+ 	p_maxHealth = 100;
+ 
+@@ -96,6 +96,11 @@ CollisionProfile Player::getCollisionProfile() const
+ 	return p_collisionProfile;
+ }
+ 
++void Player::setSpawnPosition(const Vector2f& spawnPos)
++{
++	p_body.setPosition(spawnPos);
++}
++
+ void Player::reset()
+ {
+ 	p_body.setPosition(Vector2f(500, 500.f));
+@@ -178,11 +183,6 @@ void Player::hitWall(sf::Vector2f oldPos)
+ 	p_body.setPosition(oldPos);
+ }
+ 
+-void Player::hitWall(sf::Vector2f oldPos)
+-{
+-	p_body.setPosition(oldPos);
+-}
+-
+ std::vector<std::unique_ptr<Projectile>>& Player::getProjectiles()
+ {
+ 	return p_projectiles;
+diff --git a/project-rival/project-rival/player.h b/project-rival/project-rival/player.h
+index 8307799..d959e35 100644
+--- a/project-rival/project-rival/player.h
++++ b/project-rival/project-rival/player.h
+@@ -22,6 +22,7 @@ public:
+ 	sf::FloatRect getCollisionBounds() const override;
+ 	CollisionProfile getCollisionProfile() const override;
+ 
++	void setSpawnPosition(const Vector2f& spawnPos);
+ 
+ 	void handleMovement(double dt);
+ 	void handleAiming(const Vector2f mousePos);
+diff --git a/project-rival/project-rival/project-rival.vcxproj b/project-rival/project-rival/project-rival.vcxproj
+index f0bbef0..b4eeb4d 100644
+--- a/project-rival/project-rival/project-rival.vcxproj
++++ b/project-rival/project-rival/project-rival.vcxproj
+@@ -23,6 +23,7 @@
+     <ClCompile Include="Collision.cpp" />
+     <ClCompile Include="CombatRoom.cpp" />
+     <ClCompile Include="NormalBulletProjectile.cpp" />
++    <ClCompile Include="PortalRoom.cpp" />
+     <ClCompile Include="Projectile.cpp" />
+     <ClCompile Include="Enemy.cpp" />
+     <ClCompile Include="Game.cpp" />
+@@ -33,6 +34,7 @@
+     <ClCompile Include="player.cpp" />
+     <ClCompile Include="RoomInstance.cpp" />
+     <ClCompile Include="SeekBehaviour.cpp" />
++    <ClCompile Include="SpawnRoom.cpp" />
+     <ClCompile Include="StaticCollision.cpp" />
+     <ClCompile Include="TurretEnemy.cpp" />
+   </ItemGroup>
+@@ -41,6 +43,7 @@
+     <ClInclude Include="Collision.h" />
+     <ClInclude Include="CombatRoom.h" />
+     <ClInclude Include="NormalBulletProjectile.h" />
++    <ClInclude Include="PortalRoom.h" />
+     <ClInclude Include="Projectile.h" />
+     <ClInclude Include="Enemy.h" />
+     <ClInclude Include="Game.h" />
+@@ -51,6 +54,7 @@
+     <ClInclude Include="RoomBlueprint.h" />
+     <ClInclude Include="RoomInstance.h" />
+     <ClInclude Include="SeekBehaviour.h" />
++    <ClInclude Include="SpawnRoom.h" />
+     <ClInclude Include="StaticCollision.h" />
+     <ClInclude Include="Steering.h" />
+     <ClInclude Include="TurretEnemy.h" />
+diff --git a/project-rival/project-rival/project-rival.vcxproj.filters b/project-rival/project-rival/project-rival.vcxproj.filters
+index 809c5fc..f01e4b5 100644
+--- a/project-rival/project-rival/project-rival.vcxproj.filters
++++ b/project-rival/project-rival/project-rival.vcxproj.filters
+@@ -61,6 +61,45 @@
+     <Filter Include="Resource Files\DOCUMENTATION\Git Summaries">
+       <UniqueIdentifier>{d0a212c5-440c-41a1-8f2b-6fde83f55d70}</UniqueIdentifier>
+     </Filter>
++    <Filter Include="Header Files\Levels\Rooms\Combat Room">
++      <UniqueIdentifier>{6c01b469-4db9-4697-a8dd-812e4bf169e4}</UniqueIdentifier>
++    </Filter>
++    <Filter Include="Header Files\Levels\Rooms\Portal Room">
++      <UniqueIdentifier>{d6d9eb36-80d4-49c2-8aca-b30bceee3189}</UniqueIdentifier>
++    </Filter>
++    <Filter Include="Header Files\Levels\Rooms\Spawn Room">
++      <UniqueIdentifier>{83524f3d-2757-4bc8-bd75-f613d35270f0}</UniqueIdentifier>
++    </Filter>
++    <Filter Include="Header Files\Abs.Interfaces\Collision">
++      <UniqueIdentifier>{3d16047e-5381-44b1-acad-034b7d06a802}</UniqueIdentifier>
++    </Filter>
++    <Filter Include="Header Files\Abs.Interfaces\Room Blueprint">
++      <UniqueIdentifier>{afd6ea71-deac-45ed-961c-6a703e03640c}</UniqueIdentifier>
++    </Filter>
++    <Filter Include="Header Files\Abs.Interfaces\Steering">
++      <UniqueIdentifier>{fb5c9f71-f0a5-4069-b4c4-44cd19d4858e}</UniqueIdentifier>
++    </Filter>
++    <Filter Include="Header Files\Behaviours\Arrive">
++      <UniqueIdentifier>{8a630ba1-5c05-493a-b269-da321a6359e3}</UniqueIdentifier>
++    </Filter>
++    <Filter Include="Header Files\Behaviours\Seek">
++      <UniqueIdentifier>{5e2eccba-5354-4112-84aa-d0e5fc88b169}</UniqueIdentifier>
++    </Filter>
++    <Filter Include="Header Files\Enemies\Basic">
++      <UniqueIdentifier>{09da90ae-5e5d-4854-b02a-a78a5330dfff}</UniqueIdentifier>
++    </Filter>
++    <Filter Include="Header Files\Enemies\Basic\Grunt">
++      <UniqueIdentifier>{86ff36fa-be83-400c-b8ee-b2e3af12c8d7}</UniqueIdentifier>
++    </Filter>
++    <Filter Include="Header Files\Enemies\Basic\Turret">
++      <UniqueIdentifier>{137ff5ed-1375-45ed-994c-a37a19e89b93}</UniqueIdentifier>
++    </Filter>
++    <Filter Include="Header Files\Player">
++      <UniqueIdentifier>{dbad0cb9-07df-477f-8c63-4ca7a14b0f08}</UniqueIdentifier>
++    </Filter>
++    <Filter Include="Resource Files\DOCUMENTATION\Git Summaries\Devlog Dumps">
++      <UniqueIdentifier>{dd92ece3-062f-4995-b441-b7cec4b92ad3}</UniqueIdentifier>
++    </Filter>
+   </ItemGroup>
+   <ItemGroup>
+     <ClCompile Include="main.cpp">
+@@ -69,100 +108,112 @@
+     <ClCompile Include="Game.cpp">
+       <Filter>Source Files</Filter>
+     </ClCompile>
+-    <ClCompile Include="player.cpp">
+-      <Filter>Source Files</Filter>
+-    </ClCompile>
+     <ClCompile Include="InputManager.cpp">
+       <Filter>Header Files\Input</Filter>
+     </ClCompile>
+     <ClCompile Include="Gamepad.cpp">
+       <Filter>Header Files\Input</Filter>
+     </ClCompile>
+-    <ClCompile Include="SeekBehaviour.cpp">
+-      <Filter>Header Files\Behaviours</Filter>
+-    </ClCompile>
+-    <ClCompile Include="ArriveBehaviour.cpp">
+-      <Filter>Header Files\Behaviours</Filter>
+-    </ClCompile>
+     <ClCompile Include="Enemy.cpp">
+       <Filter>Header Files\Abs.Classes</Filter>
+     </ClCompile>
+-    <ClCompile Include="GruntEnemy.cpp">
+-      <Filter>Header Files\Enemies</Filter>
+-    </ClCompile>
+-    <ClCompile Include="TurretEnemy.cpp">
+-      <Filter>Header Files\Enemies</Filter>
+-    </ClCompile>
+     <ClCompile Include="Projectile.cpp">
+       <Filter>Header Files\Abs.Classes</Filter>
+     </ClCompile>
+     <ClCompile Include="NormalBulletProjectile.cpp">
+       <Filter>Header Files\Projectiles</Filter>
+     </ClCompile>
+-    <ClCompile Include="Collision.cpp">
+-      <Filter>Header Files\Abs.Interfaces</Filter>
+-    </ClCompile>
+     <ClCompile Include="StaticCollision.cpp">
+       <Filter>Header Files\Levels\Collision</Filter>
+     </ClCompile>
+-    <ClCompile Include="CombatRoom.cpp">
+-      <Filter>Header Files\Levels\Rooms</Filter>
+-    </ClCompile>
+     <ClCompile Include="RoomInstance.cpp">
+       <Filter>Header Files\Levels</Filter>
+     </ClCompile>
++    <ClCompile Include="CombatRoom.cpp">
++      <Filter>Header Files\Levels\Rooms\Combat Room</Filter>
++    </ClCompile>
++    <ClCompile Include="PortalRoom.cpp">
++      <Filter>Header Files\Levels\Rooms\Portal Room</Filter>
++    </ClCompile>
++    <ClCompile Include="SpawnRoom.cpp">
++      <Filter>Header Files\Levels\Rooms\Spawn Room</Filter>
++    </ClCompile>
++    <ClCompile Include="Collision.cpp">
++      <Filter>Header Files\Abs.Interfaces\Collision</Filter>
++    </ClCompile>
++    <ClCompile Include="ArriveBehaviour.cpp">
++      <Filter>Header Files\Behaviours\Arrive</Filter>
++    </ClCompile>
++    <ClCompile Include="SeekBehaviour.cpp">
++      <Filter>Header Files\Behaviours\Seek</Filter>
++    </ClCompile>
++    <ClCompile Include="GruntEnemy.cpp">
++      <Filter>Header Files\Enemies\Basic\Grunt</Filter>
++    </ClCompile>
++    <ClCompile Include="TurretEnemy.cpp">
++      <Filter>Header Files\Enemies\Basic\Turret</Filter>
++    </ClCompile>
++    <ClCompile Include="player.cpp">
++      <Filter>Header Files\Player</Filter>
++    </ClCompile>
+   </ItemGroup>
+   <ItemGroup>
+     <ClInclude Include="Game.h">
+       <Filter>Header Files</Filter>
+     </ClInclude>
+-    <ClInclude Include="player.h">
+-      <Filter>Header Files</Filter>
+-    </ClInclude>
+     <ClInclude Include="InputManager.h">
+       <Filter>Header Files\Input</Filter>
+     </ClInclude>
+     <ClInclude Include="Gamepad.h">
+       <Filter>Header Files\Input</Filter>
+     </ClInclude>
+-    <ClInclude Include="SeekBehaviour.h">
+-      <Filter>Header Files\Behaviours</Filter>
+-    </ClInclude>
+-    <ClInclude Include="Steering.h">
+-      <Filter>Header Files\Abs.Interfaces</Filter>
+-    </ClInclude>
+-    <ClInclude Include="ArriveBehaviour.h">
+-      <Filter>Header Files\Behaviours</Filter>
+-    </ClInclude>
+     <ClInclude Include="Enemy.h">
+       <Filter>Header Files\Abs.Classes</Filter>
+     </ClInclude>
+-    <ClInclude Include="GruntEnemy.h">
+-      <Filter>Header Files\Enemies</Filter>
+-    </ClInclude>
+-    <ClInclude Include="TurretEnemy.h">
+-      <Filter>Header Files\Enemies</Filter>
+-    </ClInclude>
+     <ClInclude Include="Projectile.h">
+       <Filter>Header Files\Abs.Classes</Filter>
+     </ClInclude>
+     <ClInclude Include="NormalBulletProjectile.h">
+       <Filter>Header Files\Projectiles</Filter>
+     </ClInclude>
++    <ClInclude Include="StaticCollision.h">
++      <Filter>Header Files\Levels\Collision</Filter>
++    </ClInclude>
++    <ClInclude Include="RoomInstance.h">
++      <Filter>Header Files\Levels</Filter>
++    </ClInclude>
++    <ClInclude Include="CombatRoom.h">
++      <Filter>Header Files\Levels\Rooms\Combat Room</Filter>
++    </ClInclude>
++    <ClInclude Include="PortalRoom.h">
++      <Filter>Header Files\Levels\Rooms\Portal Room</Filter>
++    </ClInclude>
++    <ClInclude Include="SpawnRoom.h">
++      <Filter>Header Files\Levels\Rooms\Spawn Room</Filter>
++    </ClInclude>
+     <ClInclude Include="Collision.h">
+-      <Filter>Header Files\Abs.Interfaces</Filter>
++      <Filter>Header Files\Abs.Interfaces\Collision</Filter>
+     </ClInclude>
+     <ClInclude Include="RoomBlueprint.h">
+-      <Filter>Header Files\Abs.Interfaces</Filter>
++      <Filter>Header Files\Abs.Interfaces\Room Blueprint</Filter>
+     </ClInclude>
+-    <ClInclude Include="StaticCollision.h">
+-      <Filter>Header Files\Levels\Collision</Filter>
++    <ClInclude Include="Steering.h">
++      <Filter>Header Files\Abs.Interfaces\Steering</Filter>
+     </ClInclude>
+-    <ClInclude Include="CombatRoom.h">
+-      <Filter>Header Files\Levels\Rooms</Filter>
++    <ClInclude Include="ArriveBehaviour.h">
++      <Filter>Header Files\Behaviours\Arrive</Filter>
+     </ClInclude>
+-    <ClInclude Include="RoomInstance.h">
+-      <Filter>Header Files\Levels</Filter>
++    <ClInclude Include="SeekBehaviour.h">
++      <Filter>Header Files\Behaviours\Seek</Filter>
++    </ClInclude>
++    <ClInclude Include="GruntEnemy.h">
++      <Filter>Header Files\Enemies\Basic\Grunt</Filter>
++    </ClInclude>
++    <ClInclude Include="TurretEnemy.h">
++      <Filter>Header Files\Enemies\Basic\Turret</Filter>
++    </ClInclude>
++    <ClInclude Include="player.h">
++      <Filter>Header Files\Player</Filter>
+     </ClInclude>
+   </ItemGroup>
+   <ItemGroup>
+@@ -194,6 +245,9 @@
+     <None Include="automation\prompts\level-architecture-roomplan-generator-builder-static-colliders-context.md">
+       <Filter>Resource Files\AUTOMATIONS\Agent</Filter>
+     </None>
++    <None Include="..\automation\scripts\devlog-dump.ps1">
++      <Filter>Resource Files\AUTOMATIONS\Scripts</Filter>
++    </None>
+   </ItemGroup>
+   <ItemGroup>
+     <Text Include="..\automation\scripts\output\aiming-merge-changes.txt">
+@@ -205,5 +259,14 @@
+     <Text Include="..\automation\scripts\output\enemies-merge-changes.txt">
+       <Filter>Resource Files\DOCUMENTATION\Git Summaries</Filter>
+     </Text>
++    <Text Include="..\automation\scripts\output\devlog-dump-20260325-151026.txt">
++      <Filter>Resource Files\DOCUMENTATION\Git Summaries\Devlog Dumps</Filter>
++    </Text>
++    <Text Include="..\automation\scripts\output\devlog-dump-20260325-151324.txt">
++      <Filter>Resource Files\DOCUMENTATION\Git Summaries\Devlog Dumps</Filter>
++    </Text>
++    <Text Include="..\automation\scripts\output\combat-room-merge-changes.txt">
++      <Filter>Resource Files\DOCUMENTATION\Git Summaries</Filter>
++    </Text>
+   </ItemGroup>
+ </Project>
+\ No newline at end of file
+
+commit 55b39cf39cf8941fa0232855c8b3dc183c30de00
+Author: WollyTech <ayolawole@gmail.com>
+Date:   Wed Mar 25 03:14:05 2026 +0000
+
+    Combat Room Generated with collisions with walls
+
+diff --git a/project-rival/project-rival/Enemy.h b/project-rival/project-rival/Enemy.h
+index 5efdb91..a5a0ccd 100644
+--- a/project-rival/project-rival/Enemy.h
++++ b/project-rival/project-rival/Enemy.h
+@@ -27,6 +27,8 @@ public:
+ 
+ 	virtual sf::Vector2f getPosition() const;
+ 
++	virtual sf::Vector2f getPosition() const;
++
+ 	virtual void setTarget(const Vector2f& target) = 0;
+ 
+ 	virtual sf::FloatRect getCollisionBounds() const override;
+diff --git a/project-rival/project-rival/RoomBlueprint.h b/project-rival/project-rival/RoomBlueprint.h
+index 523f912..f7848ea 100644
+--- a/project-rival/project-rival/RoomBlueprint.h
++++ b/project-rival/project-rival/RoomBlueprint.h
+@@ -62,7 +62,7 @@ struct RoomPlan {
+ 	// Room representation
+ 	int width;
+ 	int height;	
+-	float tileSize = 64.f;
++	float tileSize = 78.f;
+ 
+ 	// Room layout
+ 	std::vector<Tile> tileMap;	// formula for 1D index: row * width + column
+diff --git a/project-rival/project-rival/RoomInstance.cpp b/project-rival/project-rival/RoomInstance.cpp
+index b321c35..90a1b5e 100644
+--- a/project-rival/project-rival/RoomInstance.cpp
++++ b/project-rival/project-rival/RoomInstance.cpp
+@@ -9,27 +9,27 @@ void RoomInstance::buildFromPlan(const RoomPlan& plan, const sf::Vector2f& world
+ 		return;
+ 
+ 	const float tileSize = plan.tileSize;
+-
++	
+ 	// initialise each tile
+ 	for (int row = 0; row < plan.height; row++) {
+ 		for (int col = 0; col < plan.width; col++) {
+ 			const Tile tile = plan.getTile(row, col);
+ 			if (tile == Tile::WALL) {
+-				// setup wall
+-				sf::RectangleShape wall;
+-				wall.setSize(sf::Vector2f(tileSize, tileSize));
+-				wall.setOrigin(wall.getSize() / 2.f);
+-				wall.setPosition(worldPos + sf::Vector2f(col * tileSize, row * tileSize));
+-				wall.setFillColor(sf::Color(100, 100, 100)); // grey walls
++			// setup wall
++			sf::RectangleShape wall;
++			wall.setSize(sf::Vector2f(tileSize, tileSize));
++			wall.setOrigin(wall.getSize() / 2.f);
++			wall.setPosition(worldPos + sf::Vector2f(col * tileSize, row * tileSize));
++			wall.setFillColor(sf::Color(100, 100, 100)); // grey walls
+ 
+-				ri_staticShapes.push_back(wall);
++			ri_staticShapes.push_back(wall);
+ 
+-				//setup collider for wall
+-				StaticCollision collider(wall.getGlobalBounds(), CollisionLayer::WALL_LAYER,
+-					CollisionLayer::PLAYER_LAYER | CollisionLayer::ENEMY_LAYER | CollisionLayer::PLAYER_BULLET_LAYER | CollisionLayer::ENEMY_BULLET_LAYER);
++			//setup collider for wall
++			StaticCollision collider(wall.getGlobalBounds(), CollisionLayer::WALL_LAYER,
++				CollisionLayer::PLAYER_LAYER | CollisionLayer::ENEMY_LAYER | CollisionLayer::PLAYER_BULLET_LAYER | CollisionLayer::ENEMY_BULLET_LAYER);
+ 
+-				ri_staticColliders.push_back(collider);
+-			}
++			ri_staticColliders.push_back(collider);
++		}
+ 		}
+ 	}
+ 	// initialise spawners (DEBUG)
+diff --git a/project-rival/project-rival/project-rival.vcxproj.filters b/project-rival/project-rival/project-rival.vcxproj.filters
+index f01e4b5..93f2ab0 100644
+--- a/project-rival/project-rival/project-rival.vcxproj.filters
++++ b/project-rival/project-rival/project-rival.vcxproj.filters
+@@ -156,6 +156,15 @@
+     <ClCompile Include="player.cpp">
+       <Filter>Header Files\Player</Filter>
+     </ClCompile>
++    <ClCompile Include="StaticCollision.cpp">
++      <Filter>Header Files\Levels\Collision</Filter>
++    </ClCompile>
++    <ClCompile Include="CombatRoom.cpp">
++      <Filter>Header Files\Levels\Rooms</Filter>
++    </ClCompile>
++    <ClCompile Include="RoomInstance.cpp">
++      <Filter>Header Files\Levels</Filter>
++    </ClCompile>
+   </ItemGroup>
+   <ItemGroup>
+     <ClInclude Include="Game.h">
+@@ -215,6 +224,18 @@
+     <ClInclude Include="player.h">
+       <Filter>Header Files\Player</Filter>
+     </ClInclude>
++    <ClInclude Include="RoomBlueprint.h">
++      <Filter>Header Files\Abs.Interfaces</Filter>
++    </ClInclude>
++    <ClInclude Include="StaticCollision.h">
++      <Filter>Header Files\Levels\Collision</Filter>
++    </ClInclude>
++    <ClInclude Include="CombatRoom.h">
++      <Filter>Header Files\Levels\Rooms</Filter>
++    </ClInclude>
++    <ClInclude Include="RoomInstance.h">
++      <Filter>Header Files\Levels</Filter>
++    </ClInclude>
+   </ItemGroup>
+   <ItemGroup>
+     <Image Include="ASSETS\IMAGES\SFML-LOGO.png">
+
+commit 69705ecad4d080af22487cbe04772be0364cfceb
+Author: WollyTech <ayolawole@gmail.com>
+Date:   Wed Mar 25 05:11:20 2026 +0000
+
+    Enemies spawn in at spawn points
+
+diff --git a/project-rival/project-rival/Game.cpp b/project-rival/project-rival/Game.cpp
+index 35cd2ca..b5f5c6c 100644
+--- a/project-rival/project-rival/Game.cpp
++++ b/project-rival/project-rival/Game.cpp
+@@ -260,6 +260,13 @@ void Game::resetGame()
+ 	m_activeRoomInstance.reset();
+ }
+ 
++	m_enemies.clear();
++
++	m_combatRoom;
++	m_activeRoomPlan;
++	m_activeRoomInstance.reset();
++}
++
+ void Game::gameStart()
+ {
+ 	resetGame();
+diff --git a/project-rival/project-rival/RoomInstance.cpp b/project-rival/project-rival/RoomInstance.cpp
+index 90a1b5e..54c8724 100644
+--- a/project-rival/project-rival/RoomInstance.cpp
++++ b/project-rival/project-rival/RoomInstance.cpp
+@@ -22,11 +22,11 @@ void RoomInstance::buildFromPlan(const RoomPlan& plan, const sf::Vector2f& world
+ 			wall.setPosition(worldPos + sf::Vector2f(col * tileSize, row * tileSize));
+ 			wall.setFillColor(sf::Color(100, 100, 100)); // grey walls
+ 
+-			ri_staticShapes.push_back(wall);
++				ri_staticShapes.push_back(wall);
+ 
+-			//setup collider for wall
+-			StaticCollision collider(wall.getGlobalBounds(), CollisionLayer::WALL_LAYER,
+-				CollisionLayer::PLAYER_LAYER | CollisionLayer::ENEMY_LAYER | CollisionLayer::PLAYER_BULLET_LAYER | CollisionLayer::ENEMY_BULLET_LAYER);
++				//setup collider for wall
++				StaticCollision collider(wall.getGlobalBounds(), CollisionLayer::WALL_LAYER,
++					CollisionLayer::PLAYER_LAYER | CollisionLayer::ENEMY_LAYER | CollisionLayer::PLAYER_BULLET_LAYER | CollisionLayer::ENEMY_BULLET_LAYER);
+ 
+ 			ri_staticColliders.push_back(collider);
+ 		}
+
+commit 5190b97c786c32100cb01fdd8deb88eec88ef33e
+Author: WollyTech <ayolawole@gmail.com>
+Date:   Wed Mar 25 05:39:48 2026 +0000
+
+    different room sizes
+
+diff --git a/project-rival/project-rival/RoomBlueprint.h b/project-rival/project-rival/RoomBlueprint.h
+index f7848ea..523f912 100644
+--- a/project-rival/project-rival/RoomBlueprint.h
++++ b/project-rival/project-rival/RoomBlueprint.h
+@@ -62,7 +62,7 @@ struct RoomPlan {
+ 	// Room representation
+ 	int width;
+ 	int height;	
+-	float tileSize = 78.f;
++	float tileSize = 64.f;
+ 
+ 	// Room layout
+ 	std::vector<Tile> tileMap;	// formula for 1D index: row * width + column
+diff --git a/project-rival/project-rival/player.cpp b/project-rival/project-rival/player.cpp
+index d229c78..618b617 100644
+--- a/project-rival/project-rival/player.cpp
++++ b/project-rival/project-rival/player.cpp
+@@ -43,6 +43,8 @@ void Player::init()
+ 
+ 	p_maxHealth = 100;
+ 
++	p_maxHealth = 100;
++
+ 	reset();
+ }
+ 
+
+commit aca9af680166e761348ec8bfded33a2d5f118908
+Author: WollyTech <ayolawole@gmail.com>
+Date:   Wed Mar 25 22:05:13 2026 +0000
+
+    minor fixes after rebase
+
+diff --git a/project-rival/project-rival/Enemy.h b/project-rival/project-rival/Enemy.h
+index a5a0ccd..5efdb91 100644
+--- a/project-rival/project-rival/Enemy.h
++++ b/project-rival/project-rival/Enemy.h
+@@ -27,8 +27,6 @@ public:
+ 
+ 	virtual sf::Vector2f getPosition() const;
+ 
+-	virtual sf::Vector2f getPosition() const;
+-
+ 	virtual void setTarget(const Vector2f& target) = 0;
+ 
+ 	virtual sf::FloatRect getCollisionBounds() const override;
+diff --git a/project-rival/project-rival/Game.cpp b/project-rival/project-rival/Game.cpp
+index b5f5c6c..35cd2ca 100644
+--- a/project-rival/project-rival/Game.cpp
++++ b/project-rival/project-rival/Game.cpp
+@@ -260,13 +260,6 @@ void Game::resetGame()
+ 	m_activeRoomInstance.reset();
+ }
+ 
+-	m_enemies.clear();
+-
+-	m_combatRoom;
+-	m_activeRoomPlan;
+-	m_activeRoomInstance.reset();
+-}
+-
+ void Game::gameStart()
+ {
+ 	resetGame();
+
+===== STAGED DIFF SUMMARY (git diff --cached --name-status) =====
+
+M	project-rival/project-rival/Collision.h
+M	project-rival/project-rival/CombatRoom.cpp
+M	project-rival/project-rival/Game.cpp
+M	project-rival/project-rival/Game.h
+A	project-rival/project-rival/PortalRoom.cpp
+C079	project-rival/project-rival/SpawnRoom.h	project-rival/project-rival/PortalRoom.h
+M	project-rival/project-rival/RoomBlueprint.h
+M	project-rival/project-rival/RoomInstance.cpp
+M	project-rival/project-rival/SpawnRoom.cpp
+M	project-rival/project-rival/SpawnRoom.h
+M	project-rival/project-rival/player.cpp
+M	project-rival/project-rival/player.h
+M	project-rival/project-rival/project-rival.vcxproj
+M	project-rival/project-rival/project-rival.vcxproj.filters
+
+===== STAGED PATCH (git diff --cached; what will be committed on main) =====
+
+diff --git a/project-rival/project-rival/Collision.h b/project-rival/project-rival/Collision.h
+index ad541df..479b8ec 100644
+--- a/project-rival/project-rival/Collision.h
++++ b/project-rival/project-rival/Collision.h
+@@ -16,6 +16,10 @@ enum CollisionLayer : uint32_t
+ 
+ 	// World Environment layers
+ 
++	// Trigger layers
++	PORTAL_TRIGGER_LAYER = 1 << 5,
++	ROOM_ENTERED_TRIGGER_LAYER = 1 << 6,
++
+ 	ALL = 0xFFFFFFFF
+ };
+ 
+diff --git a/project-rival/project-rival/CombatRoom.cpp b/project-rival/project-rival/CombatRoom.cpp
+index 715998b..790510b 100644
+--- a/project-rival/project-rival/CombatRoom.cpp
++++ b/project-rival/project-rival/CombatRoom.cpp
+@@ -5,13 +5,13 @@ RoomPlan CombatRoom::generateRoom(int id, RoomType type, int seed)
+ 	RoomPlan room;
+ 	// Meta data
+ 	room.id = id;
+-	room.type = type;
++	room.type = RoomType::COMBAT;
+ 	room.seed = seed;
+ 		// -> note here that this is where the height and width will be determined based on the type
+ 	//height 10-12; width 15-20
+ 	room.height = rand() % 4 + 10;
+ 	room.width = rand() % 6 + 15;
+-
++	
+ 	// tile map initialisation
+ 	room.tileMap.assign(room.height * room.width, Tile::FLOOR);
+ 
+@@ -31,7 +31,7 @@ RoomPlan CombatRoom::generateRoom(int id, RoomType type, int seed)
+ 	const int interiorWidth = room.width - 2;
+ 	const int interiorHeight = room.height - 2;
+ 	const int interiorArea = interiorWidth * interiorHeight;
+-	
++
+ 	// Pillars
+ 	generateObstacles(room, interiorArea);
+ 
+diff --git a/project-rival/project-rival/Game.cpp b/project-rival/project-rival/Game.cpp
+index c8d2820..35cd2ca 100644
+--- a/project-rival/project-rival/Game.cpp
++++ b/project-rival/project-rival/Game.cpp
+@@ -134,7 +134,7 @@ void Game::update(double dt)
+ 		enemy->setTarget(m_player.getPosition());
+ 		enemy->update(dt);
+ 
+-		// Check collision with player and wall
++		// Check collision with player and collisionObject
+ 		// Enemy -> Player
+ 		if (CollisionCheck::areColliding(m_player, *enemy)) {
+ 			cout << "Player collided with enemy!\n";
+@@ -180,24 +180,38 @@ void Game::update(double dt)
+ 	}
+ 
+ 	// Check static environment against player, enmies and projectiles
+-	for (auto& wall : m_activeRoomInstance.getStaticCollisions())
++	for (auto& collisionObject : m_activeRoomInstance.getStaticCollisions())
+ 	{
+-		// Wall -> Player
+-		if (CollisionCheck::areColliding(m_player, wall))
++		// Wall collision checks
++		if (collisionObject.getCollisionProfile().layer == CollisionLayer::WALL_LAYER)
+ 		{
+-			m_player.hitWall(oldPlayerPos);
++			// Wall -> Player
++			if (CollisionCheck::areColliding(m_player, collisionObject))
++			{
++				m_player.hitWall(oldPlayerPos);
++			}
++
++			// Wall -> Player Projectiles
++			for (auto& bullet : m_player.getProjectiles())
++			{
++				if (bullet->shouldDestroy())
++					continue;
++
++				if (CollisionCheck::areColliding(*bullet, collisionObject))
++				{
++					bullet->destroy();
++					break;
++				}
++			}
+ 		}
+ 
+-		// Wall -> Player Projectiles
+-		for (auto& bullet : m_player.getProjectiles())
++		// Portal trigger checks
++		if (collisionObject.getCollisionProfile().layer == CollisionLayer::PORTAL_TRIGGER_LAYER)
+ 		{
+-			if (bullet->shouldDestroy())
+-				continue;
+-
+-			if (CollisionCheck::areColliding(*bullet, wall))
++			// Portal Trigger -> Player
++			if (CollisionCheck::areColliding(collisionObject, m_player))
+ 			{
+-				bullet->destroy();
+-				break;
++				cout << "Player Collided with Portal Trigger!\n";
+ 			}
+ 		}
+ 	}
+@@ -241,6 +255,7 @@ void Game::resetGame()
+ 	m_enemies.clear();
+ 
+ 	m_combatRoom;
++	m_spawnRoom;
+ 	m_activeRoomPlan;
+ 	m_activeRoomInstance.reset();
+ }
+@@ -253,25 +268,49 @@ void Game::gameStart()
+ 
+ void Game::generateRoom()
+ {
+-	m_activeRoomPlan = m_combatRoom.generateRoom(0, RoomType::COMBAT, 0);
++	m_activeRoomPlan = m_portalRoom.generateRoom(0, RoomType::PORTAL, 0);
+ 
+ 	sf::Vector2f roomWorldPos{ 50.f, 50.f };
+ 	m_activeRoomInstance.buildFromPlan(m_activeRoomPlan, roomWorldPos);
+ 
+ 	m_enemies.clear();
+ 
+-	//Enemy Spawner
+-	int totalEnemyTypes = EnemyType::COUNT;
+-	for (auto& spawnPoint : m_activeRoomPlan.spawners)
++	// Combat room Spawner
++	if(m_activeRoomPlan.type == RoomType::COMBAT)
++	{
++		int totalEnemyTypes = EnemyType::COUNT;
++		for (auto& spawnPoint : m_activeRoomPlan.spawners)
++		{
++			if (spawnPoint.type == SpawnerType::EnemySpawner) {
++				Vector2f spawnPos = roomWorldPos + static_cast<Vector2f>(spawnPoint.tilePos) * m_activeRoomPlan.tileSize;
++
++				int enemyToSpawn = rand() % totalEnemyTypes;
++				if (enemyToSpawn == 0)
++					m_enemies.push_back(std::make_unique<GruntEnemy>(spawnPos, 150));
++				else if (enemyToSpawn == 1)
++					m_enemies.push_back(std::make_unique<TurretEnemy>(spawnPos, 250));
++			}
++		}
++	}
++	// Spawn room Spawner
++	if (m_activeRoomPlan.type == RoomType::SPAWN)
+ 	{
+-		if (spawnPoint.type == SpawnerType::EnemySpawner) {
+-			Vector2f spawnPos = roomWorldPos + static_cast<Vector2f>(spawnPoint.tilePos) * m_activeRoomPlan.tileSize;
+-			
+-			int enemyToSpawn = rand() % totalEnemyTypes;
+-			if (enemyToSpawn == 0)
+-				m_enemies.push_back(std::make_unique<GruntEnemy>(spawnPos, 150));
+-			else if (enemyToSpawn == 1)
+-				m_enemies.push_back(std::make_unique<TurretEnemy>(spawnPos, 250));
++		for (auto& spawnPoint : m_activeRoomPlan.spawners)
++		{
++			if (spawnPoint.type == SpawnerType::PlayerSpawner) {
++				Vector2f spawnPos = roomWorldPos + static_cast<Vector2f>(spawnPoint.tilePos) * m_activeRoomPlan.tileSize;
++				m_player.setSpawnPosition(spawnPos);
++			}
+ 		}
+ 	}
++	//// Portal room Spawner
++	//if (m_activeRoomPlan.type == RoomType::PORTAL)
++	//{
++	//	for(auto& spawnPoint:m_activeRoomPlan.spawners){
++	//		if(spawnPoint.type == SpawnerType::PortalSpawner){
++	//			Vector2f spawnPos = roomWorldPos + static_cast<Vector2f>(spawnPoint.tilePos) * m_activeRoomPlan.tileSize;
++
++	//		}
++	//	}
++	//}
+ }
+diff --git a/project-rival/project-rival/Game.h b/project-rival/project-rival/Game.h
+index b5fe655..cb36130 100644
+--- a/project-rival/project-rival/Game.h
++++ b/project-rival/project-rival/Game.h
+@@ -14,6 +14,8 @@
+ 
+ #include "RoomInstance.h"
+ #include "CombatRoom.h"
++#include "SpawnRoom.h"
++#include "PortalRoom.h"
+ 
+ using namespace std;
+ using namespace sf;
+@@ -57,7 +59,9 @@ protected:
+ 
+ 	std::vector<std::unique_ptr<Enemy>> m_enemies;
+ 
+-	CombatRoom m_combatRoom;	
++	CombatRoom m_combatRoom;
++	SpawnRoom m_spawnRoom;
++	PortalRoom m_portalRoom;
+ 	RoomPlan m_activeRoomPlan;
+ 	RoomInstance m_activeRoomInstance;
+ 
+diff --git a/project-rival/project-rival/PortalRoom.cpp b/project-rival/project-rival/PortalRoom.cpp
+new file mode 100644
+index 0000000..bee9da5
+--- /dev/null
++++ b/project-rival/project-rival/PortalRoom.cpp
+@@ -0,0 +1,46 @@
++#include "PortalRoom.h"
++
++RoomPlan PortalRoom::generateRoom(int id, RoomType type, int seed)
++{
++	RoomPlan plan;
++	// Meta data
++	plan.id = id;
++	plan.type = RoomType::PORTAL;
++	plan.seed = seed;
++	plan.width = 11;
++	plan.height = 11;
++
++	// Tile map initialisation
++	plan.tileMap.assign(plan.height * plan.width, Tile::FLOOR);
++
++	// Tile map construction
++	// Outer walls
++	for (int col = 0; col < plan.width; col++)
++	{
++		plan.setTile(0, col, Tile::WALL);				// top row
++		plan.setTile(plan.height - 1, col, Tile::WALL);	// bottom row
++	}
++	for (int row = 0; row < plan.height; row++)
++	{
++		plan.setTile(row, 0, Tile::WALL);				// left column
++		plan.setTile(row, plan.width - 1, Tile::WALL);	// right column
++	}
++
++	const int interiorWidth = plan.width - 2;
++	const int interiorHeight = plan.height - 2;
++	const int interiorArea = interiorWidth * interiorHeight;
++
++	// Spawners
++	generateSpawnPoints(plan, interiorArea);
++
++	return plan;
++}
++
++void PortalRoom::generateSpawnPoints(RoomPlan& roomPlan, int interiorArea)
++{
++	// Portal Spawner
++	sf::Vector2i roomCenter = sf::Vector2i(roomPlan.width, roomPlan.height) / 2;
++	roomPlan.spawners.push_back({ SpawnerType::PortalSpawner, roomCenter });
++	// Portal Trigger
++	roomPlan.triggers.push_back({ TriggerType::PortalTrigger, roomCenter });
++}
+diff --git a/project-rival/project-rival/PortalRoom.h b/project-rival/project-rival/PortalRoom.h
+new file mode 100644
+index 0000000..ae2d7aa
+--- /dev/null
++++ b/project-rival/project-rival/PortalRoom.h
+@@ -0,0 +1,10 @@
++#pragma once
++#include "RoomBlueprint.h"
++
++class PortalRoom : public IRoomGenerator
++{
++public:
++	RoomPlan generateRoom(int id, RoomType type, int seed) override;
++	void generateSpawnPoints(RoomPlan& roomPlan, int interiorArea) override;
++};
++
+diff --git a/project-rival/project-rival/RoomBlueprint.h b/project-rival/project-rival/RoomBlueprint.h
+index 9af53df..523f912 100644
+--- a/project-rival/project-rival/RoomBlueprint.h
++++ b/project-rival/project-rival/RoomBlueprint.h
+@@ -33,7 +33,8 @@ struct DoorPlan {
+ 
+ enum SpawnerType {
+ 	PlayerSpawner,
+-	EnemySpawner
++	EnemySpawner,
++	PortalSpawner
+ };
+ 
+ struct SpawnerPlan {
+@@ -41,6 +42,17 @@ struct SpawnerPlan {
+ 	sf::Vector2i tilePos;
+ };
+ 
++enum TriggerType {
++	None,
++	RoomEnteredTrigger,
++	PortalTrigger
++};
++
++struct TriggerPlan {
++	TriggerType type;
++	sf::Vector2i tilePos;
++};
++
+ struct RoomPlan {
+ 	// Room metadata
+ 	int id;
+@@ -56,6 +68,7 @@ struct RoomPlan {
+ 	std::vector<Tile> tileMap;	// formula for 1D index: row * width + column
+ 	std::vector<DoorPlan> doors;
+ 	std::vector<SpawnerPlan> spawners;
++	std::vector<TriggerPlan> triggers;
+ 	
+ 	bool isValid() const {
+ 		if (width > 0 && height > 0 && (tileMap.size() == width * height))
+diff --git a/project-rival/project-rival/RoomInstance.cpp b/project-rival/project-rival/RoomInstance.cpp
+index ff64b61..54c8724 100644
+--- a/project-rival/project-rival/RoomInstance.cpp
++++ b/project-rival/project-rival/RoomInstance.cpp
+@@ -15,12 +15,12 @@ void RoomInstance::buildFromPlan(const RoomPlan& plan, const sf::Vector2f& world
+ 		for (int col = 0; col < plan.width; col++) {
+ 			const Tile tile = plan.getTile(row, col);
+ 			if (tile == Tile::WALL) {
+-				// setup wall
+-				sf::RectangleShape wall;
+-				wall.setSize(sf::Vector2f(tileSize, tileSize));
+-				wall.setOrigin(wall.getSize() / 2.f);
+-				wall.setPosition(worldPos + sf::Vector2f(col * tileSize, row * tileSize));
+-				wall.setFillColor(sf::Color(100, 100, 100)); // grey walls
++			// setup wall
++			sf::RectangleShape wall;
++			wall.setSize(sf::Vector2f(tileSize, tileSize));
++			wall.setOrigin(wall.getSize() / 2.f);
++			wall.setPosition(worldPos + sf::Vector2f(col * tileSize, row * tileSize));
++			wall.setFillColor(sf::Color(100, 100, 100)); // grey walls
+ 
+ 				ri_staticShapes.push_back(wall);
+ 
+@@ -28,25 +28,51 @@ void RoomInstance::buildFromPlan(const RoomPlan& plan, const sf::Vector2f& world
+ 				StaticCollision collider(wall.getGlobalBounds(), CollisionLayer::WALL_LAYER,
+ 					CollisionLayer::PLAYER_LAYER | CollisionLayer::ENEMY_LAYER | CollisionLayer::PLAYER_BULLET_LAYER | CollisionLayer::ENEMY_BULLET_LAYER);
+ 
+-				ri_staticColliders.push_back(collider);
+-			}
++			ri_staticColliders.push_back(collider);
++		}
+ 		}
+ 	}
+ 	// initialise spawners (DEBUG)
+ 	for (auto& spawner : plan.spawners) {
++		// setup spawn point shape
+ 		sf::RectangleShape spawnPoint;
+ 		spawnPoint.setSize(sf::Vector2f(tileSize, tileSize) / 8.f);
+ 		spawnPoint.setOrigin(spawnPoint.getSize() / 2.f);
+ 		spawnPoint.setPosition(worldPos + static_cast<sf::Vector2f>(spawner.tilePos) * tileSize);
++
+ 		if (spawner.type == SpawnerType::PlayerSpawner) {
+-			spawnPoint.setFillColor(sf::Color(0, 255, 0)); // green for player spawn
++			spawnPoint.setFillColor(sf::Color::Green);
+ 		}
+ 		else if (spawner.type == SpawnerType::EnemySpawner) {
+-			spawnPoint.setFillColor(sf::Color(255, 0, 0)); // red for enemy spawn
++			spawnPoint.setFillColor(sf::Color::Red);
++		}
++		else if (spawner.type == SpawnerType::PortalSpawner) {
++			spawnPoint.setFillColor(sf::Color::Blue);
+ 		}
+ 
+ 		ri_staticShapes.push_back(spawnPoint);
+ 	}
++	// initialise triggers (DEBUG)
++	for (auto& trigger : plan.triggers) {
++		// setup trigger shape
++		sf::RectangleShape triggerShape;
++		if (trigger.type == TriggerType::PortalTrigger) {
++			triggerShape.setSize(sf::Vector2f(tileSize, tileSize) * 3.f); // 3x the size of a tile
++			triggerShape.setFillColor(sf::Color(0, 0, 255, 100)); // semi-transparent blue for portal trigger
++		}
++		triggerShape.setOrigin(triggerShape.getSize() / 2.f);
++		triggerShape.setPosition(worldPos + static_cast<sf::Vector2f>(trigger.tilePos) * tileSize);
++
++		ri_staticShapes.push_back(triggerShape);
++
++		// setup collider for trigger
++		StaticCollision collider;
++		if (trigger.type == TriggerType::PortalTrigger) {
++			collider = StaticCollision(triggerShape.getGlobalBounds(), CollisionLayer::PORTAL_TRIGGER_LAYER,
++				CollisionLayer::PLAYER_LAYER);
++		}
++		ri_staticColliders.push_back(collider);
++	}
+ }
+ 
+ const std::vector<StaticCollision>& RoomInstance::getStaticCollisions()
+diff --git a/project-rival/project-rival/SpawnRoom.cpp b/project-rival/project-rival/SpawnRoom.cpp
+index 58697a4..554c194 100644
+--- a/project-rival/project-rival/SpawnRoom.cpp
++++ b/project-rival/project-rival/SpawnRoom.cpp
+@@ -5,10 +5,10 @@ RoomPlan SpawnRoom::generateRoom(int id, RoomType type, int seed)
+ 	RoomPlan room;
+ 	// Meta data
+ 	room.id = id;
+-	room.type = type;
++	room.type = RoomType::SPAWN;
+ 	room.seed = seed;
+-	room.height = 8;
+-	room.width = 8;
++	room.height = 11;
++	room.width = 11;
+ 
+ 	// tile map initialisation
+ 	room.tileMap.assign(room.height * room.width, Tile::FLOOR);
+@@ -32,6 +32,8 @@ RoomPlan SpawnRoom::generateRoom(int id, RoomType type, int seed)
+ 
+ 	// Spawners
+ 	generateSpawnPoints(room, interiorArea);
++
++	return room;
+ }
+ 
+ void SpawnRoom::generateSpawnPoints(RoomPlan& roomPlan, int interiorArea)
+diff --git a/project-rival/project-rival/SpawnRoom.h b/project-rival/project-rival/SpawnRoom.h
+index 439f607..a1d6e2b 100644
+--- a/project-rival/project-rival/SpawnRoom.h
++++ b/project-rival/project-rival/SpawnRoom.h
+@@ -3,7 +3,7 @@
+ 
+ class SpawnRoom : public IRoomGenerator
+ {
+-	public:
++public:
+ 	RoomPlan generateRoom(int id, RoomType type, int seed) override;
+ 	void generateSpawnPoints(RoomPlan& roomPlan, int interiorArea) override;
+ };
+diff --git a/project-rival/project-rival/player.cpp b/project-rival/project-rival/player.cpp
+index 47e1f36..618b617 100644
+--- a/project-rival/project-rival/player.cpp
++++ b/project-rival/project-rival/player.cpp
+@@ -39,7 +39,9 @@ void Player::init()
+ 
+ 	//collision
+ 	p_collisionProfile.layer = CollisionLayer::PLAYER_LAYER;
+-	p_collisionProfile.mask = CollisionLayer::ENEMY_LAYER | CollisionLayer::ENEMY_BULLET_LAYER | CollisionLayer::WALL_LAYER;
++	p_collisionProfile.mask = CollisionLayer::ENEMY_LAYER | CollisionLayer::ENEMY_BULLET_LAYER | CollisionLayer::WALL_LAYER | CollisionLayer::PORTAL_TRIGGER_LAYER;
++
++	p_maxHealth = 100;
+ 
+ 	p_maxHealth = 100;
+ 
+@@ -96,6 +98,11 @@ CollisionProfile Player::getCollisionProfile() const
+ 	return p_collisionProfile;
+ }
+ 
++void Player::setSpawnPosition(const Vector2f& spawnPos)
++{
++	p_body.setPosition(spawnPos);
++}
++
+ void Player::reset()
+ {
+ 	p_body.setPosition(Vector2f(500, 500.f));
+diff --git a/project-rival/project-rival/player.h b/project-rival/project-rival/player.h
+index 8307799..d959e35 100644
+--- a/project-rival/project-rival/player.h
++++ b/project-rival/project-rival/player.h
+@@ -22,6 +22,7 @@ public:
+ 	sf::FloatRect getCollisionBounds() const override;
+ 	CollisionProfile getCollisionProfile() const override;
+ 
++	void setSpawnPosition(const Vector2f& spawnPos);
+ 
+ 	void handleMovement(double dt);
+ 	void handleAiming(const Vector2f mousePos);
+diff --git a/project-rival/project-rival/project-rival.vcxproj b/project-rival/project-rival/project-rival.vcxproj
+index f0bbef0..b4eeb4d 100644
+--- a/project-rival/project-rival/project-rival.vcxproj
++++ b/project-rival/project-rival/project-rival.vcxproj
+@@ -23,6 +23,7 @@
+     <ClCompile Include="Collision.cpp" />
+     <ClCompile Include="CombatRoom.cpp" />
+     <ClCompile Include="NormalBulletProjectile.cpp" />
++    <ClCompile Include="PortalRoom.cpp" />
+     <ClCompile Include="Projectile.cpp" />
+     <ClCompile Include="Enemy.cpp" />
+     <ClCompile Include="Game.cpp" />
+@@ -33,6 +34,7 @@
+     <ClCompile Include="player.cpp" />
+     <ClCompile Include="RoomInstance.cpp" />
+     <ClCompile Include="SeekBehaviour.cpp" />
++    <ClCompile Include="SpawnRoom.cpp" />
+     <ClCompile Include="StaticCollision.cpp" />
+     <ClCompile Include="TurretEnemy.cpp" />
+   </ItemGroup>
+@@ -41,6 +43,7 @@
+     <ClInclude Include="Collision.h" />
+     <ClInclude Include="CombatRoom.h" />
+     <ClInclude Include="NormalBulletProjectile.h" />
++    <ClInclude Include="PortalRoom.h" />
+     <ClInclude Include="Projectile.h" />
+     <ClInclude Include="Enemy.h" />
+     <ClInclude Include="Game.h" />
+@@ -51,6 +54,7 @@
+     <ClInclude Include="RoomBlueprint.h" />
+     <ClInclude Include="RoomInstance.h" />
+     <ClInclude Include="SeekBehaviour.h" />
++    <ClInclude Include="SpawnRoom.h" />
+     <ClInclude Include="StaticCollision.h" />
+     <ClInclude Include="Steering.h" />
+     <ClInclude Include="TurretEnemy.h" />
+diff --git a/project-rival/project-rival/project-rival.vcxproj.filters b/project-rival/project-rival/project-rival.vcxproj.filters
+index 809c5fc..93f2ab0 100644
+--- a/project-rival/project-rival/project-rival.vcxproj.filters
++++ b/project-rival/project-rival/project-rival.vcxproj.filters
+@@ -61,6 +61,45 @@
+     <Filter Include="Resource Files\DOCUMENTATION\Git Summaries">
+       <UniqueIdentifier>{d0a212c5-440c-41a1-8f2b-6fde83f55d70}</UniqueIdentifier>
+     </Filter>
++    <Filter Include="Header Files\Levels\Rooms\Combat Room">
++      <UniqueIdentifier>{6c01b469-4db9-4697-a8dd-812e4bf169e4}</UniqueIdentifier>
++    </Filter>
++    <Filter Include="Header Files\Levels\Rooms\Portal Room">
++      <UniqueIdentifier>{d6d9eb36-80d4-49c2-8aca-b30bceee3189}</UniqueIdentifier>
++    </Filter>
++    <Filter Include="Header Files\Levels\Rooms\Spawn Room">
++      <UniqueIdentifier>{83524f3d-2757-4bc8-bd75-f613d35270f0}</UniqueIdentifier>
++    </Filter>
++    <Filter Include="Header Files\Abs.Interfaces\Collision">
++      <UniqueIdentifier>{3d16047e-5381-44b1-acad-034b7d06a802}</UniqueIdentifier>
++    </Filter>
++    <Filter Include="Header Files\Abs.Interfaces\Room Blueprint">
++      <UniqueIdentifier>{afd6ea71-deac-45ed-961c-6a703e03640c}</UniqueIdentifier>
++    </Filter>
++    <Filter Include="Header Files\Abs.Interfaces\Steering">
++      <UniqueIdentifier>{fb5c9f71-f0a5-4069-b4c4-44cd19d4858e}</UniqueIdentifier>
++    </Filter>
++    <Filter Include="Header Files\Behaviours\Arrive">
++      <UniqueIdentifier>{8a630ba1-5c05-493a-b269-da321a6359e3}</UniqueIdentifier>
++    </Filter>
++    <Filter Include="Header Files\Behaviours\Seek">
++      <UniqueIdentifier>{5e2eccba-5354-4112-84aa-d0e5fc88b169}</UniqueIdentifier>
++    </Filter>
++    <Filter Include="Header Files\Enemies\Basic">
++      <UniqueIdentifier>{09da90ae-5e5d-4854-b02a-a78a5330dfff}</UniqueIdentifier>
++    </Filter>
++    <Filter Include="Header Files\Enemies\Basic\Grunt">
++      <UniqueIdentifier>{86ff36fa-be83-400c-b8ee-b2e3af12c8d7}</UniqueIdentifier>
++    </Filter>
++    <Filter Include="Header Files\Enemies\Basic\Turret">
++      <UniqueIdentifier>{137ff5ed-1375-45ed-994c-a37a19e89b93}</UniqueIdentifier>
++    </Filter>
++    <Filter Include="Header Files\Player">
++      <UniqueIdentifier>{dbad0cb9-07df-477f-8c63-4ca7a14b0f08}</UniqueIdentifier>
++    </Filter>
++    <Filter Include="Resource Files\DOCUMENTATION\Git Summaries\Devlog Dumps">
++      <UniqueIdentifier>{dd92ece3-062f-4995-b441-b7cec4b92ad3}</UniqueIdentifier>
++    </Filter>
+   </ItemGroup>
+   <ItemGroup>
+     <ClCompile Include="main.cpp">
+@@ -69,38 +108,53 @@
+     <ClCompile Include="Game.cpp">
+       <Filter>Source Files</Filter>
+     </ClCompile>
+-    <ClCompile Include="player.cpp">
+-      <Filter>Source Files</Filter>
+-    </ClCompile>
+     <ClCompile Include="InputManager.cpp">
+       <Filter>Header Files\Input</Filter>
+     </ClCompile>
+     <ClCompile Include="Gamepad.cpp">
+       <Filter>Header Files\Input</Filter>
+     </ClCompile>
+-    <ClCompile Include="SeekBehaviour.cpp">
+-      <Filter>Header Files\Behaviours</Filter>
+-    </ClCompile>
+-    <ClCompile Include="ArriveBehaviour.cpp">
+-      <Filter>Header Files\Behaviours</Filter>
+-    </ClCompile>
+     <ClCompile Include="Enemy.cpp">
+       <Filter>Header Files\Abs.Classes</Filter>
+     </ClCompile>
+-    <ClCompile Include="GruntEnemy.cpp">
+-      <Filter>Header Files\Enemies</Filter>
+-    </ClCompile>
+-    <ClCompile Include="TurretEnemy.cpp">
+-      <Filter>Header Files\Enemies</Filter>
+-    </ClCompile>
+     <ClCompile Include="Projectile.cpp">
+       <Filter>Header Files\Abs.Classes</Filter>
+     </ClCompile>
+     <ClCompile Include="NormalBulletProjectile.cpp">
+       <Filter>Header Files\Projectiles</Filter>
+     </ClCompile>
++    <ClCompile Include="StaticCollision.cpp">
++      <Filter>Header Files\Levels\Collision</Filter>
++    </ClCompile>
++    <ClCompile Include="RoomInstance.cpp">
++      <Filter>Header Files\Levels</Filter>
++    </ClCompile>
++    <ClCompile Include="CombatRoom.cpp">
++      <Filter>Header Files\Levels\Rooms\Combat Room</Filter>
++    </ClCompile>
++    <ClCompile Include="PortalRoom.cpp">
++      <Filter>Header Files\Levels\Rooms\Portal Room</Filter>
++    </ClCompile>
++    <ClCompile Include="SpawnRoom.cpp">
++      <Filter>Header Files\Levels\Rooms\Spawn Room</Filter>
++    </ClCompile>
+     <ClCompile Include="Collision.cpp">
+-      <Filter>Header Files\Abs.Interfaces</Filter>
++      <Filter>Header Files\Abs.Interfaces\Collision</Filter>
++    </ClCompile>
++    <ClCompile Include="ArriveBehaviour.cpp">
++      <Filter>Header Files\Behaviours\Arrive</Filter>
++    </ClCompile>
++    <ClCompile Include="SeekBehaviour.cpp">
++      <Filter>Header Files\Behaviours\Seek</Filter>
++    </ClCompile>
++    <ClCompile Include="GruntEnemy.cpp">
++      <Filter>Header Files\Enemies\Basic\Grunt</Filter>
++    </ClCompile>
++    <ClCompile Include="TurretEnemy.cpp">
++      <Filter>Header Files\Enemies\Basic\Turret</Filter>
++    </ClCompile>
++    <ClCompile Include="player.cpp">
++      <Filter>Header Files\Player</Filter>
+     </ClCompile>
+     <ClCompile Include="StaticCollision.cpp">
+       <Filter>Header Files\Levels\Collision</Filter>
+@@ -116,41 +170,59 @@
+     <ClInclude Include="Game.h">
+       <Filter>Header Files</Filter>
+     </ClInclude>
+-    <ClInclude Include="player.h">
+-      <Filter>Header Files</Filter>
+-    </ClInclude>
+     <ClInclude Include="InputManager.h">
+       <Filter>Header Files\Input</Filter>
+     </ClInclude>
+     <ClInclude Include="Gamepad.h">
+       <Filter>Header Files\Input</Filter>
+     </ClInclude>
+-    <ClInclude Include="SeekBehaviour.h">
+-      <Filter>Header Files\Behaviours</Filter>
+-    </ClInclude>
+-    <ClInclude Include="Steering.h">
+-      <Filter>Header Files\Abs.Interfaces</Filter>
+-    </ClInclude>
+-    <ClInclude Include="ArriveBehaviour.h">
+-      <Filter>Header Files\Behaviours</Filter>
+-    </ClInclude>
+     <ClInclude Include="Enemy.h">
+       <Filter>Header Files\Abs.Classes</Filter>
+     </ClInclude>
+-    <ClInclude Include="GruntEnemy.h">
+-      <Filter>Header Files\Enemies</Filter>
+-    </ClInclude>
+-    <ClInclude Include="TurretEnemy.h">
+-      <Filter>Header Files\Enemies</Filter>
+-    </ClInclude>
+     <ClInclude Include="Projectile.h">
+       <Filter>Header Files\Abs.Classes</Filter>
+     </ClInclude>
+     <ClInclude Include="NormalBulletProjectile.h">
+       <Filter>Header Files\Projectiles</Filter>
+     </ClInclude>
++    <ClInclude Include="StaticCollision.h">
++      <Filter>Header Files\Levels\Collision</Filter>
++    </ClInclude>
++    <ClInclude Include="RoomInstance.h">
++      <Filter>Header Files\Levels</Filter>
++    </ClInclude>
++    <ClInclude Include="CombatRoom.h">
++      <Filter>Header Files\Levels\Rooms\Combat Room</Filter>
++    </ClInclude>
++    <ClInclude Include="PortalRoom.h">
++      <Filter>Header Files\Levels\Rooms\Portal Room</Filter>
++    </ClInclude>
++    <ClInclude Include="SpawnRoom.h">
++      <Filter>Header Files\Levels\Rooms\Spawn Room</Filter>
++    </ClInclude>
+     <ClInclude Include="Collision.h">
+-      <Filter>Header Files\Abs.Interfaces</Filter>
++      <Filter>Header Files\Abs.Interfaces\Collision</Filter>
++    </ClInclude>
++    <ClInclude Include="RoomBlueprint.h">
++      <Filter>Header Files\Abs.Interfaces\Room Blueprint</Filter>
++    </ClInclude>
++    <ClInclude Include="Steering.h">
++      <Filter>Header Files\Abs.Interfaces\Steering</Filter>
++    </ClInclude>
++    <ClInclude Include="ArriveBehaviour.h">
++      <Filter>Header Files\Behaviours\Arrive</Filter>
++    </ClInclude>
++    <ClInclude Include="SeekBehaviour.h">
++      <Filter>Header Files\Behaviours\Seek</Filter>
++    </ClInclude>
++    <ClInclude Include="GruntEnemy.h">
++      <Filter>Header Files\Enemies\Basic\Grunt</Filter>
++    </ClInclude>
++    <ClInclude Include="TurretEnemy.h">
++      <Filter>Header Files\Enemies\Basic\Turret</Filter>
++    </ClInclude>
++    <ClInclude Include="player.h">
++      <Filter>Header Files\Player</Filter>
+     </ClInclude>
+     <ClInclude Include="RoomBlueprint.h">
+       <Filter>Header Files\Abs.Interfaces</Filter>
+@@ -194,6 +266,9 @@
+     <None Include="automation\prompts\level-architecture-roomplan-generator-builder-static-colliders-context.md">
+       <Filter>Resource Files\AUTOMATIONS\Agent</Filter>
+     </None>
++    <None Include="..\automation\scripts\devlog-dump.ps1">
++      <Filter>Resource Files\AUTOMATIONS\Scripts</Filter>
++    </None>
+   </ItemGroup>
+   <ItemGroup>
+     <Text Include="..\automation\scripts\output\aiming-merge-changes.txt">
+@@ -205,5 +280,14 @@
+     <Text Include="..\automation\scripts\output\enemies-merge-changes.txt">
+       <Filter>Resource Files\DOCUMENTATION\Git Summaries</Filter>
+     </Text>
++    <Text Include="..\automation\scripts\output\devlog-dump-20260325-151026.txt">
++      <Filter>Resource Files\DOCUMENTATION\Git Summaries\Devlog Dumps</Filter>
++    </Text>
++    <Text Include="..\automation\scripts\output\devlog-dump-20260325-151324.txt">
++      <Filter>Resource Files\DOCUMENTATION\Git Summaries\Devlog Dumps</Filter>
++    </Text>
++    <Text Include="..\automation\scripts\output\combat-room-merge-changes.txt">
++      <Filter>Resource Files\DOCUMENTATION\Git Summaries</Filter>
++    </Text>
+   </ItemGroup>
+ </Project>
+\ No newline at end of file
+
+===== STAGED FILE CONTENTS (index blobs; skips deletions + binaries) =====
+
+===== FILE: project-rival/project-rival/Collision.h =====
+#pragma once
+#include "Sfml/Graphics.hpp"
+
+enum CollisionLayer : uint32_t
+{
+	NONE = 0,
+
+	// Entity layers
+	PLAYER_LAYER = 1 << 0,
+	ENEMY_LAYER = 1 << 1,
+	PLAYER_BULLET_LAYER = 1 << 2,
+	ENEMY_BULLET_LAYER = 1 << 3,
+
+	// Static Environment layers
+	WALL_LAYER = 1 << 4,
+
+	// World Environment layers
+
+	// Trigger layers
+	PORTAL_TRIGGER_LAYER = 1 << 5,
+	ROOM_ENTERED_TRIGGER_LAYER = 1 << 6,
+
+	ALL = 0xFFFFFFFF
+};
+
+struct CollisionProfile
+{
+	CollisionLayer layer;
+	uint32_t mask;
+
+	bool canCollideWith(const CollisionProfile& other) const
+	{
+		//  check if the other object's layer is in our mask AND also if our layer is in the other object's mask.
+		return (((mask & other.layer) != CollisionLayer::NONE) && ((other.mask & layer) != CollisionLayer::NONE));
+	}
+};
+
+class ICollidable
+{
+public:
+	virtual ~ICollidable() = default;
+
+	virtual sf::FloatRect getCollisionBounds() const = 0;
+	virtual CollisionProfile getCollisionProfile() const = 0;
+};
+
+class CollisionCheck {
+	public:
+		static bool areColliding(const ICollidable& entity_A, const ICollidable& entity_B);
+};
+
+===== FILE: project-rival/project-rival/CombatRoom.cpp =====
+#include "CombatRoom.h"
+
+RoomPlan CombatRoom::generateRoom(int id, RoomType type, int seed)
+{
+	RoomPlan room;
+	// Meta data
+	room.id = id;
+	room.type = RoomType::COMBAT;
+	room.seed = seed;
+		// -> note here that this is where the height and width will be determined based on the type
+	//height 10-12; width 15-20
+	room.height = rand() % 4 + 10;
+	room.width = rand() % 6 + 15;
+	
+	// tile map initialisation
+	room.tileMap.assign(room.height * room.width, Tile::FLOOR);
+
+	// tile map construction
+	// outer walls
+	for (int col = 0; col < room.width; col++)
+	{
+		room.setTile(0, col, Tile::WALL);				// top row
+		room.setTile(room.height - 1, col, Tile::WALL);	// bottom row
+	}
+	for (int row = 0; row < room.height; row++)
+	{
+		room.setTile(row, 0, Tile::WALL);				// left column
+		room.setTile(row, room.width - 1, Tile::WALL);	// right column
+	}
+
+	const int interiorWidth = room.width - 2;
+	const int interiorHeight = room.height - 2;
+	const int interiorArea = interiorWidth * interiorHeight;
+
+	// Pillars
+	generateObstacles(room, interiorArea);
+
+	// Spawners
+	generateSpawnPoints(room, interiorArea);
+
+	// yet to do: room geometry like doors, etc.
+
+	return room;
+}
+
+void CombatRoom::generateObstacles(RoomPlan& room, int interiorArea)
+{
+	int maxPillars = interiorArea / (room.tileSize / 2);	// 1 pillar per half tile size of interior space, rounded down
+
+	int pillarCount = rand() % (maxPillars + 1);
+
+	for (int i = 0; i < pillarCount; i++)
+	{
+		int size = rand() % 2 + 1; // 1x1 or 2x2
+
+		const int minRow = 1;
+		const int maxRow = room.height - size - 1;
+		const int minCol = 1;
+		const int maxCol = room.width - size - 1;
+
+		if (maxRow <= minRow || maxCol <= minCol)
+			break;	// not enough space for pillars, skip
+
+		bool placed = false;
+		for (int attempts = 0; attempts < 50 && !placed; attempts++)
+		{
+			int randRow = rand() % (maxRow - minRow + 1) + minRow;
+			int randCol = rand() % (maxCol - minCol + 1) + minCol;
+
+			// Check if space is clear for the pillar
+			bool canPlace = true;
+			for (int x = 0; x < size && canPlace; x++) {
+				for (int y = 0; y < size && canPlace; y++) {	// x & y are offsets from the top-left corner of the pillar (if size is 2, we need to check the tile and the one to the right/below)
+					if (room.getTile(randRow + x, randCol + y) != Tile::FLOOR) {
+						canPlace = false;
+					}
+				}
+			}
+
+			if (!canPlace)
+				continue;	// space is not clear, try another position
+
+			// Place the pillar
+			for (int x = 0; x < size; x++) {
+				for (int y = 0; y < size; y++) {
+					room.setTile(randRow + x, randCol + y, Tile::WALL);
+				}
+			}
+
+			placed = true;
+		}
+	}
+}
+
+void CombatRoom::generateSpawnPoints(RoomPlan& room, int interiorArea)
+{
+	// Enemy Spawner
+	const int minEnemies = 1 + interiorArea / (room.tileSize * 2);
+	int maxEnemies = 10 + interiorArea / (room.tileSize / 2);
+
+	if (maxEnemies < minEnemies)
+		maxEnemies = minEnemies;
+
+	int totalEnemies = minEnemies + (rand() % ((maxEnemies - minEnemies) + 1));
+
+	std::vector<sf::Vector2i> occupiedPositions;
+	for (int i = 0; i < totalEnemies; i++)
+	{
+		sf::Vector2i randPos = { rand() % (room.width - 2) + 1, rand() % (room.height - 2) + 1 }; // random position within the room, excluding walls
+
+		Tile tileAtPos = room.getTile(randPos.y, randPos.x);
+		while (tileAtPos == Tile::WALL ||
+			std::find(occupiedPositions.begin(), occupiedPositions.end(), randPos) != occupiedPositions.end())
+		{
+			randPos = { rand() % (room.width - 2) + 1, rand() % (room.height - 2) + 1 };
+			tileAtPos = room.getTile(randPos.y, randPos.x);
+		}
+
+		room.spawners.push_back({ SpawnerType::EnemySpawner, randPos });
+		occupiedPositions.push_back(randPos);
+	}
+}
+
+===== FILE: project-rival/project-rival/Game.cpp =====
+#include "Game.h"
+#include "InputManager.h"
+#include "GruntEnemy.h"
+#include "TurretEnemy.h"
+#include <iostream>
+
+// Our target FPS
+static double const FPS{ 60.0f };
+
+////////////////////////////////////////////////////////////
+Game::Game()
+	: m_window(sf::VideoMode(sf::Vector2u(ScreenSize::s_width, ScreenSize::s_height), 32), "FYP: Dungeonish Crawler", sf::Style::Default)
+{
+	srand(time(NULL));
+	init();
+}
+
+////////////////////////////////////////////////////////////
+void Game::init()
+{
+	// Really only necessary is our target FPS is greater than 60.
+	m_window.setVerticalSyncEnabled(true);
+	
+	if (!m_arialFont.openFromFile("ASSETS/FONTS/ariblk.ttf"))
+	{
+		std::cout << "Error loading font file";
+	}
+
+#ifdef TEST_FPS
+	x_updateFPS.setFont(m_arialFont);
+	x_updateFPS.setPosition(sf::Vector2f(20, 300));
+	x_updateFPS.setCharacterSize(24);
+	x_updateFPS.setFillColor(sf::Color::White);
+	x_drawFPS.setFont(m_arialFont);
+	x_drawFPS.setPosition(sf::Vector2f(20, 350));
+	x_drawFPS.setCharacterSize(24);
+	x_drawFPS.setFillColor(sf::Color::White);
+#endif
+
+	gameStart();
+}
+
+////////////////////////////////////////////////////////////
+void Game::run()
+{
+	sf::Clock clock;
+	sf::Time timeSinceLastUpdate = sf::Time::Zero;
+	
+	sf::Time timePerFrame = sf::seconds(1.0f / FPS); // 60 fps
+	while (m_window.isOpen())
+	{
+		processEvents(); // as many as possible
+		timeSinceLastUpdate += clock.restart();
+		while (timeSinceLastUpdate > timePerFrame)
+		{
+			timeSinceLastUpdate -= timePerFrame;
+			processEvents(); // at least 60 fps
+			update(timePerFrame.asSeconds()); //60 fps
+#ifdef TEST_FPS
+			x_secondTime += timePerFrame;
+			x_updateFrameCount++;
+			if (x_secondTime.asSeconds() > 1)
+			{
+				std::string updatesPS = "UPS " + std::to_string(x_updateFrameCount - 1);
+				x_updateFPS.setString(updatesPS);
+				std::string drawsPS = "DPS " + std::to_string(x_drawFrameCount);
+				x_drawFPS.setString(drawsPS);
+				x_updateFrameCount = 0;
+				x_drawFrameCount = 0;
+				x_secondTime = sf::Time::Zero;
+			}
+#endif
+		}
+		render(); // as many as possible
+#ifdef TEST_FPS
+		x_drawFrameCount++;
+#endif
+	}
+}
+
+////////////////////////////////////////////////////////////
+void Game::processEvents()
+{
+    while (const std::optional event = m_window.pollEvent())
+    {
+        if (event->is<sf::Event::Closed>())
+        {
+            m_window.close();
+        }
+        processGameEvents(*event);
+    }
+}
+
+
+////////////////////////////////////////////////////////////
+void Game::processGameEvents(const sf::Event& event)
+{
+	if (const auto* keyPressed = event.getIf<sf::Event::KeyPressed>())
+	{
+		switch (keyPressed->scancode)
+		{
+		case sf::Keyboard::Scancode::Escape:
+			m_window.close();
+			break;
+		case sf::Keyboard::Scancode::Up:
+			// Up key was pressed...
+			break;
+		default:
+			break;
+		}
+	}
+}
+
+
+////////////////////////////////////////////////////////////
+void Game::update(double dt)
+{
+	const Vector2i mousePos = Mouse::getPosition(m_window);
+	const Vector2f mousePosF = m_window.mapPixelToCoords(mousePos);
+
+	InputManager::update();
+	
+	// Game manager controls
+	gameInput();
+
+	// Update player and enemies
+	Vector2f oldPlayerPos = m_player.getPosition();
+	m_player.update(dt, mousePosF);
+
+	for (auto enemy_it = m_enemies.begin(); enemy_it != m_enemies.end();)
+	{
+		auto& enemy = *enemy_it;
+		Vector2f oldEnemyPos = enemy->getPosition();
+		enemy->setTarget(m_player.getPosition());
+		enemy->update(dt);
+
+		// Check collision with player and collisionObject
+		// Enemy -> Player
+		if (CollisionCheck::areColliding(m_player, *enemy)) {
+			cout << "Player collided with enemy!\n";
+			m_player.takeDamage(10);
+		}
+		// Enemy -> Wall
+		for (auto& wall : m_activeRoomInstance.getStaticCollisions()) {
+			if (CollisionCheck::areColliding(*enemy, wall))
+			{
+				enemy->hitWall(oldEnemyPos);
+				break;
+			}
+		}
+
+		// Check if enemy is dead and remove if so
+		if (enemy->isDead())
+		{
+			enemy_it = m_enemies.erase(enemy_it);
+		}
+		else
+			enemy_it++;
+	}
+
+	// Collision checks
+	// Check player projectiles against enemies
+	for (auto& bullet : m_player.getProjectiles()) 
+	{
+		if(bullet->shouldDestroy())
+			continue;
+
+		for (auto& enemy : m_enemies) {
+			if (enemy->isDead())
+				continue;
+
+			// Bullet -> Enemy
+			if (CollisionCheck::areColliding(*bullet, *enemy))
+			{
+				enemy->takeDamage(bullet->applyDamage());
+				bullet->destroy();
+				break;
+			}
+		}
+	}
+
+	// Check static environment against player, enmies and projectiles
+	for (auto& collisionObject : m_activeRoomInstance.getStaticCollisions())
+	{
+		// Wall collision checks
+		if (collisionObject.getCollisionProfile().layer == CollisionLayer::WALL_LAYER)
+		{
+			// Wall -> Player
+			if (CollisionCheck::areColliding(m_player, collisionObject))
+			{
+				m_player.hitWall(oldPlayerPos);
+			}
+
+			// Wall -> Player Projectiles
+			for (auto& bullet : m_player.getProjectiles())
+			{
+				if (bullet->shouldDestroy())
+					continue;
+
+				if (CollisionCheck::areColliding(*bullet, collisionObject))
+				{
+					bullet->destroy();
+					break;
+				}
+			}
+		}
+
+		// Portal trigger checks
+		if (collisionObject.getCollisionProfile().layer == CollisionLayer::PORTAL_TRIGGER_LAYER)
+		{
+			// Portal Trigger -> Player
+			if (CollisionCheck::areColliding(collisionObject, m_player))
+			{
+				cout << "Player Collided with Portal Trigger!\n";
+			}
+		}
+	}
+}
+
+void Game::gameInput()
+{
+	if (Keyboard::isKeyPressed(Keyboard::Key::Escape) || InputManager::pad().pressed(GamepadButton::Start))
+	{
+		m_window.close();
+	}
+	if (Keyboard::isKeyPressed(Keyboard::Key::R) || InputManager::pad().pressed(GamepadButton::Select))
+	{
+		gameStart();
+	}
+}
+
+////////////////////////////////////////////////////////////
+void Game::render()
+{
+	m_window.clear(sf::Color(0, 0, 0, 0));
+
+	m_activeRoomInstance.render(m_window);
+
+	m_player.render(m_window);
+	for (auto& enemy : m_enemies) {
+		enemy->render(m_window);
+	}
+
+#ifdef TEST_FPS
+	m_window.draw(x_updateFPS); //ups is 60 and dps is 61
+	m_window.draw(x_drawFPS);
+#endif
+	m_window.display();
+}
+
+void Game::resetGame()
+{
+	m_player.init();
+
+	m_enemies.clear();
+
+	m_combatRoom;
+	m_spawnRoom;
+	m_activeRoomPlan;
+	m_activeRoomInstance.reset();
+}
+
+void Game::gameStart()
+{
+	resetGame();
+	generateRoom();
+}
+
+void Game::generateRoom()
+{
+	m_activeRoomPlan = m_portalRoom.generateRoom(0, RoomType::PORTAL, 0);
+
+	sf::Vector2f roomWorldPos{ 50.f, 50.f };
+	m_activeRoomInstance.buildFromPlan(m_activeRoomPlan, roomWorldPos);
+
+	m_enemies.clear();
+
+	// Combat room Spawner
+	if(m_activeRoomPlan.type == RoomType::COMBAT)
+	{
+		int totalEnemyTypes = EnemyType::COUNT;
+		for (auto& spawnPoint : m_activeRoomPlan.spawners)
+		{
+			if (spawnPoint.type == SpawnerType::EnemySpawner) {
+				Vector2f spawnPos = roomWorldPos + static_cast<Vector2f>(spawnPoint.tilePos) * m_activeRoomPlan.tileSize;
+
+				int enemyToSpawn = rand() % totalEnemyTypes;
+				if (enemyToSpawn == 0)
+					m_enemies.push_back(std::make_unique<GruntEnemy>(spawnPos, 150));
+				else if (enemyToSpawn == 1)
+					m_enemies.push_back(std::make_unique<TurretEnemy>(spawnPos, 250));
+			}
+		}
+	}
+	// Spawn room Spawner
+	if (m_activeRoomPlan.type == RoomType::SPAWN)
+	{
+		for (auto& spawnPoint : m_activeRoomPlan.spawners)
+		{
+			if (spawnPoint.type == SpawnerType::PlayerSpawner) {
+				Vector2f spawnPos = roomWorldPos + static_cast<Vector2f>(spawnPoint.tilePos) * m_activeRoomPlan.tileSize;
+				m_player.setSpawnPosition(spawnPos);
+			}
+		}
+	}
+	//// Portal room Spawner
+	//if (m_activeRoomPlan.type == RoomType::PORTAL)
+	//{
+	//	for(auto& spawnPoint:m_activeRoomPlan.spawners){
+	//		if(spawnPoint.type == SpawnerType::PortalSpawner){
+	//			Vector2f spawnPos = roomWorldPos + static_cast<Vector2f>(spawnPoint.tilePos) * m_activeRoomPlan.tileSize;
+
+	//		}
+	//	}
+	//}
+}
+
+===== FILE: project-rival/project-rival/Game.h =====
+#pragma once
+
+// If VS Debug build is enabled, then any block of code enclosed within 
+//  the preprocessor directive #ifdef TEST_FPS is compiled and executed.
+#ifdef _DEBUG
+#define TEST_FPS
+#endif // _DEBUG
+
+#include <SFML/Graphics.hpp>
+#include <string>
+
+#include "player.h"
+#include "Enemy.h"
+
+#include "RoomInstance.h"
+#include "CombatRoom.h"
+#include "SpawnRoom.h"
+#include "PortalRoom.h"
+
+using namespace std;
+using namespace sf;
+
+/// <summary>
+/// @author OA-O
+/// @date November 2025
+/// @version 1.0
+/// 
+/// </summary>
+
+struct ScreenSize
+{
+public:
+	static const int s_width{ 1440 };
+
+	static const int s_height{ 900 };
+};
+
+class Game
+{
+public:
+	Game();
+	void run();
+
+protected:
+	void init();
+	void update(double dt);
+
+	void gameInput();
+
+	void render();
+
+	void processEvents();
+	void processGameEvents(const sf::Event&);
+
+	sf::Font m_arialFont{ "ASSETS/FONTS/ariblk.ttf" };
+	sf::RenderWindow m_window;
+
+	Player m_player;
+
+	std::vector<std::unique_ptr<Enemy>> m_enemies;
+
+	CombatRoom m_combatRoom;
+	SpawnRoom m_spawnRoom;
+	PortalRoom m_portalRoom;
+	RoomPlan m_activeRoomPlan;
+	RoomInstance m_activeRoomInstance;
+
+#ifdef TEST_FPS
+	sf::Text x_updateFPS{ m_arialFont };	// text used to display updates per second.
+	sf::Text x_drawFPS{  m_arialFont };	// text used to display draw calls per second.
+	sf::Time x_secondTime{ sf::Time::Zero };			// counter used to establish when a second has passed.
+	int x_updateFrameCount{ 0 };						// updates per second counter.
+	int x_drawFrameCount{ 0 };							// draws per second counter.
+#endif // TEST_FPS
+
+
+private:
+	void resetGame();
+	void gameStart();
+
+	void generateRoom();
+};
+
+===== FILE: project-rival/project-rival/PortalRoom.cpp =====
+#include "PortalRoom.h"
+
+RoomPlan PortalRoom::generateRoom(int id, RoomType type, int seed)
+{
+	RoomPlan plan;
+	// Meta data
+	plan.id = id;
+	plan.type = RoomType::PORTAL;
+	plan.seed = seed;
+	plan.width = 11;
+	plan.height = 11;
+
+	// Tile map initialisation
+	plan.tileMap.assign(plan.height * plan.width, Tile::FLOOR);
+
+	// Tile map construction
+	// Outer walls
+	for (int col = 0; col < plan.width; col++)
+	{
+		plan.setTile(0, col, Tile::WALL);				// top row
+		plan.setTile(plan.height - 1, col, Tile::WALL);	// bottom row
+	}
+	for (int row = 0; row < plan.height; row++)
+	{
+		plan.setTile(row, 0, Tile::WALL);				// left column
+		plan.setTile(row, plan.width - 1, Tile::WALL);	// right column
+	}
+
+	const int interiorWidth = plan.width - 2;
+	const int interiorHeight = plan.height - 2;
+	const int interiorArea = interiorWidth * interiorHeight;
+
+	// Spawners
+	generateSpawnPoints(plan, interiorArea);
+
+	return plan;
+}
+
+void PortalRoom::generateSpawnPoints(RoomPlan& roomPlan, int interiorArea)
+{
+	// Portal Spawner
+	sf::Vector2i roomCenter = sf::Vector2i(roomPlan.width, roomPlan.height) / 2;
+	roomPlan.spawners.push_back({ SpawnerType::PortalSpawner, roomCenter });
+	// Portal Trigger
+	roomPlan.triggers.push_back({ TriggerType::PortalTrigger, roomCenter });
+}
+
+===== FILE: project-rival/project-rival/PortalRoom.h =====
+#pragma once
+#include "RoomBlueprint.h"
+
+class PortalRoom : public IRoomGenerator
+{
+public:
+	RoomPlan generateRoom(int id, RoomType type, int seed) override;
+	void generateSpawnPoints(RoomPlan& roomPlan, int interiorArea) override;
+};
+
+
+===== FILE: project-rival/project-rival/RoomBlueprint.h =====
+#pragma once
+#include "SFML/Graphics.hpp"
+#include <vector>
+#include <algorithm>
+
+enum RoomType {
+	SPAWN,
+	PORTAL,
+	COMBAT
+};
+
+enum Tile {
+	Empty,
+
+	FLOOR,
+	WALL,
+	DOOR
+};
+
+enum DoorDirection {
+	NORTH,
+	SOUTH,
+	EAST,
+	WEST
+};
+
+struct DoorPlan {
+	sf::Vector2i tilePos;
+	DoorDirection direction;
+
+	bool isLocked;
+};
+
+enum SpawnerType {
+	PlayerSpawner,
+	EnemySpawner,
+	PortalSpawner
+};
+
+struct SpawnerPlan {
+	SpawnerType type;
+	sf::Vector2i tilePos;
+};
+
+enum TriggerType {
+	None,
+	RoomEnteredTrigger,
+	PortalTrigger
+};
+
+struct TriggerPlan {
+	TriggerType type;
+	sf::Vector2i tilePos;
+};
+
+struct RoomPlan {
+	// Room metadata
+	int id;
+	RoomType type;
+	int seed;	// for stuctured random generation of room layout and contents
+
+	// Room representation
+	int width;
+	int height;	
+	float tileSize = 64.f;
+
+	// Room layout
+	std::vector<Tile> tileMap;	// formula for 1D index: row * width + column
+	std::vector<DoorPlan> doors;
+	std::vector<SpawnerPlan> spawners;
+	std::vector<TriggerPlan> triggers;
+	
+	bool isValid() const {
+		if (width > 0 && height > 0 && (tileMap.size() == width * height))
+			return true;
+		else
+			return false;
+	}
+
+	Tile getTile(int row, int column) const {
+		return tileMap[row * width + column];
+	}
+
+	void setTile(int row, int column, Tile type) {
+		tileMap[row * width + column] = type;
+	}
+};
+
+class IRoomGenerator 
+{
+public:
+	virtual ~IRoomGenerator() = default;
+
+	// a few things to note about the parameters:
+	// id, type and seed are fine for passing through
+	virtual RoomPlan generateRoom(int id, RoomType type, int seed) = 0;
+	virtual void generateSpawnPoints(RoomPlan& roomPlan, int interiorArea) = 0;
+};
+
+===== FILE: project-rival/project-rival/RoomInstance.cpp =====
+#include "RoomInstance.h"
+
+void RoomInstance::buildFromPlan(const RoomPlan& plan, const sf::Vector2f& worldPos)
+{
+	ri_staticColliders.clear();
+	ri_staticShapes.clear();
+
+	if (!plan.isValid())
+		return;
+
+	const float tileSize = plan.tileSize;
+	
+	// initialise each tile
+	for (int row = 0; row < plan.height; row++) {
+		for (int col = 0; col < plan.width; col++) {
+			const Tile tile = plan.getTile(row, col);
+			if (tile == Tile::WALL) {
+			// setup wall
+			sf::RectangleShape wall;
+			wall.setSize(sf::Vector2f(tileSize, tileSize));
+			wall.setOrigin(wall.getSize() / 2.f);
+			wall.setPosition(worldPos + sf::Vector2f(col * tileSize, row * tileSize));
+			wall.setFillColor(sf::Color(100, 100, 100)); // grey walls
+
+				ri_staticShapes.push_back(wall);
+
+				//setup collider for wall
+				StaticCollision collider(wall.getGlobalBounds(), CollisionLayer::WALL_LAYER,
+					CollisionLayer::PLAYER_LAYER | CollisionLayer::ENEMY_LAYER | CollisionLayer::PLAYER_BULLET_LAYER | CollisionLayer::ENEMY_BULLET_LAYER);
+
+			ri_staticColliders.push_back(collider);
+		}
+		}
+	}
+	// initialise spawners (DEBUG)
+	for (auto& spawner : plan.spawners) {
+		// setup spawn point shape
+		sf::RectangleShape spawnPoint;
+		spawnPoint.setSize(sf::Vector2f(tileSize, tileSize) / 8.f);
+		spawnPoint.setOrigin(spawnPoint.getSize() / 2.f);
+		spawnPoint.setPosition(worldPos + static_cast<sf::Vector2f>(spawner.tilePos) * tileSize);
+
+		if (spawner.type == SpawnerType::PlayerSpawner) {
+			spawnPoint.setFillColor(sf::Color::Green);
+		}
+		else if (spawner.type == SpawnerType::EnemySpawner) {
+			spawnPoint.setFillColor(sf::Color::Red);
+		}
+		else if (spawner.type == SpawnerType::PortalSpawner) {
+			spawnPoint.setFillColor(sf::Color::Blue);
+		}
+
+		ri_staticShapes.push_back(spawnPoint);
+	}
+	// initialise triggers (DEBUG)
+	for (auto& trigger : plan.triggers) {
+		// setup trigger shape
+		sf::RectangleShape triggerShape;
+		if (trigger.type == TriggerType::PortalTrigger) {
+			triggerShape.setSize(sf::Vector2f(tileSize, tileSize) * 3.f); // 3x the size of a tile
+			triggerShape.setFillColor(sf::Color(0, 0, 255, 100)); // semi-transparent blue for portal trigger
+		}
+		triggerShape.setOrigin(triggerShape.getSize() / 2.f);
+		triggerShape.setPosition(worldPos + static_cast<sf::Vector2f>(trigger.tilePos) * tileSize);
+
+		ri_staticShapes.push_back(triggerShape);
+
+		// setup collider for trigger
+		StaticCollision collider;
+		if (trigger.type == TriggerType::PortalTrigger) {
+			collider = StaticCollision(triggerShape.getGlobalBounds(), CollisionLayer::PORTAL_TRIGGER_LAYER,
+				CollisionLayer::PLAYER_LAYER);
+		}
+		ri_staticColliders.push_back(collider);
+	}
+}
+
+const std::vector<StaticCollision>& RoomInstance::getStaticCollisions()
+{
+	return ri_staticColliders;
+}
+
+void RoomInstance::render(sf::RenderWindow& window)
+{
+	for (auto& shape : ri_staticShapes)
+	{
+		window.draw(shape);
+	}
+}
+
+void RoomInstance::reset()
+{
+	ri_staticColliders.clear();
+	ri_staticShapes.clear();
+}
+
+===== FILE: project-rival/project-rival/SpawnRoom.cpp =====
+#include "SpawnRoom.h"
+
+RoomPlan SpawnRoom::generateRoom(int id, RoomType type, int seed)
+{
+	RoomPlan room;
+	// Meta data
+	room.id = id;
+	room.type = RoomType::SPAWN;
+	room.seed = seed;
+	room.height = 11;
+	room.width = 11;
+
+	// tile map initialisation
+	room.tileMap.assign(room.height * room.width, Tile::FLOOR);
+
+	// tile map construction
+	// outer walls
+	for (int col = 0; col < room.width; col++)
+	{
+		room.setTile(0, col, Tile::WALL);				// top row
+		room.setTile(room.height - 1, col, Tile::WALL);	// bottom row
+	}
+	for (int row = 0; row < room.height; row++)
+	{
+		room.setTile(row, 0, Tile::WALL);				// left column
+		room.setTile(row, room.width - 1, Tile::WALL);	// right column
+	}
+
+	const int interiorWidth = room.width - 2;
+	const int interiorHeight = room.height - 2;
+	const int interiorArea = interiorWidth * interiorHeight;
+
+	// Spawners
+	generateSpawnPoints(room, interiorArea);
+
+	return room;
+}
+
+void SpawnRoom::generateSpawnPoints(RoomPlan& roomPlan, int interiorArea)
+{
+	// Player Spawner
+	sf::Vector2i roomCenter = sf::Vector2i(roomPlan.width, roomPlan.height) / 2;
+	roomPlan.spawners.push_back({ SpawnerType::PlayerSpawner, roomCenter });
+}
+
+===== FILE: project-rival/project-rival/SpawnRoom.h =====
+#pragma once
+#include "RoomBlueprint.h"
+
+class SpawnRoom : public IRoomGenerator
+{
+public:
+	RoomPlan generateRoom(int id, RoomType type, int seed) override;
+	void generateSpawnPoints(RoomPlan& roomPlan, int interiorArea) override;
+};
+
+
+===== FILE: project-rival/project-rival/player.cpp =====
+#include "player.h"
+#include "InputManager.h"
+#include "NormalBulletProjectile.h"
+
+namespace {
+	float length(const Vector2f& v) {
+		return std::sqrt(v.x * v.x + v.y * v.y);
+	}
+}
+
+Player::Player()
+{
+	init();
+}
+
+Player::~Player()
+{
+}
+
+void Player::init()
+{
+	//body
+	p_body.setSize(Vector2f(50.f, 75.f));
+	Vector2f size = p_body.getSize();
+	p_body.setFillColor(Color::Green);
+	p_body.setOrigin(size / 2.f);
+
+	//physics
+	p_velocity = Vector2f(0.f, 0.f);
+
+	//reticle
+	p_reticle.setRadius(10.f);
+	p_reticle.setOrigin(Vector2f(p_reticle.getRadius(), p_reticle.getRadius()));
+	p_reticle.setFillColor(Color::Transparent);
+	p_reticle.setOutlineColor(Color::Yellow);
+	p_reticle.setOutlineThickness(2.f);
+	p_reticle.setPosition(p_body.getPosition() + p_reticleDistance * p_aimDir);
+	p_reticleDistance = 150.f;
+
+	//collision
+	p_collisionProfile.layer = CollisionLayer::PLAYER_LAYER;
+	p_collisionProfile.mask = CollisionLayer::ENEMY_LAYER | CollisionLayer::ENEMY_BULLET_LAYER | CollisionLayer::WALL_LAYER | CollisionLayer::PORTAL_TRIGGER_LAYER;
+
+	p_maxHealth = 100;
+
+	p_maxHealth = 100;
+
+	reset();
+}
+
+void Player::update(double dt, const Vector2f& mousePos)
+{
+	handleMovement(dt);
+	handleAiming(mousePos);
+
+	if (InputManager::pad().rightTrigger()) InputManager::pad().setRumble(0.2f, 0.8f);
+	else InputManager::pad().setRumble(0.0f, 0.0f);
+
+	// Update projectiles and remove any that should be destroyed
+	for (auto bullet_it = p_projectiles.begin(); bullet_it != p_projectiles.end(); )
+	{
+		auto& bullet = *bullet_it;
+		bullet->update(dt);
+
+		if (bullet->shouldDestroy())
+		{
+			bullet_it = p_projectiles.erase(bullet_it);
+		}
+		else
+		{
+			bullet_it++;
+		}
+	}
+}
+
+
+void Player::render(RenderWindow& window)
+{
+	window.draw(p_body);
+	window.draw(p_reticle);
+
+	for (const auto& bullet : p_projectiles)
+		bullet->render(window);
+}
+
+const Vector2f Player::getPosition() const
+{
+	return p_body.getPosition();
+}
+
+sf::FloatRect Player::getCollisionBounds() const
+{
+	return p_body.getGlobalBounds();
+}
+
+CollisionProfile Player::getCollisionProfile() const
+{
+	return p_collisionProfile;
+}
+
+void Player::setSpawnPosition(const Vector2f& spawnPos)
+{
+	p_body.setPosition(spawnPos);
+}
+
+void Player::reset()
+{
+	p_body.setPosition(Vector2f(500, 500.f));
+	p_health = p_maxHealth;
+}
+
+void Player::handleMovement(double dt)
+{
+	//--------- movement logic ---------//
+	Vector2f direction{ 0.f, 0.f };
+
+	const Vector2f ls = InputManager::pad().leftStick();
+	const bool isControllerActive = (ls.x != 0.f || ls.y != 0.f);
+
+	if (isControllerActive) // Gamepad input
+	{
+		direction += ls.normalized();
+	}
+	else // Keyboard input
+	{
+		if (Keyboard::isKeyPressed(Keyboard::Key::W)) { direction.y -= 1.f; }
+		if (Keyboard::isKeyPressed(Keyboard::Key::S)) { direction.y += 1.f; }
+		if (Keyboard::isKeyPressed(Keyboard::Key::A)) { direction.x -= 1.f; }
+		if (Keyboard::isKeyPressed(Keyboard::Key::D)) { direction.x += 1.f; }
+
+		if (direction.x != 0.f || direction.y != 0.f)
+			direction = direction.normalized();
+	}
+
+	p_velocity = direction * p_moveSpeed;
+	p_body.move(p_velocity * static_cast<float>(dt));
+}
+
+void Player::handleAiming(const Vector2f mousePos)
+{
+	//--------- aiming logic ---------//
+	
+	// Are we on Controller or Mouse
+	const Vector2f rs = InputManager::pad().rightStick();
+	const bool isRSMoved = (rs.x != 0.f || rs.y != 0.f);
+
+	const Vector2f mouseDelta = mousePos - p_prevMousePos;
+	const bool isMouseMoved = (length(mouseDelta) > 0.5f);
+
+	if (isRSMoved) p_isController = true;
+	else if (isMouseMoved) p_isController = false;
+
+	// Calculate and normalise aim direction
+	Vector2f aimVector;
+	if (p_isController) aimVector = rs;
+	else aimVector = mousePos - p_body.getPosition();
+
+	if (aimVector != Vector2f(0.f, 0.f))	// avoid crash out on controller since we can't normalise a zero vector
+		p_aimDir = aimVector.normalized();
+	else p_aimDir = Vector2f(0.f, 0.f);
+
+	p_reticle.setPosition(p_body.getPosition() + p_aimDir * p_reticleDistance);
+
+	p_prevMousePos = mousePos;
+
+	//--------- shooting logic ---------// -> this will move to weapon class when made
+	if (InputManager::pad().rightTrigger() || Mouse::isButtonPressed(Mouse::Button::Left))
+	{
+		std::unique_ptr<NormalBulletProjectile> newBullet = std::make_unique<NormalBulletProjectile>(p_body.getPosition(), p_aimDir, true);
+		p_projectiles.push_back(std::move(newBullet));
+	}
+}
+
+void Player::takeDamage(int damage)
+{
+	p_health -= damage;
+	if (p_health <= 0)
+	{
+		reset();
+	}
+}
+
+void Player::hitWall(sf::Vector2f oldPos)
+{
+	p_body.setPosition(oldPos);
+}
+
+std::vector<std::unique_ptr<Projectile>>& Player::getProjectiles()
+{
+	return p_projectiles;
+}
+
+===== FILE: project-rival/project-rival/player.h =====
+#pragma once
+#include <SFML/Graphics.hpp>
+#include <Windows.h>
+#include <Xinput.h>
+
+#include "Projectile.h"
+#include "Collision.h"
+
+using namespace sf;
+
+class Player : public ICollidable
+{
+public:
+	Player();
+	~Player();
+
+	void init();
+	void update(double dt, const Vector2f& mousePos);
+	void render(RenderWindow& window);
+
+	const Vector2f getPosition() const;
+	sf::FloatRect getCollisionBounds() const override;
+	CollisionProfile getCollisionProfile() const override;
+
+	void setSpawnPosition(const Vector2f& spawnPos);
+
+	void handleMovement(double dt);
+	void handleAiming(const Vector2f mousePos);
+
+	void takeDamage(int damage);
+
+	void hitWall(sf::Vector2f oldPos);
+
+	// this functions will likely move to weapon class when made
+	std::vector<std::unique_ptr<Projectile>>& getProjectiles();
+
+private:
+	// FUNCTIONS
+	void reset();
+
+	// VARIABLES
+	RectangleShape p_body;
+
+	Vector2f p_velocity{ 0.f, 0.f };
+	float p_moveSpeed{ 200.f };
+
+	bool p_isController;
+
+	// reticle
+	CircleShape p_reticle;
+	Vector2f p_aimDir{ 0.f,0.f };
+	float p_reticleDistance;
+	Vector2f p_prevMousePos;
+
+	// collsion
+	CollisionProfile p_collisionProfile;
+
+	// entity stats
+	int p_maxHealth;
+	int p_health;
+
+	// projectiles --> test. this will move to weapon class when made
+	std::vector<std::unique_ptr<Projectile>> p_projectiles;
+};
+
+
+===== FILE: project-rival/project-rival/project-rival.vcxproj =====
+∩╗┐<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="ArriveBehaviour.cpp" />
+    <ClCompile Include="Collision.cpp" />
+    <ClCompile Include="CombatRoom.cpp" />
+    <ClCompile Include="NormalBulletProjectile.cpp" />
+    <ClCompile Include="PortalRoom.cpp" />
+    <ClCompile Include="Projectile.cpp" />
+    <ClCompile Include="Enemy.cpp" />
+    <ClCompile Include="Game.cpp" />
+    <ClCompile Include="Gamepad.cpp" />
+    <ClCompile Include="GruntEnemy.cpp" />
+    <ClCompile Include="InputManager.cpp" />
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="player.cpp" />
+    <ClCompile Include="RoomInstance.cpp" />
+    <ClCompile Include="SeekBehaviour.cpp" />
+    <ClCompile Include="SpawnRoom.cpp" />
+    <ClCompile Include="StaticCollision.cpp" />
+    <ClCompile Include="TurretEnemy.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="ArriveBehaviour.h" />
+    <ClInclude Include="Collision.h" />
+    <ClInclude Include="CombatRoom.h" />
+    <ClInclude Include="NormalBulletProjectile.h" />
+    <ClInclude Include="PortalRoom.h" />
+    <ClInclude Include="Projectile.h" />
+    <ClInclude Include="Enemy.h" />
+    <ClInclude Include="Game.h" />
+    <ClInclude Include="Gamepad.h" />
+    <ClInclude Include="GruntEnemy.h" />
+    <ClInclude Include="InputManager.h" />
+    <ClInclude Include="player.h" />
+    <ClInclude Include="RoomBlueprint.h" />
+    <ClInclude Include="RoomInstance.h" />
+    <ClInclude Include="SeekBehaviour.h" />
+    <ClInclude Include="SpawnRoom.h" />
+    <ClInclude Include="StaticCollision.h" />
+    <ClInclude Include="Steering.h" />
+    <ClInclude Include="TurretEnemy.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="ASSETS\IMAGES\SFML-LOGO.png">
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</DeploymentContent>
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</DeploymentContent>
+    </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <Font Include="ASSETS\FONTS\ariblk.ttf">
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</DeploymentContent>
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</DeploymentContent>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</ExcludedFromBuild>
+    </Font>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\automation\prompts\docs-architecture-development-log-context.md" />
+    <None Include="..\automation\prompts\git-staged-changes-to-commit-context.md" />
+    <None Include="..\automation\prompts\player-aiming-mouse-right-stick-reticle-context.md" />
+    <None Include="..\automation\prompts\steering-enemy-seek-step-by-step-context.md" />
+    <None Include="..\automation\scripts\devlog-dump.ps1" />
+    <None Include="..\automation\scripts\merge-summary-generator.ps1" />
+    <None Include="automation\prompts\level-architecture-roomplan-generator-builder-static-colliders-context.md" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="..\automation\scripts\output\aiming-merge-changes.txt" />
+    <Text Include="..\automation\scripts\output\collisions-merge-changes.txt" />
+    <Text Include="..\automation\scripts\output\combat-room-merge-changes.txt" />
+    <Text Include="..\automation\scripts\output\devlog-dump-20260325-151026.txt" />
+    <Text Include="..\automation\scripts\output\devlog-dump-20260325-151324.txt" />
+    <Text Include="..\automation\scripts\output\enemies-merge-changes.txt" />
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>15.0</VCProjectVersion>
+    <ProjectGuid>{72f74580-4c0c-4adc-be48-d33f3c5aa1ef}</ProjectGuid>
+    <RootNamespace>project_rival</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v145</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v145</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v145</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v145</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup />
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>$(SFML_SDK)/include</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <AdditionalLibraryDirectories>$(SFML_SDK)\lib</AdditionalLibraryDirectories>
+      <AdditionalDependencies>xinput.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>true</SDLCheck>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>$(SFML_SDK)/include</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalLibraryDirectories>$(SFML_SDK)\lib</AdditionalLibraryDirectories>
+      <AdditionalDependencies>xinput.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+    </ClCompile>
+    <Link>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
+
+===== FILE: project-rival/project-rival/project-rival.vcxproj.filters =====
+∩╗┐<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Resource Files\FONTS">
+      <UniqueIdentifier>{b5e82806-bf9b-4fdf-b17c-c35282c021a5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\IMAGES">
+      <UniqueIdentifier>{1d793ccc-0d22-4eea-8d0e-c5b5a5270a40}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Input">
+      <UniqueIdentifier>{492c6b32-40d8-4a9f-8d7b-f4959ad27b73}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Abs.Interfaces">
+      <UniqueIdentifier>{fc0fe863-09ef-468e-aaa5-2881e53dd4b7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Abs.Classes">
+      <UniqueIdentifier>{0c6e4511-7f0a-4e12-afe0-7425cf365a97}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Behaviours">
+      <UniqueIdentifier>{b532eab4-ae76-449b-9ec6-96913d08a763}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\DOCUMENTATION">
+      <UniqueIdentifier>{432d37c5-2336-4597-a4da-e09c882032eb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\AUTOMATIONS">
+      <UniqueIdentifier>{b8e2caa8-ed7f-45de-ace6-9451eb9edab4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Enemies">
+      <UniqueIdentifier>{641a97c9-ec20-499b-a847-eae07285cfdb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\AUTOMATIONS\Agent">
+      <UniqueIdentifier>{63056c86-90e2-4897-abae-e538dd6536ac}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\AUTOMATIONS\Scripts">
+      <UniqueIdentifier>{25290212-7808-4d9b-93d3-2c9d0ccc6259}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Projectiles">
+      <UniqueIdentifier>{b9295663-bd23-4a50-bb5f-6ae5e6710b01}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Levels">
+      <UniqueIdentifier>{127c1998-b90e-4d19-9042-548546c299e2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Levels\Rooms">
+      <UniqueIdentifier>{6315f94b-1a02-4312-8a70-232932c97a70}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Levels\Collision">
+      <UniqueIdentifier>{39c9ab2c-a81f-4afe-83a4-1376aef9f6c4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\DOCUMENTATION\Git Summaries">
+      <UniqueIdentifier>{d0a212c5-440c-41a1-8f2b-6fde83f55d70}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Levels\Rooms\Combat Room">
+      <UniqueIdentifier>{6c01b469-4db9-4697-a8dd-812e4bf169e4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Levels\Rooms\Portal Room">
+      <UniqueIdentifier>{d6d9eb36-80d4-49c2-8aca-b30bceee3189}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Levels\Rooms\Spawn Room">
+      <UniqueIdentifier>{83524f3d-2757-4bc8-bd75-f613d35270f0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Abs.Interfaces\Collision">
+      <UniqueIdentifier>{3d16047e-5381-44b1-acad-034b7d06a802}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Abs.Interfaces\Room Blueprint">
+      <UniqueIdentifier>{afd6ea71-deac-45ed-961c-6a703e03640c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Abs.Interfaces\Steering">
+      <UniqueIdentifier>{fb5c9f71-f0a5-4069-b4c4-44cd19d4858e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Behaviours\Arrive">
+      <UniqueIdentifier>{8a630ba1-5c05-493a-b269-da321a6359e3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Behaviours\Seek">
+      <UniqueIdentifier>{5e2eccba-5354-4112-84aa-d0e5fc88b169}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Enemies\Basic">
+      <UniqueIdentifier>{09da90ae-5e5d-4854-b02a-a78a5330dfff}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Enemies\Basic\Grunt">
+      <UniqueIdentifier>{86ff36fa-be83-400c-b8ee-b2e3af12c8d7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Enemies\Basic\Turret">
+      <UniqueIdentifier>{137ff5ed-1375-45ed-994c-a37a19e89b93}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Player">
+      <UniqueIdentifier>{dbad0cb9-07df-477f-8c63-4ca7a14b0f08}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\DOCUMENTATION\Git Summaries\Devlog Dumps">
+      <UniqueIdentifier>{dd92ece3-062f-4995-b441-b7cec4b92ad3}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Game.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="InputManager.cpp">
+      <Filter>Header Files\Input</Filter>
+    </ClCompile>
+    <ClCompile Include="Gamepad.cpp">
+      <Filter>Header Files\Input</Filter>
+    </ClCompile>
+    <ClCompile Include="Enemy.cpp">
+      <Filter>Header Files\Abs.Classes</Filter>
+    </ClCompile>
+    <ClCompile Include="Projectile.cpp">
+      <Filter>Header Files\Abs.Classes</Filter>
+    </ClCompile>
+    <ClCompile Include="NormalBulletProjectile.cpp">
+      <Filter>Header Files\Projectiles</Filter>
+    </ClCompile>
+    <ClCompile Include="StaticCollision.cpp">
+      <Filter>Header Files\Levels\Collision</Filter>
+    </ClCompile>
+    <ClCompile Include="RoomInstance.cpp">
+      <Filter>Header Files\Levels</Filter>
+    </ClCompile>
+    <ClCompile Include="CombatRoom.cpp">
+      <Filter>Header Files\Levels\Rooms\Combat Room</Filter>
+    </ClCompile>
+    <ClCompile Include="PortalRoom.cpp">
+      <Filter>Header Files\Levels\Rooms\Portal Room</Filter>
+    </ClCompile>
+    <ClCompile Include="SpawnRoom.cpp">
+      <Filter>Header Files\Levels\Rooms\Spawn Room</Filter>
+    </ClCompile>
+    <ClCompile Include="Collision.cpp">
+      <Filter>Header Files\Abs.Interfaces\Collision</Filter>
+    </ClCompile>
+    <ClCompile Include="ArriveBehaviour.cpp">
+      <Filter>Header Files\Behaviours\Arrive</Filter>
+    </ClCompile>
+    <ClCompile Include="SeekBehaviour.cpp">
+      <Filter>Header Files\Behaviours\Seek</Filter>
+    </ClCompile>
+    <ClCompile Include="GruntEnemy.cpp">
+      <Filter>Header Files\Enemies\Basic\Grunt</Filter>
+    </ClCompile>
+    <ClCompile Include="TurretEnemy.cpp">
+      <Filter>Header Files\Enemies\Basic\Turret</Filter>
+    </ClCompile>
+    <ClCompile Include="player.cpp">
+      <Filter>Header Files\Player</Filter>
+    </ClCompile>
+    <ClCompile Include="StaticCollision.cpp">
+      <Filter>Header Files\Levels\Collision</Filter>
+    </ClCompile>
+    <ClCompile Include="CombatRoom.cpp">
+      <Filter>Header Files\Levels\Rooms</Filter>
+    </ClCompile>
+    <ClCompile Include="RoomInstance.cpp">
+      <Filter>Header Files\Levels</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Game.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="InputManager.h">
+      <Filter>Header Files\Input</Filter>
+    </ClInclude>
+    <ClInclude Include="Gamepad.h">
+      <Filter>Header Files\Input</Filter>
+    </ClInclude>
+    <ClInclude Include="Enemy.h">
+      <Filter>Header Files\Abs.Classes</Filter>
+    </ClInclude>
+    <ClInclude Include="Projectile.h">
+      <Filter>Header Files\Abs.Classes</Filter>
+    </ClInclude>
+    <ClInclude Include="NormalBulletProjectile.h">
+      <Filter>Header Files\Projectiles</Filter>
+    </ClInclude>
+    <ClInclude Include="StaticCollision.h">
+      <Filter>Header Files\Levels\Collision</Filter>
+    </ClInclude>
+    <ClInclude Include="RoomInstance.h">
+      <Filter>Header Files\Levels</Filter>
+    </ClInclude>
+    <ClInclude Include="CombatRoom.h">
+      <Filter>Header Files\Levels\Rooms\Combat Room</Filter>
+    </ClInclude>
+    <ClInclude Include="PortalRoom.h">
+      <Filter>Header Files\Levels\Rooms\Portal Room</Filter>
+    </ClInclude>
+    <ClInclude Include="SpawnRoom.h">
+      <Filter>Header Files\Levels\Rooms\Spawn Room</Filter>
+    </ClInclude>
+    <ClInclude Include="Collision.h">
+      <Filter>Header Files\Abs.Interfaces\Collision</Filter>
+    </ClInclude>
+    <ClInclude Include="RoomBlueprint.h">
+      <Filter>Header Files\Abs.Interfaces\Room Blueprint</Filter>
+    </ClInclude>
+    <ClInclude Include="Steering.h">
+      <Filter>Header Files\Abs.Interfaces\Steering</Filter>
+    </ClInclude>
+    <ClInclude Include="ArriveBehaviour.h">
+      <Filter>Header Files\Behaviours\Arrive</Filter>
+    </ClInclude>
+    <ClInclude Include="SeekBehaviour.h">
+      <Filter>Header Files\Behaviours\Seek</Filter>
+    </ClInclude>
+    <ClInclude Include="GruntEnemy.h">
+      <Filter>Header Files\Enemies\Basic\Grunt</Filter>
+    </ClInclude>
+    <ClInclude Include="TurretEnemy.h">
+      <Filter>Header Files\Enemies\Basic\Turret</Filter>
+    </ClInclude>
+    <ClInclude Include="player.h">
+      <Filter>Header Files\Player</Filter>
+    </ClInclude>
+    <ClInclude Include="RoomBlueprint.h">
+      <Filter>Header Files\Abs.Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="StaticCollision.h">
+      <Filter>Header Files\Levels\Collision</Filter>
+    </ClInclude>
+    <ClInclude Include="CombatRoom.h">
+      <Filter>Header Files\Levels\Rooms</Filter>
+    </ClInclude>
+    <ClInclude Include="RoomInstance.h">
+      <Filter>Header Files\Levels</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="ASSETS\IMAGES\SFML-LOGO.png">
+      <Filter>Resource Files\IMAGES</Filter>
+    </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <Font Include="ASSETS\FONTS\ariblk.ttf">
+      <Filter>Resource Files\FONTS</Filter>
+    </Font>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\automation\prompts\docs-architecture-development-log-context.md">
+      <Filter>Resource Files\AUTOMATIONS\Agent</Filter>
+    </None>
+    <None Include="..\automation\prompts\git-staged-changes-to-commit-context.md">
+      <Filter>Resource Files\AUTOMATIONS\Agent</Filter>
+    </None>
+    <None Include="..\automation\prompts\player-aiming-mouse-right-stick-reticle-context.md">
+      <Filter>Resource Files\AUTOMATIONS\Agent</Filter>
+    </None>
+    <None Include="..\automation\prompts\steering-enemy-seek-step-by-step-context.md">
+      <Filter>Resource Files\AUTOMATIONS\Agent</Filter>
+    </None>
+    <None Include="..\automation\scripts\merge-summary-generator.ps1">
+      <Filter>Resource Files\AUTOMATIONS\Scripts</Filter>
+    </None>
+    <None Include="automation\prompts\level-architecture-roomplan-generator-builder-static-colliders-context.md">
+      <Filter>Resource Files\AUTOMATIONS\Agent</Filter>
+    </None>
+    <None Include="..\automation\scripts\devlog-dump.ps1">
+      <Filter>Resource Files\AUTOMATIONS\Scripts</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="..\automation\scripts\output\aiming-merge-changes.txt">
+      <Filter>Resource Files\DOCUMENTATION\Git Summaries</Filter>
+    </Text>
+    <Text Include="..\automation\scripts\output\collisions-merge-changes.txt">
+      <Filter>Resource Files\DOCUMENTATION\Git Summaries</Filter>
+    </Text>
+    <Text Include="..\automation\scripts\output\enemies-merge-changes.txt">
+      <Filter>Resource Files\DOCUMENTATION\Git Summaries</Filter>
+    </Text>
+    <Text Include="..\automation\scripts\output\devlog-dump-20260325-151026.txt">
+      <Filter>Resource Files\DOCUMENTATION\Git Summaries\Devlog Dumps</Filter>
+    </Text>
+    <Text Include="..\automation\scripts\output\devlog-dump-20260325-151324.txt">
+      <Filter>Resource Files\DOCUMENTATION\Git Summaries\Devlog Dumps</Filter>
+    </Text>
+    <Text Include="..\automation\scripts\output\combat-room-merge-changes.txt">
+      <Filter>Resource Files\DOCUMENTATION\Git Summaries</Filter>
+    </Text>
+  </ItemGroup>
+</Project>
+

@@ -5,13 +5,13 @@ RoomPlan CombatRoom::generateRoom(int id, RoomType type, int seed)
 	RoomPlan room;
 	// Meta data
 	room.id = id;
-	room.type = type;
+	room.type = RoomType::COMBAT;
 	room.seed = seed;
 		// -> note here that this is where the height and width will be determined based on the type
 	//height 10-12; width 15-20
 	room.height = rand() % 4 + 10;
 	room.width = rand() % 6 + 15;
-
+	
 	// tile map initialisation
 	room.tileMap.assign(room.height * room.width, Tile::FLOOR);
 
@@ -31,7 +31,7 @@ RoomPlan CombatRoom::generateRoom(int id, RoomType type, int seed)
 	const int interiorWidth = room.width - 2;
 	const int interiorHeight = room.height - 2;
 	const int interiorArea = interiorWidth * interiorHeight;
-	
+
 	// Pillars
 	generateObstacles(room, interiorArea);
 

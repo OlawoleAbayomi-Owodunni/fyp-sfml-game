@@ -23,6 +23,7 @@
     <ClCompile Include="Collision.cpp" />
     <ClCompile Include="CombatRoom.cpp" />
     <ClCompile Include="NormalBulletProjectile.cpp" />
+    <ClCompile Include="PortalRoom.cpp" />
     <ClCompile Include="Projectile.cpp" />
     <ClCompile Include="Enemy.cpp" />
     <ClCompile Include="Game.cpp" />
@@ -33,6 +34,7 @@
     <ClCompile Include="player.cpp" />
     <ClCompile Include="RoomInstance.cpp" />
     <ClCompile Include="SeekBehaviour.cpp" />
+    <ClCompile Include="SpawnRoom.cpp" />
     <ClCompile Include="StaticCollision.cpp" />
     <ClCompile Include="TurretEnemy.cpp" />
   </ItemGroup>
@@ -41,6 +43,7 @@
     <ClInclude Include="Collision.h" />
     <ClInclude Include="CombatRoom.h" />
     <ClInclude Include="NormalBulletProjectile.h" />
+    <ClInclude Include="PortalRoom.h" />
     <ClInclude Include="Projectile.h" />
     <ClInclude Include="Enemy.h" />
     <ClInclude Include="Game.h" />
@@ -51,6 +54,7 @@
     <ClInclude Include="RoomBlueprint.h" />
     <ClInclude Include="RoomInstance.h" />
     <ClInclude Include="SeekBehaviour.h" />
+    <ClInclude Include="SpawnRoom.h" />
     <ClInclude Include="StaticCollision.h" />
     <ClInclude Include="Steering.h" />
     <ClInclude Include="TurretEnemy.h" />
@@ -85,6 +89,7 @@
     <Text Include="..\automation\scripts\output\devlog-dump-20260325-151026.txt" />
     <Text Include="..\automation\scripts\output\devlog-dump-20260325-151324.txt" />
     <Text Include="..\automation\scripts\output\enemies-merge-changes.txt" />
+    <Text Include="..\automation\scripts\output\additional-rooms-merge-changes.txt" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>

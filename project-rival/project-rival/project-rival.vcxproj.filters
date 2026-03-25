@@ -61,6 +61,45 @@
     <Filter Include="Resource Files\DOCUMENTATION\Git Summaries">
       <UniqueIdentifier>{d0a212c5-440c-41a1-8f2b-6fde83f55d70}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Levels\Rooms\Combat Room">
+      <UniqueIdentifier>{6c01b469-4db9-4697-a8dd-812e4bf169e4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Levels\Rooms\Portal Room">
+      <UniqueIdentifier>{d6d9eb36-80d4-49c2-8aca-b30bceee3189}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Levels\Rooms\Spawn Room">
+      <UniqueIdentifier>{83524f3d-2757-4bc8-bd75-f613d35270f0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Abs.Interfaces\Collision">
+      <UniqueIdentifier>{3d16047e-5381-44b1-acad-034b7d06a802}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Abs.Interfaces\Room Blueprint">
+      <UniqueIdentifier>{afd6ea71-deac-45ed-961c-6a703e03640c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Abs.Interfaces\Steering">
+      <UniqueIdentifier>{fb5c9f71-f0a5-4069-b4c4-44cd19d4858e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Behaviours\Arrive">
+      <UniqueIdentifier>{8a630ba1-5c05-493a-b269-da321a6359e3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Behaviours\Seek">
+      <UniqueIdentifier>{5e2eccba-5354-4112-84aa-d0e5fc88b169}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Enemies\Basic">
+      <UniqueIdentifier>{09da90ae-5e5d-4854-b02a-a78a5330dfff}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Enemies\Basic\Grunt">
+      <UniqueIdentifier>{86ff36fa-be83-400c-b8ee-b2e3af12c8d7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Enemies\Basic\Turret">
+      <UniqueIdentifier>{137ff5ed-1375-45ed-994c-a37a19e89b93}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Player">
+      <UniqueIdentifier>{dbad0cb9-07df-477f-8c63-4ca7a14b0f08}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\DOCUMENTATION\Git Summaries\Devlog Dumps">
+      <UniqueIdentifier>{dd92ece3-062f-4995-b441-b7cec4b92ad3}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -69,29 +108,14 @@
     <ClCompile Include="Game.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="player.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="InputManager.cpp">
       <Filter>Header Files\Input</Filter>
     </ClCompile>
     <ClCompile Include="Gamepad.cpp">
       <Filter>Header Files\Input</Filter>
     </ClCompile>
-    <ClCompile Include="SeekBehaviour.cpp">
-      <Filter>Header Files\Behaviours</Filter>
-    </ClCompile>
-    <ClCompile Include="ArriveBehaviour.cpp">
-      <Filter>Header Files\Behaviours</Filter>
-    </ClCompile>
     <ClCompile Include="Enemy.cpp">
       <Filter>Header Files\Abs.Classes</Filter>
-    </ClCompile>
-    <ClCompile Include="GruntEnemy.cpp">
-      <Filter>Header Files\Enemies</Filter>
-    </ClCompile>
-    <ClCompile Include="TurretEnemy.cpp">
-      <Filter>Header Files\Enemies</Filter>
     </ClCompile>
     <ClCompile Include="Projectile.cpp">
       <Filter>Header Files\Abs.Classes</Filter>
@@ -99,8 +123,38 @@
     <ClCompile Include="NormalBulletProjectile.cpp">
       <Filter>Header Files\Projectiles</Filter>
     </ClCompile>
+    <ClCompile Include="StaticCollision.cpp">
+      <Filter>Header Files\Levels\Collision</Filter>
+    </ClCompile>
+    <ClCompile Include="RoomInstance.cpp">
+      <Filter>Header Files\Levels</Filter>
+    </ClCompile>
+    <ClCompile Include="CombatRoom.cpp">
+      <Filter>Header Files\Levels\Rooms\Combat Room</Filter>
+    </ClCompile>
+    <ClCompile Include="PortalRoom.cpp">
+      <Filter>Header Files\Levels\Rooms\Portal Room</Filter>
+    </ClCompile>
+    <ClCompile Include="SpawnRoom.cpp">
+      <Filter>Header Files\Levels\Rooms\Spawn Room</Filter>
+    </ClCompile>
     <ClCompile Include="Collision.cpp">
-      <Filter>Header Files\Abs.Interfaces</Filter>
+      <Filter>Header Files\Abs.Interfaces\Collision</Filter>
+    </ClCompile>
+    <ClCompile Include="ArriveBehaviour.cpp">
+      <Filter>Header Files\Behaviours\Arrive</Filter>
+    </ClCompile>
+    <ClCompile Include="SeekBehaviour.cpp">
+      <Filter>Header Files\Behaviours\Seek</Filter>
+    </ClCompile>
+    <ClCompile Include="GruntEnemy.cpp">
+      <Filter>Header Files\Enemies\Basic\Grunt</Filter>
+    </ClCompile>
+    <ClCompile Include="TurretEnemy.cpp">
+      <Filter>Header Files\Enemies\Basic\Turret</Filter>
+    </ClCompile>
+    <ClCompile Include="player.cpp">
+      <Filter>Header Files\Player</Filter>
     </ClCompile>
     <ClCompile Include="StaticCollision.cpp">
       <Filter>Header Files\Levels\Collision</Filter>
@@ -116,32 +170,14 @@
     <ClInclude Include="Game.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="player.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="InputManager.h">
       <Filter>Header Files\Input</Filter>
     </ClInclude>
     <ClInclude Include="Gamepad.h">
       <Filter>Header Files\Input</Filter>
     </ClInclude>
-    <ClInclude Include="SeekBehaviour.h">
-      <Filter>Header Files\Behaviours</Filter>
-    </ClInclude>
-    <ClInclude Include="Steering.h">
-      <Filter>Header Files\Abs.Interfaces</Filter>
-    </ClInclude>
-    <ClInclude Include="ArriveBehaviour.h">
-      <Filter>Header Files\Behaviours</Filter>
-    </ClInclude>
     <ClInclude Include="Enemy.h">
       <Filter>Header Files\Abs.Classes</Filter>
-    </ClInclude>
-    <ClInclude Include="GruntEnemy.h">
-      <Filter>Header Files\Enemies</Filter>
-    </ClInclude>
-    <ClInclude Include="TurretEnemy.h">
-      <Filter>Header Files\Enemies</Filter>
     </ClInclude>
     <ClInclude Include="Projectile.h">
       <Filter>Header Files\Abs.Classes</Filter>
@@ -149,8 +185,44 @@
     <ClInclude Include="NormalBulletProjectile.h">
       <Filter>Header Files\Projectiles</Filter>
     </ClInclude>
+    <ClInclude Include="StaticCollision.h">
+      <Filter>Header Files\Levels\Collision</Filter>
+    </ClInclude>
+    <ClInclude Include="RoomInstance.h">
+      <Filter>Header Files\Levels</Filter>
+    </ClInclude>
+    <ClInclude Include="CombatRoom.h">
+      <Filter>Header Files\Levels\Rooms\Combat Room</Filter>
+    </ClInclude>
+    <ClInclude Include="PortalRoom.h">
+      <Filter>Header Files\Levels\Rooms\Portal Room</Filter>
+    </ClInclude>
+    <ClInclude Include="SpawnRoom.h">
+      <Filter>Header Files\Levels\Rooms\Spawn Room</Filter>
+    </ClInclude>
     <ClInclude Include="Collision.h">
-      <Filter>Header Files\Abs.Interfaces</Filter>
+      <Filter>Header Files\Abs.Interfaces\Collision</Filter>
+    </ClInclude>
+    <ClInclude Include="RoomBlueprint.h">
+      <Filter>Header Files\Abs.Interfaces\Room Blueprint</Filter>
+    </ClInclude>
+    <ClInclude Include="Steering.h">
+      <Filter>Header Files\Abs.Interfaces\Steering</Filter>
+    </ClInclude>
+    <ClInclude Include="ArriveBehaviour.h">
+      <Filter>Header Files\Behaviours\Arrive</Filter>
+    </ClInclude>
+    <ClInclude Include="SeekBehaviour.h">
+      <Filter>Header Files\Behaviours\Seek</Filter>
+    </ClInclude>
+    <ClInclude Include="GruntEnemy.h">
+      <Filter>Header Files\Enemies\Basic\Grunt</Filter>
+    </ClInclude>
+    <ClInclude Include="TurretEnemy.h">
+      <Filter>Header Files\Enemies\Basic\Turret</Filter>
+    </ClInclude>
+    <ClInclude Include="player.h">
+      <Filter>Header Files\Player</Filter>
     </ClInclude>
     <ClInclude Include="RoomBlueprint.h">
       <Filter>Header Files\Abs.Interfaces</Filter>
@@ -194,6 +266,9 @@
     <None Include="automation\prompts\level-architecture-roomplan-generator-builder-static-colliders-context.md">
       <Filter>Resource Files\AUTOMATIONS\Agent</Filter>
     </None>
+    <None Include="..\automation\scripts\devlog-dump.ps1">
+      <Filter>Resource Files\AUTOMATIONS\Scripts</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Text Include="..\automation\scripts\output\aiming-merge-changes.txt">
@@ -203,6 +278,15 @@
       <Filter>Resource Files\DOCUMENTATION\Git Summaries</Filter>
     </Text>
     <Text Include="..\automation\scripts\output\enemies-merge-changes.txt">
+      <Filter>Resource Files\DOCUMENTATION\Git Summaries</Filter>
+    </Text>
+    <Text Include="..\automation\scripts\output\devlog-dump-20260325-151026.txt">
+      <Filter>Resource Files\DOCUMENTATION\Git Summaries\Devlog Dumps</Filter>
+    </Text>
+    <Text Include="..\automation\scripts\output\devlog-dump-20260325-151324.txt">
+      <Filter>Resource Files\DOCUMENTATION\Git Summaries\Devlog Dumps</Filter>
+    </Text>
+    <Text Include="..\automation\scripts\output\combat-room-merge-changes.txt">
       <Filter>Resource Files\DOCUMENTATION\Git Summaries</Filter>
     </Text>
   </ItemGroup>

@@ -134,7 +134,7 @@ void Game::update(double dt)
 		enemy->setTarget(m_player.getPosition());
 		enemy->update(dt);
 
-		// Check collision with player and wall
+		// Check collision with player and collisionObject
 		// Enemy -> Player
 		if (CollisionCheck::areColliding(m_player, *enemy)) {
 			cout << "Player collided with enemy!\n";
@@ -180,24 +180,38 @@ void Game::update(double dt)
 	}
 
 	// Check static environment against player, enmies and projectiles
-	for (auto& wall : m_activeRoomInstance.getStaticCollisions())
+	for (auto& collisionObject : m_activeRoomInstance.getStaticCollisions())
 	{
-		// Wall -> Player
-		if (CollisionCheck::areColliding(m_player, wall))
+		// Wall collision checks
+		if (collisionObject.getCollisionProfile().layer == CollisionLayer::WALL_LAYER)
 		{
-			m_player.hitWall(oldPlayerPos);
+			// Wall -> Player
+			if (CollisionCheck::areColliding(m_player, collisionObject))
+			{
+				m_player.hitWall(oldPlayerPos);
+			}
+
+			// Wall -> Player Projectiles
+			for (auto& bullet : m_player.getProjectiles())
+			{
+				if (bullet->shouldDestroy())
+					continue;
+
+				if (CollisionCheck::areColliding(*bullet, collisionObject))
+				{
+					bullet->destroy();
+					break;
+				}
+			}
 		}
 
-		// Wall -> Player Projectiles
-		for (auto& bullet : m_player.getProjectiles())
+		// Portal trigger checks
+		if (collisionObject.getCollisionProfile().layer == CollisionLayer::PORTAL_TRIGGER_LAYER)
 		{
-			if (bullet->shouldDestroy())
-				continue;
-
-			if (CollisionCheck::areColliding(*bullet, wall))
+			// Portal Trigger -> Player
+			if (CollisionCheck::areColliding(collisionObject, m_player))
 			{
-				bullet->destroy();
-				break;
+				cout << "Player Collided with Portal Trigger!\n";
 			}
 		}
 	}
@@ -241,6 +255,7 @@ void Game::resetGame()
 	m_enemies.clear();
 
 	m_combatRoom;
+	m_spawnRoom;
 	m_activeRoomPlan;
 	m_activeRoomInstance.reset();
 }
@@ -253,25 +268,49 @@ void Game::gameStart()
 
 void Game::generateRoom()
 {
-	m_activeRoomPlan = m_combatRoom.generateRoom(0, RoomType::COMBAT, 0);
+	m_activeRoomPlan = m_portalRoom.generateRoom(0, RoomType::PORTAL, 0);
 
 	sf::Vector2f roomWorldPos{ 50.f, 50.f };
 	m_activeRoomInstance.buildFromPlan(m_activeRoomPlan, roomWorldPos);
 
 	m_enemies.clear();
 
-	//Enemy Spawner
-	int totalEnemyTypes = EnemyType::COUNT;
-	for (auto& spawnPoint : m_activeRoomPlan.spawners)
+	// Combat room Spawner
+	if(m_activeRoomPlan.type == RoomType::COMBAT)
 	{
-		if (spawnPoint.type == SpawnerType::EnemySpawner) {
-			Vector2f spawnPos = roomWorldPos + static_cast<Vector2f>(spawnPoint.tilePos) * m_activeRoomPlan.tileSize;
-			
-			int enemyToSpawn = rand() % totalEnemyTypes;
-			if (enemyToSpawn == 0)
-				m_enemies.push_back(std::make_unique<GruntEnemy>(spawnPos, 150));
-			else if (enemyToSpawn == 1)
-				m_enemies.push_back(std::make_unique<TurretEnemy>(spawnPos, 250));
+		int totalEnemyTypes = EnemyType::COUNT;
+		for (auto& spawnPoint : m_activeRoomPlan.spawners)
+		{
+			if (spawnPoint.type == SpawnerType::EnemySpawner) {
+				Vector2f spawnPos = roomWorldPos + static_cast<Vector2f>(spawnPoint.tilePos) * m_activeRoomPlan.tileSize;
+
+				int enemyToSpawn = rand() % totalEnemyTypes;
+				if (enemyToSpawn == 0)
+					m_enemies.push_back(std::make_unique<GruntEnemy>(spawnPos, 150));
+				else if (enemyToSpawn == 1)
+					m_enemies.push_back(std::make_unique<TurretEnemy>(spawnPos, 250));
+			}
 		}
 	}
+	// Spawn room Spawner
+	if (m_activeRoomPlan.type == RoomType::SPAWN)
+	{
+		for (auto& spawnPoint : m_activeRoomPlan.spawners)
+		{
+			if (spawnPoint.type == SpawnerType::PlayerSpawner) {
+				Vector2f spawnPos = roomWorldPos + static_cast<Vector2f>(spawnPoint.tilePos) * m_activeRoomPlan.tileSize;
+				m_player.setSpawnPosition(spawnPos);
+			}
+		}
+	}
+	//// Portal room Spawner
+	//if (m_activeRoomPlan.type == RoomType::PORTAL)
+	//{
+	//	for(auto& spawnPoint:m_activeRoomPlan.spawners){
+	//		if(spawnPoint.type == SpawnerType::PortalSpawner){
+	//			Vector2f spawnPos = roomWorldPos + static_cast<Vector2f>(spawnPoint.tilePos) * m_activeRoomPlan.tileSize;
+
+	//		}
+	//	}
+	//}
 }

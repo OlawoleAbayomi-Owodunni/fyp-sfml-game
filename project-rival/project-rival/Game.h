@@ -14,6 +14,8 @@
 
 #include "RoomInstance.h"
 #include "CombatRoom.h"
+#include "SpawnRoom.h"
+#include "PortalRoom.h"
 
 using namespace std;
 using namespace sf;
@@ -57,7 +59,9 @@ protected:
 
 	std::vector<std::unique_ptr<Enemy>> m_enemies;
 
-	CombatRoom m_combatRoom;	
+	CombatRoom m_combatRoom;
+	SpawnRoom m_spawnRoom;
+	PortalRoom m_portalRoom;
 	RoomPlan m_activeRoomPlan;
 	RoomInstance m_activeRoomInstance;
 
