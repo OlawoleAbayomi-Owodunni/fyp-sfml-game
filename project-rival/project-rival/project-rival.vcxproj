@@ -89,6 +89,7 @@
     <Text Include="..\automation\scripts\output\devlog-dump-20260325-151026.txt" />
     <Text Include="..\automation\scripts\output\devlog-dump-20260325-151324.txt" />
     <Text Include="..\automation\scripts\output\enemies-merge-changes.txt" />
+    <Text Include="..\automation\scripts\output\additional-rooms-merge-changes.txt" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
