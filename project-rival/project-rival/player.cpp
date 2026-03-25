@@ -43,6 +43,8 @@ void Player::init()
 
 	p_maxHealth = 100;
 
+	p_maxHealth = 100;
+
 	reset();
 }
 
