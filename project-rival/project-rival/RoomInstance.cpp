@@ -22,11 +22,11 @@ void RoomInstance::buildFromPlan(const RoomPlan& plan, const sf::Vector2f& world
 			wall.setPosition(worldPos + sf::Vector2f(col * tileSize, row * tileSize));
 			wall.setFillColor(sf::Color(100, 100, 100)); // grey walls
 
-			ri_staticShapes.push_back(wall);
+				ri_staticShapes.push_back(wall);
 
-			//setup collider for wall
-			StaticCollision collider(wall.getGlobalBounds(), CollisionLayer::WALL_LAYER,
-				CollisionLayer::PLAYER_LAYER | CollisionLayer::ENEMY_LAYER | CollisionLayer::PLAYER_BULLET_LAYER | CollisionLayer::ENEMY_BULLET_LAYER);
+				//setup collider for wall
+				StaticCollision collider(wall.getGlobalBounds(), CollisionLayer::WALL_LAYER,
+					CollisionLayer::PLAYER_LAYER | CollisionLayer::ENEMY_LAYER | CollisionLayer::PLAYER_BULLET_LAYER | CollisionLayer::ENEMY_BULLET_LAYER);
 
 			ri_staticColliders.push_back(collider);
 		}
