@@ -62,7 +62,6 @@ protected:
 	CombatRoom m_combatRoom;
 	SpawnRoom m_spawnRoom;
 	PortalRoom m_portalRoom;
-	RoomPlan m_activeRoomPlan;
 	RoomInstance m_activeRoomInstance;
 
 #ifdef TEST_FPS
@@ -78,5 +77,5 @@ private:
 	void resetGame();
 	void gameStart();
 
-	void generateRoom();
+	void generateRoom(RoomPlan& roomPlan);
 };

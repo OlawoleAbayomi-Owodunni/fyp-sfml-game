@@ -95,9 +95,10 @@ public:
 	// a few things to note about the parameters:
 	// id, type and seed are fine for passing through
 	virtual RoomPlan generateRoom(int id, RoomType type, int seed) = 0;
-	virtual void generateSpawnPoints(RoomPlan& roomPlan, int interiorArea) = 0;
 
 protected:
+	virtual void generateSpawnPoints(RoomPlan& roomPlan, int interiorArea) = 0;
+
 	inline void generateDoors(RoomPlan& roomPlan, DoorDirection dir)
 	{
 		DoorPlan door;

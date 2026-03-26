@@ -53,7 +53,7 @@ void RoomInstance::buildFromPlan(const RoomPlan& plan, const sf::Vector2f& world
 
 				ri_staticShapes.push_back(door);
 
-				//setup collider for door
+				//setup collider for door if door is locked
 				StaticCollision collider(door.getGlobalBounds(), CollisionLayer::DOOR_LAYER,
 					CollisionLayer::PLAYER_LAYER | CollisionLayer::ENEMY_LAYER | CollisionLayer::PLAYER_BULLET_LAYER | CollisionLayer::ENEMY_BULLET_LAYER);
 
@@ -126,6 +126,7 @@ void RoomInstance::buildFromPlan(const RoomPlan& plan, const sf::Vector2f& world
 		triggerShape.setPosition(worldPos + static_cast<sf::Vector2f>(trigger.tilePos) * tileSize + positionOffset);
 
 		ri_staticShapes.push_back(triggerShape);
+
 
 		// setup collider for trigger
 		StaticCollision collider;

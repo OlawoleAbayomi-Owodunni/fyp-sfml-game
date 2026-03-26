@@ -36,11 +36,12 @@ RoomPlan CombatRoom::generateRoom(int id, RoomType type, int seed)
 	generateObstacles(room, interiorArea);
 
 	// Spawners
-	generateSpawnPoints(room, interiorArea);
 
 	// Doors
 	generateDoors(room, DoorDirection::SOUTH);
 	generateDoors(room, DoorDirection::EAST);
+
+	currentRoomPlan = room;
 
 	return room;
 }
@@ -97,6 +98,8 @@ void CombatRoom::generateObstacles(RoomPlan& room, int interiorArea)
 void CombatRoom::generateSpawnPoints(RoomPlan& room, int interiorArea)
 {
 	// Enemy Spawner
+	room.spawners.clear();	// clear any existing spawners
+
 	const int minEnemies = 1 + interiorArea / (room.tileSize * 2);
 	int maxEnemies = 10 + interiorArea / (room.tileSize / 2);
 
@@ -121,4 +124,34 @@ void CombatRoom::generateSpawnPoints(RoomPlan& room, int interiorArea)
 		room.spawners.push_back({ SpawnerType::EnemySpawner, randPos });
 		occupiedPositions.push_back(randPos);
 	}
+}
+
+RoomPlan CombatRoom::startNewWave()
+{
+	RoomPlan room = currentRoomPlan;
+
+	const int interiorWidth = room.width - 2;
+	const int interiorHeight = room.height - 2;
+	const int interiorArea = interiorWidth * interiorHeight;
+
+	generateSpawnPoints(room, interiorArea);
+
+	for (auto& door : room.doors)
+		door.isLocked = true;	// lock doors
+
+	currentRoomPlan = room;
+
+	return room;
+}
+
+RoomPlan CombatRoom::roomCleared()
+{
+	RoomPlan room = currentRoomPlan;
+
+	for (auto& door : room.doors)
+		door.isLocked = false;	// unlock doors
+
+	currentRoomPlan = room;
+
+	return room;
 }

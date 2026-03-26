@@ -183,8 +183,8 @@ void Game::update(double dt)
 	for (auto& collisionObject : m_activeRoomInstance.getStaticCollisions())
 	{
 		// Wall or Door collision checks
-		if (collisionObject.getCollisionProfile().layer == CollisionLayer::WALL_LAYER ||
-			collisionObject.getCollisionProfile().layer == CollisionLayer::DOOR_LAYER)
+		if (collisionObject.getCollisionProfile().layer == CollisionLayer::WALL_LAYER /* ||
+			collisionObject.getCollisionProfile().layer == CollisionLayer::DOOR_LAYER */)
 		{
 			// Wall -> Player
 			if (CollisionCheck::areColliding(m_player, collisionObject))
@@ -223,6 +223,8 @@ void Game::update(double dt)
 			if (CollisionCheck::areColliding(collisionObject, m_player))
 			{
 				cout << "Player Collided with Door Trigger!\n";
+				//generateRoom(m_combatRoom.startNewWave());
+				break;
 			}
 		}
 	}
@@ -268,34 +270,31 @@ void Game::resetGame()
 	m_combatRoom;
 	m_spawnRoom;
 	m_portalRoom;
-	m_activeRoomPlan;
 	m_activeRoomInstance.reset();
 }
 
 void Game::gameStart()
 {
 	resetGame();
-	generateRoom();
+	generateRoom(m_portalRoom.generateRoom(0, RoomType::PORTAL, 0));
 }
 
-void Game::generateRoom()
+void Game::generateRoom(RoomPlan& roomPlan)
 {
-	m_activeRoomPlan = m_combatRoom.generateRoom(0, RoomType::COMBAT, 0);
-
 	sf::Vector2f roomWorldPos{ 50.f, 50.f };
-	m_activeRoomInstance.buildFromPlan(m_activeRoomPlan, roomWorldPos);
+	m_activeRoomInstance.buildFromPlan(roomPlan, roomWorldPos);
 	
 
 	m_enemies.clear();
 
 	// Combat room Spawner
-	if(m_activeRoomPlan.type == RoomType::COMBAT)
+	if(roomPlan.type == RoomType::COMBAT)
 	{
 		int totalEnemyTypes = EnemyType::COUNT;
-		for (auto& spawnPoint : m_activeRoomPlan.spawners)
+		for (auto& spawnPoint : roomPlan.spawners)
 		{
 			if (spawnPoint.type == SpawnerType::EnemySpawner) {
-				Vector2f spawnPos = roomWorldPos + static_cast<Vector2f>(spawnPoint.tilePos) * m_activeRoomPlan.tileSize;
+				Vector2f spawnPos = roomWorldPos + static_cast<Vector2f>(spawnPoint.tilePos) * roomPlan.tileSize;
 
 				int enemyToSpawn = rand() % totalEnemyTypes;
 				if (enemyToSpawn == 0)
@@ -306,12 +305,12 @@ void Game::generateRoom()
 		}
 	}
 	// Spawn room Spawner
-	if (m_activeRoomPlan.type == RoomType::SPAWN)
+	if (roomPlan.type == RoomType::SPAWN)
 	{
-		for (auto& spawnPoint : m_activeRoomPlan.spawners)
+		for (auto& spawnPoint : roomPlan.spawners)
 		{
 			if (spawnPoint.type == SpawnerType::PlayerSpawner) {
-				Vector2f spawnPos = roomWorldPos + static_cast<Vector2f>(spawnPoint.tilePos) * m_activeRoomPlan.tileSize;
+				Vector2f spawnPos = roomWorldPos + static_cast<Vector2f>(spawnPoint.tilePos) * roomPlan.tileSize;
 				m_player.setSpawnPosition(spawnPos);
 			}
 		}
