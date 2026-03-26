@@ -85,12 +85,45 @@ void RoomInstance::buildFromPlan(const RoomPlan& plan, const sf::Vector2f& world
 	for (auto& trigger : plan.triggers) {
 		// setup trigger shape
 		sf::RectangleShape triggerShape;
-		if (trigger.type == TriggerType::PortalTrigger) {
+		sf::Vector2f positionOffset = sf::Vector2f(0.f, 0.f);
+		if (trigger.type == TriggerType::PortalTrigger) 
+		{
 			triggerShape.setSize(sf::Vector2f(tileSize, tileSize) * 3.f); // 3x the size of a tile
 			triggerShape.setFillColor(sf::Color(0, 0, 255, 100)); // semi-transparent blue for portal trigger
 		}
+		else if (trigger.type == TriggerType::DoorTrigger)
+		{
+			DoorDirection dir;
+			if (trigger.tilePos.y == 0) dir = DoorDirection::NORTH;
+			else if (trigger.tilePos.y == plan.height - 1) dir = DoorDirection::SOUTH;
+			else if (trigger.tilePos.x == 0) dir = DoorDirection::WEST;
+			else if (trigger.tilePos.x == plan.width - 1) dir = DoorDirection::EAST;
+
+			if (dir == DoorDirection::NORTH || dir == DoorDirection::SOUTH)
+				triggerShape.setSize(sf::Vector2f(tileSize, tileSize / 4.f));
+			else
+				triggerShape.setSize(sf::Vector2f(tileSize / 4.f, tileSize));
+
+			switch (dir)
+			{
+			case DoorDirection::NORTH:
+				positionOffset = sf::Vector2f(0.f, tileSize * 1.7f);
+				break;
+			case DoorDirection::SOUTH:
+				positionOffset = sf::Vector2f(0.f, -tileSize * 1.7f);
+				break;
+			case DoorDirection::WEST:
+				positionOffset = sf::Vector2f(tileSize * 1.3f, 0.f);
+				break;
+			case DoorDirection::EAST:
+				positionOffset = sf::Vector2f(-tileSize * 1.3f, 0.f);
+				break;
+			}
+
+			triggerShape.setFillColor(sf::Color(150, 75, 0, 100)); // semi-transparent brown for door trigger
+		}
 		triggerShape.setOrigin(triggerShape.getSize() / 2.f);
-		triggerShape.setPosition(worldPos + static_cast<sf::Vector2f>(trigger.tilePos) * tileSize);
+		triggerShape.setPosition(worldPos + static_cast<sf::Vector2f>(trigger.tilePos) * tileSize + positionOffset);
 
 		ri_staticShapes.push_back(triggerShape);
 
@@ -100,6 +133,11 @@ void RoomInstance::buildFromPlan(const RoomPlan& plan, const sf::Vector2f& world
 			collider = StaticCollision(triggerShape.getGlobalBounds(), CollisionLayer::PORTAL_TRIGGER_LAYER,
 				CollisionLayer::PLAYER_LAYER);
 		}
+		else if (trigger.type == TriggerType::DoorTrigger) {
+			collider = StaticCollision(triggerShape.getGlobalBounds(), CollisionLayer::DOOR_TRIGGER_LAYER,
+				CollisionLayer::PLAYER_LAYER);
+		}
+		
 		ri_staticColliders.push_back(collider);
 	}
 }

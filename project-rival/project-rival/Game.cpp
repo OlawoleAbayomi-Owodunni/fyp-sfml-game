@@ -182,8 +182,9 @@ void Game::update(double dt)
 	// Check static environment against player, enmies and projectiles
 	for (auto& collisionObject : m_activeRoomInstance.getStaticCollisions())
 	{
-		// Wall collision checks
-		if (collisionObject.getCollisionProfile().layer == CollisionLayer::WALL_LAYER)
+		// Wall or Door collision checks
+		if (collisionObject.getCollisionProfile().layer == CollisionLayer::WALL_LAYER ||
+			collisionObject.getCollisionProfile().layer == CollisionLayer::DOOR_LAYER)
 		{
 			// Wall -> Player
 			if (CollisionCheck::areColliding(m_player, collisionObject))
@@ -212,6 +213,16 @@ void Game::update(double dt)
 			if (CollisionCheck::areColliding(collisionObject, m_player))
 			{
 				cout << "Player Collided with Portal Trigger!\n";
+			}
+		}
+
+		// Door trigger checks
+		if (collisionObject.getCollisionProfile().layer == CollisionLayer::DOOR_TRIGGER_LAYER)
+		{
+			// Door Trigger -> Player
+			if (CollisionCheck::areColliding(collisionObject, m_player))
+			{
+				cout << "Player Collided with Door Trigger!\n";
 			}
 		}
 	}
@@ -273,6 +284,7 @@ void Game::generateRoom()
 
 	sf::Vector2f roomWorldPos{ 50.f, 50.f };
 	m_activeRoomInstance.buildFromPlan(m_activeRoomPlan, roomWorldPos);
+	
 
 	m_enemies.clear();
 
