@@ -25,10 +25,11 @@ enum DoorDirection {
 };
 
 struct DoorPlan {
-	sf::Vector2i tilePos;
+	sf::Vector2i tileStartPos;
 	DoorDirection direction;
 
 	bool isLocked;
+	int spanTiles; // st = 2 if width/height % 2 = 0, else st = 3 {if l/w is even, st = 2. if odd, st = 3}
 };
 
 enum SpawnerType {
@@ -44,7 +45,7 @@ struct SpawnerPlan {
 
 enum TriggerType {
 	None,
-	RoomEnteredTrigger,
+	DoorTrigger,
 	PortalTrigger
 };
 
@@ -95,4 +96,5 @@ public:
 	// id, type and seed are fine for passing through
 	virtual RoomPlan generateRoom(int id, RoomType type, int seed) = 0;
 	virtual void generateSpawnPoints(RoomPlan& roomPlan, int interiorArea) = 0;
+	virtual void generateDoors(RoomPlan& roomPlan, DoorDirection dir) = 0;
 };

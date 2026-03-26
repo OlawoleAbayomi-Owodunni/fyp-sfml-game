@@ -38,7 +38,9 @@ RoomPlan CombatRoom::generateRoom(int id, RoomType type, int seed)
 	// Spawners
 	generateSpawnPoints(room, interiorArea);
 
-	// yet to do: room geometry like doors, etc.
+	// Doors
+	generateDoors(room, DoorDirection::SOUTH);
+	generateDoors(room, DoorDirection::EAST);
 
 	return room;
 }
@@ -106,7 +108,7 @@ void CombatRoom::generateSpawnPoints(RoomPlan& room, int interiorArea)
 	std::vector<sf::Vector2i> occupiedPositions;
 	for (int i = 0; i < totalEnemies; i++)
 	{
-		sf::Vector2i randPos = { rand() % (room.width - 2) + 1, rand() % (room.height - 2) + 1 }; // random position within the room, excluding walls
+		sf::Vector2i randPos = { rand() % (room.width - 2) + 1, rand() % (room.height - 2) + 1 }; // random position within the roomPlan, excluding walls
 
 		Tile tileAtPos = room.getTile(randPos.y, randPos.x);
 		while (tileAtPos == Tile::WALL ||
@@ -119,4 +121,57 @@ void CombatRoom::generateSpawnPoints(RoomPlan& room, int interiorArea)
 		room.spawners.push_back({ SpawnerType::EnemySpawner, randPos });
 		occupiedPositions.push_back(randPos);
 	}
+}
+
+void CombatRoom::generateDoors(RoomPlan& roomPlan, DoorDirection dir)
+{
+	DoorPlan door;
+	door.direction = dir;
+	door.isLocked = false;
+
+	// seeding starting tile variables
+	int rowStart = 0;
+	int colStart = 0;
+
+	// determine door length and position based on direction
+	if (door.direction == DoorDirection::NORTH || door.direction == DoorDirection::SOUTH)
+	{
+		// even width = 2 tiles, odd width = 3 tiles
+		if (roomPlan.width % 2 == 0) door.spanTiles = 2;
+		else door.spanTiles = 3;
+
+		// determine doors starting tile position based on direction and span
+		colStart = (roomPlan.width - door.spanTiles) / 2;
+		int row;
+		if (door.direction == DoorDirection::NORTH) row = 0;
+		else if (door.direction == DoorDirection::SOUTH) row = roomPlan.height - 1;
+
+		door.tileStartPos = { colStart, row };
+
+		// set door tiles
+		for (int i = 0; i < door.spanTiles; i++) {
+			roomPlan.setTile(row, colStart + i, Tile::DOOR);
+		}
+	}
+	else if (door.direction == DoorDirection::EAST || door.direction == DoorDirection::WEST)
+	{
+		// even height = 2 tiles, odd height = 3 tiles
+		if (roomPlan.height % 2 == 0) door.spanTiles = 2;
+		else door.spanTiles = 3;
+
+		// determine doors starting tile position based on direction and span
+		rowStart = (roomPlan.height - door.spanTiles) / 2;
+		int col;
+		if (door.direction == DoorDirection::WEST) col = 0;
+		else if (door.direction == DoorDirection::EAST) col = roomPlan.width - 1;
+
+		door.tileStartPos = { col, rowStart };
+
+		// set door tiles
+		for (int i = 0; i < door.spanTiles; i++) {
+			roomPlan.setTile(rowStart + i, col, Tile::DOOR);
+		}
+	}
+
+	roomPlan.doors.push_back(door);
 }

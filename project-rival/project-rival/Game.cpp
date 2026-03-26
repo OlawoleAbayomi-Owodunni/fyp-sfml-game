@@ -256,6 +256,7 @@ void Game::resetGame()
 
 	m_combatRoom;
 	m_spawnRoom;
+	m_portalRoom;
 	m_activeRoomPlan;
 	m_activeRoomInstance.reset();
 }
@@ -268,7 +269,7 @@ void Game::gameStart()
 
 void Game::generateRoom()
 {
-	m_activeRoomPlan = m_portalRoom.generateRoom(0, RoomType::PORTAL, 0);
+	m_activeRoomPlan = m_combatRoom.generateRoom(0, RoomType::COMBAT, 0);
 
 	sf::Vector2f roomWorldPos{ 50.f, 50.f };
 	m_activeRoomInstance.buildFromPlan(m_activeRoomPlan, roomWorldPos);
@@ -303,14 +304,4 @@ void Game::generateRoom()
 			}
 		}
 	}
-	//// Portal room Spawner
-	//if (m_activeRoomPlan.type == RoomType::PORTAL)
-	//{
-	//	for(auto& spawnPoint:m_activeRoomPlan.spawners){
-	//		if(spawnPoint.type == SpawnerType::PortalSpawner){
-	//			Vector2f spawnPos = roomWorldPos + static_cast<Vector2f>(spawnPoint.tilePos) * m_activeRoomPlan.tileSize;
-
-	//		}
-	//	}
-	//}
 }

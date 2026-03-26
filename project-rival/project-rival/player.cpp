@@ -29,8 +29,8 @@ void Player::init()
 	p_velocity = Vector2f(0.f, 0.f);
 
 	//reticle
-	p_reticle.setRadius(10.f);
-	p_reticle.setOrigin(Vector2f(p_reticle.getRadius(), p_reticle.getRadius()));
+	p_reticle.setSize(Vector2f(20.f, 20.f));
+	p_reticle.setOrigin(p_reticle.getSize() / 2.f);
 	p_reticle.setFillColor(Color::Transparent);
 	p_reticle.setOutlineColor(Color::Yellow);
 	p_reticle.setOutlineThickness(2.f);
@@ -39,7 +39,7 @@ void Player::init()
 
 	//collision
 	p_collisionProfile.layer = CollisionLayer::PLAYER_LAYER;
-	p_collisionProfile.mask = CollisionLayer::ENEMY_LAYER | CollisionLayer::ENEMY_BULLET_LAYER | CollisionLayer::WALL_LAYER | CollisionLayer::PORTAL_TRIGGER_LAYER;
+	p_collisionProfile.mask = CollisionLayer::ENEMY_LAYER | CollisionLayer::ENEMY_BULLET_LAYER | CollisionLayer::WALL_LAYER | CollisionLayer::PORTAL_TRIGGER_LAYER | CollisionLayer::DOOR_TRIGGER_LAYER;
 
 	p_maxHealth = 100;
 

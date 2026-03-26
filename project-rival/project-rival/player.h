@@ -47,7 +47,7 @@ private:
 	bool p_isController;
 
 	// reticle
-	CircleShape p_reticle;
+	RectangleShape p_reticle;
 	Vector2f p_aimDir{ 0.f,0.f };
 	float p_reticleDistance;
 	Vector2f p_prevMousePos;

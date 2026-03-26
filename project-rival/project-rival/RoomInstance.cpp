@@ -14,13 +14,14 @@ void RoomInstance::buildFromPlan(const RoomPlan& plan, const sf::Vector2f& world
 	for (int row = 0; row < plan.height; row++) {
 		for (int col = 0; col < plan.width; col++) {
 			const Tile tile = plan.getTile(row, col);
+			// Walls
 			if (tile == Tile::WALL) {
-			// setup wall
-			sf::RectangleShape wall;
-			wall.setSize(sf::Vector2f(tileSize, tileSize));
-			wall.setOrigin(wall.getSize() / 2.f);
-			wall.setPosition(worldPos + sf::Vector2f(col * tileSize, row * tileSize));
-			wall.setFillColor(sf::Color(100, 100, 100)); // grey walls
+				// setup wall shape
+				sf::RectangleShape wall;
+				wall.setSize(sf::Vector2f(tileSize, tileSize));
+				wall.setOrigin(wall.getSize() / 2.f);
+				wall.setPosition(worldPos + sf::Vector2f(col * tileSize, row * tileSize));
+				wall.setFillColor(sf::Color(100, 100, 100)); // grey walls
 
 				ri_staticShapes.push_back(wall);
 
@@ -28,8 +29,36 @@ void RoomInstance::buildFromPlan(const RoomPlan& plan, const sf::Vector2f& world
 				StaticCollision collider(wall.getGlobalBounds(), CollisionLayer::WALL_LAYER,
 					CollisionLayer::PLAYER_LAYER | CollisionLayer::ENEMY_LAYER | CollisionLayer::PLAYER_BULLET_LAYER | CollisionLayer::ENEMY_BULLET_LAYER);
 
-			ri_staticColliders.push_back(collider);
-		}
+				ri_staticColliders.push_back(collider);
+			}
+			// Doors
+			else if (tile == Tile::DOOR) {
+				// setup door shape
+				sf::RectangleShape door;
+
+				// determine direction to place door
+				DoorDirection dir;
+				if (row == 0) dir = DoorDirection::NORTH;
+				else if (row == plan.height - 1) dir = DoorDirection::SOUTH;
+				else if (col == 0) dir = DoorDirection::WEST;
+				else if (col == plan.width - 1) dir = DoorDirection::EAST;
+				if (dir == DoorDirection::NORTH || dir == DoorDirection::SOUTH)
+					door.setSize(sf::Vector2f(tileSize, tileSize / 2.f));
+				else
+					door.setSize(sf::Vector2f(tileSize / 2.f, tileSize));
+
+				door.setOrigin(door.getSize() / 2.f);
+				door.setPosition(worldPos + sf::Vector2f(col * tileSize, row * tileSize));
+				door.setFillColor(sf::Color(150, 75, 0)); // brown doors
+
+				ri_staticShapes.push_back(door);
+
+				//setup collider for door
+				StaticCollision collider(door.getGlobalBounds(), CollisionLayer::DOOR_LAYER,
+					CollisionLayer::PLAYER_LAYER | CollisionLayer::ENEMY_LAYER | CollisionLayer::PLAYER_BULLET_LAYER | CollisionLayer::ENEMY_BULLET_LAYER);
+
+				ri_staticColliders.push_back(collider);
+			}
 		}
 	}
 	// initialise spawners (DEBUG)
