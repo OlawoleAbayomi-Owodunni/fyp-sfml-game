@@ -15,7 +15,7 @@ Also:
 
 - Implements `ICollidable` (so it can participate in collision checks)
 - Has health (`p_health` / `p_maxHealth`) + `takeDamage(...)` (currently resets when health reaches 0)
-- Has basic wall collision response via `hitWall(oldPos)` (currently a rollback)
+- Has basic collision response via `hitWall()` (currently a rollback to the previously stored position)
 
 Currently, the player collides with:
 

@@ -53,10 +53,6 @@ void RoomInstance::buildFromPlan(const RoomPlan& plan, const sf::Vector2f& world
 
 				ri_staticRoomShapes.push_back(door);
 
-				// Door solution
-				// PROBLEM -> we need to know the coordinates of the specific door to lock so that we can set it to be locked or not via the collider
-				// SOLUTION -> we already have the position the door is supposed to be at within the doorplan's struct. We can run a for loop and check if the current tile mathches the doorplan's coordinates to gain access to the door's is locked variable
-
 				//setup collider for door if door is locked
 				for (auto& doorObj : plan.doors) {
 					sf::Vector2i distToStart =  sf::Vector2i(col, row) - doorObj.tileStartPos;

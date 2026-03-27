@@ -46,7 +46,7 @@ This chapter summarizes the major subsystems, who owns what, and how data flows.
 
 ### Rooms / generation
 
-- `RoomPlan` contains tile/spawn data.
+- `RoomPlan` contains tile/spawn/door/trigger data.
 - `IRoomGenerator` builds a `RoomPlan` (e.g., `CombatRoom`).
 - `RoomInstance` builds runtime shapes + `StaticCollision` colliders.
 
@@ -67,7 +67,7 @@ This chapter summarizes the major subsystems, who owns what, and how data flows.
 Data flow example:
 
 - `Game` updates player and enemies.
-- `Game` checks collisions (player/enemy, bullets/enemy, objects vs walls).
+- `Game` checks collisions (player/enemy, bullets/enemy, entities vs walls/doors, triggers).
 - `Game` renders room → player → enemies.
 
 Game management input:

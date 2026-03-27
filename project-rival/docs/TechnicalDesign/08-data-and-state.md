@@ -9,6 +9,8 @@ This chapter describes what state exists, who owns it, and what might need savin
 - `Game`:
   - active room plan + room instance
   - enemy list
+  - room list / pool (prototype)
+  - combat state (e.g., in-combat flag, wave counter)
 - `Player`:
   - transform/velocity
   - current projectiles
@@ -20,7 +22,8 @@ This chapter describes what state exists, who owns it, and what might need savin
 Additional notes:
 
 - `RoomPlan.spawners` are tile-space markers used to spawn runtime entities when a room is generated.
-- Wall collisions currently use a rollback approach by storing “old position” for player/enemies.
+- `RoomPlan.triggers` are tile-space markers used to detect interactions (doors / portal).
+- Wall/door collisions currently use a rollback approach by storing “old position” for player/enemies.
 
 ## Procedural generation state
 

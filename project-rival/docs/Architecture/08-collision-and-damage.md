@@ -9,7 +9,7 @@ This project uses a simple collision system with **layers** and **masks** to fil
 Defined in `Collision.h`:
 
 - `CollisionLayer` (bit flags)
-  - examples: `PLAYER_LAYER`, `ENEMY_LAYER`, `PLAYER_BULLET_LAYER`, `WALL_LAYER`
+  - examples: `PLAYER_LAYER`, `ENEMY_LAYER`, `PLAYER_BULLET_LAYER`, `WALL_LAYER`, `DOOR_LAYER`
 - `CollisionProfile`
   - `layer`: what this object *is*
   - `mask`: what this object *can collide with*
@@ -48,13 +48,18 @@ Room generation builds wall colliders using `StaticCollision`:
 - walls use `WALL_LAYER`
 - their mask allows collisions with player, enemies, and bullets
 
+Room generation also builds other static colliders:
+
+- locked doors use `DOOR_LAYER`
+- triggers use `PORTAL_TRIGGER_LAYER` and `DOOR_TRIGGER_LAYER` (they only collide with the player)
+
 ## Collision response (current)
 
 At the moment, collision response is a simple "rollback":
 
-- `Player::hitWall(oldPos)` sets the player back to the old position.
-- `Enemy::hitWall(oldPos)` is implemented per enemy type (e.g., `GruntEnemy` rolls back).
-- Projectiles are destroyed when they hit a wall.
+- `Player::hitWall()` sets the player back to the previously stored position.
+- `Enemy::hitWall()` is implemented per enemy type (e.g., `GruntEnemy` rolls back).
+- Projectiles are destroyed when they hit a wall or a locked door.
 
 (A more advanced response like sliding can be added later.)
 

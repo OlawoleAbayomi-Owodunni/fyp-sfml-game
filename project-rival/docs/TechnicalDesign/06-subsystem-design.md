@@ -18,8 +18,8 @@ Key concepts:
 
 Current behaviour:
 
-- Collision checks are centralized in `Game::update(dt)` using `CollisionCheck::areColliding(...)`.
-- Response is currently a simple rollback for player/enemies (`hitWall(oldPos)`) and destruction for projectiles.
+- Collision checks are centralized in `Game::update(dt)` (via `Game::CollisionChecks()`) using `CollisionCheck::areColliding(...)`.
+- Response is currently a simple rollback for player/enemies (`hitWall()`) and destruction for projectiles on wall/door hit.
 
 Extension points:
 
@@ -53,6 +53,13 @@ Current behaviour:
 - `RoomInstance` converts all `Tile::WALL` tiles (outer walls + obstacles) into wall shapes + `StaticCollision` colliders.
 - `Game::generateRoom()` spawns enemies at `RoomPlan.spawners` (world position = `roomWorldPos + tilePos * tileSize`).
 
+Doors and triggers (current):
+
+- Door tiles can span 2–3 tiles depending on room size.
+- Door tiles create `DoorTrigger` entries.
+- Locked doors become `DOOR_LAYER` colliders at build time.
+- Portal rooms can add a `PortalTrigger` collider.
+
 ## Combat / projectiles
 
 Core files:
@@ -69,6 +76,8 @@ Current behaviour:
 
 - Player bullets are destroyed when they hit walls.
 - `NormalBulletProjectile` currently applies 10 damage.
+
+(Projectiles also collide with locked doors.)
 
 Extension points:
 
@@ -90,7 +99,7 @@ Key algorithms:
 Current behaviour:
 
 - Enemies track max health (`e_maxHealth`) and can be reset to their start state via `Enemy::reset()`.
-- Enemies respond to wall collisions via `hitWall(oldPos)` (e.g., `GruntEnemy` rolls back).
+- Enemies respond to wall/door collisions via `hitWall()` (e.g., `GruntEnemy` rolls back).
 
 Extension points:
 

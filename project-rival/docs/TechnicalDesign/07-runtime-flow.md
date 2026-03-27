@@ -22,6 +22,7 @@ At a high level:
    - player vs enemies
    - bullets vs enemies
    - player/enemies/bullets vs walls
+   - player vs triggers (doors / portals)
 	- player vs portal trigger
 7. Render:
    - room
@@ -33,3 +34,4 @@ At a high level:
 
 - Collision checks currently use AABB intersection + layer/mask filtering.
 - Current wall response is simple rollback for player/enemies and bullet destruction.
+- Door response is the same as walls when doors are locked (a `DOOR_LAYER` collider exists).

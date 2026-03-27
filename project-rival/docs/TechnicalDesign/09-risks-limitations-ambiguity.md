@@ -11,6 +11,7 @@ This chapter documents known shortcuts and future technical risks.
 - Player owns bullets (may move to a world/weapon system later).
 - Some generation uses `rand()` directly (non-deterministic by design for room details).
 - Room generation currently does not use `seed` to drive deterministic outcomes (even though `RoomPlan` stores a seed).
+- Doors/triggers are currently generated in fixed directions in room generators (not yet driven by a floor/dungeon graph).
 
 ## Technical risks
 

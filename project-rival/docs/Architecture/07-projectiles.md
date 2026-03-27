@@ -22,7 +22,7 @@ Projectiles also set a collision profile based on who fired them:
 - player-fired bullets collide with enemies
 - enemy-fired bullets collide with the player
 
-They also collide with walls (`WALL_LAYER`) and are destroyed on impact.
+They also collide with walls (`WALL_LAYER`) & with locked doors (`DOOR_LAYER`) and are destroyed on impact.
 
 Derived projectiles are expected to:
 

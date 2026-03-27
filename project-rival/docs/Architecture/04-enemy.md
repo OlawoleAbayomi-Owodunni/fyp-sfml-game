@@ -28,13 +28,14 @@ Currently, enemies collide with:
 - the player
 - player-fired bullets
 - walls (`WALL_LAYER`)
+- locked doors (`DOOR_LAYER`)
 
 Derived classes must implement:
 
 - `init()`
 - `update(double dt)`
 - `setTarget(const sf::Vector2f& target)`
-- `hitWall(oldPos)` (wall collision response)
+- `hitWall()` (wall/door collision response)
 
 ## `GruntEnemy`
 
@@ -69,7 +70,7 @@ Collision + damage (current approach):
 - Player projectiles are checked against enemies; on hit:
   - enemy takes damage
   - projectile is destroyed
-- Enemies are checked against wall colliders; on hit, `enemy->hitWall(oldPos)` is called (currently rollback).
+- Enemies are checked against static room colliders (walls + locked doors); on hit, `enemy->hitWall()` is called (currently rollback for `GruntEnemy`).
 - Dead enemies are removed from the `m_enemies` list.
 
 ## Likely next steps

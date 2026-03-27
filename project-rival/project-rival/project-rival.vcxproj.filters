@@ -100,6 +100,12 @@
     <Filter Include="Header Files\Projectiles\NormalBullets">
       <UniqueIdentifier>{ec3a1ba9-8f3b-49c9-a2af-ee53fd5af881}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Resource Files\DOCUMENTATION\TDD">
+      <UniqueIdentifier>{ab98f2b2-375f-4581-b89f-c300adecb773}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\DOCUMENTATION\Architecture">
+      <UniqueIdentifier>{f6122b01-7ad4-459c-ab01-774cd71eb0a7}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -269,27 +275,69 @@
     <None Include="..\automation\scripts\devlog-dump.ps1">
       <Filter>Resource Files\AUTOMATIONS\Scripts</Filter>
     </None>
-    <None Include="..\docs\Architecture\01-project-structure.md" />
-    <None Include="..\docs\Architecture\02-player.md" />
-    <None Include="..\docs\Architecture\03-input.md" />
-    <None Include="..\docs\Architecture\04-enemy.md" />
-    <None Include="..\docs\Architecture\05-steering-oop.md" />
-    <None Include="..\docs\Architecture\06-coding-conventions.md" />
-    <None Include="..\docs\Architecture\07-projectiles.md" />
-    <None Include="..\docs\Architecture\08-collision-and-damage.md" />
-    <None Include="..\docs\Architecture\09-rooms-and-generation.md" />
-    <None Include="..\docs\Architecture\README.md" />
-    <None Include="..\docs\TechnicalDesign\01-overview.md" />
-    <None Include="..\docs\TechnicalDesign\02-goals.md" />
-    <None Include="..\docs\TechnicalDesign\03-technical-requirements.md" />
-    <None Include="..\docs\TechnicalDesign\04-scope-non-goals.md" />
-    <None Include="..\docs\TechnicalDesign\05-system-architecture.md" />
-    <None Include="..\docs\TechnicalDesign\06-subsystem-design.md" />
-    <None Include="..\docs\TechnicalDesign\07-runtime-flow.md" />
-    <None Include="..\docs\TechnicalDesign\08-data-and-state.md" />
-    <None Include="..\docs\TechnicalDesign\09-risks-limitations-ambiguity.md" />
-    <None Include="..\docs\TechnicalDesign\10-appendix.md" />
-    <None Include="..\docs\TechnicalDesign\README.md" />
+    <None Include="..\docs\Architecture\01-project-structure.md">
+      <Filter>Resource Files\DOCUMENTATION\Architecture</Filter>
+    </None>
+    <None Include="..\docs\Architecture\02-player.md">
+      <Filter>Resource Files\DOCUMENTATION\Architecture</Filter>
+    </None>
+    <None Include="..\docs\Architecture\03-input.md">
+      <Filter>Resource Files\DOCUMENTATION\Architecture</Filter>
+    </None>
+    <None Include="..\docs\Architecture\04-enemy.md">
+      <Filter>Resource Files\DOCUMENTATION\Architecture</Filter>
+    </None>
+    <None Include="..\docs\Architecture\05-steering-oop.md">
+      <Filter>Resource Files\DOCUMENTATION\Architecture</Filter>
+    </None>
+    <None Include="..\docs\Architecture\07-projectiles.md">
+      <Filter>Resource Files\DOCUMENTATION\Architecture</Filter>
+    </None>
+    <None Include="..\docs\Architecture\08-collision-and-damage.md">
+      <Filter>Resource Files\DOCUMENTATION\Architecture</Filter>
+    </None>
+    <None Include="..\docs\Architecture\09-rooms-and-generation.md">
+      <Filter>Resource Files\DOCUMENTATION\Architecture</Filter>
+    </None>
+    <None Include="..\docs\Architecture\06-coding-conventions.md">
+      <Filter>Resource Files\DOCUMENTATION\Architecture</Filter>
+    </None>
+    <None Include="..\docs\Architecture\README.md">
+      <Filter>Resource Files\DOCUMENTATION\Architecture</Filter>
+    </None>
+    <None Include="..\docs\TechnicalDesign\01-overview.md">
+      <Filter>Resource Files\DOCUMENTATION\TDD</Filter>
+    </None>
+    <None Include="..\docs\TechnicalDesign\02-goals.md">
+      <Filter>Resource Files\DOCUMENTATION\TDD</Filter>
+    </None>
+    <None Include="..\docs\TechnicalDesign\03-technical-requirements.md">
+      <Filter>Resource Files\DOCUMENTATION\TDD</Filter>
+    </None>
+    <None Include="..\docs\TechnicalDesign\04-scope-non-goals.md">
+      <Filter>Resource Files\DOCUMENTATION\TDD</Filter>
+    </None>
+    <None Include="..\docs\TechnicalDesign\05-system-architecture.md">
+      <Filter>Resource Files\DOCUMENTATION\TDD</Filter>
+    </None>
+    <None Include="..\docs\TechnicalDesign\06-subsystem-design.md">
+      <Filter>Resource Files\DOCUMENTATION\TDD</Filter>
+    </None>
+    <None Include="..\docs\TechnicalDesign\07-runtime-flow.md">
+      <Filter>Resource Files\DOCUMENTATION\TDD</Filter>
+    </None>
+    <None Include="..\docs\TechnicalDesign\08-data-and-state.md">
+      <Filter>Resource Files\DOCUMENTATION\TDD</Filter>
+    </None>
+    <None Include="..\docs\TechnicalDesign\09-risks-limitations-ambiguity.md">
+      <Filter>Resource Files\DOCUMENTATION\TDD</Filter>
+    </None>
+    <None Include="..\docs\TechnicalDesign\10-appendix.md">
+      <Filter>Resource Files\DOCUMENTATION\TDD</Filter>
+    </None>
+    <None Include="..\docs\TechnicalDesign\README.md">
+      <Filter>Resource Files\DOCUMENTATION\TDD</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Text Include="..\automation\scripts\output\aiming-merge-changes.txt">
@@ -310,6 +358,8 @@
     <Text Include="..\automation\scripts\output\combat-room-merge-changes.txt">
       <Filter>Resource Files\DOCUMENTATION\Git Summaries</Filter>
     </Text>
-    <Text Include="..\automation\scripts\output\additional-rooms-merge-changes.txt" />
+    <Text Include="..\automation\scripts\output\additional-rooms-merge-changes.txt">
+      <Filter>Resource Files\DOCUMENTATION\Git Summaries</Filter>
+    </Text>
   </ItemGroup>
 </Project>

@@ -32,6 +32,29 @@ This document tracks technical progress over time in a supervisor-friendly way.
 
 ---
 
+## Week of 2026-03-27
+
+### Summary
+- Added multiple room types (spawn room and portal room) alongside combat rooms.
+- Added doors, locked-door collision, and trigger volumes for doors and portals.
+- Implemented an early combat wave loop: entering a combat door trigger starts waves, locks doors, and clears/unlocks when complete.
+
+### Technical notes
+- Extended `RoomPlan` in `RoomBlueprint.h` to include `doors`, `triggers`, and an `isCleared` state flag.
+- Updated `RoomInstance` to build:
+  - wall colliders (`WALL_LAYER`)
+  - door colliders (`DOOR_LAYER`) only when doors are locked
+  - trigger colliders (`DOOR_TRIGGER_LAYER`, `PORTAL_TRIGGER_LAYER`) for gameplay interactions
+- Updated collision response to use per-entity stored previous positions (`Player::hitWall()`, `Enemy::hitWall()`).
+- Updated `Game` to manage a small room list, spawn player/enemies from spawners, and handle combat waves.
+
+### Evidence (commits)
+- `4f9cdbb` — FEATURE(Levels): Add Spawn/Portal rooms with triggers and player spawn placement
+- `1d22e64` — Doors generated and visually represented
+- `77c0739` — Door triggers added and collision with the player
+- `4f44527` — Wave Spawner logic added
+- `fd1bb72` — Wave System implemented
+
 ## Week of 2026-03-19
 
 ### Summary
