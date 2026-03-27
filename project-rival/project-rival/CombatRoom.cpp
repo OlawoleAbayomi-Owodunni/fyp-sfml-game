@@ -35,16 +35,39 @@ RoomPlan CombatRoom::generateRoomPlan(int id, RoomType type, int seed)
 	// Pillars
 	generateObstacles(room, interiorArea);
 
-	// Spawners
-
-	// Doors
+	// Doors -> this will eventually be determined by the dungeon floor layout
 	generateDoors(room, DoorDirection::SOUTH);
 	generateDoors(room, DoorDirection::EAST);
 
-	currentRoomPlan = room;
+	cr_currentRoomPlan = room;
 
 	return room;
 }
+
+RoomPlan CombatRoom::generateNewWave(RoomPlan& room)
+{
+	const int interiorWidth = room.width - 2;
+	const int interiorHeight = room.height - 2;
+	const int interiorArea = interiorWidth * interiorHeight;
+
+	generateSpawnPoints(room, interiorArea);
+
+	for (auto& door : room.doors)
+		door.isLocked = true;	// lock doors
+
+	return room;
+}
+
+RoomPlan CombatRoom::setRoomCleared(RoomPlan& room)
+{
+	room.isCleared = true;
+	
+	for (auto& door : room.doors)
+		door.isLocked = false;	// unlock doors
+
+	return room;
+}
+
 
 void CombatRoom::generateObstacles(RoomPlan& room, int interiorArea)
 {
@@ -124,34 +147,4 @@ void CombatRoom::generateSpawnPoints(RoomPlan& room, int interiorArea)
 		room.spawners.push_back({ SpawnerType::EnemySpawner, randPos });
 		occupiedPositions.push_back(randPos);
 	}
-}
-
-RoomPlan CombatRoom::startNewWave()
-{
-	RoomPlan room = currentRoomPlan;
-
-	const int interiorWidth = room.width - 2;
-	const int interiorHeight = room.height - 2;
-	const int interiorArea = interiorWidth * interiorHeight;
-
-	generateSpawnPoints(room, interiorArea);
-
-	for (auto& door : room.doors)
-		door.isLocked = true;	// lock doors
-
-	currentRoomPlan = room;
-
-	return room;
-}
-
-RoomPlan CombatRoom::roomCleared()
-{
-	RoomPlan room = currentRoomPlan;
-
-	for (auto& door : room.doors)
-		door.isLocked = false;	// unlock doors
-
-	currentRoomPlan = room;
-
-	return room;
 }

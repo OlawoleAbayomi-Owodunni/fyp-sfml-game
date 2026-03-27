@@ -41,15 +41,15 @@ void Player::init()
 	p_collisionProfile.layer = CollisionLayer::PLAYER_LAYER;
 	p_collisionProfile.mask = CollisionLayer::ENEMY_LAYER | CollisionLayer::ENEMY_BULLET_LAYER | CollisionLayer::WALL_LAYER | CollisionLayer::DOOR_LAYER | CollisionLayer::PORTAL_TRIGGER_LAYER | CollisionLayer::DOOR_TRIGGER_LAYER;
 
-	p_maxHealth = 100;
-
-	p_maxHealth = 100;
+	p_maxHealth = 1000;
 
 	reset();
 }
 
 void Player::update(double dt, const Vector2f& mousePos)
 {
+	p_prevPos = p_body.getPosition();
+
 	handleMovement(dt);
 	handleAiming(mousePos);
 
@@ -180,9 +180,9 @@ void Player::takeDamage(int damage)
 	}
 }
 
-void Player::hitWall(sf::Vector2f oldPos)
+void Player::hitWall()
 {
-	p_body.setPosition(oldPos);
+	p_body.setPosition(p_prevPos);
 }
 
 std::vector<std::unique_ptr<Projectile>>& Player::getProjectiles()

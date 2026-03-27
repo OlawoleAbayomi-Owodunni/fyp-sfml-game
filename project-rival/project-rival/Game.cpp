@@ -122,6 +122,26 @@ void Game::update(double dt)
 	
 	// Game manager controls
 	gameInput();
+	// Wave management for combat rooms
+	if (m_activeRoomPlan.type == RoomType::COMBAT && m_isInCombat) {
+		// check if all enemies are dead
+		if (m_enemies.empty()) {
+			m_waveCounter--;
+			if (m_waveCounter > 0) {	// start new wave
+				cout << "New Wave Starting! Remaining Waves: " << m_waveCounter << endl;
+				m_activeRoomPlan = CombatRoom().generateNewWave(m_activeRoomPlan);
+				spawnEnemies(m_activeRoomPlan, m_roomWorldPos);
+				generateRoom(m_activeRoomPlan);
+			}
+			else {	// end combat
+				cout << "Combat Room Cleared at ID " << m_activeRoomPlan.id << "!\n";
+				m_activeRoomPlan = CombatRoom().setRoomCleared(m_activeRoomPlan);
+				generateRoom(m_activeRoomPlan);
+				m_isInCombat = false;
+			}
+		}
+	}
+
 
 	// Update player and enemies
 	Vector2f oldPlayerPos = m_player.getPosition();
@@ -130,24 +150,9 @@ void Game::update(double dt)
 	for (auto enemy_it = m_enemies.begin(); enemy_it != m_enemies.end();)
 	{
 		auto& enemy = *enemy_it;
-		Vector2f oldEnemyPos = enemy->getPosition();
+		//Vector2f oldEnemyPos = enemy->getPosition();
 		enemy->setTarget(m_player.getPosition());
 		enemy->update(dt);
-
-		// Check collision with player and collisionObject
-		// Enemy -> Player
-		if (CollisionCheck::areColliding(m_player, *enemy)) {
-			cout << "Player collided with enemy!\n";
-			m_player.takeDamage(10);
-		}
-		// Enemy -> Wall
-		for (auto& wall : m_activeRoomInstance.getStaticCollisions()) {
-			if (CollisionCheck::areColliding(*enemy, wall))
-			{
-				enemy->hitWall(oldEnemyPos);
-				break;
-			}
-		}
 
 		// Check if enemy is dead and remove if so
 		if (enemy->isDead())
@@ -158,88 +163,8 @@ void Game::update(double dt)
 			enemy_it++;
 	}
 
-	// Collision checks
-	// Check player projectiles against enemies
-	for (auto& bullet : m_player.getProjectiles()) 
-	{
-		if(bullet->shouldDestroy())
-			continue;
-
-		for (auto& enemy : m_enemies) {
-			if (enemy->isDead())
-				continue;
-
-			// Bullet -> Enemy
-			if (CollisionCheck::areColliding(*bullet, *enemy))
-			{
-				enemy->takeDamage(bullet->applyDamage());
-				bullet->destroy();
-				break;
-			}
-		}
-	}
-
-	// Check static environment against player, enmies and projectiles
-	for (auto& collisionObject : m_activeRoomInstance.getStaticCollisions())
-	{
-		// Wall or Door collision checks
-		if (collisionObject.getCollisionProfile().layer == CollisionLayer::WALL_LAYER ||
-			collisionObject.getCollisionProfile().layer == CollisionLayer::DOOR_LAYER)
-		{
-			// Wall -> Player
-			if (CollisionCheck::areColliding(m_player, collisionObject))
-			{
-				m_player.hitWall(oldPlayerPos);
-			}
-
-			// Wall -> Player Projectiles
-			for (auto& bullet : m_player.getProjectiles())
-			{
-				if (bullet->shouldDestroy())
-					continue;
-
-				if (CollisionCheck::areColliding(*bullet, collisionObject))
-				{
-					bullet->destroy();
-					break;
-				}
-			}
-		}
-
-		// Portal trigger checks
-		if (collisionObject.getCollisionProfile().layer == CollisionLayer::PORTAL_TRIGGER_LAYER)
-		{
-			// Portal Trigger -> Player
-			if (CollisionCheck::areColliding(collisionObject, m_player))
-			{
-				cout << "Player Collided with Portal Trigger!\n";
-			}
-		}
-
-		// Door trigger checks
-		if (collisionObject.getCollisionProfile().layer == CollisionLayer::DOOR_TRIGGER_LAYER)
-		{
-			// Door Trigger -> Player
-			if (CollisionCheck::areColliding(collisionObject, m_player))
-			{
-				cout << "Player Collided with Door Trigger!\n";
-				//generateRoomPlan(m_combatRoom.startNewWave());
-				break;
-			}
-		}
-	}
-}
-
-void Game::gameInput()
-{
-	if (Keyboard::isKeyPressed(Keyboard::Key::Escape) || InputManager::pad().pressed(GamepadButton::Start))
-	{
-		m_window.close();
-	}
-	if (Keyboard::isKeyPressed(Keyboard::Key::R) || InputManager::pad().pressed(GamepadButton::Select))
-	{
-		gameStart();
-	}
+	//Collision checks
+	CollisionChecks();
 }
 
 ////////////////////////////////////////////////////////////
@@ -264,29 +189,167 @@ void Game::render()
 void Game::resetGame()
 {
 	m_player.init();
+	m_isInCombat = false;
 
 	m_enemies.clear();
 
 	m_activeRoomInstance.reset();
-
 	m_roomPlans.clear();
+	m_activeRoomPlan = RoomPlan();
 }
 
+
+////////////////////////////////////////////////////////////
+
+void Game::CollisionChecks()
+{
+	//__________________________ COLLISION CHECKS __________________________//
+	
+	// ------------------- ENEMY CHECKS --------------------
+	for (auto& enemy : m_enemies)
+	{
+		// Enemy -> Player
+		if (CollisionCheck::areColliding(m_player, *enemy)) {
+			cout << "Player collided with enemy!\n";
+			m_player.takeDamage(1);
+			break;
+		}
+	}
+
+	// ------------------- BULLET CHECKS -------------------
+	for (auto& bullet : m_player.getProjectiles())
+	{
+		if (bullet->shouldDestroy())
+			continue;
+
+		// Bullet -> Enemy
+		for (auto& enemy : m_enemies) {
+			if (enemy->isDead())
+				continue;
+
+			if (CollisionCheck::areColliding(*bullet, *enemy))
+			{
+				enemy->takeDamage(bullet->applyDamage());
+				bullet->destroy();
+				break;
+			}
+		}
+	}
+
+	// -------------------- ENVIRONMENT CHECKS -------------------
+	for (auto& collisionObject : m_activeRoomInstance.getStaticRoomColliders())
+	{
+		// ____________________________ SHAPE COLLISION CHECKS ____________________________ //
+		// Wall or Door collision checks
+		if (collisionObject.getCollisionProfile().layer == CollisionLayer::WALL_LAYER ||
+			collisionObject.getCollisionProfile().layer == CollisionLayer::DOOR_LAYER)
+		{
+			// Wall/Door -> Player
+			if (CollisionCheck::areColliding(m_player, collisionObject))
+			{
+				m_player.hitWall();
+				break;
+			}
+
+			// Wall/Door -> Player Projectiles
+			for (auto& bullet : m_player.getProjectiles())
+			{
+				if (bullet->shouldDestroy())
+					continue;
+
+				if (CollisionCheck::areColliding(*bullet, collisionObject)) {
+					bullet->destroy();
+					break;
+				}
+			}
+
+			// Wall/Door -> Enemy
+			for (auto& enemy : m_enemies) {
+				if (enemy->isDead())
+					continue;
+
+				if (CollisionCheck::areColliding(*enemy, collisionObject)) {
+					enemy->hitWall();
+					break;
+				}
+			}
+		}
+
+		// ____________________________ TRIGGER COLLISION CHECKS ____________________________ //
+		// Portal trigger checks
+		if (collisionObject.getCollisionProfile().layer == CollisionLayer::PORTAL_TRIGGER_LAYER)
+		{
+			// Portal Trigger -> Player
+			if (CollisionCheck::areColliding(collisionObject, m_player))
+			{
+				cout << "Player Collided with Portal Trigger!\n";
+				break;
+			}
+		}
+
+		// Door trigger checks
+		if (collisionObject.getCollisionProfile().layer == CollisionLayer::DOOR_TRIGGER_LAYER)
+		{
+			// PROBLEM -> we need a way to set the active room to be the room that the this collision happens in
+			// SOLUTION -> 
+
+			// Door Trigger -> Player
+			if (CollisionCheck::areColliding(collisionObject, m_player))
+			{
+				// Combat Door Trigger
+				if (m_activeRoomPlan.type == RoomType::COMBAT) {
+					//cout << "Player collided with combat room door trigger!\n";
+					if (!m_activeRoomPlan.isCleared && !m_isInCombat)
+					{
+						m_activeRoomPlan = CombatRoom().generateNewWave(m_activeRoomPlan);
+						spawnEnemies(m_activeRoomPlan, m_roomWorldPos);
+						m_isInCombat = true;
+						m_waveCounter = rand() % 3 + 1;
+						cout << "Starting combat room wave!\nWaves Remaining: " << m_waveCounter << "\n";
+						generateRoom(m_activeRoomPlan);
+					}
+				}
+
+				break;
+			}
+		}
+	}
+}
+
+void Game::gameInput()
+{
+	if (Keyboard::isKeyPressed(Keyboard::Key::Escape) || InputManager::pad().pressed(GamepadButton::Start))
+	{
+		m_window.close();
+	}
+	if (Keyboard::isKeyPressed(Keyboard::Key::R) || InputManager::pad().pressed(GamepadButton::Select))
+	{
+		gameStart();
+	}
+}
+
+
+///////////////////////////////////////////////////////////
 void Game::gameStart()
 {
 	resetGame();
 	m_roomPlans.push_back(CombatRoom().generateRoomPlan(0, RoomType::COMBAT, 0));
 	m_roomPlans.push_back(SpawnRoom().generateRoomPlan(1, RoomType::SPAWN, 0));
 	m_roomPlans.push_back(PortalRoom().generateRoomPlan(2, RoomType::PORTAL, 0));
-	generateRoom(m_roomPlans[0]);
+
+	int roomToLoad = rand() % m_roomPlans.size();	// temportary for displaying single rooms at a time
+	m_activeRoomPlan = m_roomPlans[0];
+	generateRoom(m_activeRoomPlan);
 }
 
 void Game::generateRoom(RoomPlan& roomPlan)
 {
-	sf::Vector2f roomWorldPos{ 50.f, 50.f };
-	m_activeRoomInstance.buildFromPlan(roomPlan, roomWorldPos);	
+	m_activeRoomInstance.buildFromPlan(roomPlan, m_roomWorldPos);
+	spawnPlayer(roomPlan, m_roomWorldPos);
 }
 
+
+/////////////////////////////////////////////
 void Game::spawnPlayer(RoomPlan& roomPlan, const sf::Vector2f& roomWorldPos)
 {
 	// Spawn room Spawner
@@ -297,6 +360,7 @@ void Game::spawnPlayer(RoomPlan& roomPlan, const sf::Vector2f& roomWorldPos)
 			if (spawnPoint.type == SpawnerType::PlayerSpawner) {
 				Vector2f spawnPos = roomWorldPos + static_cast<Vector2f>(spawnPoint.tilePos) * roomPlan.tileSize;
 				m_player.setSpawnPosition(spawnPos);
+				m_activeRoomPlan = roomPlan;
 			}
 		}
 	}

@@ -20,6 +20,6 @@ void TurretEnemy::setTarget(const Vector2f& target)
 	e_target = target;
 }
 
-void TurretEnemy::hitWall(sf::Vector2f oldPos)
+void TurretEnemy::hitWall()
 {
 }

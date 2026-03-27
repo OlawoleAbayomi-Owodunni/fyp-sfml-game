@@ -45,8 +45,6 @@ protected:
 	void init();
 	void update(double dt);
 
-	void gameInput();
-
 	void render();
 
 	void processEvents();
@@ -54,13 +52,6 @@ protected:
 
 	sf::Font m_arialFont{ "ASSETS/FONTS/ariblk.ttf" };
 	sf::RenderWindow m_window;
-
-	Player m_player;
-
-	std::vector<std::unique_ptr<Enemy>> m_enemies;
-
-	vector<RoomPlan> m_roomPlans;
-	RoomInstance m_activeRoomInstance;
 
 #ifdef TEST_FPS
 	sf::Text x_updateFPS{ m_arialFont };	// text used to display updates per second.
@@ -70,12 +61,39 @@ protected:
 	int x_drawFrameCount{ 0 };							// draws per second counter.
 #endif // TEST_FPS
 
-
 private:
+	// ----------------------------------> FUNCTIONS <---------------------------------- //
+	// Update subfunctions
+	void CollisionChecks();
+	void gameInput();	
+	
+	// Game management
 	void resetGame();
 	void gameStart();
 
+	// Room management
 	void generateRoom(RoomPlan& roomPlan);
 	void spawnPlayer(RoomPlan& roomPlan, const sf::Vector2f& roomWorldPos);
 	void spawnEnemies(RoomPlan& roomPlan, const sf::Vector2f& roomWorldPos);
+
+
+	// ----------------------------------> VARIABLES <---------------------------------- //
+	// Player management
+	Player m_player;
+	bool m_isInCombat;
+
+	// Enemy management
+	std::vector<std::unique_ptr<Enemy>> m_enemies;
+
+	// Room management
+	vector<RoomPlan> m_roomPlans;
+	RoomPlan m_activeRoomPlan;
+	RoomInstance m_activeRoomInstance;
+
+	//Wave management
+	int m_waveCounter;
+
+	//Temporary variables
+	Vector2f m_roomWorldPos{ 50.f,50.f };
+
 };

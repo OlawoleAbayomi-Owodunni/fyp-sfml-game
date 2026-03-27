@@ -8,14 +8,14 @@ class RoomInstance
 public:
 	void buildFromPlan(const RoomPlan& plan, const sf::Vector2f& worldPos);
 	
-	const std::vector<StaticCollision>& getStaticCollisions();
+	const std::vector<StaticCollision>& getStaticRoomColliders();
 
 	void render(sf::RenderWindow& window);
 
 	void reset();
 
 private:
-	std::vector<StaticCollision> ri_staticColliders;
-	std::vector<sf::RectangleShape> ri_staticShapes;
+	std::vector<StaticCollision> ri_staticRoomColliders;
+	std::vector<sf::RectangleShape> ri_staticRoomShapes;
 };
 

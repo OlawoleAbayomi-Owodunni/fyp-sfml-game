@@ -2,8 +2,8 @@
 
 void RoomInstance::buildFromPlan(const RoomPlan& plan, const sf::Vector2f& worldPos)
 {
-	ri_staticColliders.clear();
-	ri_staticShapes.clear();
+	ri_staticRoomColliders.clear();
+	ri_staticRoomShapes.clear();
 
 	if (!plan.isValid())
 		return;
@@ -23,13 +23,13 @@ void RoomInstance::buildFromPlan(const RoomPlan& plan, const sf::Vector2f& world
 				wall.setPosition(worldPos + sf::Vector2f(col * tileSize, row * tileSize));
 				wall.setFillColor(sf::Color(100, 100, 100)); // grey walls
 
-				ri_staticShapes.push_back(wall);
+				ri_staticRoomShapes.push_back(wall);
 
 				//setup collider for wall
 				StaticCollision collider(wall.getGlobalBounds(), CollisionLayer::WALL_LAYER,
 					CollisionLayer::PLAYER_LAYER | CollisionLayer::ENEMY_LAYER | CollisionLayer::PLAYER_BULLET_LAYER | CollisionLayer::ENEMY_BULLET_LAYER);
 
-				ri_staticColliders.push_back(collider);
+				ri_staticRoomColliders.push_back(collider);
 			}
 			// Doors
 			else if (tile == Tile::DOOR) {
@@ -51,7 +51,7 @@ void RoomInstance::buildFromPlan(const RoomPlan& plan, const sf::Vector2f& world
 				door.setPosition(worldPos + sf::Vector2f(col * tileSize, row * tileSize));
 				door.setFillColor(sf::Color(150, 75, 0)); // brown doors
 
-				ri_staticShapes.push_back(door);
+				ri_staticRoomShapes.push_back(door);
 
 				// Door solution
 				// PROBLEM -> we need to know the coordinates of the specific door to lock so that we can set it to be locked or not via the collider
@@ -67,7 +67,7 @@ void RoomInstance::buildFromPlan(const RoomPlan& plan, const sf::Vector2f& world
 							StaticCollision collider(door.getGlobalBounds(), CollisionLayer::DOOR_LAYER,
 								CollisionLayer::PLAYER_LAYER | CollisionLayer::ENEMY_LAYER | CollisionLayer::PLAYER_BULLET_LAYER | CollisionLayer::ENEMY_BULLET_LAYER);
 
-							ri_staticColliders.push_back(collider);
+							ri_staticRoomColliders.push_back(collider);
 						}
 						break;
 					}
@@ -93,7 +93,7 @@ void RoomInstance::buildFromPlan(const RoomPlan& plan, const sf::Vector2f& world
 			spawnPoint.setFillColor(sf::Color::Blue);
 		}
 
-		ri_staticShapes.push_back(spawnPoint);
+		ri_staticRoomShapes.push_back(spawnPoint);
 	}
 	// initialise triggers (DEBUG)
 	for (auto& trigger : plan.triggers) {
@@ -139,7 +139,7 @@ void RoomInstance::buildFromPlan(const RoomPlan& plan, const sf::Vector2f& world
 		triggerShape.setOrigin(triggerShape.getSize() / 2.f);
 		triggerShape.setPosition(worldPos + static_cast<sf::Vector2f>(trigger.tilePos) * tileSize + positionOffset);
 
-		ri_staticShapes.push_back(triggerShape);
+		ri_staticRoomShapes.push_back(triggerShape);
 
 
 		// setup collider for trigger
@@ -153,18 +153,18 @@ void RoomInstance::buildFromPlan(const RoomPlan& plan, const sf::Vector2f& world
 				CollisionLayer::PLAYER_LAYER);
 		}
 		
-		ri_staticColliders.push_back(collider);
+		ri_staticRoomColliders.push_back(collider);
 	}
 }
 
-const std::vector<StaticCollision>& RoomInstance::getStaticCollisions()
+const std::vector<StaticCollision>& RoomInstance::getStaticRoomColliders()
 {
-	return ri_staticColliders;
+	return ri_staticRoomColliders;
 }
 
 void RoomInstance::render(sf::RenderWindow& window)
 {
-	for (auto& shape : ri_staticShapes)
+	for (auto& shape : ri_staticRoomShapes)
 	{
 		window.draw(shape);
 	}
@@ -172,6 +172,6 @@ void RoomInstance::render(sf::RenderWindow& window)
 
 void RoomInstance::reset()
 {
-	ri_staticColliders.clear();
-	ri_staticShapes.clear();
+	ri_staticRoomColliders.clear();
+	ri_staticRoomShapes.clear();
 }

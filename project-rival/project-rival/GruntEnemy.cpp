@@ -76,15 +76,17 @@ void GruntEnemy::update(double dt)
 
 void GruntEnemy::setTarget(const Vector2f& target)
 {
+	e_prevPos = e_body.getPosition();
+
 	e_target = target;
 
 	e_seek.setTarget(target);
 	e_arrive.setTarget(target);
 }
 
-void GruntEnemy::hitWall(sf::Vector2f oldPos)
+void GruntEnemy::hitWall()
 {
-	e_agent.position = oldPos;
+	e_agent.position = e_prevPos;
 	e_body.setPosition(e_agent.position);
 }
 

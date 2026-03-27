@@ -70,6 +70,9 @@ struct RoomPlan {
 	std::vector<DoorPlan> doors;
 	std::vector<SpawnerPlan> spawners;
 	std::vector<TriggerPlan> triggers;
+
+	// Room state
+	bool isCleared = false;
 	
 	bool isValid() const {
 		if (width > 0 && height > 0 && (tileMap.size() == width * height))
@@ -92,8 +95,6 @@ class IRoomGenerator
 public:
 	virtual ~IRoomGenerator() = default;
 
-	// a few things to note about the parameters:
-	// id, type and seed are fine for passing through
 	virtual RoomPlan generateRoomPlan(int id, RoomType type, int seed) = 0;
 
 protected:
