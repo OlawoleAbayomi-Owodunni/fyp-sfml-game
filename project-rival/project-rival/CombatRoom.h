@@ -4,7 +4,7 @@
 class CombatRoom : public IRoomGenerator
 {
 public:
-	RoomPlan generateRoom(int id, RoomType type, int seed) override;
+	RoomPlan generateRoomPlan(int id, RoomType type, int seed) override;
 	RoomPlan startNewWave();
 	RoomPlan roomCleared();
 

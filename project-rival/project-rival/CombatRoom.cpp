@@ -1,6 +1,6 @@
 #include "CombatRoom.h"
 
-RoomPlan CombatRoom::generateRoom(int id, RoomType type, int seed)
+RoomPlan CombatRoom::generateRoomPlan(int id, RoomType type, int seed)
 {
 	RoomPlan room;
 	// Meta data

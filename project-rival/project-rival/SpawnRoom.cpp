@@ -1,6 +1,6 @@
 #include "SpawnRoom.h"
 
-RoomPlan SpawnRoom::generateRoom(int id, RoomType type, int seed)
+RoomPlan SpawnRoom::generateRoomPlan(int id, RoomType type, int seed)
 {
 	RoomPlan room;
 	// Meta data

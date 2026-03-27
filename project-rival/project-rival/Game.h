@@ -59,9 +59,7 @@ protected:
 
 	std::vector<std::unique_ptr<Enemy>> m_enemies;
 
-	CombatRoom m_combatRoom;
-	SpawnRoom m_spawnRoom;
-	PortalRoom m_portalRoom;
+	vector<RoomPlan> m_roomPlans;
 	RoomInstance m_activeRoomInstance;
 
 #ifdef TEST_FPS
@@ -78,4 +76,6 @@ private:
 	void gameStart();
 
 	void generateRoom(RoomPlan& roomPlan);
+	void spawnPlayer(RoomPlan& roomPlan, const sf::Vector2f& roomWorldPos);
+	void spawnEnemies(RoomPlan& roomPlan, const sf::Vector2f& roomWorldPos);
 };

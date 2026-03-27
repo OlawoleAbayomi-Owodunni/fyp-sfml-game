@@ -183,8 +183,8 @@ void Game::update(double dt)
 	for (auto& collisionObject : m_activeRoomInstance.getStaticCollisions())
 	{
 		// Wall or Door collision checks
-		if (collisionObject.getCollisionProfile().layer == CollisionLayer::WALL_LAYER /* ||
-			collisionObject.getCollisionProfile().layer == CollisionLayer::DOOR_LAYER */)
+		if (collisionObject.getCollisionProfile().layer == CollisionLayer::WALL_LAYER ||
+			collisionObject.getCollisionProfile().layer == CollisionLayer::DOOR_LAYER)
 		{
 			// Wall -> Player
 			if (CollisionCheck::areColliding(m_player, collisionObject))
@@ -223,7 +223,7 @@ void Game::update(double dt)
 			if (CollisionCheck::areColliding(collisionObject, m_player))
 			{
 				cout << "Player Collided with Door Trigger!\n";
-				//generateRoom(m_combatRoom.startNewWave());
+				//generateRoomPlan(m_combatRoom.startNewWave());
 				break;
 			}
 		}
@@ -267,28 +267,46 @@ void Game::resetGame()
 
 	m_enemies.clear();
 
-	m_combatRoom;
-	m_spawnRoom;
-	m_portalRoom;
 	m_activeRoomInstance.reset();
+
+	m_roomPlans.clear();
 }
 
 void Game::gameStart()
 {
 	resetGame();
-	generateRoom(m_portalRoom.generateRoom(0, RoomType::PORTAL, 0));
+	m_roomPlans.push_back(CombatRoom().generateRoomPlan(0, RoomType::COMBAT, 0));
+	m_roomPlans.push_back(SpawnRoom().generateRoomPlan(1, RoomType::SPAWN, 0));
+	m_roomPlans.push_back(PortalRoom().generateRoomPlan(2, RoomType::PORTAL, 0));
+	generateRoom(m_roomPlans[0]);
 }
 
 void Game::generateRoom(RoomPlan& roomPlan)
 {
 	sf::Vector2f roomWorldPos{ 50.f, 50.f };
-	m_activeRoomInstance.buildFromPlan(roomPlan, roomWorldPos);
-	
+	m_activeRoomInstance.buildFromPlan(roomPlan, roomWorldPos);	
+}
 
-	m_enemies.clear();
+void Game::spawnPlayer(RoomPlan& roomPlan, const sf::Vector2f& roomWorldPos)
+{
+	// Spawn room Spawner
+	if (roomPlan.type == RoomType::SPAWN)
+	{
+		for (auto& spawnPoint : roomPlan.spawners)
+		{
+			if (spawnPoint.type == SpawnerType::PlayerSpawner) {
+				Vector2f spawnPos = roomWorldPos + static_cast<Vector2f>(spawnPoint.tilePos) * roomPlan.tileSize;
+				m_player.setSpawnPosition(spawnPos);
+			}
+		}
+	}
+}
 
+void Game::spawnEnemies(RoomPlan& roomPlan, const sf::Vector2f& roomWorldPos)
+{
 	// Combat room Spawner
-	if(roomPlan.type == RoomType::COMBAT)
+	m_enemies.clear();
+	if (roomPlan.type == RoomType::COMBAT)
 	{
 		int totalEnemyTypes = EnemyType::COUNT;
 		for (auto& spawnPoint : roomPlan.spawners)
@@ -301,17 +319,6 @@ void Game::generateRoom(RoomPlan& roomPlan)
 					m_enemies.push_back(std::make_unique<GruntEnemy>(spawnPos, 150));
 				else if (enemyToSpawn == 1)
 					m_enemies.push_back(std::make_unique<TurretEnemy>(spawnPos, 250));
-			}
-		}
-	}
-	// Spawn room Spawner
-	if (roomPlan.type == RoomType::SPAWN)
-	{
-		for (auto& spawnPoint : roomPlan.spawners)
-		{
-			if (spawnPoint.type == SpawnerType::PlayerSpawner) {
-				Vector2f spawnPos = roomWorldPos + static_cast<Vector2f>(spawnPoint.tilePos) * roomPlan.tileSize;
-				m_player.setSpawnPosition(spawnPos);
 			}
 		}
 	}

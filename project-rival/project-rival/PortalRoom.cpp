@@ -1,6 +1,6 @@
 #include "PortalRoom.h"
 
-RoomPlan PortalRoom::generateRoom(int id, RoomType type, int seed)
+RoomPlan PortalRoom::generateRoomPlan(int id, RoomType type, int seed)
 {
 	RoomPlan plan;
 	// Meta data

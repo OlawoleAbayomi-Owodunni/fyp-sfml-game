@@ -105,7 +105,7 @@ void Player::setSpawnPosition(const Vector2f& spawnPos)
 
 void Player::reset()
 {
-	p_body.setPosition(Vector2f(500, 500.f));
+	p_body.setPosition(Vector2f(1400, 500));
 	p_health = p_maxHealth;
 }
 

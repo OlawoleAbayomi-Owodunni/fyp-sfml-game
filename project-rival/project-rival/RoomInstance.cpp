@@ -53,11 +53,25 @@ void RoomInstance::buildFromPlan(const RoomPlan& plan, const sf::Vector2f& world
 
 				ri_staticShapes.push_back(door);
 
-				//setup collider for door if door is locked
-				StaticCollision collider(door.getGlobalBounds(), CollisionLayer::DOOR_LAYER,
-					CollisionLayer::PLAYER_LAYER | CollisionLayer::ENEMY_LAYER | CollisionLayer::PLAYER_BULLET_LAYER | CollisionLayer::ENEMY_BULLET_LAYER);
+				// Door solution
+				// PROBLEM -> we need to know the coordinates of the specific door to lock so that we can set it to be locked or not via the collider
+				// SOLUTION -> we already have the position the door is supposed to be at within the doorplan's struct. We can run a for loop and check if the current tile mathches the doorplan's coordinates to gain access to the door's is locked variable
 
-				ri_staticColliders.push_back(collider);
+				//setup collider for door if door is locked
+				for (auto& doorObj : plan.doors) {
+					sf::Vector2i distToStart =  sf::Vector2i(col, row) - doorObj.tileStartPos;
+					distToStart = sf::Vector2i(std::abs(distToStart.x), std::abs(distToStart.y));
+					if (doorObj.tileStartPos == (sf::Vector2i(col, row) - distToStart))
+					{
+						if (doorObj.isLocked) {
+							StaticCollision collider(door.getGlobalBounds(), CollisionLayer::DOOR_LAYER,
+								CollisionLayer::PLAYER_LAYER | CollisionLayer::ENEMY_LAYER | CollisionLayer::PLAYER_BULLET_LAYER | CollisionLayer::ENEMY_BULLET_LAYER);
+
+							ri_staticColliders.push_back(collider);
+						}
+						break;
+					}
+				}
 			}
 		}
 	}
