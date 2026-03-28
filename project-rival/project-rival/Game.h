@@ -13,9 +13,7 @@
 #include "Enemy.h"
 
 #include "RoomInstance.h"
-#include "CombatRoom.h"
-#include "SpawnRoom.h"
-#include "PortalRoom.h"
+#include "FloorGenerator.h"
 
 using namespace std;
 using namespace sf;
@@ -89,6 +87,10 @@ private:
 	vector<RoomPlan> m_roomPlans;
 	RoomPlan m_activeRoomPlan;
 	RoomInstance m_activeRoomInstance;
+
+	// Floor management
+	FloorPlan m_floorPlan;
+	FloorGenerator m_floorGenerator;
 
 	//Wave management
 	int m_waveCounter;

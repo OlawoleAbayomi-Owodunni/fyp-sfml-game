@@ -2,41 +2,41 @@
 
 RoomPlan PortalRoom::generateRoomPlan(int id, RoomType type, int seed)
 {
-	RoomPlan plan;
+	RoomPlan room;
 	// Meta data
-	plan.id = id;
-	plan.type = RoomType::PORTAL;
-	plan.seed = seed;
-	plan.width = 11;
-	plan.height = 11;
+	room.id = id;
+	room.type = RoomType::PORTAL;
+	room.seed = seed + room.id;
+	room.width = 11;
+	room.height = 11;
 
 	// Tile map initialisation
-	plan.tileMap.assign(plan.height * plan.width, Tile::FLOOR);
+	room.tileMap.assign(room.height * room.width, Tile::FLOOR);
 
 	// Tile map construction
 	// Outer walls
-	for (int col = 0; col < plan.width; col++)
+	for (int col = 0; col < room.width; col++)
 	{
-		plan.setTile(0, col, Tile::WALL);				// top row
-		plan.setTile(plan.height - 1, col, Tile::WALL);	// bottom row
+		room.setTile(0, col, Tile::WALL);				// top row
+		room.setTile(room.height - 1, col, Tile::WALL);	// bottom row
 	}
-	for (int row = 0; row < plan.height; row++)
+	for (int row = 0; row < room.height; row++)
 	{
-		plan.setTile(row, 0, Tile::WALL);				// left column
-		plan.setTile(row, plan.width - 1, Tile::WALL);	// right column
+		room.setTile(row, 0, Tile::WALL);				// left column
+		room.setTile(row, room.width - 1, Tile::WALL);	// right column
 	}
 
-	const int interiorWidth = plan.width - 2;
-	const int interiorHeight = plan.height - 2;
+	const int interiorWidth = room.width - 2;
+	const int interiorHeight = room.height - 2;
 	const int interiorArea = interiorWidth * interiorHeight;
 
 	// Spawners
-	generateSpawnPoints(plan, interiorArea);
+	generateSpawnPoints(room, interiorArea);
 
 	// Doors
-	generateDoors(plan, DoorDirection::SOUTH);
+	generateDoors(room, DoorDirection::SOUTH);
 
-	return plan;
+	return room;
 }
 
 void PortalRoom::generateSpawnPoints(RoomPlan& roomPlan, int interiorArea)

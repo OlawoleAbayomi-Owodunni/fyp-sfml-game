@@ -1,7 +1,13 @@
 #include "Game.h"
 #include "InputManager.h"
+
 #include "GruntEnemy.h"
 #include "TurretEnemy.h"
+
+#include "CombatRoom.h"
+#include "PortalRoom.h"
+#include "SpawnRoom.h"
+
 #include <iostream>
 
 // Our target FPS
@@ -333,12 +339,32 @@ void Game::gameInput()
 void Game::gameStart()
 {
 	resetGame();
-	m_roomPlans.push_back(CombatRoom().generateRoomPlan(0, RoomType::COMBAT, 0));
-	m_roomPlans.push_back(SpawnRoom().generateRoomPlan(1, RoomType::SPAWN, 0));
-	m_roomPlans.push_back(PortalRoom().generateRoomPlan(2, RoomType::PORTAL, 0));
 
-	int roomToLoad = rand() % m_roomPlans.size();	// temportary for displaying single rooms at a time
-	m_activeRoomPlan = m_roomPlans[0];
+	const int dungeonSeed = 12345;	// temporary seed for testing
+	const int floorId = 0;
+	const int roomCount = 10;
+
+	m_floorPlan = m_floorGenerator.generateFloorPlan(floorId, dungeonSeed, roomCount, false);
+
+	m_roomPlans.clear();
+	m_roomPlans.reserve(m_floorPlan.rooms.size());
+
+	for (const auto& room : m_floorPlan.rooms)
+	{
+		switch (room.roomType) {
+		case RoomType::SPAWN:
+			m_roomPlans.push_back(SpawnRoom().generateRoomPlan(room.id, room.roomType, dungeonSeed + floorId));
+			break;
+		case RoomType::PORTAL:
+			m_roomPlans.push_back(PortalRoom().generateRoomPlan(room.id, room.roomType, dungeonSeed + floorId));
+			break;
+		case RoomType::COMBAT:
+			m_roomPlans.push_back(CombatRoom().generateRoomPlan(room.id, room.roomType, dungeonSeed + floorId));
+			break;
+		}
+	}
+
+	m_activeRoomPlan = m_roomPlans[3];
 	generateRoom(m_activeRoomPlan);
 }
 
