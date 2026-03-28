@@ -60,6 +60,7 @@ RoomPlan CombatRoom::generateNewWave(RoomPlan& room)
 
 RoomPlan CombatRoom::setRoomCleared(RoomPlan& room)
 {
+	room.spawners.clear();
 	room.isCleared = true;
 	
 	for (auto& door : room.doors)

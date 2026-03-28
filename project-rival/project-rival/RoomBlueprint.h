@@ -6,7 +6,13 @@
 enum RoomType {
 	SPAWN,
 	PORTAL,
-	COMBAT
+	//BOSS,
+	//MINIBOSS,
+	COMBAT,
+	//TREASURE,
+	//QUEST,
+
+	ROOM_COUNT
 };
 
 enum Tile {

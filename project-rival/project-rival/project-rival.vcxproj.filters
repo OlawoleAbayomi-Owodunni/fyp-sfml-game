@@ -106,6 +106,12 @@
     <Filter Include="Resource Files\DOCUMENTATION\Architecture">
       <UniqueIdentifier>{f6122b01-7ad4-459c-ab01-774cd71eb0a7}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Levels\Floors">
+      <UniqueIdentifier>{baac4118-c356-4ce9-ab7b-54e113e487fd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Abs.Interfaces\Floor Blueprint">
+      <UniqueIdentifier>{be3d9870-f5b6-48e9-b412-a0513c5dc1bb}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -122,9 +128,6 @@
     </ClCompile>
     <ClCompile Include="StaticCollision.cpp">
       <Filter>Header Files\Levels\Collision</Filter>
-    </ClCompile>
-    <ClCompile Include="RoomInstance.cpp">
-      <Filter>Header Files\Levels</Filter>
     </ClCompile>
     <ClCompile Include="CombatRoom.cpp">
       <Filter>Header Files\Levels\Rooms\Combat Room</Filter>
@@ -171,6 +174,12 @@
     <ClCompile Include="Projectile.cpp">
       <Filter>Header Files\Projectiles</Filter>
     </ClCompile>
+    <ClCompile Include="RoomInstance.cpp">
+      <Filter>Header Files\Levels\Rooms</Filter>
+    </ClCompile>
+    <ClCompile Include="FloorGenerator.cpp">
+      <Filter>Header Files\Levels\Floors</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Game.h">
@@ -184,9 +193,6 @@
     </ClInclude>
     <ClInclude Include="StaticCollision.h">
       <Filter>Header Files\Levels\Collision</Filter>
-    </ClInclude>
-    <ClInclude Include="RoomInstance.h">
-      <Filter>Header Files\Levels</Filter>
     </ClInclude>
     <ClInclude Include="CombatRoom.h">
       <Filter>Header Files\Levels\Rooms\Combat Room</Filter>
@@ -241,6 +247,15 @@
     </ClInclude>
     <ClInclude Include="Projectile.h">
       <Filter>Header Files\Projectiles</Filter>
+    </ClInclude>
+    <ClInclude Include="RoomInstance.h">
+      <Filter>Header Files\Levels\Rooms</Filter>
+    </ClInclude>
+    <ClInclude Include="FloorBlueprint.h">
+      <Filter>Header Files\Abs.Interfaces\Floor Blueprint</Filter>
+    </ClInclude>
+    <ClInclude Include="FloorGenerator.h">
+      <Filter>Header Files\Levels\Floors</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

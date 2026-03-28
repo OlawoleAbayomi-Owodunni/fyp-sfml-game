@@ -12,7 +12,7 @@ enum EnemyType
 	GRUNT,
 	TURRET,
 
-	COUNT
+	ENEMY_COUNT
 };
 
 class Enemy : public ICollidable

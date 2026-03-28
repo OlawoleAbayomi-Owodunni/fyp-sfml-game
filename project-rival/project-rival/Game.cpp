@@ -372,7 +372,7 @@ void Game::spawnEnemies(RoomPlan& roomPlan, const sf::Vector2f& roomWorldPos)
 	m_enemies.clear();
 	if (roomPlan.type == RoomType::COMBAT)
 	{
-		int totalEnemyTypes = EnemyType::COUNT;
+		int totalEnemyTypes = EnemyType::ENEMY_COUNT;
 		for (auto& spawnPoint : roomPlan.spawners)
 		{
 			if (spawnPoint.type == SpawnerType::EnemySpawner) {
