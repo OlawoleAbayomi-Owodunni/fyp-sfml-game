@@ -14,6 +14,7 @@
 
 #include "RoomInstance.h"
 #include "FloorGenerator.h"
+#include "FloorLayout.h"
 
 using namespace std;
 using namespace sf;
@@ -70,32 +71,36 @@ private:
 	void gameStart();
 
 	// Room management
-	void generateRoom(RoomPlan& roomPlan);
 	void spawnPlayer(RoomPlan& roomPlan, const sf::Vector2f& roomWorldPos);
 	void spawnEnemies(RoomPlan& roomPlan, const sf::Vector2f& roomWorldPos);
+
+	// Floor Management
+	void buildFloorInstance();
 
 
 	// ----------------------------------> VARIABLES <---------------------------------- //
 	// Player management
 	Player m_player;
 	bool m_isInCombat;
+	sf::View m_playerCamera;
 
 	// Enemy management
 	std::vector<std::unique_ptr<Enemy>> m_enemies;
 
 	// Room management
 	vector<RoomPlan> m_roomPlans;
-	RoomPlan m_activeRoomPlan;
-	RoomInstance m_activeRoomInstance;
+	vector<RoomInstance> m_roomInstances;
+	vector<Vector2f> m_roomWorldPositions;
+	int m_activeRoomId;
 
 	// Floor management
 	FloorPlan m_floorPlan;
 	FloorGenerator m_floorGenerator;
 
+	FloorLayout m_floorLayout;
+	FloorLayoutGenerator m_floorInstanceGenerator;
+
 	//Wave management
 	int m_waveCounter;
-
-	//Temporary variables
-	Vector2f m_roomWorldPos{ 50.f,50.f };
 
 };

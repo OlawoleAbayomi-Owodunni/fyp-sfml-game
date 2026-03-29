@@ -33,9 +33,6 @@ RoomPlan PortalRoom::generateRoomPlan(int id, RoomType type, int seed)
 	// Spawners
 	generateSpawnPoints(room, interiorArea);
 
-	// Doors
-	generateDoors(room, DoorDirection::SOUTH);
-
 	return room;
 }
 

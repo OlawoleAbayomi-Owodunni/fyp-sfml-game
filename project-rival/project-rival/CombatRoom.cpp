@@ -35,10 +35,6 @@ RoomPlan CombatRoom::generateRoomPlan(int id, RoomType type, int seed)
 	// Pillars
 	generateObstacles(room, interiorArea);
 
-	// Doors -> this will eventually be determined by the dungeon floor layout
-	generateDoors(room, DoorDirection::SOUTH);
-	generateDoors(room, DoorDirection::EAST);
-
 	cr_currentRoomPlan = room;
 
 	return room;

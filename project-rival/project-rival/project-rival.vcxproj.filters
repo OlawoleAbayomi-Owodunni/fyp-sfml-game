@@ -162,9 +162,6 @@
     <ClCompile Include="CombatRoom.cpp">
       <Filter>Header Files\Levels\Rooms</Filter>
     </ClCompile>
-    <ClCompile Include="RoomInstance.cpp">
-      <Filter>Header Files\Levels</Filter>
-    </ClCompile>
     <ClCompile Include="NormalBulletProjectile.cpp">
       <Filter>Header Files\Projectiles\NormalBullets</Filter>
     </ClCompile>
@@ -179,6 +176,15 @@
     </ClCompile>
     <ClCompile Include="FloorGenerator.cpp">
       <Filter>Header Files\Levels\Floors</Filter>
+    </ClCompile>
+    <ClCompile Include="RoomInstance.cpp">
+      <Filter>Header Files\Levels\Rooms</Filter>
+    </ClCompile>
+    <ClCompile Include="FloorLayout.cpp">
+      <Filter>Header Files\Levels\Floors</Filter>
+    </ClCompile>
+    <ClCompile Include="RoomDoorUtils.cpp">
+      <Filter>Header Files\Levels\Rooms</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -236,9 +242,6 @@
     <ClInclude Include="CombatRoom.h">
       <Filter>Header Files\Levels\Rooms</Filter>
     </ClInclude>
-    <ClInclude Include="RoomInstance.h">
-      <Filter>Header Files\Levels</Filter>
-    </ClInclude>
     <ClInclude Include="NormalBulletProjectile.h">
       <Filter>Header Files\Projectiles\NormalBullets</Filter>
     </ClInclude>
@@ -255,6 +258,15 @@
       <Filter>Header Files\Abs.Interfaces\Floor Blueprint</Filter>
     </ClInclude>
     <ClInclude Include="FloorGenerator.h">
+      <Filter>Header Files\Levels\Floors</Filter>
+    </ClInclude>
+    <ClInclude Include="RoomInstance.h">
+      <Filter>Header Files\Levels\Rooms</Filter>
+    </ClInclude>
+    <ClInclude Include="RoomDoorUtils.h">
+      <Filter>Header Files\Levels\Rooms</Filter>
+    </ClInclude>
+    <ClInclude Include="FloorLayout.h">
       <Filter>Header Files\Levels\Floors</Filter>
     </ClInclude>
   </ItemGroup>

@@ -23,6 +23,7 @@
     <ClCompile Include="Collision.cpp" />
     <ClCompile Include="CombatRoom.cpp" />
     <ClCompile Include="FloorGenerator.cpp" />
+    <ClCompile Include="FloorLayout.cpp" />
     <ClCompile Include="NormalBulletProjectile.cpp" />
     <ClCompile Include="PortalRoom.cpp" />
     <ClCompile Include="Projectile.cpp" />
@@ -33,6 +34,7 @@
     <ClCompile Include="InputManager.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="player.cpp" />
+    <ClCompile Include="RoomDoorUtils.cpp" />
     <ClCompile Include="RoomInstance.cpp" />
     <ClCompile Include="SeekBehaviour.cpp" />
     <ClCompile Include="SpawnRoom.cpp" />
@@ -45,6 +47,7 @@
     <ClInclude Include="CombatRoom.h" />
     <ClInclude Include="FloorBlueprint.h" />
     <ClInclude Include="FloorGenerator.h" />
+    <ClInclude Include="FloorLayout.h" />
     <ClInclude Include="NormalBulletProjectile.h" />
     <ClInclude Include="PortalRoom.h" />
     <ClInclude Include="Projectile.h" />
@@ -55,6 +58,7 @@
     <ClInclude Include="InputManager.h" />
     <ClInclude Include="player.h" />
     <ClInclude Include="RoomBlueprint.h" />
+    <ClInclude Include="RoomDoorUtils.h" />
     <ClInclude Include="RoomInstance.h" />
     <ClInclude Include="SeekBehaviour.h" />
     <ClInclude Include="SpawnRoom.h" />

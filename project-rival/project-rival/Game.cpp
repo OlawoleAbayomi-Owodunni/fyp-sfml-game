@@ -8,6 +8,8 @@
 #include "PortalRoom.h"
 #include "SpawnRoom.h"
 
+#include "RoomDoorUtils.h"
+
 #include <iostream>
 
 // Our target FPS
@@ -128,25 +130,25 @@ void Game::update(double dt)
 	
 	// Game manager controls
 	gameInput();
-	// Wave management for combat rooms
-	if (m_activeRoomPlan.type == RoomType::COMBAT && m_isInCombat) {
-		// check if all enemies are dead
-		if (m_enemies.empty()) {
-			m_waveCounter--;
-			if (m_waveCounter > 0) {	// start new wave
-				cout << "New Wave Starting! Remaining Waves: " << m_waveCounter << endl;
-				m_activeRoomPlan = CombatRoom().generateNewWave(m_activeRoomPlan);
-				spawnEnemies(m_activeRoomPlan, m_roomWorldPos);
-				generateRoom(m_activeRoomPlan);
-			}
-			else {	// end combat
-				cout << "Combat Room Cleared at ID " << m_activeRoomPlan.id << "!\n";
-				m_activeRoomPlan = CombatRoom().setRoomCleared(m_activeRoomPlan);
-				generateRoom(m_activeRoomPlan);
-				m_isInCombat = false;
-			}
-		}
-	}
+	//// Wave management for combat rooms
+	//if (m_activeRoomPlan.type == RoomType::COMBAT && m_isInCombat) {
+	//	// check if all enemies are dead
+	//	if (m_enemies.empty()) {
+	//		m_waveCounter--;
+	//		if (m_waveCounter > 0) {	// start new wave
+	//			cout << "New Wave Starting! Remaining Waves: " << m_waveCounter << endl;
+	//			m_activeRoomPlan = CombatRoom().generateNewWave(m_activeRoomPlan);
+	//			spawnEnemies(m_activeRoomPlan, m_roomWorldPos);
+	//			generateRoom(m_activeRoomPlan);
+	//		}
+	//		else {	// end combat
+	//			cout << "Combat Room Cleared at ID " << m_activeRoomPlan.id << "!\n";
+	//			m_activeRoomPlan = CombatRoom().setRoomCleared(m_activeRoomPlan);
+	//			generateRoom(m_activeRoomPlan);
+	//			m_isInCombat = false;
+	//		}
+	//	}
+	//}
 
 
 	// Update player and enemies
@@ -178,9 +180,16 @@ void Game::render()
 {
 	m_window.clear(sf::Color(0, 0, 0, 0));
 
-	m_activeRoomInstance.render(m_window);
+	m_playerCamera.setCenter(m_player.getPosition());
+	m_window.setView(m_playerCamera);
+
+
+	for (auto& roomInstance : m_roomInstances) {
+		roomInstance.render(m_window);
+	}
 
 	m_player.render(m_window);
+
 	for (auto& enemy : m_enemies) {
 		enemy->render(m_window);
 	}
@@ -192,21 +201,107 @@ void Game::render()
 	m_window.display();
 }
 
+///////////////////////////////////////////////////////////
+#pragma region GAME MANAGEMENT
 void Game::resetGame()
 {
 	m_player.init();
 	m_isInCombat = false;
+	m_playerCamera = m_window.getDefaultView();
 
 	m_enemies.clear();
 
-	m_activeRoomInstance.reset();
 	m_roomPlans.clear();
-	m_activeRoomPlan = RoomPlan();
+	m_roomInstances.clear();
+	m_roomWorldPositions.clear();
+	m_activeRoomId = 0;
+
+	m_floorPlan = FloorPlan();
+	m_floorGenerator = FloorGenerator();
+	m_floorLayout = FloorLayout();
+	m_floorInstanceGenerator = FloorLayoutGenerator();
+
+	m_waveCounter = 0;
 }
+
+void Game::gameStart()
+{
+	resetGame();
+
+	const int dungeonSeed = 12345;	// temporary seed for testing
+	const int floorId = 0;
+	const int roomCount = 3;
+
+	m_floorPlan = m_floorGenerator.generateFloorPlan(floorId, dungeonSeed, roomCount, false);
+
+	m_roomPlans.clear();
+	m_roomPlans.resize(m_floorPlan.rooms.size());
+
+	for (const auto& room : m_floorPlan.rooms)
+	{
+		switch (room.roomType) {
+		case RoomType::SPAWN:
+			m_roomPlans[room.id] = SpawnRoom().generateRoomPlan(room.id, room.roomType, dungeonSeed + floorId);
+			break;
+		case RoomType::PORTAL:
+			m_roomPlans[room.id] = PortalRoom().generateRoomPlan(room.id, room.roomType, dungeonSeed + floorId);
+			break;
+		case RoomType::COMBAT:
+			m_roomPlans[room.id] = CombatRoom().generateRoomPlan(room.id, room.roomType, dungeonSeed + floorId);
+			break;
+		}
+	}
+
+	m_floorLayout = m_floorInstanceGenerator.generateFloorLayout(m_floorPlan);
+
+	for (auto& roomPlan : m_roomPlans)
+	{
+		RoomDoorUtils::clearAllDoors(roomPlan);
+	}
+
+	auto directionBetweenRooms = [&](int fromId, int toId)
+		{
+			// Determine the direction of the door based on the grid positions of the two rooms in the floor layout
+			Vector2i a = m_floorLayout.roomGridPositions[fromId];
+			Vector2i b = m_floorLayout.roomGridPositions[toId];
+			Vector2i diff = b - a;
+
+			// The difference in grid positions should indicate the direction of the door
+			if (diff.x != 0 && (std::abs(diff.x) >= std::abs(diff.y) || diff.y == 0))
+			{
+				if (diff.x > 0) return DoorDirection::EAST;
+				else return DoorDirection::WEST;
+			}
+			else
+			{
+				if (diff.y > 0) return DoorDirection::SOUTH;
+				else return DoorDirection::NORTH;
+			}
+		};
+
+	for (auto& edge : m_floorPlan.edges)
+	{
+		int aId = edge.id_a;
+		int bId = edge.id_b;
+
+		DoorDirection dirFromAtoB = directionBetweenRooms(aId, bId);
+		DoorDirection dirFromBtoA = RoomDoorUtils::opposite(dirFromAtoB);
+
+		RoomDoorUtils::addDoor(m_roomPlans[aId], dirFromAtoB);
+		RoomDoorUtils::addDoor(m_roomPlans[bId], dirFromBtoA);
+	}
+
+	buildFloorInstance();
+
+	m_activeRoomId = 0;
+
+}
+
+#pragma endregion
 
 
 ////////////////////////////////////////////////////////////
-
+#pragma region UPDATE SUBFUNCTIONS
 void Game::CollisionChecks()
 {
 	//__________________________ COLLISION CHECKS __________________________//
@@ -243,81 +338,85 @@ void Game::CollisionChecks()
 	}
 
 	// -------------------- ENVIRONMENT CHECKS -------------------
-	for (auto& collisionObject : m_activeRoomInstance.getStaticRoomColliders())
+	for (auto& roomInstance : m_roomInstances)
 	{
-		// ____________________________ SHAPE COLLISION CHECKS ____________________________ //
-		// Wall or Door collision checks
-		if (collisionObject.getCollisionProfile().layer == CollisionLayer::WALL_LAYER ||
-			collisionObject.getCollisionProfile().layer == CollisionLayer::DOOR_LAYER)
+		for (auto& collisionObject : roomInstance.getStaticRoomColliders())
 		{
-			// Wall/Door -> Player
-			if (CollisionCheck::areColliding(m_player, collisionObject))
+			// ____________________________ SHAPE COLLISION CHECKS ____________________________ //
+			// Wall or Door collision checks
+			if (collisionObject.getCollisionProfile().layer == CollisionLayer::WALL_LAYER ||
+				collisionObject.getCollisionProfile().layer == CollisionLayer::DOOR_LAYER)
 			{
-				m_player.hitWall();
-				break;
-			}
-
-			// Wall/Door -> Player Projectiles
-			for (auto& bullet : m_player.getProjectiles())
-			{
-				if (bullet->shouldDestroy())
-					continue;
-
-				if (CollisionCheck::areColliding(*bullet, collisionObject)) {
-					bullet->destroy();
+				// Wall/Door -> Player
+				if (CollisionCheck::areColliding(m_player, collisionObject))
+				{
+					m_player.hitWall();
 					break;
 				}
-			}
 
-			// Wall/Door -> Enemy
-			for (auto& enemy : m_enemies) {
-				if (enemy->isDead())
-					continue;
+				// Wall/Door -> Player Projectiles
+				for (auto& bullet : m_player.getProjectiles())
+				{
+					if (bullet->shouldDestroy())
+						continue;
 
-				if (CollisionCheck::areColliding(*enemy, collisionObject)) {
-					enemy->hitWall();
-					break;
-				}
-			}
-		}
-
-		// ____________________________ TRIGGER COLLISION CHECKS ____________________________ //
-		// Portal trigger checks
-		if (collisionObject.getCollisionProfile().layer == CollisionLayer::PORTAL_TRIGGER_LAYER)
-		{
-			// Portal Trigger -> Player
-			if (CollisionCheck::areColliding(collisionObject, m_player))
-			{
-				cout << "Player Collided with Portal Trigger!\n";
-				break;
-			}
-		}
-
-		// Door trigger checks
-		if (collisionObject.getCollisionProfile().layer == CollisionLayer::DOOR_TRIGGER_LAYER)
-		{
-			// PROBLEM -> we need a way to set the active room to be the room that the this collision happens in
-			// SOLUTION -> 
-
-			// Door Trigger -> Player
-			if (CollisionCheck::areColliding(collisionObject, m_player))
-			{
-				// Combat Door Trigger
-				if (m_activeRoomPlan.type == RoomType::COMBAT) {
-					//cout << "Player collided with combat room door trigger!\n";
-					if (!m_activeRoomPlan.isCleared && !m_isInCombat)
-					{
-						m_activeRoomPlan = CombatRoom().generateNewWave(m_activeRoomPlan);
-						spawnEnemies(m_activeRoomPlan, m_roomWorldPos);
-						m_isInCombat = true;
-						m_waveCounter = rand() % 3 + 1;
-						cout << "Starting combat room wave!\nWaves Remaining: " << m_waveCounter << "\n";
-						generateRoom(m_activeRoomPlan);
+					if (CollisionCheck::areColliding(*bullet, collisionObject)) {
+						bullet->destroy();
+						break;
 					}
 				}
 
-				break;
+				// Wall/Door -> Enemy
+				for (auto& enemy : m_enemies) {
+					if (enemy->isDead())
+						continue;
+
+					if (CollisionCheck::areColliding(*enemy, collisionObject)) {
+						enemy->hitWall();
+						break;
+					}
+				}
 			}
+
+			// ____________________________ TRIGGER COLLISION CHECKS ____________________________ //
+			// Portal trigger checks
+			if (collisionObject.getCollisionProfile().layer == CollisionLayer::PORTAL_TRIGGER_LAYER)
+			{
+				// Portal Trigger -> Player
+				if (CollisionCheck::areColliding(collisionObject, m_player))
+				{
+					cout << "Player Collided with Portal Trigger!\n";
+					break;
+				}
+			}
+
+			// Door trigger checks
+			if (collisionObject.getCollisionProfile().layer == CollisionLayer::DOOR_TRIGGER_LAYER)
+			{
+				// PROBLEM -> we need a way to set the active room to be the room that the this collision happens in
+				// SOLUTION -> 
+
+				// Door Trigger -> Player
+				if (CollisionCheck::areColliding(collisionObject, m_player))
+				{
+					//// Combat Door Trigger
+					//if (m_activeRoomPlan.type == RoomType::COMBAT) {
+					//	//cout << "Player collided with combat room door trigger!\n";
+					//	if (!m_activeRoomPlan.isCleared && !m_isInCombat)
+					//	{
+					//		m_activeRoomPlan = CombatRoom().generateNewWave(m_activeRoomPlan);
+					//		spawnEnemies(m_activeRoomPlan, m_roomWorldPos);
+					//		m_isInCombat = true;
+					//		m_waveCounter = rand() % 3 + 1;
+					//		cout << "Starting combat room wave!\nWaves Remaining: " << m_waveCounter << "\n";
+					//		generateRoom(m_activeRoomPlan);
+					//	}
+					//}
+
+					break;
+				}
+			}
+
 		}
 	}
 }
@@ -333,49 +432,11 @@ void Game::gameInput()
 		gameStart();
 	}
 }
+#pragma endregion
 
 
 ///////////////////////////////////////////////////////////
-void Game::gameStart()
-{
-	resetGame();
-
-	const int dungeonSeed = 12345;	// temporary seed for testing
-	const int floorId = 0;
-	const int roomCount = 10;
-
-	m_floorPlan = m_floorGenerator.generateFloorPlan(floorId, dungeonSeed, roomCount, false);
-
-	m_roomPlans.clear();
-	m_roomPlans.reserve(m_floorPlan.rooms.size());
-
-	for (const auto& room : m_floorPlan.rooms)
-	{
-		switch (room.roomType) {
-		case RoomType::SPAWN:
-			m_roomPlans.push_back(SpawnRoom().generateRoomPlan(room.id, room.roomType, dungeonSeed + floorId));
-			break;
-		case RoomType::PORTAL:
-			m_roomPlans.push_back(PortalRoom().generateRoomPlan(room.id, room.roomType, dungeonSeed + floorId));
-			break;
-		case RoomType::COMBAT:
-			m_roomPlans.push_back(CombatRoom().generateRoomPlan(room.id, room.roomType, dungeonSeed + floorId));
-			break;
-		}
-	}
-
-	m_activeRoomPlan = m_roomPlans[3];
-	generateRoom(m_activeRoomPlan);
-}
-
-void Game::generateRoom(RoomPlan& roomPlan)
-{
-	m_activeRoomInstance.buildFromPlan(roomPlan, m_roomWorldPos);
-	spawnPlayer(roomPlan, m_roomWorldPos);
-}
-
-
-/////////////////////////////////////////////
+#pragma region ROOM MANAGEMENT
 void Game::spawnPlayer(RoomPlan& roomPlan, const sf::Vector2f& roomWorldPos)
 {
 	// Spawn room Spawner
@@ -386,7 +447,6 @@ void Game::spawnPlayer(RoomPlan& roomPlan, const sf::Vector2f& roomWorldPos)
 			if (spawnPoint.type == SpawnerType::PlayerSpawner) {
 				Vector2f spawnPos = roomWorldPos + static_cast<Vector2f>(spawnPoint.tilePos) * roomPlan.tileSize;
 				m_player.setSpawnPosition(spawnPos);
-				m_activeRoomPlan = roomPlan;
 			}
 		}
 	}
@@ -413,3 +473,56 @@ void Game::spawnEnemies(RoomPlan& roomPlan, const sf::Vector2f& roomWorldPos)
 		}
 	}
 }
+
+#pragma endregion
+
+
+///////////////////////////////////////////////
+#pragma	region FLOOR MANAGEMENT
+void Game::buildFloorInstance()
+{
+	const int roomCount = m_floorPlan.rooms.size();
+	if (roomCount <= 0) return;
+
+	// Calculate the world size of each cell in the grid layout based on the largest room dimensions and a fixed gap between rooms
+	const float tileSize = m_roomPlans[0].tileSize;
+	const int gapTiles = 2;
+
+	int maxWidth = 0;
+	int maxHeight = 0;
+	for (auto& roomPlan : m_roomPlans)
+	{
+		maxWidth = std::max(maxWidth, roomPlan.width);
+		maxHeight = std::max(maxHeight, roomPlan.height);
+	}
+
+	const float cellWorldW = (maxWidth + gapTiles) * tileSize;
+	const float cellWorldH = (maxHeight + gapTiles) * tileSize;
+
+	m_roomInstances.clear();
+	m_roomWorldPositions.clear();
+
+	m_roomInstances.resize(roomCount);
+	m_roomWorldPositions.resize(roomCount);
+
+	// Calculate world positions for each room based on their grid positions and the calculated cell world size, then build room instances from their plans
+	for (int roomId = 0; roomId < roomCount; roomId++)
+	{
+		Vector2i gridPos = m_floorLayout.roomGridPositions[roomId];
+		Vector2f cellCenter = Vector2f(gridPos.x * cellWorldW, gridPos.y * cellWorldH);
+
+		const RoomPlan& roomPlan = m_roomPlans[roomId];
+		Vector2f halfRoomSize = Vector2f((roomPlan.width - 1) * tileSize, (roomPlan.height - 1) * tileSize) * .5f;
+
+		Vector2f worldPos = cellCenter - halfRoomSize;
+
+		m_roomWorldPositions[roomId] = worldPos;
+		m_roomInstances[roomId].buildFromPlan(m_roomPlans[roomId], worldPos);
+
+		// Spawn player in spawn room
+		if (m_roomPlans[roomId].type == RoomType::SPAWN)
+			spawnPlayer(m_roomPlans[roomId], worldPos);
+	}
+}
+
+#pragma endregion

@@ -33,10 +33,6 @@ RoomPlan SpawnRoom::generateRoomPlan(int id, RoomType type, int seed)
 	// Spawners
 	generateSpawnPoints(room, interiorArea);
 
-	// Doors
-	generateDoors(room, DoorDirection::SOUTH);
-	generateDoors(room, DoorDirection::EAST);
-
 	return room;
 }
 
