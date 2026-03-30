@@ -44,6 +44,10 @@ protected:
 	void init();
 	void update(double dt);
 
+	void ManageWave();
+
+	void updateActiveRoom();
+
 	void render();
 
 	void processEvents();
@@ -71,19 +75,25 @@ private:
 	void gameStart();
 
 	// Room management
-	void spawnPlayer(RoomPlan& roomPlan, const sf::Vector2f& roomWorldPos);
-	void spawnEnemies(RoomPlan& roomPlan, const sf::Vector2f& roomWorldPos);
+	void spawnPlayer(const int roomId);
+	void spawnEnemies(const int roomId);
+	void generateRoom(int roomId);
 
 	// Floor Management
 	void buildFloorInstance();
 	void buildCorridors();
 
 
-	// ----------------------------------> VARIABLES <---------------------------------- //
+	// ----------------------------------> VARIABLES <---------------------------------- //	
+	// Game Management
+	sf::View m_gameCamera;
+	bool m_isPlayerCamera;
+	
 	// Player management
 	Player m_player;
 	bool m_isInCombat;
 	sf::View m_playerCamera;
+	bool m_isInRoom;
 
 	// Enemy management
 	std::vector<std::unique_ptr<Enemy>> m_enemies;
@@ -95,15 +105,12 @@ private:
 	int m_activeRoomId;
 
 	// Floor management
+	sf::View m_floorCamera;
 	FloorPlan m_floorPlan;
 	FloorGenerator m_floorGenerator;
 
 	FloorLayout m_floorLayout;
 	FloorLayoutGenerator m_floorInstanceGenerator;
-
-	vector<RoomPlan> m_corridorPlans;
-	vector<RoomInstance> m_corridorInstances;
-	vector<Vector2f> m_corridorWorldPositions;
 
 	//Wave management
 	int m_waveCounter;

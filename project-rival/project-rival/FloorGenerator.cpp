@@ -1,7 +1,7 @@
 #include "FloorGenerator.h"
 #include <random>
 
-FloorPlan FloorGenerator::generateFloorPlan(int floorId, int dungeonSeed, int roomCount, bool isBossFloor)
+FloorPlan FloorGenerator::generateFloorPlan(int floorId, int dungeonSeed, bool isBossFloor)
 {
 	FloorPlan plan;
 	plan.dungeonSeed = dungeonSeed;
@@ -11,9 +11,8 @@ FloorPlan FloorGenerator::generateFloorPlan(int floorId, int dungeonSeed, int ro
 	
 	std::mt19937 rng(plan.floorSeed); // setting the seed for the engine
 
-	//std::uniform_int_distribution roomCountRange(3, 10); 	////uncomment when we're happy with generation
-	//int roomCount = roomCountRange(rng);
-	roomCount = std::clamp(roomCount, 3, 10);
+	std::uniform_int_distribution roomCountRange(3, 10); 	////uncomment when we're happy with generation
+	int roomCount = roomCountRange(rng);
 
 
 	//___________________________ Nodes (rooms) ___________________________//

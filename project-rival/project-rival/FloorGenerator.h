@@ -4,6 +4,6 @@
 class FloorGenerator
 {
 public:
-	FloorPlan generateFloorPlan(int floorId, int dungeonSeed, int roomCount, bool isBossFloor);
+	FloorPlan generateFloorPlan(int floorId, int dungeonSeed, bool isBossFloor);
 };
 

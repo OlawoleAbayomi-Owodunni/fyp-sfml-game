@@ -11,6 +11,7 @@
 #include "RoomDoorUtils.h"
 
 #include <iostream>
+#include <string>
 
 // Our target FPS
 static double const FPS{ 60.0f };
@@ -130,35 +131,16 @@ void Game::update(double dt)
 	
 	// Game manager controls
 	gameInput();
-	//// Wave management for combat rooms
-	//if (m_activeRoomPlan.type == RoomType::COMBAT && m_isInCombat) {
-	//	// check if all enemies are dead
-	//	if (m_enemies.empty()) {
-	//		m_waveCounter--;
-	//		if (m_waveCounter > 0) {	// start new wave
-	//			cout << "New Wave Starting! Remaining Waves: " << m_waveCounter << endl;
-	//			m_activeRoomPlan = CombatRoom().generateNewWave(m_activeRoomPlan);
-	//			spawnEnemies(m_activeRoomPlan, m_roomWorldPos);
-	//			generateRoom(m_activeRoomPlan);
-	//		}
-	//		else {	// end combat
-	//			cout << "Combat Room Cleared at ID " << m_activeRoomPlan.id << "!\n";
-	//			m_activeRoomPlan = CombatRoom().setRoomCleared(m_activeRoomPlan);
-	//			generateRoom(m_activeRoomPlan);
-	//			m_isInCombat = false;
-	//		}
-	//	}
-	//}
-
+	updateActiveRoom();
 
 	// Update player and enemies
 	Vector2f oldPlayerPos = m_player.getPosition();
 	m_player.update(dt, mousePosF);
 
+
 	for (auto enemy_it = m_enemies.begin(); enemy_it != m_enemies.end();)
 	{
 		auto& enemy = *enemy_it;
-		//Vector2f oldEnemyPos = enemy->getPosition();
 		enemy->setTarget(m_player.getPosition());
 		enemy->update(dt);
 
@@ -173,6 +155,13 @@ void Game::update(double dt)
 
 	//Collision checks
 	CollisionChecks();
+
+	if (m_isInRoom)
+	{
+		// Wave management for combat rooms
+		if (m_roomPlans[m_activeRoomId].type == RoomType::COMBAT && m_isInCombat)
+			ManageWave();
+	}
 }
 
 ////////////////////////////////////////////////////////////
@@ -180,13 +169,16 @@ void Game::render()
 {
 	m_window.clear(sf::Color(0, 0, 0, 0));
 
-	m_playerCamera.setCenter(m_player.getPosition());
-	m_window.setView(m_playerCamera);
-	
-	for (auto& corridorInstance : m_corridorInstances){
-		corridorInstance.render(m_window);
+	if (m_isPlayerCamera)
+	{
+		m_playerCamera.setCenter(m_player.getPosition());
+		m_gameCamera = m_playerCamera;
 	}
+	else
+		m_gameCamera = m_floorCamera;
 
+	m_window.setView(m_gameCamera);
+	
 	for (auto& roomInstance : m_roomInstances) {
 		roomInstance.render(m_window);
 	}
@@ -206,18 +198,26 @@ void Game::render()
 
 ///////////////////////////////////////////////////////////
 #pragma region GAME MANAGEMENT
+/// <summary>
+/// Resets the game to its initial state.
+/// </summary>
 void Game::resetGame()
 {
+	m_playerCamera = m_window.getDefaultView();
+	m_floorCamera = m_window.getDefaultView();
+	m_gameCamera = m_playerCamera;
+	m_isPlayerCamera = true;
+
 	m_player.init();
 	m_isInCombat = false;
-	m_playerCamera = m_window.getDefaultView();
+	m_isInRoom = true;
 
 	m_enemies.clear();
 
 	m_roomPlans.clear();
 	m_roomInstances.clear();
 	m_roomWorldPositions.clear();
-	m_activeRoomId = 0;
+	m_activeRoomId = -1;
 
 	m_floorPlan = FloorPlan();
 	m_floorGenerator = FloorGenerator();
@@ -227,15 +227,17 @@ void Game::resetGame()
 	m_waveCounter = 0;
 }
 
+/// <summary>
+/// Initializes and starts a new game by generating a dungeon floor with rooms and their connections.
+/// </summary>
 void Game::gameStart()
 {
 	resetGame();
 
 	const int dungeonSeed = 12345;	// temporary seed for testing
 	const int floorId = 0;
-	const int roomCount = 10;
 
-	m_floorPlan = m_floorGenerator.generateFloorPlan(floorId, dungeonSeed, roomCount, false);
+	m_floorPlan = m_floorGenerator.generateFloorPlan(floorId, dungeonSeed, false);
 
 	m_roomPlans.clear();
 	m_roomPlans.resize(m_floorPlan.rooms.size());
@@ -296,8 +298,32 @@ void Game::gameStart()
 
 	buildFloorInstance();
 
-	m_activeRoomId = 0;
+	m_activeRoomId = -1;
+	m_floorCamera.setCenter(m_roomWorldPositions[0]);
+	m_floorCamera.zoom(12.f);
+}
 
+/// <summary>
+/// Manages wave-based combat by checking if all enemies are defeated and either starting a new wave or ending combat.
+/// </summary>
+void Game::ManageWave()
+{
+	// check if all enemies are dead
+	if (m_enemies.empty()) {
+		m_waveCounter--;
+		if (m_waveCounter > 0) {	// start new wave
+			cout << "New Wave Starting! Remaining Waves: " << m_waveCounter << endl;
+			m_roomPlans[m_activeRoomId] = CombatRoom().generateNewWave(m_roomPlans[m_activeRoomId]);
+			spawnEnemies(m_activeRoomId);
+			generateRoom(m_activeRoomId);
+		}
+		else {	// end combat
+			cout << "Combat Room Cleared at ID " << m_activeRoomId << "!\n";
+			m_roomPlans[m_activeRoomId] = CombatRoom().setRoomCleared(m_roomPlans[m_activeRoomId]);
+			generateRoom(m_activeRoomId);
+			m_isInCombat = false;
+		}
+	}
 }
 
 #pragma endregion
@@ -305,6 +331,9 @@ void Game::gameStart()
 
 ////////////////////////////////////////////////////////////
 #pragma region UPDATE SUBFUNCTIONS
+/// <summary>
+/// Performs collision detection and response for all game entities including enemies, projectiles, the player, and environment objects.
+/// </summary>
 void Game::CollisionChecks()
 {	
 	// ------------------- ENEMY CHECKS --------------------
@@ -394,25 +423,21 @@ void Game::CollisionChecks()
 			// Door trigger checks
 			if (collisionObject.getCollisionProfile().layer == CollisionLayer::DOOR_TRIGGER_LAYER)
 			{
-				// PROBLEM -> we need a way to set the active room to be the room that the this collision happens in
-				// SOLUTION -> 
-
 				// Door Trigger -> Player
 				if (CollisionCheck::areColliding(collisionObject, m_player))
 				{
 					//// Combat Door Trigger
-					//if (m_activeRoomPlan.type == RoomType::COMBAT) {
-					//	//cout << "Player collided with combat room door trigger!\n";
-					//	if (!m_activeRoomPlan.isCleared && !m_isInCombat)
-					//	{
-					//		m_activeRoomPlan = CombatRoom().generateNewWave(m_activeRoomPlan);
-					//		spawnEnemies(m_activeRoomPlan, m_roomWorldPos);
-					//		m_isInCombat = true;
-					//		m_waveCounter = rand() % 3 + 1;
-					//		cout << "Starting combat room wave!\nWaves Remaining: " << m_waveCounter << "\n";
-					//		generateRoom(m_activeRoomPlan);
-					//	}
-					//}
+					if (m_roomPlans[m_activeRoomId].type == RoomType::COMBAT) {
+						if (!m_roomPlans[m_activeRoomId].isCleared && !m_isInCombat)
+						{
+							m_roomPlans[m_activeRoomId] = CombatRoom().generateNewWave(m_roomPlans[m_activeRoomId]);
+							spawnEnemies(m_activeRoomId);
+							m_isInCombat = true;
+							m_waveCounter = rand() % 3 + 1;
+							cout << "Starting combat room wave!\nWaves Remaining: " << m_waveCounter << "\n";
+							generateRoom(m_activeRoomId);
+						}
+					}
 
 					break;
 				}
@@ -422,6 +447,34 @@ void Game::CollisionChecks()
 	}
 }
 
+/// <summary>
+/// Updates the active room ID based on the player's current position by checking which room bounds contain the player's center point.
+/// </summary>
+void Game::updateActiveRoom()
+{
+	for (RoomPlan room : m_roomPlans)
+	{
+		Vector2f roomWorldPos = m_roomWorldPositions[room.id];
+		float ts = room.tileSize;
+
+		FloatRect roomBounds(roomWorldPos - Vector2f(ts / 2, ts / 2), Vector2f(room.width * ts, room.height * ts));
+		if (roomBounds.contains(m_player.getPosition()))
+		{
+			m_activeRoomId = room.id;
+			m_isInRoom = true;
+			break;
+		}
+		else
+		{
+			m_isInRoom = false;
+			m_activeRoomId = -1;
+		}
+	}
+}
+
+/// <summary>
+/// Handles game input for controlling game state, including closing the window and restarting the game.
+/// </summary>
 void Game::gameInput()
 {
 	if (Keyboard::isKeyPressed(Keyboard::Key::Escape) || InputManager::pad().pressed(GamepadButton::Start))
@@ -432,14 +485,38 @@ void Game::gameInput()
 	{
 		gameStart();
 	}
+	if (Keyboard::isKeyPressed(Keyboard::Key::V) || InputManager::pad().pressed(GamepadButton::DPadDown))
+	{
+		m_isPlayerCamera = !m_isPlayerCamera;
+	}
 }
+
 #pragma endregion
 
 
 ///////////////////////////////////////////////////////////
 #pragma region ROOM MANAGEMENT
-void Game::spawnPlayer(RoomPlan& roomPlan, const sf::Vector2f& roomWorldPos)
+/// <summary>
+/// Generates a room instance from its corresponding room plan and world position, and stores it in the room instances vector.
+/// </summary>
+/// <param name="roomId"></param>
+void Game::generateRoom(int roomId)
 {
+	RoomPlan& roomPlan = m_roomPlans[roomId];
+	Vector2f roomWorldPos = m_roomWorldPositions[roomId];
+	m_roomInstances[roomId].buildFromPlan(roomPlan, roomWorldPos);
+}
+
+/// <summary>
+/// Spawns the player at the appropriate location within a room.
+/// </summary>
+/// <param name="roomPlan">The room plan containing spawn point information.</param>
+/// <param name="roomWorldPos">The world position of the room in which to spawn the player.</param>
+void Game::spawnPlayer(const int roomId)
+{
+	RoomPlan& roomPlan = m_roomPlans[roomId];
+	Vector2f roomWorldPos = m_roomWorldPositions[roomId];
+
 	// Spawn room Spawner
 	if (roomPlan.type == RoomType::SPAWN)
 	{
@@ -448,15 +525,25 @@ void Game::spawnPlayer(RoomPlan& roomPlan, const sf::Vector2f& roomWorldPos)
 			if (spawnPoint.type == SpawnerType::PlayerSpawner) {
 				Vector2f spawnPos = roomWorldPos + static_cast<Vector2f>(spawnPoint.tilePos) * roomPlan.tileSize;
 				m_player.setSpawnPosition(spawnPos);
+				m_activeRoomId = roomId;
+				m_isInRoom = true;
 			}
 		}
 	}
 }
 
-void Game::spawnEnemies(RoomPlan& roomPlan, const sf::Vector2f& roomWorldPos)
+/// <summary>
+/// Spawns enemies in a room based on the room plan and type.
+/// </summary>
+/// <param name="roomPlan">The room plan containing spawn points and room type information.</param>
+/// <param name="roomWorldPos">The world position of the room where enemies will be spawned.</param>
+void Game::spawnEnemies(const int roomId)
 {
 	// Combat room Spawner
 	m_enemies.clear();
+	RoomPlan& roomPlan = m_roomPlans[roomId];
+	Vector2f roomWorldPos = m_roomWorldPositions[roomId];
+
 	if (roomPlan.type == RoomType::COMBAT)
 	{
 		int totalEnemyTypes = EnemyType::ENEMY_COUNT;
@@ -481,7 +568,7 @@ void Game::spawnEnemies(RoomPlan& roomPlan, const sf::Vector2f& roomWorldPos)
 ///////////////////////////////////////////////
 #pragma	region FLOOR MANAGEMENT
 /// <summary>
-/// Builds the floor instance by calculating world positions for all rooms in a grid layout and instantiating them from their plans.
+/// Builds the floor instance by calculating room positions in world space and instantiating all rooms from their plans.
 /// </summary>
 void Game::buildFloorInstance()
 {
@@ -490,7 +577,7 @@ void Game::buildFloorInstance()
 
 	// Calculate the world size of each cell in the grid layout based on the largest room dimensions and a fixed gap between rooms
 	const float tileSize = m_roomPlans[0].tileSize;
-	const int gapTiles = 2;
+	const int gapTiles = 5;
 
 	int maxWidth = 0;
 	int maxHeight = 0;
@@ -521,25 +608,21 @@ void Game::buildFloorInstance()
 		Vector2f worldPos = cellCenter - halfRoomSize;
 
 		m_roomWorldPositions[roomId] = worldPos;
-		m_roomInstances[roomId].buildFromPlan(m_roomPlans[roomId], worldPos);
+		generateRoom(roomId);
 
 		// Spawn player in spawn room
 		if (m_roomPlans[roomId].type == RoomType::SPAWN)
-			spawnPlayer(m_roomPlans[roomId], worldPos);
+			spawnPlayer(roomId);
 	}
 
 	buildCorridors();
 }
 
 /// <summary>
-/// Generates and builds corridor connections between rooms in the game level. Clears existing corridor data, then creates corridor plans and instances for each edge in the floor plan by connecting the doors of adjacent rooms with either horizontal or vertical passages.
+/// Builds corridor room instances connecting adjacent rooms based on the floor plan edges and room door positions.
 /// </summary>
 void Game::buildCorridors()
 {
-	m_corridorPlans.clear();
-	m_corridorInstances.clear();
-	m_corridorWorldPositions.clear();
-
 	if (m_roomPlans.empty()) return;
 
 	const float tileSize = m_roomPlans[0].tileSize;
@@ -550,26 +633,6 @@ void Game::buildCorridors()
 			for (auto& door : roomPlan.doors)
 				if (door.direction == dir)
 					return &door;
-		};
-
-	// Returns the tile position of the center of the door in the given direction for the specified room plan
-	auto getDoorCenterTile = [&](const RoomPlan& roomPlan, DoorDirection dir)	
-		{
-			for (auto& door : roomPlan.doors)
-			{
-				if (door.direction != dir) continue;
-
-				if (dir == DoorDirection::NORTH || dir == DoorDirection::SOUTH)
-					return Vector2i(door.tileStartPos.x + door.spanTiles / 2, door.tileStartPos.y);
-				else
-					return Vector2i(door.tileStartPos.x, door.tileStartPos.y + door.spanTiles / 2);
-			}
-		};
-
-	// Converts a tile position within a room to a world position based on the room's world position and tile size
-	auto tileToWorldPos = [&](int roomId, Vector2i tilePos)
-		{
-			return m_roomWorldPositions[roomId] + Vector2f(static_cast<Vector2f>(tilePos) * tileSize);
 		};
 
 	// Returns the opposite direction of the given door direction (e.g. NORTH -> SOUTH, EAST -> WEST)
@@ -598,17 +661,6 @@ void Game::buildCorridors()
 			}
 		};
 
-	// Returns the world offset from the center of a door to the edge of the room in the given direction, used to position corridors just outside the doors
-	auto dirToOffset = [&](DoorDirection dir)
-		{
-			switch (dir)
-			{
-			case DoorDirection::NORTH: return Vector2f(0, -tileSize);
-			case DoorDirection::SOUTH: return Vector2f(0, tileSize);
-			case DoorDirection::EAST: return Vector2f(tileSize, 0);
-			case DoorDirection::WEST: return Vector2f(-tileSize, 0);
-			}
-		};
 #pragma endregion
 
 	int corridorIdCounter = 0;
@@ -616,71 +668,104 @@ void Game::buildCorridors()
 	
 	for (const auto& edge : m_floorPlan.edges)
 	{
+		// 1) Declare variables for the two rooms connected by this edge and the directions of the doors between them
 		const int aId = edge.id_a;
 		const int bId = edge.id_b;
 
 		const DoorDirection dirFromAtoB = directionBetweenRooms(aId, bId);
 		const DoorDirection dirFromBtoA = opposite(dirFromAtoB);
 
-		const Vector2i aDoorTile = getDoorCenterTile(m_roomPlans[aId], dirFromAtoB);
-		const Vector2i bDoorTile = getDoorCenterTile(m_roomPlans[bId], dirFromBtoA);
-
-		const Vector2f aDoorWorldPos = tileToWorldPos(aId, aDoorTile);
-		const Vector2f bDoorWorldPos = tileToWorldPos(bId, bDoorTile);
-
-		Vector2f start = aDoorWorldPos + dirToOffset(dirFromAtoB);
-		Vector2f end = bDoorWorldPos + dirToOffset(dirFromBtoA);
+		const RoomPlan& roomA = m_roomPlans[aId];
+		const RoomPlan& roomB = m_roomPlans[bId];
+		const DoorPlan* doorA = getDoor(roomA, dirFromAtoB);
+		const DoorPlan* doorB = getDoor(roomB, dirFromBtoA);
+		if (!doorA || !doorB) continue;	// if either room doesn't have the expected door, skip this edge (invalid edge)
 
 		const bool isHorizontal = (dirFromAtoB == DoorDirection::EAST || dirFromAtoB == DoorDirection::WEST);
 
-		// Create corridor plan and instance
+		const int walkableThickness = std::min(doorA->spanTiles, doorB->spanTiles);
+		const int corridorThickness = walkableThickness + 2;
+
+		Vector2f start;
+		Vector2f end;
+
+		Vector2f corridorWorldPos;
+
 		RoomPlan corridor;
 		corridor.id = corridorIdCounter++;
 		corridor.type = RoomType::CORRIDOR;
 		corridor.seed = 0;
 		corridor.tileSize = tileSize;
 
-		Vector2f corridorWorldPos;
-
+		// 3) Calculate the world positions of the two doors and use them to determine the start and end points of the corridor
 		if (isHorizontal)
 		{
+			// For horizontal corridors, the Y position of the corridor will be centered on the doors, and the X positions will be at the walls of the rooms (door position + half tile size)
+			const float doorA_WallX = m_roomWorldPositions[aId].x + (doorA->tileStartPos.x * tileSize);
+			const float doorB_WallX = m_roomWorldPositions[bId].x + (doorB->tileStartPos.x * tileSize);
+
+			// To center the corridor on the doors, we need to calculate the center Y position of the corridor based on the door positions and their span
+			const float doorA_CenterY = m_roomWorldPositions[aId].y + ((doorA->tileStartPos.y + (doorA->spanTiles - 1) * .5f) * tileSize);
+			const float doorB_CenterY = m_roomWorldPositions[bId].y + ((doorB->tileStartPos.y + (doorB->spanTiles - 1) * .5f) * tileSize);
+			// The center Y position of the corridor should be the average of the two door center Y positions to ensure it is centered between them
+			const float centerY = (doorA_CenterY + doorB_CenterY) * .5f;
+			// The start and end points of the corridor will be at the wall X positions of the rooms and the center Y position calculated above
+			start = Vector2f(doorA_WallX, centerY);
+			end = Vector2f(doorB_WallX, centerY);
+
 			if (end.x < start.x) std::swap(start, end);	// ensure start is always left of end for horizontal corridors
-			const int lengthTiles = static_cast<int>((end.x - start.x) / tileSize);
-			
+			const int lengthTiles = static_cast<int>((end.x - start.x) / tileSize) + 1;
+
 			corridor.width = lengthTiles;
-			corridor.height = 5;
+			corridor.height = corridorThickness;
 
-			corridor.tileMap.assign(corridor.width * corridor.height, Tile::FLOOR);
-			for (int i = 0; i < corridor.width; i++)
-				for (int j = 0; j < corridor.height; j++)
-					if (j == 0 || j == corridor.height - 1)
-						corridor.tileMap[j * corridor.width + i] = Tile::WALL;
+			// 2) Create a corridor plan with the appropriate dimensions and layout based on the positions of the two doors and the direction of the corridor (horizontal or vertical)
+			corridor.tileMap.assign(corridor.width * corridor.height, Tile::WALL);
 
-			corridorWorldPos = start - Vector2f(0, tileSize);
+			for (int row = 1; row <= walkableThickness; row++)
+				for (int col = 0; col < corridor.width; col++)
+					corridor.setTile(row, col, Tile::FLOOR);
+
+			// Place corridor that (0,0) center is at (start.x, centerY - halfHeightSpan) so that the corridor is centered on the doors
+			const float halfHeightSpan = ((corridor.height - 1) * 0.5f) * tileSize;
+			corridorWorldPos = Vector2f(start.x, centerY - halfHeightSpan);
 		}
 		else
 		{
-			if (end.y < start.y) std::swap(start, end);	// ensure start is always above end for vertical corridors
-			const int lengthTiles = static_cast<int>((end.y - start.y) / tileSize);
+			// For vertical corridors, the X position of the corridor will be centered on the doors, and the Y positions will be at the walls of the rooms (door position + half tile size)
+			const float doorA_WallY = m_roomWorldPositions[aId].y + (doorA->tileStartPos.y * tileSize);
+			const float doorB_WallY = m_roomWorldPositions[bId].y + (doorB->tileStartPos.y * tileSize);
+			// To center the corridor on the doors, we need to calculate the center X position of the corridor based on the door positions and their span
+			const float doorA_CenterX = m_roomWorldPositions[aId].x + ((doorA->tileStartPos.x + (doorA->spanTiles - 1) * .5f) * tileSize);
+			const float doorB_CenterX = m_roomWorldPositions[bId].x + ((doorB->tileStartPos.x + (doorB->spanTiles - 1) * .5f) * tileSize);
+			// The center X position of the corridor should be the average of the two door center X positions to ensure it is centered between them
+			const float centerX = (doorA_CenterX + doorB_CenterX) * .5f;
+			// The start and end points of the corridor will be at the wall Y positions of the rooms and the center X position calculated above
+			start = Vector2f(centerX, doorA_WallY);
+			end = Vector2f(centerX, doorB_WallY);
 
-			corridor.width = 3;
+			if (end.y < start.y) std::swap(start, end);	// ensure start is always above end for vertical corridors
+			const int lengthTiles = static_cast<int>((end.y - start.y) / tileSize) + 1;
+
+			corridor.width = corridorThickness;
 			corridor.height = lengthTiles;
 
-			corridor.tileMap.assign(corridor.width* corridor.height, Tile::FLOOR);
-			for (int i = 0; i < corridor.width; i++)
-				for (int j = 0; j < corridor.height; j++)
-					if (i == 0 || i == corridor.width - 1)
-						corridor.tileMap[j * corridor.width + i] = Tile::WALL;
+			// 2) Create a corridor plan with the appropriate dimensions and layout based on the positions of the two doors and the direction of the corridor (horizontal or vertical)
+			corridor.tileMap.assign(corridor.width* corridor.height, Tile::WALL);
 
-			corridorWorldPos = start - Vector2f(tileSize, 0);
+			for (int col = 1; col <= walkableThickness; col++)
+				for (int row = 0; row < corridor.height; row++)
+					corridor.setTile(row, col, Tile::FLOOR);
+
+			// Place corridor that (0,0) center is at (centerX - halfWidthSpan, start.y) so that the corridor is centered on the doors
+			const float halfWidthSpan = ((corridor.width - 1) * 0.5f) * tileSize;
+			corridorWorldPos = Vector2f(centerX - halfWidthSpan, start.y);
 		}
 
-		m_corridorPlans.push_back(corridor);
-		m_corridorWorldPositions.push_back(corridorWorldPos);
-
+		// 4) Store the corridor plan and its world position, then build a room instance from the corridor plan and add it to the list of room instances
 		RoomInstance corridorInst;
-		corridorInst.buildFromPlan(m_corridorPlans.back(), corridorWorldPos);
-		m_corridorInstances.push_back(corridorInst);
+		corridorInst.buildFromPlan(corridor, corridorWorldPos);
+		m_roomInstances.push_back(corridorInst);
 	}
 
 }
