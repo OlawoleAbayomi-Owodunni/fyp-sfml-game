@@ -76,6 +76,7 @@ private:
 
 	// Floor Management
 	void buildFloorInstance();
+	void buildCorridors();
 
 
 	// ----------------------------------> VARIABLES <---------------------------------- //
@@ -99,6 +100,10 @@ private:
 
 	FloorLayout m_floorLayout;
 	FloorLayoutGenerator m_floorInstanceGenerator;
+
+	vector<RoomPlan> m_corridorPlans;
+	vector<RoomInstance> m_corridorInstances;
+	vector<Vector2f> m_corridorWorldPositions;
 
 	//Wave management
 	int m_waveCounter;

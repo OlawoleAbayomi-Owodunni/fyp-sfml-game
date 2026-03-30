@@ -25,7 +25,7 @@ At a high level:
    - player vs triggers (doors / portals)
 	- player vs portal trigger
 7. Render:
-   - room
+   - rooms (multiple)
    - player
    - enemies
    - debug overlays (if enabled)

@@ -34,20 +34,43 @@ Current implementations:
   - generates outer walls
   - randomly chooses a room size (currently: height ~10–13, width ~15–20)
   - randomly places interior obstacles (“pillars”)
-  - generates doors (currently hard-coded directions)
   - supports combat waves via `generateNewWave(...)` and `setRoomCleared(...)`
 - `SpawnRoom` (`SpawnRoom.h/.cpp`)
   - fixed-size room (currently 11x11)
   - generates a player spawn marker
-  - generates doors
 - `PortalRoom` (`PortalRoom.h/.cpp`)
   - fixed-size room (currently 11x11)
   - generates a portal spawn marker + portal trigger
-  - generates doors
 
 Obstacle/spawn counts in combat rooms are derived from the interior size (via `interiorArea`).
 
 Note: `RoomPlan` includes a `seed` field, but room generation currently uses `rand()` for most details.
+
+## Floors (room graph + layout) (prototype)
+
+Rooms are now also used as part of a simple **floor pipeline**:
+
+- `FloorPlan` (`FloorBlueprint.h`):
+  - nodes = rooms (`id`, `RoomType`)
+  - edges = connections between rooms
+  - adjacency list is built from edges for neighbour queries
+- `FloorGenerator` (`FloorGenerator.h/.cpp`): creates a deterministic room graph from a floor seed (derived from a dungeon seed + floor id).
+- `FloorLayoutGenerator` (`FloorLayout.h/.cpp`): embeds the graph into a simple 2D grid (tile-grid positions per room).
+
+Current generation constraints:
+
+- Room 0 is always `SPAWN`.
+- The last room is always `PORTAL` (boss room is planned for final floors).
+- The generator avoids directly connecting spawn and portal rooms with a single edge.
+
+Door placement from floor connectivity:
+
+- Each room plan is generated first.
+- Doors are then cleared and re-added based on `FloorPlan.edges`.
+- `RoomDoorUtils` is responsible for adding doors and ensuring:
+  - no duplicate door per direction
+  - door tiles span 2–3 tiles (based on room parity)
+  - `DoorTrigger` markers are added for door tiles
 
 Doors:
 
@@ -85,11 +108,15 @@ In `Game`:
   - portal room spawner → (visual marker only for now)
 - The room instance is rendered before the entities.
 
+Multi-room rendering (prototype):
+
+- `Game` builds a floor instance by computing a world position per room (from the grid layout).
+- All room instances are rendered each frame.
+- A camera view follows the player (`sf::View` centered on `Player` position).
+
 Combat room flow (current prototype):
 
-- Entering a combat room door trigger starts combat (waves).
-- Combat waves spawn enemies and lock doors.
-- When waves are cleared, doors unlock and the room is marked cleared.
+- Combat wave logic exists (`CombatRoom::generateNewWave`, `CombatRoom::setRoomCleared`), but the gameplay wiring is currently in-progress (parts are commented out in `Game`).
 
 ## Likely next steps
 

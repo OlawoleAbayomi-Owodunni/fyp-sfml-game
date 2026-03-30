@@ -182,7 +182,10 @@ void Game::render()
 
 	m_playerCamera.setCenter(m_player.getPosition());
 	m_window.setView(m_playerCamera);
-
+	
+	for (auto& corridorInstance : m_corridorInstances){
+		corridorInstance.render(m_window);
+	}
 
 	for (auto& roomInstance : m_roomInstances) {
 		roomInstance.render(m_window);
@@ -230,7 +233,7 @@ void Game::gameStart()
 
 	const int dungeonSeed = 12345;	// temporary seed for testing
 	const int floorId = 0;
-	const int roomCount = 3;
+	const int roomCount = 10;
 
 	m_floorPlan = m_floorGenerator.generateFloorPlan(floorId, dungeonSeed, roomCount, false);
 
@@ -303,9 +306,7 @@ void Game::gameStart()
 ////////////////////////////////////////////////////////////
 #pragma region UPDATE SUBFUNCTIONS
 void Game::CollisionChecks()
-{
-	//__________________________ COLLISION CHECKS __________________________//
-	
+{	
 	// ------------------- ENEMY CHECKS --------------------
 	for (auto& enemy : m_enemies)
 	{
@@ -479,6 +480,9 @@ void Game::spawnEnemies(RoomPlan& roomPlan, const sf::Vector2f& roomWorldPos)
 
 ///////////////////////////////////////////////
 #pragma	region FLOOR MANAGEMENT
+/// <summary>
+/// Builds the floor instance by calculating world positions for all rooms in a grid layout and instantiating them from their plans.
+/// </summary>
 void Game::buildFloorInstance()
 {
 	const int roomCount = m_floorPlan.rooms.size();
@@ -523,6 +527,162 @@ void Game::buildFloorInstance()
 		if (m_roomPlans[roomId].type == RoomType::SPAWN)
 			spawnPlayer(m_roomPlans[roomId], worldPos);
 	}
+
+	buildCorridors();
+}
+
+/// <summary>
+/// Generates and builds corridor connections between rooms in the game level. Clears existing corridor data, then creates corridor plans and instances for each edge in the floor plan by connecting the doors of adjacent rooms with either horizontal or vertical passages.
+/// </summary>
+void Game::buildCorridors()
+{
+	m_corridorPlans.clear();
+	m_corridorInstances.clear();
+	m_corridorWorldPositions.clear();
+
+	if (m_roomPlans.empty()) return;
+
+	const float tileSize = m_roomPlans[0].tileSize;
+
+#pragma region Corridor Helper Lambdas
+	auto getDoor = [&](const RoomPlan& roomPlan, DoorDirection dir)
+		{
+			for (auto& door : roomPlan.doors)
+				if (door.direction == dir)
+					return &door;
+		};
+
+	// Returns the tile position of the center of the door in the given direction for the specified room plan
+	auto getDoorCenterTile = [&](const RoomPlan& roomPlan, DoorDirection dir)	
+		{
+			for (auto& door : roomPlan.doors)
+			{
+				if (door.direction != dir) continue;
+
+				if (dir == DoorDirection::NORTH || dir == DoorDirection::SOUTH)
+					return Vector2i(door.tileStartPos.x + door.spanTiles / 2, door.tileStartPos.y);
+				else
+					return Vector2i(door.tileStartPos.x, door.tileStartPos.y + door.spanTiles / 2);
+			}
+		};
+
+	// Converts a tile position within a room to a world position based on the room's world position and tile size
+	auto tileToWorldPos = [&](int roomId, Vector2i tilePos)
+		{
+			return m_roomWorldPositions[roomId] + Vector2f(static_cast<Vector2f>(tilePos) * tileSize);
+		};
+
+	// Returns the opposite direction of the given door direction (e.g. NORTH -> SOUTH, EAST -> WEST)
+	auto opposite = [&](DoorDirection dir)
+		{
+			return RoomDoorUtils::opposite(dir);
+		};
+
+	// Determines the direction of the door between two rooms based on their grid positions in the floor layout
+	auto directionBetweenRooms = [&](int fromId, int toId)
+		{
+			// Determine the direction of the door based on the grid positions of the two rooms in the floor layout
+			Vector2i a = m_floorLayout.roomGridPositions[fromId];
+			Vector2i b = m_floorLayout.roomGridPositions[toId];
+			Vector2i diff = b - a;
+			// The difference in grid positions should indicate the direction of the door
+			if (diff.x != 0 && (std::abs(diff.x) >= std::abs(diff.y) || diff.y == 0))
+			{
+				if (diff.x > 0) return DoorDirection::EAST;
+				else return DoorDirection::WEST;
+			}
+			else
+			{
+				if (diff.y > 0) return DoorDirection::SOUTH;
+				else return DoorDirection::NORTH;
+			}
+		};
+
+	// Returns the world offset from the center of a door to the edge of the room in the given direction, used to position corridors just outside the doors
+	auto dirToOffset = [&](DoorDirection dir)
+		{
+			switch (dir)
+			{
+			case DoorDirection::NORTH: return Vector2f(0, -tileSize);
+			case DoorDirection::SOUTH: return Vector2f(0, tileSize);
+			case DoorDirection::EAST: return Vector2f(tileSize, 0);
+			case DoorDirection::WEST: return Vector2f(-tileSize, 0);
+			}
+		};
+#pragma endregion
+
+	int corridorIdCounter = 0;
+
+	
+	for (const auto& edge : m_floorPlan.edges)
+	{
+		const int aId = edge.id_a;
+		const int bId = edge.id_b;
+
+		const DoorDirection dirFromAtoB = directionBetweenRooms(aId, bId);
+		const DoorDirection dirFromBtoA = opposite(dirFromAtoB);
+
+		const Vector2i aDoorTile = getDoorCenterTile(m_roomPlans[aId], dirFromAtoB);
+		const Vector2i bDoorTile = getDoorCenterTile(m_roomPlans[bId], dirFromBtoA);
+
+		const Vector2f aDoorWorldPos = tileToWorldPos(aId, aDoorTile);
+		const Vector2f bDoorWorldPos = tileToWorldPos(bId, bDoorTile);
+
+		Vector2f start = aDoorWorldPos + dirToOffset(dirFromAtoB);
+		Vector2f end = bDoorWorldPos + dirToOffset(dirFromBtoA);
+
+		const bool isHorizontal = (dirFromAtoB == DoorDirection::EAST || dirFromAtoB == DoorDirection::WEST);
+
+		// Create corridor plan and instance
+		RoomPlan corridor;
+		corridor.id = corridorIdCounter++;
+		corridor.type = RoomType::CORRIDOR;
+		corridor.seed = 0;
+		corridor.tileSize = tileSize;
+
+		Vector2f corridorWorldPos;
+
+		if (isHorizontal)
+		{
+			if (end.x < start.x) std::swap(start, end);	// ensure start is always left of end for horizontal corridors
+			const int lengthTiles = static_cast<int>((end.x - start.x) / tileSize);
+			
+			corridor.width = lengthTiles;
+			corridor.height = 5;
+
+			corridor.tileMap.assign(corridor.width * corridor.height, Tile::FLOOR);
+			for (int i = 0; i < corridor.width; i++)
+				for (int j = 0; j < corridor.height; j++)
+					if (j == 0 || j == corridor.height - 1)
+						corridor.tileMap[j * corridor.width + i] = Tile::WALL;
+
+			corridorWorldPos = start - Vector2f(0, tileSize);
+		}
+		else
+		{
+			if (end.y < start.y) std::swap(start, end);	// ensure start is always above end for vertical corridors
+			const int lengthTiles = static_cast<int>((end.y - start.y) / tileSize);
+
+			corridor.width = 3;
+			corridor.height = lengthTiles;
+
+			corridor.tileMap.assign(corridor.width* corridor.height, Tile::FLOOR);
+			for (int i = 0; i < corridor.width; i++)
+				for (int j = 0; j < corridor.height; j++)
+					if (i == 0 || i == corridor.width - 1)
+						corridor.tileMap[j * corridor.width + i] = Tile::WALL;
+
+			corridorWorldPos = start - Vector2f(tileSize, 0);
+		}
+
+		m_corridorPlans.push_back(corridor);
+		m_corridorWorldPositions.push_back(corridorWorldPos);
+
+		RoomInstance corridorInst;
+		corridorInst.buildFromPlan(m_corridorPlans.back(), corridorWorldPos);
+		m_corridorInstances.push_back(corridorInst);
+	}
+
 }
 
 #pragma endregion

@@ -63,6 +63,12 @@ At the moment, collision response is a simple "rollback":
 
 (A more advanced response like sliding can be added later.)
 
+## Multi-room collision checks (current)
+
+The current floor prototype renders multiple rooms at once.
+
+`Game` currently checks the player/enemies/projectiles against static colliders from **all** room instances.
+
 ## Damage flow (high level)
 
 Right now, the main damage logic lives in `Game::update(dt)`:

@@ -50,6 +50,13 @@ This chapter summarizes the major subsystems, who owns what, and how data flows.
 - `IRoomGenerator` builds a `RoomPlan` (e.g., `CombatRoom`).
 - `RoomInstance` builds runtime shapes + `StaticCollision` colliders.
 
+### Floor generation / layout (prototype)
+
+- `FloorPlan` is a small graph (nodes=rooms, edges=connections).
+- `FloorGenerator` builds a deterministic floor plan from a seed.
+- `FloorLayoutGenerator` embeds rooms into a simple 2D grid.
+- `RoomDoorUtils` applies connectivity by clearing/adding doors on room plans.
+
 ### LLM dialogue (planned)
 
 - NPC dialogue system backed by a local LLM wrapper.
@@ -60,7 +67,8 @@ This chapter summarizes the major subsystems, who owns what, and how data flows.
 - `Game` owns:
   - `Player`
   - enemies list (`std::vector<std::unique_ptr<Enemy>>`)
-  - active room (`RoomPlan` + `RoomInstance`)
+  - room plans (`std::vector<RoomPlan>`) and room instances (`std::vector<RoomInstance>`)
+  - a floor plan + a simple floor layout (prototype)
 - `Player` owns:
   - projectile list (`std::vector<std::unique_ptr<Projectile>>`)
 
@@ -68,7 +76,9 @@ Data flow example:
 
 - `Game` updates player and enemies.
 - `Game` checks collisions (player/enemy, bullets/enemy, entities vs walls/doors, triggers).
-- `Game` renders room → player → enemies.
+- `Game` renders rooms → player → enemies.
+
+In the current prototype, the floor is rendered as multiple rooms simultaneously and the camera follows the player.
 
 Game management input:
 

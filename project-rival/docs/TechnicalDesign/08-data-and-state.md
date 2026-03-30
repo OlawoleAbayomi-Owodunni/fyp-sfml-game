@@ -7,10 +7,12 @@ This chapter describes what state exists, who owns it, and what might need savin
 ## Runtime state (prototype)
 
 - `Game`:
-  - active room plan + room instance
+  - room plans + room instances (multi-room floor view)
+  - active room id (used for future room-local logic)
   - enemy list
   - room list / pool (prototype)
   - combat state (e.g., in-combat flag, wave counter)
+  - floor plan + layout (prototype)
 - `Player`:
   - transform/velocity
   - current projectiles

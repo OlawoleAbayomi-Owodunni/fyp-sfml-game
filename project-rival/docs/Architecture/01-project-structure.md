@@ -24,6 +24,13 @@ Most gameplay code is inside `project-rival/`.
 - `RoomInstance.h` / `RoomInstance.cpp` (builds drawable shapes + static colliders from a `RoomPlan`)
 - `StaticCollision.h` / `StaticCollision.cpp` (colliders for walls/doors/triggers)
 
+### Floor generation / multi-room layout (prototype)
+
+- `FloorBlueprint.h` (`FloorPlan`: room nodes + graph edges + adjacency list)
+- `FloorGenerator.h` / `FloorGenerator.cpp` (generates a floor graph deterministically from a seed)
+- `FloorLayout.h` / `FloorLayout.cpp` (embeds the floor graph into a simple 2D grid layout)
+- `RoomDoorUtils.h` / `RoomDoorUtils.cpp` (adds/clears doors in a `RoomPlan` based on graph connectivity)
+
 ### Entities
 
 - `player.h` / `player.cpp`

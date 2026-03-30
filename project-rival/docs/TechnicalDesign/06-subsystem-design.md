@@ -60,6 +60,23 @@ Doors and triggers (current):
 - Locked doors become `DOOR_LAYER` colliders at build time.
 - Portal rooms can add a `PortalTrigger` collider.
 
+## Floor generation / layout (prototype)
+
+Core files:
+
+- `project-rival/FloorBlueprint.h` (`FloorPlan`)
+- `project-rival/FloorGenerator.h/.cpp`
+- `project-rival/FloorLayout.h/.cpp` (`FloorLayoutGenerator`)
+- `project-rival/RoomDoorUtils.h/.cpp`
+
+Key behaviours:
+
+- The floor plan is generated deterministically from `dungeonSeed + floorId`.
+- Rooms are represented as a graph (edges = connections).
+- The current generator enforces simple constraints (spawn first, portal last, no direct spawn -> portal edge).
+- A simple BFS-based layout places rooms on a 2D grid without overlaps.
+- Doors are cleared and re-added to room plans based on graph edges.
+
 ## Combat / projectiles
 
 Core files:

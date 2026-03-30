@@ -4,6 +4,7 @@
 #include <algorithm>
 
 enum RoomType {
+	CORRIDOR,
 	SPAWN,
 	PORTAL,
 	//BOSS,
