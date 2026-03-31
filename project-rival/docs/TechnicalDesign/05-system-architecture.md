@@ -16,7 +16,7 @@ This chapter summarizes the major subsystems, who owns what, and how data flows.
 
 - `Game` owns the top-level SFML window and drives update + render.
 - `Game` is the best place for “systems” that require access to multiple owners (e.g., player bullets vs enemies).
-- `Game` also owns the active room state and handles spawning enemies from room spawner tiles.
+- `Game` manages the current floor state (room plans, room instances, corridor instances) and handles spawning entities from spawner tiles.
 
 ### Input
 
@@ -56,6 +56,8 @@ This chapter summarizes the major subsystems, who owns what, and how data flows.
 - `FloorGenerator` builds a deterministic floor plan from a seed.
 - `FloorLayoutGenerator` embeds rooms into a simple 2D grid.
 - `RoomDoorUtils` applies connectivity by clearing/adding doors on room plans.
+
+Corridors are generated in `Game` from floor edges and appended as extra `RoomInstance` objects.
 
 ### LLM dialogue (planned)
 

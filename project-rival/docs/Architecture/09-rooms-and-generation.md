@@ -15,6 +15,8 @@ Defined in `RoomBlueprint.h`:
   - layout: `tileMap` (1D array), plus `doors`, `spawners`, and `triggers`
   - room state: `isCleared` (used by combat rooms)
 
+`RoomType` currently also includes `CORRIDOR`, which is used for corridor “rooms” generated at runtime to connect doorways between rooms.
+
 The tile map uses a 1D index:
 
 - `index = row * width + column`
@@ -46,6 +48,8 @@ Obstacle/spawn counts in combat rooms are derived from the interior size (via `i
 
 Note: `RoomPlan` includes a `seed` field, but room generation currently uses `rand()` for most details.
 
+Door tiles are not placed by the room generators themselves. Doors are applied later based on floor connectivity (see below).
+
 ## Floors (room graph + layout) (prototype)
 
 Rooms are now also used as part of a simple **floor pipeline**:
@@ -72,10 +76,11 @@ Door placement from floor connectivity:
   - door tiles span 2–3 tiles (based on room parity)
   - `DoorTrigger` markers are added for door tiles
 
-Doors:
+Corridors:
 
-- Doors are generated as 2–3 tiles wide (based on room width/height parity).
-- Door tiles also add `DoorTrigger` entries so `Game` can react to entering a doorway.
+- `Game::buildCorridors()` builds corridor `RoomPlan`s from floor edges.
+- Each corridor is a small wall “tube” with a walkable strip of `Tile::FLOOR` down the middle.
+- Corridor plans are immediately converted to `RoomInstance` objects and appended to `m_roomInstances`.
 
 ## `RoomInstance` (runtime)
 
@@ -101,10 +106,10 @@ This is where room geometry becomes “real” (drawn/collidable) in the world.
 
 In `Game`:
 
-- `generateRoom(roomPlan)` builds a `RoomInstance` from a `RoomPlan`.
+- `generateRoom(roomId)` builds a `RoomInstance` from the corresponding `RoomPlan` and its computed world position.
 - Spawner tiles in the plan are used to spawn runtime objects:
-  - spawn room spawner → sets the player spawn position
-  - combat room spawners → spawn enemies
+  - spawn room spawner → sets the player spawn position (`spawnPlayer(roomId)`)
+  - combat room spawners → spawn enemies (`spawnEnemies(roomId)`)
   - portal room spawner → (visual marker only for now)
 - The room instance is rendered before the entities.
 
@@ -112,11 +117,18 @@ Multi-room rendering (prototype):
 
 - `Game` builds a floor instance by computing a world position per room (from the grid layout).
 - All room instances are rendered each frame.
-- A camera view follows the player (`sf::View` centered on `Player` position).
+- There are currently two camera modes:
+  - player-follow camera (`sf::View` centered on the player)
+  - floor overview camera (zoomed out)
 
 Combat room flow (current prototype):
 
-- Combat wave logic exists (`CombatRoom::generateNewWave`, `CombatRoom::setRoomCleared`), but the gameplay wiring is currently in-progress (parts are commented out in `Game`).
+- `Game::updateActiveRoom()` sets `m_activeRoomId` based on which room bounds contains the player.
+- When the player collides with a door trigger in a combat room:
+  - a wave is generated (`CombatRoom::generateNewWave(...)`)
+  - enemies are spawned from the new spawner list
+  - doors are locked for the duration of combat
+- `Game::ManageWave()` starts new waves until `m_waveCounter` reaches 0, then clears the room and unlocks doors.
 
 ## Likely next steps
 

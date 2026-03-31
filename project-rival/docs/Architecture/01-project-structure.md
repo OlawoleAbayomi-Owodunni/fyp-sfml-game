@@ -31,6 +31,8 @@ Most gameplay code is inside `project-rival/`.
 - `FloorLayout.h` / `FloorLayout.cpp` (embeds the floor graph into a simple 2D grid layout)
 - `RoomDoorUtils.h` / `RoomDoorUtils.cpp` (adds/clears doors in a `RoomPlan` based on graph connectivity)
 
+Corridors are currently generated inside `Game.cpp` (as temporary `RoomPlan`s converted into `RoomInstance`s).
+
 ### Entities
 
 - `player.h` / `player.cpp`

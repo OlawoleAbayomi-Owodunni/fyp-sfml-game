@@ -38,6 +38,8 @@ This document tracks technical progress over time in a supervisor-friendly way.
 - Added multiple room types (spawn room and portal room) alongside combat rooms.
 - Added doors, locked-door collision, and trigger volumes for doors and portals.
 - Added an early floor pipeline (room graph + simple 2D layout) and updated rendering to draw multiple rooms with a player-follow camera.
+- Added runtime corridor generation to connect rooms based on door positions.
+- Added active-room detection so room-local logic (waves/triggers) can be driven by player position.
 - Implemented early combat wave support (generation + helpers); gameplay wiring is still in progress.
 
 ### Technical notes
@@ -49,7 +51,8 @@ This document tracks technical progress over time in a supervisor-friendly way.
 - Updated collision response to use per-entity stored previous positions (`Player::hitWall()`, `Enemy::hitWall()`).
 - Added `FloorPlan`/`FloorGenerator`/`FloorLayoutGenerator` to generate and embed a small floor layout.
 - Added `RoomDoorUtils` to clear/re-add doors based on floor graph connectivity.
-- Updated `Game` to build/render multiple room instances and to spawn the player via the spawn room marker.
+- Updated `Game` to build/render multiple room instances, generate corridor instances between connected rooms, and to spawn the player via the spawn room marker.
+- Added a simple camera mode toggle (player-follow vs floor overview).
 
 ### Evidence (commits)
 - `4f9cdbb` — FEATURE(Levels): Add Spawn/Portal rooms with triggers and player spawn placement

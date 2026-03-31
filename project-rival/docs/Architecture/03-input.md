@@ -35,5 +35,6 @@ High-level game controls (in `Game::gameInput()`):
 
 - Exit: `Escape` or controller `Start`
 - Restart run: `R` or controller `Select`
+- Toggle camera mode (player cam vs floor overview): `V` or controller `DPadDown`
 
 Also applies deadzones to reduce controller drift.

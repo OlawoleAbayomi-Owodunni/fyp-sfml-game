@@ -69,6 +69,8 @@ The current floor prototype renders multiple rooms at once.
 
 `Game` currently checks the player/enemies/projectiles against static colliders from **all** room instances.
 
+This includes corridor instances, which are generated at runtime and appended to the room instance list.
+
 ## Damage flow (high level)
 
 Right now, the main damage logic lives in `Game::update(dt)`:

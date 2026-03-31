@@ -11,7 +11,10 @@ This chapter documents known shortcuts and future technical risks.
 - Player owns bullets (may move to a world/weapon system later).
 - Some generation uses `rand()` directly (non-deterministic by design for room details).
 - Room generation currently does not use `seed` to drive deterministic outcomes (even though `RoomPlan` stores a seed).
-- Doors/triggers are currently generated in fixed directions in room generators (not yet driven by a floor/dungeon graph).
+- Door placement currently depends on the generated floor layout (direction inferred from grid positions) and corridor generation assumes doors are aligned well enough to connect.
+- Portal trigger currently only logs a message; floor progression is not yet implemented.
+- Active-room detection is a simple bounds check against each room’s rectangle (no spatial indexing).
+- Corridor generation is procedural and may need extra handling for edge cases (misaligned door spans, overlapping corridors, or collisions near door thresholds).
 
 ## Technical risks
 

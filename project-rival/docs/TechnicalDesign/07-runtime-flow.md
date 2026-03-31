@@ -11,6 +11,9 @@ At a high level:
 1. Poll window events.
 2. Read input (`InputManager::update()`).
 3. Handle game management input (exit / restart).
+4. Update room context:
+   - determine the active room id based on player position
+   - manage combat wave state (if in a combat room)
 4. Update player:
    - movement
    - aiming

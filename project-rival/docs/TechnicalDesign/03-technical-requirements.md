@@ -16,6 +16,11 @@
 - Prototype-first approach: simple systems that scale into advanced systems over time.
 - The game loop passes `dt` in **seconds** (fixed timestep ~60 FPS).
 
+Procedural generation split (current intent):
+
+- Floor graph/layout generation is deterministic (uses `std::mt19937` seeded with `dungeonSeed + floorId`).
+- Room details (obstacles, spawns) use `rand()` for per-run variety.
+
 ## Assumptions
 
 - LLM dialogue uses a locally running model, accessed through a custom C++ wrapper yet to be integrated (separate repo).

@@ -234,7 +234,7 @@ void Game::gameStart()
 {
 	resetGame();
 
-	const int dungeonSeed = 12345;	// temporary seed for testing
+	const int dungeonSeed = 12344;	// temporary seed for testing
 	const int floorId = 0;
 
 	m_floorPlan = m_floorGenerator.generateFloorPlan(floorId, dungeonSeed, false);

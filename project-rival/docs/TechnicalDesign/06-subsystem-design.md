@@ -51,7 +51,8 @@ Current behaviour:
 - `CombatRoom` currently chooses a random width/height in a small range.
 - Spawn points and obstacle density are derived from interior size (via `interiorArea`).
 - `RoomInstance` converts all `Tile::WALL` tiles (outer walls + obstacles) into wall shapes + `StaticCollision` colliders.
-- `Game::generateRoom()` spawns enemies at `RoomPlan.spawners` (world position = `roomWorldPos + tilePos * tileSize`).
+- `Game::generateRoom(roomId)` rebuilds the `RoomInstance` from the current `RoomPlan` (used after door lock/unlock or wave generation).
+- `Game::spawnEnemies(roomId)` spawns runtime enemies from `RoomPlan.spawners` (world position = `roomWorldPos + tilePos * tileSize`).
 
 Doors and triggers (current):
 
@@ -59,6 +60,12 @@ Doors and triggers (current):
 - Door tiles create `DoorTrigger` entries.
 - Locked doors become `DOOR_LAYER` colliders at build time.
 - Portal rooms can add a `PortalTrigger` collider.
+
+Corridors (current):
+
+- Corridors are generated at runtime in `Game::buildCorridors()` as `RoomPlan` objects of type `RoomType::CORRIDOR`.
+- Corridor plans are immediately built into `RoomInstance` objects and appended to `m_roomInstances`.
+- Corridors use `Tile::WALL` for borders and a strip of `Tile::FLOOR` through the middle.
 
 ## Floor generation / layout (prototype)
 
@@ -76,6 +83,11 @@ Key behaviours:
 - The current generator enforces simple constraints (spawn first, portal last, no direct spawn -> portal edge).
 - A simple BFS-based layout places rooms on a 2D grid without overlaps.
 - Doors are cleared and re-added to room plans based on graph edges.
+
+Current runtime build:
+
+- `Game::buildFloorInstance()` builds all room instances from their plans.
+- `Game::buildCorridors()` builds additional corridor instances that connect matching doors between connected rooms.
 
 ## Combat / projectiles
 
