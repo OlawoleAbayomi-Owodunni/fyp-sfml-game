@@ -40,6 +40,7 @@ This document tracks technical progress over time in a supervisor-friendly way.
 - Added an early floor pipeline (room graph + simple 2D layout) and updated rendering to draw multiple rooms with a player-follow camera.
 - Added runtime corridor generation to connect rooms based on door positions.
 - Added active-room detection so room-local logic (waves/triggers) can be driven by player position.
+- Added early multi-floor progression: interacting with a portal trigger can load the next floor.
 - Implemented early combat wave support (generation + helpers); gameplay wiring is still in progress.
 
 ### Technical notes
@@ -53,6 +54,7 @@ This document tracks technical progress over time in a supervisor-friendly way.
 - Added `RoomDoorUtils` to clear/re-add doors based on floor graph connectivity.
 - Updated `Game` to build/render multiple room instances, generate corridor instances between connected rooms, and to spawn the player via the spawn room marker.
 - Added a simple camera mode toggle (player-follow vs floor overview).
+- Added `DungeonPlan` to track dungeon seed and current floor, plus a portal-driven `loadNewFloor()` flow.
 
 ### Evidence (commits)
 - `4f9cdbb` — FEATURE(Levels): Add Spawn/Portal rooms with triggers and player spawn placement

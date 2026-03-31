@@ -109,7 +109,10 @@
     <Filter Include="Header Files\Levels\Floors">
       <UniqueIdentifier>{baac4118-c356-4ce9-ab7b-54e113e487fd}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\Abs.Interfaces\Floor Blueprint">
+    <Filter Include="Header Files\Levels\Dungeons">
+      <UniqueIdentifier>{368fecfe-ccc6-4a98-9c23-09b284ac1fdf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Levels\Floors\Floor Blueprint">
       <UniqueIdentifier>{be3d9870-f5b6-48e9-b412-a0513c5dc1bb}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
@@ -255,7 +258,7 @@
       <Filter>Header Files\Levels\Rooms</Filter>
     </ClInclude>
     <ClInclude Include="FloorBlueprint.h">
-      <Filter>Header Files\Abs.Interfaces\Floor Blueprint</Filter>
+      <Filter>Header Files\Levels\Floors\Floor Blueprint</Filter>
     </ClInclude>
     <ClInclude Include="FloorGenerator.h">
       <Filter>Header Files\Levels\Floors</Filter>
@@ -268,6 +271,9 @@
     </ClInclude>
     <ClInclude Include="FloorLayout.h">
       <Filter>Header Files\Levels\Floors</Filter>
+    </ClInclude>
+    <ClInclude Include="DungeonPlan.h">
+      <Filter>Header Files\Levels\Dungeons</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

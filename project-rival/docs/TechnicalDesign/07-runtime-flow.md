@@ -26,6 +26,9 @@ At a high level:
    - bullets vs enemies
    - player/enemies/bullets vs walls
    - player vs triggers (doors / portals)
+   - portal interactions (if inside portal trigger and interact pressed)
+8. Handle floor progression:
+   - if a next-floor request was raised, advance the dungeon plan and load a new floor
 	- player vs portal trigger
 7. Render:
    - rooms (multiple)

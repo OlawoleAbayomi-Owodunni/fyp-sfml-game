@@ -33,6 +33,10 @@ Most gameplay code is inside `project-rival/`.
 
 Corridors are currently generated inside `Game.cpp` (as temporary `RoomPlan`s converted into `RoomInstance`s).
 
+### Dungeon / multi-floor run state (prototype)
+
+- `DungeonPlan.h` (tracks dungeon seed, current floor id, floor count, and “dungeon complete” state)
+
 ### Entities
 
 - `player.h` / `player.cpp`

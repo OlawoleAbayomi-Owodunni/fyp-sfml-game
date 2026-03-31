@@ -53,6 +53,8 @@ Room generation also builds other static colliders:
 - locked doors use `DOOR_LAYER`
 - triggers use `PORTAL_TRIGGER_LAYER` and `DOOR_TRIGGER_LAYER` (they only collide with the player)
 
+Portal triggers are treated as "interaction volumes": when the player is inside the trigger, pressing `Space` (keyboard) or `A` (controller) requests a floor advance.
+
 ## Collision response (current)
 
 At the moment, collision response is a simple "rollback":

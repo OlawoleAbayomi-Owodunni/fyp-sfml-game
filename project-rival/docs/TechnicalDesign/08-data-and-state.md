@@ -13,6 +13,8 @@ This chapter describes what state exists, who owns it, and what might need savin
   - room list / pool (prototype)
   - combat state (e.g., in-combat flag, wave counter)
   - floor plan + layout (prototype)
+  - dungeon plan (seed + current floor id)
+  - request-next-floor flag (set by portal interaction)
 - `Player`:
   - transform/velocity
   - current projectiles

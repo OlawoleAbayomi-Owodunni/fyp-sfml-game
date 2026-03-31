@@ -63,8 +63,10 @@ Rooms are now also used as part of a simple **floor pipeline**:
 
 Current generation constraints:
 
+- FloorGenerator currently chooses a random room count in `[3..10]` using `std::mt19937`.
 - Room 0 is always `SPAWN`.
 - The last room is always `PORTAL` (boss room is planned for final floors).
+- All middle rooms currently resolve to `COMBAT` (the distribution range currently only spans `COMBAT`).
 - The generator avoids directly connecting spawn and portal rooms with a single edge.
 
 Door placement from floor connectivity:
@@ -81,6 +83,23 @@ Corridors:
 - `Game::buildCorridors()` builds corridor `RoomPlan`s from floor edges.
 - Each corridor is a small wall “tube” with a walkable strip of `Tile::FLOOR` down the middle.
 - Corridor plans are immediately converted to `RoomInstance` objects and appended to `m_roomInstances`.
+
+## Dungeon progression (prototype)
+
+`DungeonPlan` (`DungeonPlan.h`) tracks:
+
+- `seed`
+- `currentFloorId`
+- `floorCount`
+- `isDungeonComplete`
+
+In `Game`:
+
+- `gameStart()` initializes a new dungeon plan (currently using a fixed seed for testing) and calls `loadNewFloor()`.
+- Standing in a portal trigger and pressing interact (`Space` / `A`) sets a `m_requestNextFloor` flag.
+- `Game::update(dt)` consumes the flag and advances the dungeon:
+  - if the dungeon is complete → close window (temporary)
+  - otherwise → load the next floor via `loadNewFloor()`
 
 ## `RoomInstance` (runtime)
 

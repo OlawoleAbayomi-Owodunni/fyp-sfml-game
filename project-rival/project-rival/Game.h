@@ -15,6 +15,7 @@
 #include "RoomInstance.h"
 #include "FloorGenerator.h"
 #include "FloorLayout.h"
+#include "DungeonPlan.h"
 
 using namespace std;
 using namespace sf;
@@ -82,6 +83,7 @@ private:
 	// Floor Management
 	void buildFloorInstance();
 	void buildCorridors();
+	void loadNewFloor();
 
 
 	// ----------------------------------> VARIABLES <---------------------------------- //	
@@ -111,6 +113,10 @@ private:
 
 	FloorLayout m_floorLayout;
 	FloorLayoutGenerator m_floorInstanceGenerator;
+
+	// Dungeon management
+	DungeonPlan m_dungeonPlan;
+	bool m_requestNextFloor;
 
 	//Wave management
 	int m_waveCounter;

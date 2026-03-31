@@ -33,6 +33,7 @@ As of the current prototype, the project has:
   - player-follow camera
   - zoomed-out floor overview (toggle)
 - Early combat wave logic for combat rooms (door trigger starts combat, waves spawn enemies, doors lock/unlock).
+- Multi-floor progression (prototype): portal interaction can advance to the next floor; when the dungeon is complete, the game currently exits (temporary).
 
 ## Core / key terminology
 

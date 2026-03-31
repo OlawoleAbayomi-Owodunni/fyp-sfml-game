@@ -3,6 +3,9 @@
 #include <vector>
 #include <algorithm>
 
+/// <summary>
+/// Different types of Rooms.
+/// </summary>
 enum RoomType {
 	CORRIDOR,
 	SPAWN,
@@ -16,6 +19,9 @@ enum RoomType {
 	ROOM_COUNT
 };
 
+/// <summary>
+/// Different types of Tiles
+/// </summary>
 enum Tile {
 	Empty,
 
@@ -24,6 +30,9 @@ enum Tile {
 	DOOR
 };
 
+/// <summary>
+/// Specifies the direction of a door.
+/// </summary>
 enum DoorDirection {
 	NORTH,
 	SOUTH,
@@ -31,41 +40,59 @@ enum DoorDirection {
 	WEST
 };
 
+/// <summary>
+/// Represents the configuration and properties of a door in the game world.
+/// </summary>
 struct DoorPlan {
 	sf::Vector2i tileStartPos;
 	DoorDirection direction;
 
 	bool isLocked;
-	int spanTiles; // st = 2 if width/height % 2 = 0, else st = 3 {if l/w is even, st = 2. if odd, st = 3}
+	int spanTiles;
 };
 
+/// <summary>
+/// Defines the types of spawners available in the game.
+/// </summary>
 enum SpawnerType {
 	PlayerSpawner,
 	EnemySpawner,
 	PortalSpawner
 };
 
+/// <summary>
+/// Represents a plan for spawning an entity, containing its type and tile position.
+/// </summary>
 struct SpawnerPlan {
 	SpawnerType type;
 	sf::Vector2i tilePos;
 };
 
+/// <summary>
+/// Defines the types of triggers that can be used in the system.
+/// </summary>
 enum TriggerType {
 	None,
 	DoorTrigger,
 	PortalTrigger
 };
 
+/// <summary>
+/// Represents a plan for triggering an event at a specific tile location.
+/// </summary>
 struct TriggerPlan {
 	TriggerType type;
 	sf::Vector2i tilePos;
 };
 
+/// <summary>
+/// Represents the blueprint and state of a room in the game, including its layout, dimensions, and contents.
+/// </summary>
 struct RoomPlan {
 	// Room metadata
 	int id;
 	RoomType type;
-	int seed;	// for stuctured random generation of room layout and contents
+	int seed;
 
 	// Room representation
 	int width;
@@ -81,6 +108,10 @@ struct RoomPlan {
 	// Room state
 	bool isCleared = false;
 	
+	/// <summary>
+	/// Checks whether the object is in a valid state.
+	/// </summary>
+	/// <returns>True if the width and height are positive and the tile map size matches the dimensions; otherwise, false.</returns>
 	bool isValid() const {
 		if (width > 0 && height > 0 && (tileMap.size() == width * height))
 			return true;
@@ -88,6 +119,12 @@ struct RoomPlan {
 			return false;
 	}
 
+	/// <summary>
+	/// Retrieves the tile at the specified row and column position.
+	/// </summary>
+	/// <param name="row">The row index of the tile.</param>
+	/// <param name="column">The column index of the tile.</param>
+	/// <returns>The tile at the specified position.</returns>
 	Tile getTile(int row, int column) const {
 		return tileMap[row * width + column];
 	}

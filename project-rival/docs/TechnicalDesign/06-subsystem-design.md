@@ -81,6 +81,8 @@ Key behaviours:
 - The floor plan is generated deterministically from `dungeonSeed + floorId`.
 - Rooms are represented as a graph (edges = connections).
 - The current generator enforces simple constraints (spawn first, portal last, no direct spawn -> portal edge).
+- Room count is currently randomized per floor in the range `[3..10]`.
+- Middle rooms currently resolve to `COMBAT` (other room types are planned).
 - A simple BFS-based layout places rooms on a 2D grid without overlaps.
 - Doors are cleared and re-added to room plans based on graph edges.
 
@@ -88,6 +90,17 @@ Current runtime build:
 
 - `Game::buildFloorInstance()` builds all room instances from their plans.
 - `Game::buildCorridors()` builds additional corridor instances that connect matching doors between connected rooms.
+
+## Dungeon progression (prototype)
+
+Core files:
+
+- `project-rival/DungeonPlan.h`
+
+Key behaviours:
+
+- `DungeonPlan` tracks a dungeon seed, current floor id, total floor count, and whether the dungeon is complete.
+- Portal triggers can request a floor advance; `Game` consumes the request and calls `loadNewFloor()`.
 
 ## Combat / projectiles
 

@@ -162,6 +162,19 @@ void Game::update(double dt)
 		if (m_roomPlans[m_activeRoomId].type == RoomType::COMBAT && m_isInCombat)
 			ManageWave();
 	}
+
+	if (m_requestNextFloor)
+	{
+		m_requestNextFloor = false;
+		m_dungeonPlan.advanceFloor();
+
+		if (m_dungeonPlan.isDungeonComplete)
+			m_window.close();
+		else
+			loadNewFloor();
+	}
+
+
 }
 
 ////////////////////////////////////////////////////////////
@@ -199,12 +212,13 @@ void Game::render()
 ///////////////////////////////////////////////////////////
 #pragma region GAME MANAGEMENT
 /// <summary>
-/// Resets the game to its initial state.
+/// Resets the game to its initial state, clearing all progress and reinitializing game systems.
 /// </summary>
 void Game::resetGame()
 {
 	m_playerCamera = m_window.getDefaultView();
 	m_floorCamera = m_window.getDefaultView();
+	m_floorCamera.zoom(12.f);
 	m_gameCamera = m_playerCamera;
 	m_isPlayerCamera = true;
 
@@ -224,6 +238,9 @@ void Game::resetGame()
 	m_floorLayout = FloorLayout();
 	m_floorInstanceGenerator = FloorLayoutGenerator();
 
+	m_dungeonPlan = DungeonPlan();
+	m_requestNextFloor = false;
+
 	m_waveCounter = 0;
 }
 
@@ -234,73 +251,9 @@ void Game::gameStart()
 {
 	resetGame();
 
-	const int dungeonSeed = 12344;	// temporary seed for testing
-	const int floorId = 0;
+	m_dungeonPlan.start(/*rand() % 50000*/12344); // using a fixed seed for testing purposes, can be randomized for more variety
 
-	m_floorPlan = m_floorGenerator.generateFloorPlan(floorId, dungeonSeed, false);
-
-	m_roomPlans.clear();
-	m_roomPlans.resize(m_floorPlan.rooms.size());
-
-	for (const auto& room : m_floorPlan.rooms)
-	{
-		switch (room.roomType) {
-		case RoomType::SPAWN:
-			m_roomPlans[room.id] = SpawnRoom().generateRoomPlan(room.id, room.roomType, dungeonSeed + floorId);
-			break;
-		case RoomType::PORTAL:
-			m_roomPlans[room.id] = PortalRoom().generateRoomPlan(room.id, room.roomType, dungeonSeed + floorId);
-			break;
-		case RoomType::COMBAT:
-			m_roomPlans[room.id] = CombatRoom().generateRoomPlan(room.id, room.roomType, dungeonSeed + floorId);
-			break;
-		}
-	}
-
-	m_floorLayout = m_floorInstanceGenerator.generateFloorLayout(m_floorPlan);
-
-	for (auto& roomPlan : m_roomPlans)
-	{
-		RoomDoorUtils::clearAllDoors(roomPlan);
-	}
-
-	auto directionBetweenRooms = [&](int fromId, int toId)
-		{
-			// Determine the direction of the door based on the grid positions of the two rooms in the floor layout
-			Vector2i a = m_floorLayout.roomGridPositions[fromId];
-			Vector2i b = m_floorLayout.roomGridPositions[toId];
-			Vector2i diff = b - a;
-
-			// The difference in grid positions should indicate the direction of the door
-			if (diff.x != 0 && (std::abs(diff.x) >= std::abs(diff.y) || diff.y == 0))
-			{
-				if (diff.x > 0) return DoorDirection::EAST;
-				else return DoorDirection::WEST;
-			}
-			else
-			{
-				if (diff.y > 0) return DoorDirection::SOUTH;
-				else return DoorDirection::NORTH;
-			}
-		};
-
-	for (auto& edge : m_floorPlan.edges)
-	{
-		int aId = edge.id_a;
-		int bId = edge.id_b;
-
-		DoorDirection dirFromAtoB = directionBetweenRooms(aId, bId);
-		DoorDirection dirFromBtoA = RoomDoorUtils::opposite(dirFromAtoB);
-
-		RoomDoorUtils::addDoor(m_roomPlans[aId], dirFromAtoB);
-		RoomDoorUtils::addDoor(m_roomPlans[bId], dirFromBtoA);
-	}
-
-	buildFloorInstance();
-
-	m_activeRoomId = -1;
-	m_floorCamera.setCenter(m_roomWorldPositions[0]);
-	m_floorCamera.zoom(12.f);
+	loadNewFloor();
 }
 
 /// <summary>
@@ -415,7 +368,10 @@ void Game::CollisionChecks()
 				// Portal Trigger -> Player
 				if (CollisionCheck::areColliding(collisionObject, m_player))
 				{
-					cout << "Player Collided with Portal Trigger!\n";
+					if (InputManager::pad().pressed(GamepadButton::A) || Keyboard::isKeyPressed(Keyboard::Key::Space))
+					{
+						m_requestNextFloor = true;
+					}
 					break;
 				}
 			}
@@ -426,7 +382,7 @@ void Game::CollisionChecks()
 				// Door Trigger -> Player
 				if (CollisionCheck::areColliding(collisionObject, m_player))
 				{
-					//// Combat Door Trigger
+					// Combat Door Trigger
 					if (m_roomPlans[m_activeRoomId].type == RoomType::COMBAT) {
 						if (!m_roomPlans[m_activeRoomId].isCleared && !m_isInCombat)
 						{
@@ -438,7 +394,6 @@ void Game::CollisionChecks()
 							generateRoom(m_activeRoomId);
 						}
 					}
-
 					break;
 				}
 			}
@@ -497,9 +452,9 @@ void Game::gameInput()
 ///////////////////////////////////////////////////////////
 #pragma region ROOM MANAGEMENT
 /// <summary>
-/// Generates a room instance from its corresponding room plan and world position, and stores it in the room instances vector.
+/// Generates a room instance from a room plan at a specific world position.
 /// </summary>
-/// <param name="roomId"></param>
+/// <param name="roomId">The identifier of the room to generate.</param>
 void Game::generateRoom(int roomId)
 {
 	RoomPlan& roomPlan = m_roomPlans[roomId];
@@ -508,10 +463,9 @@ void Game::generateRoom(int roomId)
 }
 
 /// <summary>
-/// Spawns the player at the appropriate location within a room.
+/// Spawns the player at the designated player spawn point within the specified room.
 /// </summary>
-/// <param name="roomPlan">The room plan containing spawn point information.</param>
-/// <param name="roomWorldPos">The world position of the room in which to spawn the player.</param>
+/// <param name="roomId">The identifier of the room where the player should be spawned.</param>
 void Game::spawnPlayer(const int roomId)
 {
 	RoomPlan& roomPlan = m_roomPlans[roomId];
@@ -533,10 +487,9 @@ void Game::spawnPlayer(const int roomId)
 }
 
 /// <summary>
-/// Spawns enemies in a room based on the room plan and type.
+/// Spawns enemies in a combat room at designated spawn points.
 /// </summary>
-/// <param name="roomPlan">The room plan containing spawn points and room type information.</param>
-/// <param name="roomWorldPos">The world position of the room where enemies will be spawned.</param>
+/// <param name="roomId">The ID of the room in which to spawn enemies.</param>
 void Game::spawnEnemies(const int roomId)
 {
 	// Combat room Spawner
@@ -768,6 +721,83 @@ void Game::buildCorridors()
 		m_roomInstances.push_back(corridorInst);
 	}
 
+}
+
+/// <summary>
+/// Loads and initializes a new dungeon floor, generating its layout, rooms, and connections.
+/// </summary>
+void Game::loadNewFloor()
+{
+	m_enemies.clear();
+	m_isInCombat = false;
+	m_isInRoom = true;
+	m_activeRoomId = -1;
+	m_waveCounter = 0;
+
+	int dungeonSeed = m_dungeonPlan.seed;
+	int floorId = m_dungeonPlan.currentFloorId;
+	m_floorPlan = m_floorGenerator.generateFloorPlan(floorId, dungeonSeed, m_dungeonPlan.isFinalFloor());
+
+	m_roomPlans.clear();
+	m_roomPlans.resize(m_floorPlan.rooms.size());
+
+	for (const auto& room : m_floorPlan.rooms)
+	{
+		switch (room.roomType) {
+		case RoomType::SPAWN:
+			m_roomPlans[room.id] = SpawnRoom().generateRoomPlan(room.id, room.roomType, dungeonSeed + floorId);
+			break;
+		case RoomType::PORTAL:
+			m_roomPlans[room.id] = PortalRoom().generateRoomPlan(room.id, room.roomType, dungeonSeed + floorId);
+			break;
+		case RoomType::COMBAT:
+			m_roomPlans[room.id] = CombatRoom().generateRoomPlan(room.id, room.roomType, dungeonSeed + floorId);
+			break;
+		}
+	}
+
+	m_floorLayout = m_floorInstanceGenerator.generateFloorLayout(m_floorPlan);
+
+	for (auto& roomPlan : m_roomPlans)
+	{
+		RoomDoorUtils::clearAllDoors(roomPlan);
+	}
+
+	auto directionBetweenRooms = [&](int fromId, int toId)
+		{
+			// Determine the direction of the door based on the grid positions of the two rooms in the floor layout
+			Vector2i a = m_floorLayout.roomGridPositions[fromId];
+			Vector2i b = m_floorLayout.roomGridPositions[toId];
+			Vector2i diff = b - a;
+
+			// The difference in grid positions should indicate the direction of the door
+			if (diff.x != 0 && (std::abs(diff.x) >= std::abs(diff.y) || diff.y == 0))
+			{
+				if (diff.x > 0) return DoorDirection::EAST;
+				else return DoorDirection::WEST;
+			}
+			else
+			{
+				if (diff.y > 0) return DoorDirection::SOUTH;
+				else return DoorDirection::NORTH;
+			}
+		};
+
+	for (auto& edge : m_floorPlan.edges)
+	{
+		int aId = edge.id_a;
+		int bId = edge.id_b;
+
+		DoorDirection dirFromAtoB = directionBetweenRooms(aId, bId);
+		DoorDirection dirFromBtoA = RoomDoorUtils::opposite(dirFromAtoB);
+
+		RoomDoorUtils::addDoor(m_roomPlans[aId], dirFromAtoB);
+		RoomDoorUtils::addDoor(m_roomPlans[bId], dirFromBtoA);
+	}
+
+	buildFloorInstance();
+
+	m_floorCamera.setCenter(m_roomWorldPositions[0]);
 }
 
 #pragma endregion
