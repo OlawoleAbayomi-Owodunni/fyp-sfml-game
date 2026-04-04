@@ -17,7 +17,7 @@ Projectile::Projectile(sf::Vector2f spawnPoint, float lifetime, bool isFromPlaye
 	}
 	// add other collision masks for environment (e.g. walls)
 	// like so ----> p_collisionProfile.mask |= CollisionLayer::LEVEL_LAYER;
-	p_collisionProfile.mask |= CollisionLayer::WALL_LAYER;
+	p_collisionProfile.mask |= CollisionLayer::WALL_LAYER | CollisionLayer::DOOR_LAYER;
 }
 
 void Projectile::render(sf::RenderWindow& window)

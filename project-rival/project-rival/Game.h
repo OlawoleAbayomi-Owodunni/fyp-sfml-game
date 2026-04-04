@@ -13,9 +13,9 @@
 #include "Enemy.h"
 
 #include "RoomInstance.h"
-#include "CombatRoom.h"
-#include "SpawnRoom.h"
-#include "PortalRoom.h"
+#include "FloorGenerator.h"
+#include "FloorLayout.h"
+#include "DungeonPlan.h"
 
 using namespace std;
 using namespace sf;
@@ -45,7 +45,9 @@ protected:
 	void init();
 	void update(double dt);
 
-	void gameInput();
+	void ManageWave();
+
+	void updateActiveRoom();
 
 	void render();
 
@@ -55,16 +57,6 @@ protected:
 	sf::Font m_arialFont{ "ASSETS/FONTS/ariblk.ttf" };
 	sf::RenderWindow m_window;
 
-	Player m_player;
-
-	std::vector<std::unique_ptr<Enemy>> m_enemies;
-
-	CombatRoom m_combatRoom;
-	SpawnRoom m_spawnRoom;
-	PortalRoom m_portalRoom;
-	RoomPlan m_activeRoomPlan;
-	RoomInstance m_activeRoomInstance;
-
 #ifdef TEST_FPS
 	sf::Text x_updateFPS{ m_arialFont };	// text used to display updates per second.
 	sf::Text x_drawFPS{  m_arialFont };	// text used to display draw calls per second.
@@ -73,10 +65,60 @@ protected:
 	int x_drawFrameCount{ 0 };							// draws per second counter.
 #endif // TEST_FPS
 
-
 private:
+	// ----------------------------------> FUNCTIONS <---------------------------------- //
+	// Update subfunctions
+	void CollisionChecks();
+	void gameInput();	
+	
+	// Game management
 	void resetGame();
 	void gameStart();
 
-	void generateRoom();
+	// Room management
+	void spawnPlayer(const int roomId);
+	void spawnEnemies(const int roomId);
+	void generateRoom(int roomId);
+
+	// Floor Management
+	void buildFloorInstance();
+	void buildCorridors();
+	void loadNewFloor();
+
+
+	// ----------------------------------> VARIABLES <---------------------------------- //	
+	// Game Management
+	sf::View m_gameCamera;
+	bool m_isPlayerCamera;
+	
+	// Player management
+	Player m_player;
+	bool m_isInCombat;
+	sf::View m_playerCamera;
+	bool m_isInRoom;
+
+	// Enemy management
+	std::vector<std::unique_ptr<Enemy>> m_enemies;
+
+	// Room management
+	vector<RoomPlan> m_roomPlans;
+	vector<RoomInstance> m_roomInstances;
+	vector<Vector2f> m_roomWorldPositions;
+	int m_activeRoomId;
+
+	// Floor management
+	sf::View m_floorCamera;
+	FloorPlan m_floorPlan;
+	FloorGenerator m_floorGenerator;
+
+	FloorLayout m_floorLayout;
+	FloorLayoutGenerator m_floorInstanceGenerator;
+
+	// Dungeon management
+	DungeonPlan m_dungeonPlan;
+	bool m_requestNextFloor;
+
+	//Wave management
+	int m_waveCounter;
+
 };

@@ -29,7 +29,7 @@ public:
 
 	void takeDamage(int damage);
 
-	void hitWall(sf::Vector2f oldPos);
+	void hitWall();
 
 	// this functions will likely move to weapon class when made
 	std::vector<std::unique_ptr<Projectile>>& getProjectiles();
@@ -44,10 +44,12 @@ private:
 	Vector2f p_velocity{ 0.f, 0.f };
 	float p_moveSpeed{ 200.f };
 
+	Vector2f p_prevPos;
+
 	bool p_isController;
 
 	// reticle
-	CircleShape p_reticle;
+	RectangleShape p_reticle;
 	Vector2f p_aimDir{ 0.f,0.f };
 	float p_reticleDistance;
 	Vector2f p_prevMousePos;

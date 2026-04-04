@@ -11,6 +11,10 @@ This chapter clarifies what we’re building **now** vs what is explicitly defer
   - `RoomPlan` data
   - generator(s) for at least combat rooms
   - runtime build (`RoomInstance`) + wall collisions
+- Floor pipeline (prototype):
+  - generate a room graph (`FloorPlan`) from a seed
+  - embed rooms into a grid layout
+  - generate doors/corridors from graph connectivity
 - Iterating on collision correctness and response.
 
 ## Out of scope (for now)

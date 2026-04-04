@@ -25,9 +25,6 @@
     <Filter Include="Header Files\Abs.Interfaces">
       <UniqueIdentifier>{fc0fe863-09ef-468e-aaa5-2881e53dd4b7}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\Abs.Classes">
-      <UniqueIdentifier>{0c6e4511-7f0a-4e12-afe0-7425cf365a97}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\Behaviours">
       <UniqueIdentifier>{b532eab4-ae76-449b-9ec6-96913d08a763}</UniqueIdentifier>
     </Filter>
@@ -100,6 +97,24 @@
     <Filter Include="Resource Files\DOCUMENTATION\Git Summaries\Devlog Dumps">
       <UniqueIdentifier>{dd92ece3-062f-4995-b441-b7cec4b92ad3}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Projectiles\NormalBullets">
+      <UniqueIdentifier>{ec3a1ba9-8f3b-49c9-a2af-ee53fd5af881}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\DOCUMENTATION\TDD">
+      <UniqueIdentifier>{ab98f2b2-375f-4581-b89f-c300adecb773}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\DOCUMENTATION\Architecture">
+      <UniqueIdentifier>{f6122b01-7ad4-459c-ab01-774cd71eb0a7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Levels\Floors">
+      <UniqueIdentifier>{baac4118-c356-4ce9-ab7b-54e113e487fd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Levels\Dungeons">
+      <UniqueIdentifier>{368fecfe-ccc6-4a98-9c23-09b284ac1fdf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Levels\Floors\Floor Blueprint">
+      <UniqueIdentifier>{be3d9870-f5b6-48e9-b412-a0513c5dc1bb}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -114,20 +129,8 @@
     <ClCompile Include="Gamepad.cpp">
       <Filter>Header Files\Input</Filter>
     </ClCompile>
-    <ClCompile Include="Enemy.cpp">
-      <Filter>Header Files\Abs.Classes</Filter>
-    </ClCompile>
-    <ClCompile Include="Projectile.cpp">
-      <Filter>Header Files\Abs.Classes</Filter>
-    </ClCompile>
-    <ClCompile Include="NormalBulletProjectile.cpp">
-      <Filter>Header Files\Projectiles</Filter>
-    </ClCompile>
     <ClCompile Include="StaticCollision.cpp">
       <Filter>Header Files\Levels\Collision</Filter>
-    </ClCompile>
-    <ClCompile Include="RoomInstance.cpp">
-      <Filter>Header Files\Levels</Filter>
     </ClCompile>
     <ClCompile Include="CombatRoom.cpp">
       <Filter>Header Files\Levels\Rooms\Combat Room</Filter>
@@ -162,8 +165,29 @@
     <ClCompile Include="CombatRoom.cpp">
       <Filter>Header Files\Levels\Rooms</Filter>
     </ClCompile>
+    <ClCompile Include="NormalBulletProjectile.cpp">
+      <Filter>Header Files\Projectiles\NormalBullets</Filter>
+    </ClCompile>
+    <ClCompile Include="Enemy.cpp">
+      <Filter>Header Files\Enemies</Filter>
+    </ClCompile>
+    <ClCompile Include="Projectile.cpp">
+      <Filter>Header Files\Projectiles</Filter>
+    </ClCompile>
     <ClCompile Include="RoomInstance.cpp">
-      <Filter>Header Files\Levels</Filter>
+      <Filter>Header Files\Levels\Rooms</Filter>
+    </ClCompile>
+    <ClCompile Include="FloorGenerator.cpp">
+      <Filter>Header Files\Levels\Floors</Filter>
+    </ClCompile>
+    <ClCompile Include="RoomInstance.cpp">
+      <Filter>Header Files\Levels\Rooms</Filter>
+    </ClCompile>
+    <ClCompile Include="FloorLayout.cpp">
+      <Filter>Header Files\Levels\Floors</Filter>
+    </ClCompile>
+    <ClCompile Include="RoomDoorUtils.cpp">
+      <Filter>Header Files\Levels\Rooms</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -176,20 +200,8 @@
     <ClInclude Include="Gamepad.h">
       <Filter>Header Files\Input</Filter>
     </ClInclude>
-    <ClInclude Include="Enemy.h">
-      <Filter>Header Files\Abs.Classes</Filter>
-    </ClInclude>
-    <ClInclude Include="Projectile.h">
-      <Filter>Header Files\Abs.Classes</Filter>
-    </ClInclude>
-    <ClInclude Include="NormalBulletProjectile.h">
-      <Filter>Header Files\Projectiles</Filter>
-    </ClInclude>
     <ClInclude Include="StaticCollision.h">
       <Filter>Header Files\Levels\Collision</Filter>
-    </ClInclude>
-    <ClInclude Include="RoomInstance.h">
-      <Filter>Header Files\Levels</Filter>
     </ClInclude>
     <ClInclude Include="CombatRoom.h">
       <Filter>Header Files\Levels\Rooms\Combat Room</Filter>
@@ -233,8 +245,35 @@
     <ClInclude Include="CombatRoom.h">
       <Filter>Header Files\Levels\Rooms</Filter>
     </ClInclude>
+    <ClInclude Include="NormalBulletProjectile.h">
+      <Filter>Header Files\Projectiles\NormalBullets</Filter>
+    </ClInclude>
+    <ClInclude Include="Enemy.h">
+      <Filter>Header Files\Enemies</Filter>
+    </ClInclude>
+    <ClInclude Include="Projectile.h">
+      <Filter>Header Files\Projectiles</Filter>
+    </ClInclude>
     <ClInclude Include="RoomInstance.h">
-      <Filter>Header Files\Levels</Filter>
+      <Filter>Header Files\Levels\Rooms</Filter>
+    </ClInclude>
+    <ClInclude Include="FloorBlueprint.h">
+      <Filter>Header Files\Levels\Floors\Floor Blueprint</Filter>
+    </ClInclude>
+    <ClInclude Include="FloorGenerator.h">
+      <Filter>Header Files\Levels\Floors</Filter>
+    </ClInclude>
+    <ClInclude Include="RoomInstance.h">
+      <Filter>Header Files\Levels\Rooms</Filter>
+    </ClInclude>
+    <ClInclude Include="RoomDoorUtils.h">
+      <Filter>Header Files\Levels\Rooms</Filter>
+    </ClInclude>
+    <ClInclude Include="FloorLayout.h">
+      <Filter>Header Files\Levels\Floors</Filter>
+    </ClInclude>
+    <ClInclude Include="DungeonPlan.h">
+      <Filter>Header Files\Levels\Dungeons</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -269,6 +308,69 @@
     <None Include="..\automation\scripts\devlog-dump.ps1">
       <Filter>Resource Files\AUTOMATIONS\Scripts</Filter>
     </None>
+    <None Include="..\docs\Architecture\01-project-structure.md">
+      <Filter>Resource Files\DOCUMENTATION\Architecture</Filter>
+    </None>
+    <None Include="..\docs\Architecture\02-player.md">
+      <Filter>Resource Files\DOCUMENTATION\Architecture</Filter>
+    </None>
+    <None Include="..\docs\Architecture\03-input.md">
+      <Filter>Resource Files\DOCUMENTATION\Architecture</Filter>
+    </None>
+    <None Include="..\docs\Architecture\04-enemy.md">
+      <Filter>Resource Files\DOCUMENTATION\Architecture</Filter>
+    </None>
+    <None Include="..\docs\Architecture\05-steering-oop.md">
+      <Filter>Resource Files\DOCUMENTATION\Architecture</Filter>
+    </None>
+    <None Include="..\docs\Architecture\07-projectiles.md">
+      <Filter>Resource Files\DOCUMENTATION\Architecture</Filter>
+    </None>
+    <None Include="..\docs\Architecture\08-collision-and-damage.md">
+      <Filter>Resource Files\DOCUMENTATION\Architecture</Filter>
+    </None>
+    <None Include="..\docs\Architecture\09-rooms-and-generation.md">
+      <Filter>Resource Files\DOCUMENTATION\Architecture</Filter>
+    </None>
+    <None Include="..\docs\Architecture\06-coding-conventions.md">
+      <Filter>Resource Files\DOCUMENTATION\Architecture</Filter>
+    </None>
+    <None Include="..\docs\Architecture\README.md">
+      <Filter>Resource Files\DOCUMENTATION\Architecture</Filter>
+    </None>
+    <None Include="..\docs\TechnicalDesign\01-overview.md">
+      <Filter>Resource Files\DOCUMENTATION\TDD</Filter>
+    </None>
+    <None Include="..\docs\TechnicalDesign\02-goals.md">
+      <Filter>Resource Files\DOCUMENTATION\TDD</Filter>
+    </None>
+    <None Include="..\docs\TechnicalDesign\03-technical-requirements.md">
+      <Filter>Resource Files\DOCUMENTATION\TDD</Filter>
+    </None>
+    <None Include="..\docs\TechnicalDesign\04-scope-non-goals.md">
+      <Filter>Resource Files\DOCUMENTATION\TDD</Filter>
+    </None>
+    <None Include="..\docs\TechnicalDesign\05-system-architecture.md">
+      <Filter>Resource Files\DOCUMENTATION\TDD</Filter>
+    </None>
+    <None Include="..\docs\TechnicalDesign\06-subsystem-design.md">
+      <Filter>Resource Files\DOCUMENTATION\TDD</Filter>
+    </None>
+    <None Include="..\docs\TechnicalDesign\07-runtime-flow.md">
+      <Filter>Resource Files\DOCUMENTATION\TDD</Filter>
+    </None>
+    <None Include="..\docs\TechnicalDesign\08-data-and-state.md">
+      <Filter>Resource Files\DOCUMENTATION\TDD</Filter>
+    </None>
+    <None Include="..\docs\TechnicalDesign\09-risks-limitations-ambiguity.md">
+      <Filter>Resource Files\DOCUMENTATION\TDD</Filter>
+    </None>
+    <None Include="..\docs\TechnicalDesign\10-appendix.md">
+      <Filter>Resource Files\DOCUMENTATION\TDD</Filter>
+    </None>
+    <None Include="..\docs\TechnicalDesign\README.md">
+      <Filter>Resource Files\DOCUMENTATION\TDD</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Text Include="..\automation\scripts\output\aiming-merge-changes.txt">
@@ -287,6 +389,9 @@
       <Filter>Resource Files\DOCUMENTATION\Git Summaries\Devlog Dumps</Filter>
     </Text>
     <Text Include="..\automation\scripts\output\combat-room-merge-changes.txt">
+      <Filter>Resource Files\DOCUMENTATION\Git Summaries</Filter>
+    </Text>
+    <Text Include="..\automation\scripts\output\additional-rooms-merge-changes.txt">
       <Filter>Resource Files\DOCUMENTATION\Git Summaries</Filter>
     </Text>
   </ItemGroup>

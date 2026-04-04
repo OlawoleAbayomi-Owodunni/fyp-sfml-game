@@ -7,15 +7,27 @@ This chapter describes what state exists, who owns it, and what might need savin
 ## Runtime state (prototype)
 
 - `Game`:
-  - active room plan + room instance
+  - room plans + room instances (multi-room floor view)
+  - active room id (used for future room-local logic)
   - enemy list
+  - room list / pool (prototype)
+  - combat state (e.g., in-combat flag, wave counter)
+  - floor plan + layout (prototype)
+  - dungeon plan (seed + current floor id)
+  - request-next-floor flag (set by portal interaction)
 - `Player`:
   - transform/velocity
   - current projectiles
-  - health
+  - health (`p_health` / `p_maxHealth`)
 - `Enemy`:
-  - health/dead flag
+  - health/dead flag (`e_health` / `e_maxHealth`)
   - steering state
+
+Additional notes:
+
+- `RoomPlan.spawners` are tile-space markers used to spawn runtime entities when a room is generated.
+- `RoomPlan.triggers` are tile-space markers used to detect interactions (doors / portal).
+- Wall/door collisions currently use a rollback approach by storing “old position” for player/enemies.
 
 ## Procedural generation state
 

@@ -22,6 +22,8 @@
     <ClCompile Include="ArriveBehaviour.cpp" />
     <ClCompile Include="Collision.cpp" />
     <ClCompile Include="CombatRoom.cpp" />
+    <ClCompile Include="FloorGenerator.cpp" />
+    <ClCompile Include="FloorLayout.cpp" />
     <ClCompile Include="NormalBulletProjectile.cpp" />
     <ClCompile Include="PortalRoom.cpp" />
     <ClCompile Include="Projectile.cpp" />
@@ -32,6 +34,7 @@
     <ClCompile Include="InputManager.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="player.cpp" />
+    <ClCompile Include="RoomDoorUtils.cpp" />
     <ClCompile Include="RoomInstance.cpp" />
     <ClCompile Include="SeekBehaviour.cpp" />
     <ClCompile Include="SpawnRoom.cpp" />
@@ -42,6 +45,10 @@
     <ClInclude Include="ArriveBehaviour.h" />
     <ClInclude Include="Collision.h" />
     <ClInclude Include="CombatRoom.h" />
+    <ClInclude Include="DungeonPlan.h" />
+    <ClInclude Include="FloorBlueprint.h" />
+    <ClInclude Include="FloorGenerator.h" />
+    <ClInclude Include="FloorLayout.h" />
     <ClInclude Include="NormalBulletProjectile.h" />
     <ClInclude Include="PortalRoom.h" />
     <ClInclude Include="Projectile.h" />
@@ -52,6 +59,7 @@
     <ClInclude Include="InputManager.h" />
     <ClInclude Include="player.h" />
     <ClInclude Include="RoomBlueprint.h" />
+    <ClInclude Include="RoomDoorUtils.h" />
     <ClInclude Include="RoomInstance.h" />
     <ClInclude Include="SeekBehaviour.h" />
     <ClInclude Include="SpawnRoom.h" />
@@ -80,6 +88,27 @@
     <None Include="..\automation\prompts\steering-enemy-seek-step-by-step-context.md" />
     <None Include="..\automation\scripts\devlog-dump.ps1" />
     <None Include="..\automation\scripts\merge-summary-generator.ps1" />
+    <None Include="..\docs\Architecture\01-project-structure.md" />
+    <None Include="..\docs\Architecture\02-player.md" />
+    <None Include="..\docs\Architecture\03-input.md" />
+    <None Include="..\docs\Architecture\04-enemy.md" />
+    <None Include="..\docs\Architecture\05-steering-oop.md" />
+    <None Include="..\docs\Architecture\06-coding-conventions.md" />
+    <None Include="..\docs\Architecture\07-projectiles.md" />
+    <None Include="..\docs\Architecture\08-collision-and-damage.md" />
+    <None Include="..\docs\Architecture\09-rooms-and-generation.md" />
+    <None Include="..\docs\Architecture\README.md" />
+    <None Include="..\docs\TechnicalDesign\01-overview.md" />
+    <None Include="..\docs\TechnicalDesign\02-goals.md" />
+    <None Include="..\docs\TechnicalDesign\03-technical-requirements.md" />
+    <None Include="..\docs\TechnicalDesign\04-scope-non-goals.md" />
+    <None Include="..\docs\TechnicalDesign\05-system-architecture.md" />
+    <None Include="..\docs\TechnicalDesign\06-subsystem-design.md" />
+    <None Include="..\docs\TechnicalDesign\07-runtime-flow.md" />
+    <None Include="..\docs\TechnicalDesign\08-data-and-state.md" />
+    <None Include="..\docs\TechnicalDesign\09-risks-limitations-ambiguity.md" />
+    <None Include="..\docs\TechnicalDesign\10-appendix.md" />
+    <None Include="..\docs\TechnicalDesign\README.md" />
     <None Include="automation\prompts\level-architecture-roomplan-generator-builder-static-colliders-context.md" />
   </ItemGroup>
   <ItemGroup>
@@ -90,6 +119,7 @@
     <Text Include="..\automation\scripts\output\devlog-dump-20260325-151324.txt" />
     <Text Include="..\automation\scripts\output\enemies-merge-changes.txt" />
     <Text Include="..\automation\scripts\output\additional-rooms-merge-changes.txt" />
+    <Text Include="..\automation\scripts\output\floor+dungeon-merge-changes.txt" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>

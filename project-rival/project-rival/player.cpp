@@ -29,8 +29,8 @@ void Player::init()
 	p_velocity = Vector2f(0.f, 0.f);
 
 	//reticle
-	p_reticle.setRadius(10.f);
-	p_reticle.setOrigin(Vector2f(p_reticle.getRadius(), p_reticle.getRadius()));
+	p_reticle.setSize(Vector2f(20.f, 20.f));
+	p_reticle.setOrigin(p_reticle.getSize() / 2.f);
 	p_reticle.setFillColor(Color::Transparent);
 	p_reticle.setOutlineColor(Color::Yellow);
 	p_reticle.setOutlineThickness(2.f);
@@ -39,17 +39,17 @@ void Player::init()
 
 	//collision
 	p_collisionProfile.layer = CollisionLayer::PLAYER_LAYER;
-	p_collisionProfile.mask = CollisionLayer::ENEMY_LAYER | CollisionLayer::ENEMY_BULLET_LAYER | CollisionLayer::WALL_LAYER | CollisionLayer::PORTAL_TRIGGER_LAYER;
+	p_collisionProfile.mask = CollisionLayer::ENEMY_LAYER | CollisionLayer::ENEMY_BULLET_LAYER | CollisionLayer::WALL_LAYER | CollisionLayer::DOOR_LAYER | CollisionLayer::PORTAL_TRIGGER_LAYER | CollisionLayer::DOOR_TRIGGER_LAYER;
 
-	p_maxHealth = 100;
-
-	p_maxHealth = 100;
+	p_maxHealth = 1000;
 
 	reset();
 }
 
 void Player::update(double dt, const Vector2f& mousePos)
 {
+	p_prevPos = p_body.getPosition();
+
 	handleMovement(dt);
 	handleAiming(mousePos);
 
@@ -105,7 +105,7 @@ void Player::setSpawnPosition(const Vector2f& spawnPos)
 
 void Player::reset()
 {
-	p_body.setPosition(Vector2f(500, 500.f));
+	p_body.setPosition(Vector2f(1400, 500));
 	p_health = p_maxHealth;
 }
 
@@ -180,9 +180,9 @@ void Player::takeDamage(int damage)
 	}
 }
 
-void Player::hitWall(sf::Vector2f oldPos)
+void Player::hitWall()
 {
-	p_body.setPosition(oldPos);
+	p_body.setPosition(p_prevPos);
 }
 
 std::vector<std::unique_ptr<Projectile>>& Player::getProjectiles()

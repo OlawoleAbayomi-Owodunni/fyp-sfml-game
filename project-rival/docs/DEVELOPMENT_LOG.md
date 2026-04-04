@@ -32,6 +32,38 @@ This document tracks technical progress over time in a supervisor-friendly way.
 
 ---
 
+## Week of 2026-03-27
+
+### Summary
+- Added multiple room types (spawn room and portal room) alongside combat rooms.
+- Added doors, locked-door collision, and trigger volumes for doors and portals.
+- Added an early floor pipeline (room graph + simple 2D layout) and updated rendering to draw multiple rooms with a player-follow camera.
+- Added runtime corridor generation to connect rooms based on door positions.
+- Added active-room detection so room-local logic (waves/triggers) can be driven by player position.
+- Added early multi-floor progression: interacting with a portal trigger can load the next floor.
+- Implemented early combat wave support (generation + helpers); gameplay wiring is still in progress.
+
+### Technical notes
+- Extended `RoomPlan` in `RoomBlueprint.h` to include `doors`, `triggers`, and an `isCleared` state flag.
+- Updated `RoomInstance` to build:
+  - wall colliders (`WALL_LAYER`)
+  - door colliders (`DOOR_LAYER`) only when doors are locked
+  - trigger colliders (`DOOR_TRIGGER_LAYER`, `PORTAL_TRIGGER_LAYER`) for gameplay interactions
+- Updated collision response to use per-entity stored previous positions (`Player::hitWall()`, `Enemy::hitWall()`).
+- Added `FloorPlan`/`FloorGenerator`/`FloorLayoutGenerator` to generate and embed a small floor layout.
+- Added `RoomDoorUtils` to clear/re-add doors based on floor graph connectivity.
+- Updated `Game` to build/render multiple room instances, generate corridor instances between connected rooms, and to spawn the player via the spawn room marker.
+- Added a simple camera mode toggle (player-follow vs floor overview).
+- Added `DungeonPlan` to track dungeon seed and current floor, plus a portal-driven `loadNewFloor()` flow.
+
+### Evidence (commits)
+- `4f9cdbb` — FEATURE(Levels): Add Spawn/Portal rooms with triggers and player spawn placement
+- `1d22e64` — Doors generated and visually represented
+- `77c0739` — Door triggers added and collision with the player
+- `4f44527` — Wave Spawner logic added
+- `fd1bb72` — Wave System implemented
+- `35125fb` — Door collider added when door is locked + containerised game logic
+
 ## Week of 2026-03-19
 
 ### Summary

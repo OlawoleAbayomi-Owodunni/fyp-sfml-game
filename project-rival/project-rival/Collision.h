@@ -13,12 +13,13 @@ enum CollisionLayer : uint32_t
 
 	// Static Environment layers
 	WALL_LAYER = 1 << 4,
+	DOOR_LAYER = 1 << 5,
 
 	// World Environment layers
 
 	// Trigger layers
-	PORTAL_TRIGGER_LAYER = 1 << 5,
-	ROOM_ENTERED_TRIGGER_LAYER = 1 << 6,
+	PORTAL_TRIGGER_LAYER = 1 << 6,
+	DOOR_TRIGGER_LAYER = 1 << 7,
 
 	ALL = 0xFFFFFFFF
 };

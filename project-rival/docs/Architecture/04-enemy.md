@@ -18,19 +18,24 @@ It provides:
 It also implements `ICollidable` and includes basic “combat” state:
 
 - collision profile (layer/mask)
-- health (`takeDamage(...)`)
+- health (`e_health` / `e_maxHealth`, via `takeDamage(...)`)
 - death flag (`isDead()`)
+
+It also provides `reset()` (restore start position and health).
 
 Currently, enemies collide with:
 
 - the player
 - player-fired bullets
+- walls (`WALL_LAYER`)
+- locked doors (`DOOR_LAYER`)
 
 Derived classes must implement:
 
 - `init()`
 - `update(double dt)`
 - `setTarget(const sf::Vector2f& target)`
+- `hitWall()` (wall/door collision response)
 
 ## `GruntEnemy`
 
@@ -57,12 +62,15 @@ Each update:
 - the target is set to the player position (`enemy->setTarget(m_player.getPosition())`)
 - then each enemy is updated (`enemy->update(dt)`)
 
+Enemies are spawned when the current room is generated (based on room spawner tiles).
+
 Collision + damage (current approach):
 
 - If player collides with an enemy, the player takes damage.
 - Player projectiles are checked against enemies; on hit:
   - enemy takes damage
   - projectile is destroyed
+- Enemies are checked against static room colliders (walls + locked doors); on hit, `enemy->hitWall()` is called (currently rollback for `GruntEnemy`).
 - Dead enemies are removed from the `m_enemies` list.
 
 ## Likely next steps

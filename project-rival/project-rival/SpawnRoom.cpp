@@ -1,12 +1,12 @@
 #include "SpawnRoom.h"
 
-RoomPlan SpawnRoom::generateRoom(int id, RoomType type, int seed)
+RoomPlan SpawnRoom::generateRoomPlan(int id, RoomType type, int seed)
 {
 	RoomPlan room;
 	// Meta data
 	room.id = id;
 	room.type = RoomType::SPAWN;
-	room.seed = seed;
+	room.seed = seed + room.id;
 	room.height = 11;
 	room.width = 11;
 

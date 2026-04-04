@@ -14,7 +14,14 @@
 Also:
 
 - Implements `ICollidable` (so it can participate in collision checks)
-- Has health + `takeDamage(...)` (currently resets when health reaches 0)
+- Has health (`p_health` / `p_maxHealth`) + `takeDamage(...)` (currently resets when health reaches 0)
+- Has basic collision response via `hitWall()` (currently a rollback to the previously stored position)
+
+Currently, the player collides with:
+
+- enemies
+- walls (`WALL_LAYER`)
+- triggers (`PORTAL_TRIGGER_LAYER`)
 
 Also (current prototype features):
 

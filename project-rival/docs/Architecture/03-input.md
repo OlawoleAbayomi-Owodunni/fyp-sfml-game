@@ -31,4 +31,14 @@ Current gameplay usage examples:
 - right stick or mouse: aiming
 - right trigger or left mouse button: shoot
 
+High-level game controls (in `Game::gameInput()`):
+
+- Exit: `Escape` or controller `Start`
+- Restart run: `R` or controller `Select`
+- Toggle camera mode (player cam vs floor overview): `V` or controller `DPadDown`
+
+Contextual interactions:
+
+- Use portal (when standing inside a portal trigger): `Space` or controller `A`
+
 Also applies deadzones to reduce controller drift.

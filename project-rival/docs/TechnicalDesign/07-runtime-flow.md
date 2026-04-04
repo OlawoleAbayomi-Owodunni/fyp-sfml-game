@@ -10,19 +10,28 @@ At a high level:
 
 1. Poll window events.
 2. Read input (`InputManager::update()`).
-3. Update player:
+3. Handle game management input (exit / restart).
+4. Update room context:
+   - determine the active room id based on player position
+   - manage combat wave state (if in a combat room)
+4. Update player:
    - movement
    - aiming
    - spawn/update projectiles
-4. Update enemies:
+5. Update enemies:
    - steering-based movement
    - target updates
-5. Resolve collisions:
+6. Resolve collisions:
    - player vs enemies
    - bullets vs enemies
-   - objects vs walls
-6. Render:
-   - room
+   - player/enemies/bullets vs walls
+   - player vs triggers (doors / portals)
+   - portal interactions (if inside portal trigger and interact pressed)
+8. Handle floor progression:
+   - if a next-floor request was raised, advance the dungeon plan and load a new floor
+	- player vs portal trigger
+7. Render:
+   - rooms (multiple)
    - player
    - enemies
    - debug overlays (if enabled)
@@ -30,3 +39,5 @@ At a high level:
 ## Notes
 
 - Collision checks currently use AABB intersection + layer/mask filtering.
+- Current wall response is simple rollback for player/enemies and bullet destruction.
+- Door response is the same as walls when doors are locked (a `DOOR_LAYER` collider exists).

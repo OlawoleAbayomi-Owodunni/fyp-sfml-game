@@ -17,10 +17,25 @@ Most gameplay code is inside `project-rival/`.
 
 ### Rooms / procedural generation
 
-- `RoomBlueprint.h` (RoomPlan + tiles + spawners + generator interface)
-- `CombatRoom.h` / `CombatRoom.cpp` (combat room generator)
-- `RoomInstance.h` / `RoomInstance.cpp` (builds a drawable room + wall colliders)
-- `StaticCollision.h` / `StaticCollision.cpp` (colliders for walls/geometry)
+- `RoomBlueprint.h` (RoomPlan + tiles + doors + spawners + triggers + generator interface)
+- `CombatRoom.h` / `CombatRoom.cpp` (combat room generator + wave spawning helpers)
+- `SpawnRoom.h` / `SpawnRoom.cpp` (spawn room generator + player spawn marker)
+- `PortalRoom.h` / `PortalRoom.cpp` (portal room generator + portal spawn + trigger)
+- `RoomInstance.h` / `RoomInstance.cpp` (builds drawable shapes + static colliders from a `RoomPlan`)
+- `StaticCollision.h` / `StaticCollision.cpp` (colliders for walls/doors/triggers)
+
+### Floor generation / multi-room layout (prototype)
+
+- `FloorBlueprint.h` (`FloorPlan`: room nodes + graph edges + adjacency list)
+- `FloorGenerator.h` / `FloorGenerator.cpp` (generates a floor graph deterministically from a seed)
+- `FloorLayout.h` / `FloorLayout.cpp` (embeds the floor graph into a simple 2D grid layout)
+- `RoomDoorUtils.h` / `RoomDoorUtils.cpp` (adds/clears doors in a `RoomPlan` based on graph connectivity)
+
+Corridors are currently generated inside `Game.cpp` (as temporary `RoomPlan`s converted into `RoomInstance`s).
+
+### Dungeon / multi-floor run state (prototype)
+
+- `DungeonPlan.h` (tracks dungeon seed, current floor id, floor count, and “dungeon complete” state)
 
 ### Entities
 

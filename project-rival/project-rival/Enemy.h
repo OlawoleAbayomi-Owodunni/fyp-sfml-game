@@ -12,7 +12,7 @@ enum EnemyType
 	GRUNT,
 	TURRET,
 
-	COUNT
+	ENEMY_COUNT
 };
 
 class Enemy : public ICollidable
@@ -25,14 +25,12 @@ public:
 	virtual void render(sf::RenderWindow& window);
 	virtual void reset();
 
-	virtual sf::Vector2f getPosition() const;
-
 	virtual void setTarget(const Vector2f& target) = 0;
 
 	virtual sf::FloatRect getCollisionBounds() const override;
 	virtual CollisionProfile getCollisionProfile() const override;
 
-	virtual void hitWall(sf::Vector2f oldPos) = 0;
+	virtual void hitWall() = 0;
 
 	virtual void takeDamage(int damage);
 	virtual void onDeath();
@@ -43,6 +41,7 @@ protected:
 
 	sf::RectangleShape e_body;
 	sf::Vector2f e_startPos;
+	sf::Vector2f e_prevPos;
 	sf::Vector2f e_target{ 0.f, 0.f };
 
 	CollisionProfile e_collisionProfile;

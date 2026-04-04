@@ -23,7 +23,17 @@ As of the current prototype, the project has:
 - Player movement + aiming + projectile shooting.
 - Enemies with steering behaviours.
 - A minimal collision system (AABB + layer/mask filtering).
-- Early “rooms” pipeline: `RoomPlan` (data) → `RoomInstance` (render + wall colliders) → runtime collision checks.
+- Rooms pipeline: `RoomPlan` (data) → `RoomInstance` (render + static colliders) → runtime collision checks.
+- Floor pipeline (prototype):
+  - `FloorPlan` graph generation (`FloorGenerator`)
+  - simple 2D embedding (`FloorLayoutGenerator`)
+  - doors applied from graph edges (`RoomDoorUtils`)
+  - corridors generated at runtime to connect doorways
+- Multi-room rendering with two camera modes:
+  - player-follow camera
+  - zoomed-out floor overview (toggle)
+- Early combat wave logic for combat rooms (door trigger starts combat, waves spawn enemies, doors lock/unlock).
+- Multi-floor progression (prototype): portal interaction can advance to the next floor; when the dungeon is complete, the game currently exits (temporary).
 
 ## Core / key terminology
 

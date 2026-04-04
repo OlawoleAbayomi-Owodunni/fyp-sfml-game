@@ -1,12 +1,12 @@
 #include "CombatRoom.h"
 
-RoomPlan CombatRoom::generateRoom(int id, RoomType type, int seed)
+RoomPlan CombatRoom::generateRoomPlan(int id, RoomType type, int seed)
 {
 	RoomPlan room;
 	// Meta data
 	room.id = id;
 	room.type = RoomType::COMBAT;
-	room.seed = seed;
+	room.seed = seed + room.id;
 		// -> note here that this is where the height and width will be determined based on the type
 	//height 10-12; width 15-20
 	room.height = rand() % 4 + 10;
@@ -35,13 +35,36 @@ RoomPlan CombatRoom::generateRoom(int id, RoomType type, int seed)
 	// Pillars
 	generateObstacles(room, interiorArea);
 
-	// Spawners
-	generateSpawnPoints(room, interiorArea);
-
-	// yet to do: room geometry like doors, etc.
+	cr_currentRoomPlan = room;
 
 	return room;
 }
+
+RoomPlan CombatRoom::generateNewWave(RoomPlan& room)
+{
+	const int interiorWidth = room.width - 2;
+	const int interiorHeight = room.height - 2;
+	const int interiorArea = interiorWidth * interiorHeight;
+
+	generateSpawnPoints(room, interiorArea);
+
+	for (auto& door : room.doors)
+		door.isLocked = true;	// lock doors
+
+	return room;
+}
+
+RoomPlan CombatRoom::setRoomCleared(RoomPlan& room)
+{
+	room.spawners.clear();
+	room.isCleared = true;
+	
+	for (auto& door : room.doors)
+		door.isLocked = false;	// unlock doors
+
+	return room;
+}
+
 
 void CombatRoom::generateObstacles(RoomPlan& room, int interiorArea)
 {
@@ -95,6 +118,8 @@ void CombatRoom::generateObstacles(RoomPlan& room, int interiorArea)
 void CombatRoom::generateSpawnPoints(RoomPlan& room, int interiorArea)
 {
 	// Enemy Spawner
+	room.spawners.clear();	// clear any existing spawners
+
 	const int minEnemies = 1 + interiorArea / (room.tileSize * 2);
 	int maxEnemies = 10 + interiorArea / (room.tileSize / 2);
 
@@ -106,7 +131,7 @@ void CombatRoom::generateSpawnPoints(RoomPlan& room, int interiorArea)
 	std::vector<sf::Vector2i> occupiedPositions;
 	for (int i = 0; i < totalEnemies; i++)
 	{
-		sf::Vector2i randPos = { rand() % (room.width - 2) + 1, rand() % (room.height - 2) + 1 }; // random position within the room, excluding walls
+		sf::Vector2i randPos = { rand() % (room.width - 2) + 1, rand() % (room.height - 2) + 1 }; // random position within the roomPlan, excluding walls
 
 		Tile tileAtPos = room.getTile(randPos.y, randPos.x);
 		while (tileAtPos == Tile::WALL ||
