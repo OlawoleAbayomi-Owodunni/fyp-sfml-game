@@ -1,0 +1,36 @@
+{
+  "version": 6,
+  "configurePresets": [
+    {
+      "name": "llm_win32_debug",
+      "displayName": "LLM deps (Win32 Debug)",
+      "generator": "Visual Studio 18 2026",
+      "binaryDir": "${sourceDir}/build/llm_win32_debug",
+      "architecture": "Win32",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "name": "llm_win32_release",
+      "displayName": "LLM deps (Win32 Release)",
+      "generator": "Visual Studio 18 2026",
+      "binaryDir": "${sourceDir}/build/llm_win32_release",
+      "architecture": "Win32",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    }
+  ],
+
+  "buildPresets": [
+    {
+      "name": "llm_win32_debug",
+      "configurePreset": "llm_win32_debug"
+    },
+    {
+      "name": "llm_win32_release",
+      "configurePreset": "llm_win32_release"
+    }
+  ]
+}
