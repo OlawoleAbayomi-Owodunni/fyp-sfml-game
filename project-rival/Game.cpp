@@ -119,10 +119,14 @@ void Game::processGameEvents(const sf::Event& event)
 			}
 			else {
 				// LLM Prompt/Response test
-				RoomPlan currRoom = m_roomPlans[m_activeRoomId];
+				// Request generation of p
+				if (!m_llm.isBusy())
+				{
+					// Generate Prompt
+					RoomPlan currRoom = m_roomPlans[m_activeRoomId];
 
-				std::string roomTypeStr;
-				switch (currRoom.type) {
+					std::string roomTypeStr;
+					switch (currRoom.type) {
 					case RoomType::CORRIDOR:
 						roomTypeStr = "Corridor";
 						break;
@@ -135,21 +139,29 @@ void Game::processGameEvents(const sf::Event& event)
 					case RoomType::COMBAT:
 						roomTypeStr = "Combat Room";
 						break;
+					}
+
+					std::string clearedStr = currRoom.isCleared ? "Yes" : "No";
+
+					cout << "Generating response...\n";
+					const std::string prompt = "Generate a short sentence description of the room the player is in currently based on the following properties: Room Type: " + roomTypeStr
+						+ ", Is Room Cleared: " + clearedStr
+						+ ", Room Height: " + to_string(currRoom.height)
+						+ ", Room Width: " + to_string(currRoom.width)
+						+ ", Dungeon Floor: " + to_string(m_dungeonPlan.currentFloorId) + "\n";
+
+					cout << "Prompt: " << prompt << "\n";
+
+					const bool queued = m_llm.requestGenerate(prompt);
+					if (queued)
+						cout << "Generation request queued successfully.\n";
+					else
+						cout << "Failed to queue generation request.\n";
 				}
-
-				std::string clearedStr = currRoom.isCleared ? "Yes" : "No";
-
-				cout << "Generating response...\n";
-				const std::string prompt = "Generate a short sentence description of the room the player is in currently based on the following properties: Room Type: " + roomTypeStr
-					+ ", Is Room Cleared: " + clearedStr
-					+ ", Room Height: " + to_string(currRoom.height)
-					+ ", Room Width: " + to_string(currRoom.width)
-					+ ", Dungeon Floor: " + to_string(m_dungeonPlan.currentFloorId) + "\n";
-				
-				cout << "Prompt: " << prompt << "\n";
-
-				const std::string response = m_llm.generateResponse(prompt);
-				cout << "LLM Response: " << response << "\n";
+				else
+				{
+					cout << "Generation in progress, please wait...\n";
+				}
 			}			
 			break;
 		
@@ -214,7 +226,11 @@ void Game::update(double dt)
 			loadNewFloor();
 	}
 
-
+	// LLM response handling
+	if (auto response = m_llm.tryConsumeLatestResponse())
+	{
+		cout << "LLM Response: " << *response << "\n";
+	}
 }
 
 ////////////////////////////////////////////////////////////

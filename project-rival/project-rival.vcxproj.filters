@@ -202,7 +202,7 @@
       <Filter>Header Files\Levels\Rooms</Filter>
     </ClCompile>
     <ClCompile Include="LLMService.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Header Files\LLM</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -291,7 +291,7 @@
       <Filter>Header Files\Levels\Dungeons</Filter>
     </ClInclude>
     <ClInclude Include="LLMService.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\LLM</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -395,6 +395,7 @@
     <None Include="ASSETS\LLM\MODELS\Llama-3.2-1B-Instruct-Q4_K_M.gguf">
       <Filter>Resource Files\LLM\Model</Filter>
     </None>
+    <None Include="docs\Architecture\10-llm-integration.md" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="..\automation\scripts\output\aiming-merge-changes.txt">

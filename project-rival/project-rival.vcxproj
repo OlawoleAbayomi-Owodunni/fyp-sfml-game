@@ -114,6 +114,7 @@
     <None Include="..\docs\TechnicalDesign\README.md" />
     <None Include="ASSETS\LLM\MODELS\Llama-3.2-1B-Instruct-Q4_K_M.gguf" />
     <None Include="automation\prompts\level-architecture-roomplan-generator-builder-static-colliders-context.md" />
+    <None Include="docs\Architecture\10-llm-integration.md" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="..\automation\scripts\output\aiming-merge-changes.txt" />
