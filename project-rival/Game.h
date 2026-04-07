@@ -17,6 +17,8 @@
 #include "FloorLayout.h"
 #include "DungeonPlan.h"
 
+#include "LLMService.h"
+
 using namespace std;
 using namespace sf;
 
@@ -118,7 +120,9 @@ private:
 	DungeonPlan m_dungeonPlan;
 	bool m_requestNextFloor;
 
-	//Wave management
+	// Wave management
 	int m_waveCounter;
 
+	// LLM management
+	LLMService m_llm;
 };

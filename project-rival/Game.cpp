@@ -46,6 +46,7 @@ void Game::init()
 	x_drawFPS.setFillColor(sf::Color::White);
 #endif
 
+	m_llm.init("ASSETS/LLM/MODELS/Llama-3.2-1B-Instruct-Q4_K_M.gguf");
 	gameStart();
 }
 
@@ -111,9 +112,47 @@ void Game::processGameEvents(const sf::Event& event)
 		case sf::Keyboard::Scancode::Escape:
 			m_window.close();
 			break;
-		case sf::Keyboard::Scancode::Up:
-			// Up key was pressed...
+		
+		case sf::Keyboard::Scancode::Num0:
+			if (!m_llm.isReady()) {
+				cout << "LLM model is not ready.\n";
+			}
+			else {
+				// LLM Prompt/Response test
+				RoomPlan currRoom = m_roomPlans[m_activeRoomId];
+
+				std::string roomTypeStr;
+				switch (currRoom.type) {
+					case RoomType::CORRIDOR:
+						roomTypeStr = "Corridor";
+						break;
+					case RoomType::SPAWN:
+						roomTypeStr = "Spawn Room";
+						break;
+					case RoomType::PORTAL:
+						roomTypeStr = "Portal Room";
+						break;
+					case RoomType::COMBAT:
+						roomTypeStr = "Combat Room";
+						break;
+				}
+
+				std::string clearedStr = currRoom.isCleared ? "Yes" : "No";
+
+				cout << "Generating response...\n";
+				const std::string prompt = "Generate a short sentence description of the room the player is in currently based on the following properties: Room Type: " + roomTypeStr
+					+ ", Is Room Cleared: " + clearedStr
+					+ ", Room Height: " + to_string(currRoom.height)
+					+ ", Room Width: " + to_string(currRoom.width)
+					+ ", Dungeon Floor: " + to_string(m_dungeonPlan.currentFloorId) + "\n";
+				
+				cout << "Prompt: " << prompt << "\n";
+
+				const std::string response = m_llm.generateResponse(prompt);
+				cout << "LLM Response: " << response << "\n";
+			}			
 			break;
+		
 		default:
 			break;
 		}
@@ -165,6 +204,7 @@ void Game::update(double dt)
 
 	if (m_requestNextFloor)
 	{
+		// Dungeon management for advancing floors
 		m_requestNextFloor = false;
 		m_dungeonPlan.advanceFloor();
 

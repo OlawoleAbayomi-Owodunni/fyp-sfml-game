@@ -24,6 +24,7 @@
     <ClCompile Include="CombatRoom.cpp" />
     <ClCompile Include="FloorGenerator.cpp" />
     <ClCompile Include="FloorLayout.cpp" />
+    <ClCompile Include="LLMService.cpp" />
     <ClCompile Include="NormalBulletProjectile.cpp" />
     <ClCompile Include="PortalRoom.cpp" />
     <ClCompile Include="Projectile.cpp" />
@@ -49,6 +50,7 @@
     <ClInclude Include="FloorBlueprint.h" />
     <ClInclude Include="FloorGenerator.h" />
     <ClInclude Include="FloorLayout.h" />
+    <ClInclude Include="LLMService.h" />
     <ClInclude Include="NormalBulletProjectile.h" />
     <ClInclude Include="PortalRoom.h" />
     <ClInclude Include="Projectile.h" />
@@ -186,7 +188,7 @@
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>$(SFML_SDK)\lib;$(SolutionDir)build\llm_win32_debug\Debug;$(SolutionDir)build\llm_win32_debug\external\fyp-llm-lib\Debug;$(SolutionDir)build\llm_win32_debug\external\fyp-llm-lib\external\llama.cpp\src\Debug;$(SolutionDir)build\llm_win32_debug\external\fyp-llm-lib\external\llama.cpp\ggml\src\Debug</AdditionalLibraryDirectories>
-      <AdditionalDependencies>xinput.lib;LLMLib.lib;llama.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>xinput.lib;LLMLib.lib;llama.lib;ggml.lib;ggml-base.lib;ggml-cpu.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">

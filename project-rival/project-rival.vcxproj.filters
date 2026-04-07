@@ -124,6 +124,9 @@
     <Filter Include="Resource Files\LLM\Model">
       <UniqueIdentifier>{c1aaa3ab-baca-40ba-b16d-7601f1b78d66}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\LLM">
+      <UniqueIdentifier>{dcefa0a9-0b7c-4107-8bf5-e9c46d69b31c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -197,6 +200,9 @@
     </ClCompile>
     <ClCompile Include="RoomDoorUtils.cpp">
       <Filter>Header Files\Levels\Rooms</Filter>
+    </ClCompile>
+    <ClCompile Include="LLMService.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -283,6 +289,9 @@
     </ClInclude>
     <ClInclude Include="DungeonPlan.h">
       <Filter>Header Files\Levels\Dungeons</Filter>
+    </ClInclude>
+    <ClInclude Include="LLMService.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -12,6 +12,6 @@ public:
 
 private:
 	LLMWrapper llm_wrapper;
-	bool llm_isReady;
+	bool llm_isReady{ false };
 };
 
