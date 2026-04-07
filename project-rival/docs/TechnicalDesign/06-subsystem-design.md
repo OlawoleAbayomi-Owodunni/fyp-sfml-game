@@ -148,13 +148,20 @@ Extension points:
 - Introduce enemy attacks (turrets firing, cooldowns).
 - Add navigation constraints within rooms.
 
-## LLM dialogue (planned)
+## LLM integration (prototype)
 
-Core idea:
+Core files:
 
-- A dialogue subsystem that can send a “conversation context” to a local LLM and receive responses.
+- `project-rival/LLMService.h/.cpp`
+- `external/fyp-llm-lib/llm/LLMWrapper.h` (vendored dependency)
+
+Current behaviour:
+
+- `LLMService::init(modelPath)` loads a `.gguf` model via `LLMWrapper::LoadModel(...)`.
+- `LLMService::generateResponse(prompt)` returns `LLMWrapper::Generate(prompt)` when ready; otherwise returns a simple error string.
 
 Extension points:
 
-- Prompt templates, safety constraints, and tool-like structured outputs.
-- Caching and performance considerations.
+- Provide a structured NPC dialogue API (speaker id, conversation history, system prompt).
+- Add caching and streaming generation support (if supported by the wrapper).
+- Define safety constraints and prompt templates.

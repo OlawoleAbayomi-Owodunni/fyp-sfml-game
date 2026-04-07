@@ -37,6 +37,11 @@ Corridors are currently generated inside `Game.cpp` (as temporary `RoomPlan`s co
 
 - `DungeonPlan.h` (tracks dungeon seed, current floor id, floor count, and “dungeon complete” state)
 
+### LLM integration (prototype)
+
+- `LLMService.h` / `LLMService.cpp` (game-facing service wrapper)
+- `external/fyp-llm-lib/llm/LLMWrapper.h` (vendored LLM wrapper)
+
 ### Entities
 
 - `player.h` / `player.cpp`
