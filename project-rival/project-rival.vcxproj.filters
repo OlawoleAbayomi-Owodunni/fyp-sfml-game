@@ -118,6 +118,12 @@
     <Filter Include="Resource Files\BUILD">
       <UniqueIdentifier>{4ca282ac-c0df-4320-a865-d8a78b90be98}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Resource Files\LLM">
+      <UniqueIdentifier>{94f1d2f2-1198-47a6-a717-b512538676a6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\LLM\Model">
+      <UniqueIdentifier>{c1aaa3ab-baca-40ba-b16d-7601f1b78d66}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -376,6 +382,9 @@
     </None>
     <None Include="..\CMakePresets.json">
       <Filter>Resource Files\BUILD</Filter>
+    </None>
+    <None Include="ASSETS\LLM\MODELS\Llama-3.2-1B-Instruct-Q4_K_M.gguf">
+      <Filter>Resource Files\LLM\Model</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>

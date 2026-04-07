@@ -110,6 +110,7 @@
     <None Include="..\docs\TechnicalDesign\09-risks-limitations-ambiguity.md" />
     <None Include="..\docs\TechnicalDesign\10-appendix.md" />
     <None Include="..\docs\TechnicalDesign\README.md" />
+    <None Include="ASSETS\LLM\MODELS\Llama-3.2-1B-Instruct-Q4_K_M.gguf" />
     <None Include="automation\prompts\level-architecture-roomplan-generator-builder-static-colliders-context.md" />
   </ItemGroup>
   <ItemGroup>
@@ -180,7 +181,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>$(SFML_SDK)\include;$(SolutionDir)external\fyp-llm-lib\llm;$(SolutionDir)external\fyp-llm-lib\external\llama.cpp\include;$(SolutionDir)external\fyp-llm-lib\external\llama.cpp\ggml\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SFML_SDK)\include;$(SolutionDir)external\$(SFML_SDK)\include;$(SolutionDir)external\fyp-llm-lib\llm;$(SolutionDir)external\fyp-llm-lib\external\llama.cpp\include;$(SolutionDir)external\fyp-llm-lib\external\llama.cpp\ggml\include</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
@@ -202,7 +203,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>$(SFML_SDK)\include;$(SolutionDir)external\fyp-llm-lib\llm;$(SolutionDir)external\fyp-llm-lib\external\llama.cpp\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SFML_SDK)\include;$(SolutionDir)external\$(SFML_SDK)\include;$(SolutionDir)external\fyp-llm-lib\llm;$(SolutionDir)external\fyp-llm-lib\external\llama.cpp\include;$(SolutionDir)external\fyp-llm-lib\external\llama.cpp\ggml\include</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
