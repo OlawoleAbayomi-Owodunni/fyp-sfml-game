@@ -224,6 +224,11 @@ Build/
 build/
 Debug/
 deubug/
+Release/
+release/
+x64/
+x86/
+Win32/
 
 ------------------------------
 Tests / coverage
