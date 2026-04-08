@@ -1,0 +1,245 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="ArriveBehaviour.cpp" />
+    <ClCompile Include="Collision.cpp" />
+    <ClCompile Include="CombatRoom.cpp" />
+    <ClCompile Include="FloorGenerator.cpp" />
+    <ClCompile Include="FloorLayout.cpp" />
+    <ClCompile Include="LLMService.cpp" />
+    <ClCompile Include="NormalBulletProjectile.cpp" />
+    <ClCompile Include="PortalRoom.cpp" />
+    <ClCompile Include="Projectile.cpp" />
+    <ClCompile Include="Enemy.cpp" />
+    <ClCompile Include="Game.cpp" />
+    <ClCompile Include="Gamepad.cpp" />
+    <ClCompile Include="GruntEnemy.cpp" />
+    <ClCompile Include="InputManager.cpp" />
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="player.cpp" />
+    <ClCompile Include="RoomDoorUtils.cpp" />
+    <ClCompile Include="RoomInstance.cpp" />
+    <ClCompile Include="SeekBehaviour.cpp" />
+    <ClCompile Include="SpawnRoom.cpp" />
+    <ClCompile Include="StaticCollision.cpp" />
+    <ClCompile Include="TurretEnemy.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="ArriveBehaviour.h" />
+    <ClInclude Include="Collision.h" />
+    <ClInclude Include="CombatRoom.h" />
+    <ClInclude Include="DungeonPlan.h" />
+    <ClInclude Include="FloorBlueprint.h" />
+    <ClInclude Include="FloorGenerator.h" />
+    <ClInclude Include="FloorLayout.h" />
+    <ClInclude Include="LLMService.h" />
+    <ClInclude Include="NormalBulletProjectile.h" />
+    <ClInclude Include="PortalRoom.h" />
+    <ClInclude Include="Projectile.h" />
+    <ClInclude Include="Enemy.h" />
+    <ClInclude Include="Game.h" />
+    <ClInclude Include="Gamepad.h" />
+    <ClInclude Include="GruntEnemy.h" />
+    <ClInclude Include="InputManager.h" />
+    <ClInclude Include="player.h" />
+    <ClInclude Include="RoomBlueprint.h" />
+    <ClInclude Include="RoomDoorUtils.h" />
+    <ClInclude Include="RoomInstance.h" />
+    <ClInclude Include="SeekBehaviour.h" />
+    <ClInclude Include="SpawnRoom.h" />
+    <ClInclude Include="StaticCollision.h" />
+    <ClInclude Include="Steering.h" />
+    <ClInclude Include="TurretEnemy.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="ASSETS\IMAGES\SFML-LOGO.png">
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</DeploymentContent>
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</DeploymentContent>
+    </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <Font Include="ASSETS\FONTS\ariblk.ttf">
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</DeploymentContent>
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</DeploymentContent>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</ExcludedFromBuild>
+    </Font>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\automation\prompts\docs-architecture-development-log-context.md" />
+    <None Include="..\automation\prompts\git-staged-changes-to-commit-context.md" />
+    <None Include="..\automation\prompts\player-aiming-mouse-right-stick-reticle-context.md" />
+    <None Include="..\automation\prompts\steering-enemy-seek-step-by-step-context.md" />
+    <None Include="..\automation\scripts\devlog-dump.ps1" />
+    <None Include="..\automation\scripts\merge-summary-generator.ps1" />
+    <None Include="..\CMakePresets.json" />
+    <None Include="..\docs\Architecture\01-project-structure.md" />
+    <None Include="..\docs\Architecture\02-player.md" />
+    <None Include="..\docs\Architecture\03-input.md" />
+    <None Include="..\docs\Architecture\04-enemy.md" />
+    <None Include="..\docs\Architecture\05-steering-oop.md" />
+    <None Include="..\docs\Architecture\06-coding-conventions.md" />
+    <None Include="..\docs\Architecture\07-projectiles.md" />
+    <None Include="..\docs\Architecture\08-collision-and-damage.md" />
+    <None Include="..\docs\Architecture\09-rooms-and-generation.md" />
+    <None Include="..\docs\Architecture\README.md" />
+    <None Include="..\docs\TechnicalDesign\01-overview.md" />
+    <None Include="..\docs\TechnicalDesign\02-goals.md" />
+    <None Include="..\docs\TechnicalDesign\03-technical-requirements.md" />
+    <None Include="..\docs\TechnicalDesign\04-scope-non-goals.md" />
+    <None Include="..\docs\TechnicalDesign\05-system-architecture.md" />
+    <None Include="..\docs\TechnicalDesign\06-subsystem-design.md" />
+    <None Include="..\docs\TechnicalDesign\07-runtime-flow.md" />
+    <None Include="..\docs\TechnicalDesign\08-data-and-state.md" />
+    <None Include="..\docs\TechnicalDesign\09-risks-limitations-ambiguity.md" />
+    <None Include="..\docs\TechnicalDesign\10-appendix.md" />
+    <None Include="..\docs\TechnicalDesign\README.md" />
+    <None Include="ASSETS\LLM\MODELS\Llama-3.2-1B-Instruct-Q4_K_M.gguf" />
+    <None Include="automation\prompts\level-architecture-roomplan-generator-builder-static-colliders-context.md" />
+    <None Include="docs\Architecture\10-llm-integration.md" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="..\automation\scripts\output\aiming-merge-changes.txt" />
+    <Text Include="..\automation\scripts\output\collisions-merge-changes.txt" />
+    <Text Include="..\automation\scripts\output\combat-room-merge-changes.txt" />
+    <Text Include="..\automation\scripts\output\devlog-dump-20260325-151026.txt" />
+    <Text Include="..\automation\scripts\output\devlog-dump-20260325-151324.txt" />
+    <Text Include="..\automation\scripts\output\enemies-merge-changes.txt" />
+    <Text Include="..\automation\scripts\output\additional-rooms-merge-changes.txt" />
+    <Text Include="..\automation\scripts\output\floor+dungeon-merge-changes.txt" />
+    <Text Include="..\CMakeLists.txt" />
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>15.0</VCProjectVersion>
+    <ProjectGuid>{72f74580-4c0c-4adc-be48-d33f3c5aa1ef}</ProjectGuid>
+    <RootNamespace>project_rival</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v145</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v145</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v145</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v145</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup />
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>$(SFML_SDK)\include;$(SolutionDir)external\$(SFML_SDK)\include;$(SolutionDir)external\fyp-llm-lib\llm;$(SolutionDir)external\fyp-llm-lib\external\llama.cpp\include;$(SolutionDir)external\fyp-llm-lib\external\llama.cpp\ggml\include</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <AdditionalLibraryDirectories>$(SFML_SDK)\lib;$(SolutionDir)build\llm_win32_debug\Debug;$(SolutionDir)build\llm_win32_debug\external\fyp-llm-lib\Debug;$(SolutionDir)build\llm_win32_debug\external\fyp-llm-lib\external\llama.cpp\src\Debug;$(SolutionDir)build\llm_win32_debug\external\fyp-llm-lib\external\llama.cpp\ggml\src\Debug</AdditionalLibraryDirectories>
+      <AdditionalDependencies>xinput.lib;LLMLib.lib;llama.lib;ggml.lib;ggml-base.lib;ggml-cpu.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>$(SFML_SDK_x64)\include;$(SolutionDir)external\$(SFML_SDK)\include;$(SolutionDir)external\fyp-llm-lib\llm;$(SolutionDir)external\fyp-llm-lib\external\llama.cpp\include;$(SolutionDir)external\fyp-llm-lib\external\llama.cpp\ggml\include</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <AdditionalLibraryDirectories>$(SFML_SDK_x64)\lib;$(SolutionDir)build\llm_x64_debug\Debug;$(SolutionDir)build\llm_x64_debug\external\fyp-llm-lib\Debug;$(SolutionDir)build\llm_x64_debug\external\fyp-llm-lib\external\llama.cpp\src\Debug;$(SolutionDir)build\llm_x64_debug\external\fyp-llm-lib\external\llama.cpp\ggml\src\Debug</AdditionalLibraryDirectories>
+      <AdditionalDependencies>xinput.lib;LLMLib.lib;llama.lib;ggml.lib;ggml-base.lib;ggml-cpu.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>$(SFML_SDK)\include;$(SolutionDir)external\$(SFML_SDK)\include;$(SolutionDir)external\fyp-llm-lib\llm;$(SolutionDir)external\fyp-llm-lib\external\llama.cpp\include;$(SolutionDir)external\fyp-llm-lib\external\llama.cpp\ggml\include</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalLibraryDirectories>$(SFML_SDK)\lib;$(SolutionDir)build\llm_win32_release\Release;$(SolutionDir)build\llm_win32_release\external\fyp-llm-lib\Release;$(SolutionDir)build\llm_win32_release\external\fyp-llm-lib\external\llama.cpp\src\Release;$(SolutionDir)build\llm_win32_release\external\fyp-llm-lib\external\llama.cpp\ggml\src\Release</AdditionalLibraryDirectories>
+      <AdditionalDependencies>xinput.lib;LLMLib.lib;llama.lib;ggml.lib;ggml-base.lib;ggml-cpu.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>$(SFML_SDK_x64)\include;$(SolutionDir)external\$(SFML_SDK)\include;$(SolutionDir)external\fyp-llm-lib\llm;$(SolutionDir)external\fyp-llm-lib\external\llama.cpp\include;$(SolutionDir)external\fyp-llm-lib\external\llama.cpp\ggml\include</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalLibraryDirectories>$(SFML_SDK_x64)\lib;$(SolutionDir)build\llm_x64_release\Release;$(SolutionDir)build\llm_x64_release\external\fyp-llm-lib\Release;$(SolutionDir)build\llm_x64_release\external\fyp-llm-lib\external\llama.cpp\src\Release;$(SolutionDir)build\llm_x64_release\external\fyp-llm-lib\external\llama.cpp\ggml\src\Release</AdditionalLibraryDirectories>
+      <AdditionalDependencies>xinput.lib;LLMLib.lib;llama.lib;ggml.lib;ggml-base.lib;ggml-cpu.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

@@ -59,10 +59,10 @@ This chapter summarizes the major subsystems, who owns what, and how data flows.
 
 Corridors are generated in `Game` from floor edges and appended as extra `RoomInstance` objects.
 
-### LLM dialogue (planned)
+### LLM dialogue (prototype integration)
 
-- NPC dialogue system backed by a local LLM wrapper.
-- Intended to be integrated as a separate module/library.
+- `LLMService` provides a small wrapper around the vendored `LLMWrapper` implementation.
+- The wrapper is located under `external/fyp-llm-lib` and is intended to be used for NPC dialogue.
 
 ## Ownership + data flow (prototype)
 

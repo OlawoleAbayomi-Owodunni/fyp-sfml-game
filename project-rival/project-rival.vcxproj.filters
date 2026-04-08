@@ -1,0 +1,429 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Resource Files\FONTS">
+      <UniqueIdentifier>{b5e82806-bf9b-4fdf-b17c-c35282c021a5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\IMAGES">
+      <UniqueIdentifier>{1d793ccc-0d22-4eea-8d0e-c5b5a5270a40}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Input">
+      <UniqueIdentifier>{492c6b32-40d8-4a9f-8d7b-f4959ad27b73}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Abs.Interfaces">
+      <UniqueIdentifier>{fc0fe863-09ef-468e-aaa5-2881e53dd4b7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Behaviours">
+      <UniqueIdentifier>{b532eab4-ae76-449b-9ec6-96913d08a763}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\DOCUMENTATION">
+      <UniqueIdentifier>{432d37c5-2336-4597-a4da-e09c882032eb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\AUTOMATIONS">
+      <UniqueIdentifier>{b8e2caa8-ed7f-45de-ace6-9451eb9edab4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Enemies">
+      <UniqueIdentifier>{641a97c9-ec20-499b-a847-eae07285cfdb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\AUTOMATIONS\Agent">
+      <UniqueIdentifier>{63056c86-90e2-4897-abae-e538dd6536ac}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\AUTOMATIONS\Scripts">
+      <UniqueIdentifier>{25290212-7808-4d9b-93d3-2c9d0ccc6259}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Projectiles">
+      <UniqueIdentifier>{b9295663-bd23-4a50-bb5f-6ae5e6710b01}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Levels">
+      <UniqueIdentifier>{127c1998-b90e-4d19-9042-548546c299e2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Levels\Rooms">
+      <UniqueIdentifier>{6315f94b-1a02-4312-8a70-232932c97a70}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Levels\Collision">
+      <UniqueIdentifier>{39c9ab2c-a81f-4afe-83a4-1376aef9f6c4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\DOCUMENTATION\Git Summaries">
+      <UniqueIdentifier>{d0a212c5-440c-41a1-8f2b-6fde83f55d70}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Levels\Rooms\Combat Room">
+      <UniqueIdentifier>{6c01b469-4db9-4697-a8dd-812e4bf169e4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Levels\Rooms\Portal Room">
+      <UniqueIdentifier>{d6d9eb36-80d4-49c2-8aca-b30bceee3189}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Levels\Rooms\Spawn Room">
+      <UniqueIdentifier>{83524f3d-2757-4bc8-bd75-f613d35270f0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Abs.Interfaces\Collision">
+      <UniqueIdentifier>{3d16047e-5381-44b1-acad-034b7d06a802}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Abs.Interfaces\Room Blueprint">
+      <UniqueIdentifier>{afd6ea71-deac-45ed-961c-6a703e03640c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Abs.Interfaces\Steering">
+      <UniqueIdentifier>{fb5c9f71-f0a5-4069-b4c4-44cd19d4858e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Behaviours\Arrive">
+      <UniqueIdentifier>{8a630ba1-5c05-493a-b269-da321a6359e3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Behaviours\Seek">
+      <UniqueIdentifier>{5e2eccba-5354-4112-84aa-d0e5fc88b169}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Enemies\Basic">
+      <UniqueIdentifier>{09da90ae-5e5d-4854-b02a-a78a5330dfff}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Enemies\Basic\Grunt">
+      <UniqueIdentifier>{86ff36fa-be83-400c-b8ee-b2e3af12c8d7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Enemies\Basic\Turret">
+      <UniqueIdentifier>{137ff5ed-1375-45ed-994c-a37a19e89b93}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Player">
+      <UniqueIdentifier>{dbad0cb9-07df-477f-8c63-4ca7a14b0f08}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\DOCUMENTATION\Git Summaries\Devlog Dumps">
+      <UniqueIdentifier>{dd92ece3-062f-4995-b441-b7cec4b92ad3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Projectiles\NormalBullets">
+      <UniqueIdentifier>{ec3a1ba9-8f3b-49c9-a2af-ee53fd5af881}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\DOCUMENTATION\TDD">
+      <UniqueIdentifier>{ab98f2b2-375f-4581-b89f-c300adecb773}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\DOCUMENTATION\Architecture">
+      <UniqueIdentifier>{f6122b01-7ad4-459c-ab01-774cd71eb0a7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Levels\Floors">
+      <UniqueIdentifier>{baac4118-c356-4ce9-ab7b-54e113e487fd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Levels\Dungeons">
+      <UniqueIdentifier>{368fecfe-ccc6-4a98-9c23-09b284ac1fdf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Levels\Floors\Floor Blueprint">
+      <UniqueIdentifier>{be3d9870-f5b6-48e9-b412-a0513c5dc1bb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\BUILD">
+      <UniqueIdentifier>{4ca282ac-c0df-4320-a865-d8a78b90be98}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\LLM">
+      <UniqueIdentifier>{94f1d2f2-1198-47a6-a717-b512538676a6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\LLM\Model">
+      <UniqueIdentifier>{c1aaa3ab-baca-40ba-b16d-7601f1b78d66}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\LLM">
+      <UniqueIdentifier>{dcefa0a9-0b7c-4107-8bf5-e9c46d69b31c}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Game.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="InputManager.cpp">
+      <Filter>Header Files\Input</Filter>
+    </ClCompile>
+    <ClCompile Include="Gamepad.cpp">
+      <Filter>Header Files\Input</Filter>
+    </ClCompile>
+    <ClCompile Include="StaticCollision.cpp">
+      <Filter>Header Files\Levels\Collision</Filter>
+    </ClCompile>
+    <ClCompile Include="CombatRoom.cpp">
+      <Filter>Header Files\Levels\Rooms\Combat Room</Filter>
+    </ClCompile>
+    <ClCompile Include="PortalRoom.cpp">
+      <Filter>Header Files\Levels\Rooms\Portal Room</Filter>
+    </ClCompile>
+    <ClCompile Include="SpawnRoom.cpp">
+      <Filter>Header Files\Levels\Rooms\Spawn Room</Filter>
+    </ClCompile>
+    <ClCompile Include="Collision.cpp">
+      <Filter>Header Files\Abs.Interfaces\Collision</Filter>
+    </ClCompile>
+    <ClCompile Include="ArriveBehaviour.cpp">
+      <Filter>Header Files\Behaviours\Arrive</Filter>
+    </ClCompile>
+    <ClCompile Include="SeekBehaviour.cpp">
+      <Filter>Header Files\Behaviours\Seek</Filter>
+    </ClCompile>
+    <ClCompile Include="GruntEnemy.cpp">
+      <Filter>Header Files\Enemies\Basic\Grunt</Filter>
+    </ClCompile>
+    <ClCompile Include="TurretEnemy.cpp">
+      <Filter>Header Files\Enemies\Basic\Turret</Filter>
+    </ClCompile>
+    <ClCompile Include="player.cpp">
+      <Filter>Header Files\Player</Filter>
+    </ClCompile>
+    <ClCompile Include="StaticCollision.cpp">
+      <Filter>Header Files\Levels\Collision</Filter>
+    </ClCompile>
+    <ClCompile Include="CombatRoom.cpp">
+      <Filter>Header Files\Levels\Rooms</Filter>
+    </ClCompile>
+    <ClCompile Include="NormalBulletProjectile.cpp">
+      <Filter>Header Files\Projectiles\NormalBullets</Filter>
+    </ClCompile>
+    <ClCompile Include="Enemy.cpp">
+      <Filter>Header Files\Enemies</Filter>
+    </ClCompile>
+    <ClCompile Include="Projectile.cpp">
+      <Filter>Header Files\Projectiles</Filter>
+    </ClCompile>
+    <ClCompile Include="RoomInstance.cpp">
+      <Filter>Header Files\Levels\Rooms</Filter>
+    </ClCompile>
+    <ClCompile Include="FloorGenerator.cpp">
+      <Filter>Header Files\Levels\Floors</Filter>
+    </ClCompile>
+    <ClCompile Include="RoomInstance.cpp">
+      <Filter>Header Files\Levels\Rooms</Filter>
+    </ClCompile>
+    <ClCompile Include="FloorLayout.cpp">
+      <Filter>Header Files\Levels\Floors</Filter>
+    </ClCompile>
+    <ClCompile Include="RoomDoorUtils.cpp">
+      <Filter>Header Files\Levels\Rooms</Filter>
+    </ClCompile>
+    <ClCompile Include="LLMService.cpp">
+      <Filter>Header Files\LLM</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Game.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="InputManager.h">
+      <Filter>Header Files\Input</Filter>
+    </ClInclude>
+    <ClInclude Include="Gamepad.h">
+      <Filter>Header Files\Input</Filter>
+    </ClInclude>
+    <ClInclude Include="StaticCollision.h">
+      <Filter>Header Files\Levels\Collision</Filter>
+    </ClInclude>
+    <ClInclude Include="CombatRoom.h">
+      <Filter>Header Files\Levels\Rooms\Combat Room</Filter>
+    </ClInclude>
+    <ClInclude Include="PortalRoom.h">
+      <Filter>Header Files\Levels\Rooms\Portal Room</Filter>
+    </ClInclude>
+    <ClInclude Include="SpawnRoom.h">
+      <Filter>Header Files\Levels\Rooms\Spawn Room</Filter>
+    </ClInclude>
+    <ClInclude Include="Collision.h">
+      <Filter>Header Files\Abs.Interfaces\Collision</Filter>
+    </ClInclude>
+    <ClInclude Include="RoomBlueprint.h">
+      <Filter>Header Files\Abs.Interfaces\Room Blueprint</Filter>
+    </ClInclude>
+    <ClInclude Include="Steering.h">
+      <Filter>Header Files\Abs.Interfaces\Steering</Filter>
+    </ClInclude>
+    <ClInclude Include="ArriveBehaviour.h">
+      <Filter>Header Files\Behaviours\Arrive</Filter>
+    </ClInclude>
+    <ClInclude Include="SeekBehaviour.h">
+      <Filter>Header Files\Behaviours\Seek</Filter>
+    </ClInclude>
+    <ClInclude Include="GruntEnemy.h">
+      <Filter>Header Files\Enemies\Basic\Grunt</Filter>
+    </ClInclude>
+    <ClInclude Include="TurretEnemy.h">
+      <Filter>Header Files\Enemies\Basic\Turret</Filter>
+    </ClInclude>
+    <ClInclude Include="player.h">
+      <Filter>Header Files\Player</Filter>
+    </ClInclude>
+    <ClInclude Include="RoomBlueprint.h">
+      <Filter>Header Files\Abs.Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="StaticCollision.h">
+      <Filter>Header Files\Levels\Collision</Filter>
+    </ClInclude>
+    <ClInclude Include="CombatRoom.h">
+      <Filter>Header Files\Levels\Rooms</Filter>
+    </ClInclude>
+    <ClInclude Include="NormalBulletProjectile.h">
+      <Filter>Header Files\Projectiles\NormalBullets</Filter>
+    </ClInclude>
+    <ClInclude Include="Enemy.h">
+      <Filter>Header Files\Enemies</Filter>
+    </ClInclude>
+    <ClInclude Include="Projectile.h">
+      <Filter>Header Files\Projectiles</Filter>
+    </ClInclude>
+    <ClInclude Include="RoomInstance.h">
+      <Filter>Header Files\Levels\Rooms</Filter>
+    </ClInclude>
+    <ClInclude Include="FloorBlueprint.h">
+      <Filter>Header Files\Levels\Floors\Floor Blueprint</Filter>
+    </ClInclude>
+    <ClInclude Include="FloorGenerator.h">
+      <Filter>Header Files\Levels\Floors</Filter>
+    </ClInclude>
+    <ClInclude Include="RoomInstance.h">
+      <Filter>Header Files\Levels\Rooms</Filter>
+    </ClInclude>
+    <ClInclude Include="RoomDoorUtils.h">
+      <Filter>Header Files\Levels\Rooms</Filter>
+    </ClInclude>
+    <ClInclude Include="FloorLayout.h">
+      <Filter>Header Files\Levels\Floors</Filter>
+    </ClInclude>
+    <ClInclude Include="DungeonPlan.h">
+      <Filter>Header Files\Levels\Dungeons</Filter>
+    </ClInclude>
+    <ClInclude Include="LLMService.h">
+      <Filter>Header Files\LLM</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="ASSETS\IMAGES\SFML-LOGO.png">
+      <Filter>Resource Files\IMAGES</Filter>
+    </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <Font Include="ASSETS\FONTS\ariblk.ttf">
+      <Filter>Resource Files\FONTS</Filter>
+    </Font>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\automation\prompts\docs-architecture-development-log-context.md">
+      <Filter>Resource Files\AUTOMATIONS\Agent</Filter>
+    </None>
+    <None Include="..\automation\prompts\git-staged-changes-to-commit-context.md">
+      <Filter>Resource Files\AUTOMATIONS\Agent</Filter>
+    </None>
+    <None Include="..\automation\prompts\player-aiming-mouse-right-stick-reticle-context.md">
+      <Filter>Resource Files\AUTOMATIONS\Agent</Filter>
+    </None>
+    <None Include="..\automation\prompts\steering-enemy-seek-step-by-step-context.md">
+      <Filter>Resource Files\AUTOMATIONS\Agent</Filter>
+    </None>
+    <None Include="..\automation\scripts\merge-summary-generator.ps1">
+      <Filter>Resource Files\AUTOMATIONS\Scripts</Filter>
+    </None>
+    <None Include="automation\prompts\level-architecture-roomplan-generator-builder-static-colliders-context.md">
+      <Filter>Resource Files\AUTOMATIONS\Agent</Filter>
+    </None>
+    <None Include="..\automation\scripts\devlog-dump.ps1">
+      <Filter>Resource Files\AUTOMATIONS\Scripts</Filter>
+    </None>
+    <None Include="..\docs\Architecture\01-project-structure.md">
+      <Filter>Resource Files\DOCUMENTATION\Architecture</Filter>
+    </None>
+    <None Include="..\docs\Architecture\02-player.md">
+      <Filter>Resource Files\DOCUMENTATION\Architecture</Filter>
+    </None>
+    <None Include="..\docs\Architecture\03-input.md">
+      <Filter>Resource Files\DOCUMENTATION\Architecture</Filter>
+    </None>
+    <None Include="..\docs\Architecture\04-enemy.md">
+      <Filter>Resource Files\DOCUMENTATION\Architecture</Filter>
+    </None>
+    <None Include="..\docs\Architecture\05-steering-oop.md">
+      <Filter>Resource Files\DOCUMENTATION\Architecture</Filter>
+    </None>
+    <None Include="..\docs\Architecture\07-projectiles.md">
+      <Filter>Resource Files\DOCUMENTATION\Architecture</Filter>
+    </None>
+    <None Include="..\docs\Architecture\08-collision-and-damage.md">
+      <Filter>Resource Files\DOCUMENTATION\Architecture</Filter>
+    </None>
+    <None Include="..\docs\Architecture\09-rooms-and-generation.md">
+      <Filter>Resource Files\DOCUMENTATION\Architecture</Filter>
+    </None>
+    <None Include="..\docs\Architecture\06-coding-conventions.md">
+      <Filter>Resource Files\DOCUMENTATION\Architecture</Filter>
+    </None>
+    <None Include="..\docs\Architecture\README.md">
+      <Filter>Resource Files\DOCUMENTATION\Architecture</Filter>
+    </None>
+    <None Include="..\docs\TechnicalDesign\01-overview.md">
+      <Filter>Resource Files\DOCUMENTATION\TDD</Filter>
+    </None>
+    <None Include="..\docs\TechnicalDesign\02-goals.md">
+      <Filter>Resource Files\DOCUMENTATION\TDD</Filter>
+    </None>
+    <None Include="..\docs\TechnicalDesign\03-technical-requirements.md">
+      <Filter>Resource Files\DOCUMENTATION\TDD</Filter>
+    </None>
+    <None Include="..\docs\TechnicalDesign\04-scope-non-goals.md">
+      <Filter>Resource Files\DOCUMENTATION\TDD</Filter>
+    </None>
+    <None Include="..\docs\TechnicalDesign\05-system-architecture.md">
+      <Filter>Resource Files\DOCUMENTATION\TDD</Filter>
+    </None>
+    <None Include="..\docs\TechnicalDesign\06-subsystem-design.md">
+      <Filter>Resource Files\DOCUMENTATION\TDD</Filter>
+    </None>
+    <None Include="..\docs\TechnicalDesign\07-runtime-flow.md">
+      <Filter>Resource Files\DOCUMENTATION\TDD</Filter>
+    </None>
+    <None Include="..\docs\TechnicalDesign\08-data-and-state.md">
+      <Filter>Resource Files\DOCUMENTATION\TDD</Filter>
+    </None>
+    <None Include="..\docs\TechnicalDesign\09-risks-limitations-ambiguity.md">
+      <Filter>Resource Files\DOCUMENTATION\TDD</Filter>
+    </None>
+    <None Include="..\docs\TechnicalDesign\10-appendix.md">
+      <Filter>Resource Files\DOCUMENTATION\TDD</Filter>
+    </None>
+    <None Include="..\docs\TechnicalDesign\README.md">
+      <Filter>Resource Files\DOCUMENTATION\TDD</Filter>
+    </None>
+    <None Include="..\CMakePresets.json">
+      <Filter>Resource Files\BUILD</Filter>
+    </None>
+    <None Include="ASSETS\LLM\MODELS\Llama-3.2-1B-Instruct-Q4_K_M.gguf">
+      <Filter>Resource Files\LLM\Model</Filter>
+    </None>
+    <None Include="docs\Architecture\10-llm-integration.md" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="..\automation\scripts\output\aiming-merge-changes.txt">
+      <Filter>Resource Files\DOCUMENTATION\Git Summaries</Filter>
+    </Text>
+    <Text Include="..\automation\scripts\output\collisions-merge-changes.txt">
+      <Filter>Resource Files\DOCUMENTATION\Git Summaries</Filter>
+    </Text>
+    <Text Include="..\automation\scripts\output\enemies-merge-changes.txt">
+      <Filter>Resource Files\DOCUMENTATION\Git Summaries</Filter>
+    </Text>
+    <Text Include="..\automation\scripts\output\devlog-dump-20260325-151026.txt">
+      <Filter>Resource Files\DOCUMENTATION\Git Summaries\Devlog Dumps</Filter>
+    </Text>
+    <Text Include="..\automation\scripts\output\devlog-dump-20260325-151324.txt">
+      <Filter>Resource Files\DOCUMENTATION\Git Summaries\Devlog Dumps</Filter>
+    </Text>
+    <Text Include="..\automation\scripts\output\combat-room-merge-changes.txt">
+      <Filter>Resource Files\DOCUMENTATION\Git Summaries</Filter>
+    </Text>
+    <Text Include="..\automation\scripts\output\additional-rooms-merge-changes.txt">
+      <Filter>Resource Files\DOCUMENTATION\Git Summaries</Filter>
+    </Text>
+    <Text Include="..\automation\scripts\output\floor+dungeon-merge-changes.txt">
+      <Filter>Resource Files\DOCUMENTATION\Git Summaries</Filter>
+    </Text>
+    <Text Include="..\CMakeLists.txt">
+      <Filter>Resource Files\BUILD</Filter>
+    </Text>
+  </ItemGroup>
+</Project>

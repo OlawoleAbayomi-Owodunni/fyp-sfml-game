@@ -15,3 +15,4 @@ A high-level, beginner-friendly overview of how the main gameplay-related code i
 7. [Projectiles (prototype)](07-projectiles.md)
 8. [Collision + damage](08-collision-and-damage.md)
 9. [Rooms + procedural generation](09-rooms-and-generation.md)
+10. [LLM integration (prototype)](10-llm-integration.md)

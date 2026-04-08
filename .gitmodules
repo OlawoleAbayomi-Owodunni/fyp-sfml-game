@@ -1,0 +1,3 @@
+[submodule "external/fyp-llm-lib"]
+	path = external/fyp-llm-lib
+	url = https://github.com/OlawoleAbayomi-Owodunni/fyp-llm-library.git

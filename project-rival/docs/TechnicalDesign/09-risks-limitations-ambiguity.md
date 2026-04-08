@@ -15,6 +15,7 @@ This chapter documents known shortcuts and future technical risks.
 - Portal interaction currently advances floors, but completion behavior is temporary (on dungeon complete, the game exits instead of returning to a menu/hub).
 - Active-room detection is a simple bounds check against each room’s rectangle (no spatial indexing).
 - Corridor generation is procedural and may need extra handling for edge cases (misaligned door spans, overlapping corridors, or collisions near door thresholds).
+- LLM integration is currently a thin synchronous wrapper; there is no budgeting for latency, no streaming, and no gameplay-level dialogue system yet.
 
 ## Technical risks
 

@@ -13,12 +13,6 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="Resource Files\FONTS">
-      <UniqueIdentifier>{b5e82806-bf9b-4fdf-b17c-c35282c021a5}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Resource Files\IMAGES">
-      <UniqueIdentifier>{1d793ccc-0d22-4eea-8d0e-c5b5a5270a40}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\Input">
       <UniqueIdentifier>{492c6b32-40d8-4a9f-8d7b-f4959ad27b73}</UniqueIdentifier>
     </Filter>
@@ -114,6 +108,18 @@
     </Filter>
     <Filter Include="Header Files\Levels\Floors\Floor Blueprint">
       <UniqueIdentifier>{be3d9870-f5b6-48e9-b412-a0513c5dc1bb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\BUILD">
+      <UniqueIdentifier>{6f80d990-b03b-456c-ad8c-59957746af73}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\ASSETS">
+      <UniqueIdentifier>{2cfd31fc-5580-492d-8bd8-f3f8ccb72cd2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\ASSETS\IMAGES">
+      <UniqueIdentifier>{1d793ccc-0d22-4eea-8d0e-c5b5a5270a40}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\ASSETS\FONTS">
+      <UniqueIdentifier>{b5e82806-bf9b-4fdf-b17c-c35282c021a5}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -278,12 +284,12 @@
   </ItemGroup>
   <ItemGroup>
     <Image Include="ASSETS\IMAGES\SFML-LOGO.png">
-      <Filter>Resource Files\IMAGES</Filter>
+      <Filter>Resource Files\ASSETS\IMAGES</Filter>
     </Image>
   </ItemGroup>
   <ItemGroup>
     <Font Include="ASSETS\FONTS\ariblk.ttf">
-      <Filter>Resource Files\FONTS</Filter>
+      <Filter>Resource Files\ASSETS\FONTS</Filter>
     </Font>
   </ItemGroup>
   <ItemGroup>
@@ -393,6 +399,12 @@
     </Text>
     <Text Include="..\automation\scripts\output\additional-rooms-merge-changes.txt">
       <Filter>Resource Files\DOCUMENTATION\Git Summaries</Filter>
+    </Text>
+    <Text Include="..\automation\scripts\output\floor+dungeon-merge-changes.txt">
+      <Filter>Resource Files\DOCUMENTATION\Git Summaries</Filter>
+    </Text>
+    <Text Include="..\..\CMakeLists.txt">
+      <Filter>Resource Files\BUILD</Filter>
     </Text>
   </ItemGroup>
 </Project>

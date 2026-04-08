@@ -112,6 +112,7 @@
     <None Include="automation\prompts\level-architecture-roomplan-generator-builder-static-colliders-context.md" />
   </ItemGroup>
   <ItemGroup>
+    <Text Include="..\..\CMakeLists.txt" />
     <Text Include="..\automation\scripts\output\aiming-merge-changes.txt" />
     <Text Include="..\automation\scripts\output\collisions-merge-changes.txt" />
     <Text Include="..\automation\scripts\output\combat-room-merge-changes.txt" />

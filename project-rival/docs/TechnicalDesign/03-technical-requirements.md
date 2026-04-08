@@ -23,9 +23,10 @@ Procedural generation split (current intent):
 
 ## Assumptions
 
-- LLM dialogue uses a locally running model, accessed through a custom C++ wrapper yet to be integrated (separate repo).
+- LLM dialogue uses a locally running model, accessed through a custom C++ wrapper.
 - Room “layout determinism” and “room appearance randomness” are both acceptable (seeded vs non-seeded split).
 
-## External dependencies (planned)
+## External dependencies (current)
 
-- LLM wrapper repo (to be integrated as a submodule/subtree or linked library later).
+- The LLM wrapper library is vendored under `external/fyp-llm-lib`.
+- The game integrates it through `LLMService` (`project-rival/LLMService.h/.cpp`).
