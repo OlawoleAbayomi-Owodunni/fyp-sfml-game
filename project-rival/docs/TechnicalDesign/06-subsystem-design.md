@@ -157,8 +157,16 @@ Core files:
 
 Current behaviour:
 
-- `LLMService::init(modelPath)` loads a `.gguf` model via `LLMWrapper::LoadModel(...)`.
-- `LLMService::generateResponse(prompt)` returns `LLMWrapper::Generate(prompt)` when ready; otherwise returns a simple error string.
+- The LLM is initialized asynchronously from `Game` using `LLMService::initAsync(modelPath)`.
+- `Game::update(dt)` polls:
+  - `LLMService::tryConsumeInitResult()` to detect init completion/failure
+  - `LLMService::tryConsumeLatestResponse()` to print completed generations
+- Generation requests are queued explicitly using `LLMService::requestGenerate(prompt)`.
+- `LLMService::isReady()` and `LLMService::isBusy()` are used to gate requests.
+
+Synchronous entrypoint:
+
+- `LLMService::init(modelPath)` and direct `generateResponse(prompt)` still exist for synchronous usage, but the current game loop uses the async APIs.
 
 Extension points:
 
