@@ -20,6 +20,8 @@ static double const FPS{ 60.0f };
 Game::Game()
 	: m_window(sf::VideoMode(sf::Vector2u(ScreenSize::s_width, ScreenSize::s_height), 32), "FYP: Dungeonish Crawler", sf::Style::Default)
 {
+	m_llmManager.initAsync("ASSETS/LLM/MODELS/Llama-3.2-1B-Instruct-Q4_K_M.gguf");
+
 	srand(time(NULL));
 	init();
 }
@@ -46,7 +48,6 @@ void Game::init()
 	x_drawFPS.setFillColor(sf::Color::White);
 #endif
 
-	m_llm.init("ASSETS/LLM/MODELS/Llama-3.2-1B-Instruct-Q4_K_M.gguf");
 	gameStart();
 }
 
@@ -114,13 +115,13 @@ void Game::processGameEvents(const sf::Event& event)
 			break;
 		
 		case sf::Keyboard::Scancode::Num0:
-			if (!m_llm.isReady()) {
+			if (!m_llmManager.isReady()) {
 				cout << "LLM model is not ready.\n";
 			}
 			else {
 				// LLM Prompt/Response test
 				// Request generation of p
-				if (!m_llm.isBusy())
+				if (!m_llmManager.isBusy())
 				{
 					// Generate Prompt
 					RoomPlan currRoom = m_roomPlans[m_activeRoomId];
@@ -144,7 +145,7 @@ void Game::processGameEvents(const sf::Event& event)
 					std::string clearedStr = currRoom.isCleared ? "Yes" : "No";
 
 					cout << "Generating response...\n";
-					const std::string prompt = "Generate a short sentence description of the room the player is in currently based on the following properties: Room Type: " + roomTypeStr
+					const std::string prompt = "Generate a 2 sentence description of the room the player is in currently based on the following properties: Room Type: " + roomTypeStr
 						+ ", Is Room Cleared: " + clearedStr
 						+ ", Room Height: " + to_string(currRoom.height)
 						+ ", Room Width: " + to_string(currRoom.width)
@@ -152,7 +153,7 @@ void Game::processGameEvents(const sf::Event& event)
 
 					cout << "Prompt: " << prompt << "\n";
 
-					const bool queued = m_llm.requestGenerate(prompt);
+					const bool queued = m_llmManager.requestGenerate(prompt);
 					if (queued)
 						cout << "Generation request queued successfully.\n";
 					else
@@ -207,16 +208,17 @@ void Game::update(double dt)
 	//Collision checks
 	CollisionChecks();
 
+
+	// Wave management for combat rooms
 	if (m_isInRoom)
 	{
-		// Wave management for combat rooms
 		if (m_roomPlans[m_activeRoomId].type == RoomType::COMBAT && m_isInCombat)
 			ManageWave();
 	}
 
+	// Dungeon management for advancing floors
 	if (m_requestNextFloor)
 	{
-		// Dungeon management for advancing floors
 		m_requestNextFloor = false;
 		m_dungeonPlan.advanceFloor();
 
@@ -226,8 +228,19 @@ void Game::update(double dt)
 			loadNewFloor();
 	}
 
-	// LLM response handling
-	if (auto response = m_llm.tryConsumeLatestResponse())
+	// LLM polling
+	if (auto initOk = m_llmManager.tryConsumeInitResult())
+	{
+		if (*initOk) {
+			cout << "LLM initialized successfully.\n";
+		}
+		else {
+			cout << "LLM failed to initialize.\n";
+			m_llmManager.initAsync("ASSETS/LLM/MODELS/Llama-3.2-1B-Instruct-Q4_K_M.gguf"); // Retry initialization
+		}
+	}
+
+	if (auto response = m_llmManager.tryConsumeLatestResponse())
 	{
 		cout << "LLM Response: " << *response << "\n";
 	}

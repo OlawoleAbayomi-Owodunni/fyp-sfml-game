@@ -124,5 +124,5 @@ private:
 	int m_waveCounter;
 
 	// LLM management
-	LLMService m_llm;
+	LLMService m_llmManager;
 };

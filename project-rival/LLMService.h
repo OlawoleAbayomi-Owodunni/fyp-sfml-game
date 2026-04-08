@@ -13,27 +13,39 @@ public:
 	~LLMService();
 
 	bool init(const std::string& modelPath);
+	bool initAsync(const std::string& modelPath);
+	std::optional<bool> tryConsumeInitResult();
+
 	bool isReady() const;
+	bool isInitInProgress() const;
+	bool isBusy() const;
 
 	bool requestGenerate(const std::string& prompt);
-
-	//std::string generateResponse(const std::string& prompt);
 	std::optional<std::string> tryConsumeLatestResponse();
 
-	bool isBusy() const;
 
 	void shutdown();
 
 private:
-	void workerMain(std::string prompt);
+	void initWorkerMain(const std::string& modelPath);
+	void generateWorkerMain(std::string prompt);
 
 
 	LLMWrapper llm_wrapper;
-	bool llm_isReady{ false };
+	
+	std::atomic<bool> llm_isReady{ false };
+	
+	// Initialization management
+	std::atomic<bool> llm_initInProgress{ false };
+	std::thread llm_initWorker;
 
+	std::mutex llm_initMutex;
+	std::optional<bool> llm_initResult;
+
+	// Generation worker management
 	std::atomic<bool> llm_isBusy{ false };
-
-	std::thread llm_worker;
+	std::thread llm_generateWorker;
+	
 	std::mutex llm_resultMutex;
 	std::optional<std::string> llm_latestResponse;
 };
