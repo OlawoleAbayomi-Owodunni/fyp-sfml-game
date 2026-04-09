@@ -395,7 +395,9 @@
     <None Include="ASSETS\LLM\MODELS\Llama-3.2-1B-Instruct-Q4_K_M.gguf">
       <Filter>Resource Files\LLM\Model</Filter>
     </None>
-    <None Include="docs\Architecture\10-llm-integration.md" />
+    <None Include="docs\Architecture\10-llm-integration.md">
+      <Filter>Resource Files\DOCUMENTATION\Architecture</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Text Include="..\automation\scripts\output\aiming-merge-changes.txt">
@@ -424,6 +426,9 @@
     </Text>
     <Text Include="..\CMakeLists.txt">
       <Filter>Resource Files\BUILD</Filter>
+    </Text>
+    <Text Include="automation\scripts\output\llm-integration-merge-changes.txt">
+      <Filter>Resource Files\DOCUMENTATION\Git Summaries</Filter>
     </Text>
   </ItemGroup>
 </Project>
