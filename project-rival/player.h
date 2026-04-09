@@ -15,7 +15,7 @@ public:
 	~Player();
 
 	void init();
-	void update(double dt, const Vector2f& mousePos);
+	void update(float dt, const Vector2f& mousePos);
 	void render(RenderWindow& window);
 
 	const Vector2f getPosition() const;
@@ -24,7 +24,7 @@ public:
 
 	void setSpawnPosition(const Vector2f& spawnPos);
 
-	void handleMovement(double dt);
+	void handleMovement(float dt);
 	void handleAiming(const Vector2f mousePos);
 
 	void takeDamage(int damage);

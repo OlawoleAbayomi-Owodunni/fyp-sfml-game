@@ -41,6 +41,7 @@
     <ClCompile Include="SpawnRoom.cpp" />
     <ClCompile Include="StaticCollision.cpp" />
     <ClCompile Include="TurretEnemy.cpp" />
+    <ClCompile Include="Weapon.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ArriveBehaviour.h" />
@@ -68,6 +69,7 @@
     <ClInclude Include="StaticCollision.h" />
     <ClInclude Include="Steering.h" />
     <ClInclude Include="TurretEnemy.h" />
+    <ClInclude Include="Weapon.h" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="ASSETS\IMAGES\SFML-LOGO.png">

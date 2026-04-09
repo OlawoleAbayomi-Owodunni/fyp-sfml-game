@@ -8,7 +8,7 @@ public:
 	~GruntEnemy() = default;
 
 	void init() override;
-	void update(double dt) override;
+	void update(float dt) override;
 	void setTarget(const Vector2f& target) override;
 
 	void hitWall() override;

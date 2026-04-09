@@ -33,7 +33,7 @@ void GruntEnemy::init()
 	e_arriveExitDist = base + gap;
 }
 
-void GruntEnemy::update(double dt)
+void GruntEnemy::update(float dt)
 {
 	if (e_currBehaviour != nullptr)
 	{
@@ -53,13 +53,11 @@ void GruntEnemy::update(double dt)
 			}
 		}
 
-		float dtS = static_cast<float>(dt);
-
 		// 1) Get the steering (acceleration) from the current behaviour.
 		const Vector2f steering = e_currBehaviour->getSteering(e_agent);
 
 		// 2) v = v + a * dt
-		e_agent.velocity += steering * dtS;
+		e_agent.velocity += steering * dt;
 
 		// 3) Clamp velocity to max speed.
 		const float speed = length(e_agent.velocity);
@@ -68,7 +66,7 @@ void GruntEnemy::update(double dt)
 		}
 
 		// 4) p = p + v * dt
-		e_agent.position += e_agent.velocity * dtS;
+		e_agent.position += e_agent.velocity * dt;
 
 		e_body.setPosition(e_agent.position);
 	}

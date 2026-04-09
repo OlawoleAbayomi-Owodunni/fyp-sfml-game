@@ -46,7 +46,7 @@ void Player::init()
 	reset();
 }
 
-void Player::update(double dt, const Vector2f& mousePos)
+void Player::update(float dt, const Vector2f& mousePos)
 {
 	p_prevPos = p_body.getPosition();
 
@@ -109,7 +109,7 @@ void Player::reset()
 	p_health = p_maxHealth;
 }
 
-void Player::handleMovement(double dt)
+void Player::handleMovement(float dt)
 {
 	//--------- movement logic ---------//
 	Vector2f direction{ 0.f, 0.f };
@@ -133,7 +133,7 @@ void Player::handleMovement(double dt)
 	}
 
 	p_velocity = direction * p_moveSpeed;
-	p_body.move(p_velocity * static_cast<float>(dt));
+	p_body.move(p_velocity * dt);
 }
 
 void Player::handleAiming(const Vector2f mousePos)

@@ -174,7 +174,7 @@ void Game::processGameEvents(const sf::Event& event)
 
 
 ////////////////////////////////////////////////////////////
-void Game::update(double dt)
+void Game::update(float dt)
 {
 	const Vector2i mousePos = Mouse::getPosition(m_window);
 	const Vector2f mousePosF = m_window.mapPixelToCoords(mousePos);

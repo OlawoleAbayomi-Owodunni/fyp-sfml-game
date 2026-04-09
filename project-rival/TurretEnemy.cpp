@@ -11,7 +11,7 @@ void TurretEnemy::init()
 {
 }
 
-void TurretEnemy::update(double dt)
+void TurretEnemy::update(float dt)
 {
 }
 
