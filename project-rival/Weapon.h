@@ -39,8 +39,6 @@ public:
 protected:
 	virtual void spawnProjectile(const FireInfo& info, std::vector<std::unique_ptr<Projectile>>& projectileList) = 0;
 
-	sf::Vector2f normalise(const sf::Vector2f& direction);
-
 private:
 	const bool canSpawn();
 

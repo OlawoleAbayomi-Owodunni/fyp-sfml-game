@@ -33,12 +33,3 @@ void Weapon::fire(const FireInfo & fireInfo, std::vector<std::unique_ptr<Project
 			w_timeTillNextShot = 0.0f;
 	}
 }
-
-sf::Vector2f Weapon::normalise(const sf::Vector2f & direction)
-{
-	float length = std::sqrt(direction.x * direction.x + direction.y * direction.y);
-	if (length != 0)
-		return sf::Vector2f(direction.x / length, direction.y / length);
-	else
-		return sf::Vector2f(0.0f, 0.0f);
-}
