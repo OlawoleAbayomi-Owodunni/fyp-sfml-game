@@ -216,6 +216,9 @@
     <ClCompile Include="PlayerWeapons.cpp">
       <Filter>Header Files\Weapons\PlayerWeapons</Filter>
     </ClCompile>
+    <ClCompile Include="EnemyWeapon.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Game.h">
@@ -310,6 +313,9 @@
     </ClInclude>
     <ClInclude Include="PlayerWeapons.h">
       <Filter>Header Files\Weapons\PlayerWeapons</Filter>
+    </ClInclude>
+    <ClInclude Include="EnemyWeapon.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

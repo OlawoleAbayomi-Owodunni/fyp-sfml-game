@@ -187,14 +187,17 @@ void Game::update(float dt)
 
 	// Update player and enemies
 	Vector2f oldPlayerPos = m_player.getPosition();
-	m_player.update(dt, mousePosF);
+	m_player.update(dt, mousePosF, m_gameProjectiles);
 
 
 	for (auto enemy_it = m_enemies.begin(); enemy_it != m_enemies.end();)
 	{
 		auto& enemy = *enemy_it;
 		enemy->setTarget(m_player.getPosition());
-		enemy->update(dt);
+		if (auto* turret = dynamic_cast<TurretEnemy*>(enemy.get()))
+			turret->update(dt, m_gameProjectiles);
+		else
+			enemy->update(dt);
 
 		// Check if enemy is dead and remove if so
 		if (enemy->isDead())
@@ -207,6 +210,16 @@ void Game::update(float dt)
 
 	//Collision checks
 	CollisionChecks();
+
+	// Projectile Management
+	for (auto it = m_gameProjectiles.begin(); it != m_gameProjectiles.end();)
+	{
+		(*it)->update(dt);
+		if ((*it)->shouldDestroy())
+			it = m_gameProjectiles.erase(it);
+		else
+			++it;
+	}
 
 
 	// Wave management for combat rooms
@@ -266,6 +279,9 @@ void Game::render()
 	}
 
 	m_player.render(m_window);
+
+	for (auto& bullet : m_gameProjectiles)
+		bullet->render(m_window);
 
 	for (auto& enemy : m_enemies) {
 		enemy->render(m_window);
@@ -370,12 +386,12 @@ void Game::CollisionChecks()
 	}
 
 	// ------------------- BULLET CHECKS -------------------
-	for (auto& bullet : m_player.getProjectiles())
+	for (auto& bullet : m_gameProjectiles)
 	{
 		if (bullet->shouldDestroy())
 			continue;
 
-		// Bullet -> Enemy
+		// Bullet -> Enemy (Player Projectiles)
 		for (auto& enemy : m_enemies) {
 			if (enemy->isDead())
 				continue;
@@ -386,6 +402,14 @@ void Game::CollisionChecks()
 				bullet->destroy();
 				break;
 			}
+		}
+
+		// Bullet -> Player (Enemy Projectiles)
+		if (CollisionCheck::areColliding(m_player, *bullet))
+		{
+			m_player.takeDamage(bullet->applyDamage());
+			bullet->destroy();
+			break;
 		}
 	}
 
@@ -406,8 +430,8 @@ void Game::CollisionChecks()
 					break;
 				}
 
-				// Wall/Door -> Player Projectiles
-				for (auto& bullet : m_player.getProjectiles())
+				// Wall/Door -> Projectiles
+				for (auto& bullet : m_gameProjectiles)
 				{
 					if (bullet->shouldDestroy())
 						continue;

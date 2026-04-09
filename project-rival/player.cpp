@@ -53,7 +53,7 @@ void Player::init()
 	reset();
 }
 
-void Player::update(float dt, const Vector2f& mousePos)
+void Player::update(float dt, const Vector2f& mousePos, std::vector<std::unique_ptr<Projectile>>& gameProjectiles)
 {
 	p_prevPos = p_body.getPosition();
 
@@ -62,6 +62,17 @@ void Player::update(float dt, const Vector2f& mousePos)
 
 	if (InputManager::pad().rightTrigger()) InputManager::pad().setRumble(0.2f, 0.8f);
 	else InputManager::pad().setRumble(0.0f, 0.0f);
+
+
+	//--------- shooting logic ---------//
+	if (InputManager::pad().rightTrigger() || Mouse::isButtonPressed(Mouse::Button::Left))
+	{
+		FireReq fireInfo;
+		fireInfo.aimDir = p_aimDir;
+		fireInfo.isFromPlayer = true;
+
+		p_weapons[p_currentWeaponID]->fire(fireInfo, gameProjectiles);
+	}
 
 	// Update Weapon (for positioning and firing cooldowns)
 	if (InputManager::pad().pressed(GamepadButton::RightBumper))
@@ -78,23 +89,6 @@ void Player::update(float dt, const Vector2f& mousePos)
 	}
 
 	p_weapons[p_currentWeaponID]->update(dt, p_body.getPosition(), p_aimDir);
-
-
-	// Update projectiles and remove any that should be destroyed
-	for (auto bullet_it = p_projectiles.begin(); bullet_it != p_projectiles.end(); )
-	{
-		auto& bullet = *bullet_it;
-		bullet->update(dt);
-
-		if (bullet->shouldDestroy())
-		{
-			bullet_it = p_projectiles.erase(bullet_it);
-		}
-		else
-		{
-			bullet_it++;
-		}
-	}
 }
 
 
@@ -104,9 +98,6 @@ void Player::render(RenderWindow& window)
 	window.draw(p_reticle);
 
 	p_weapons[p_currentWeaponID]->render(window);
-
-	for (const auto& bullet : p_projectiles)
-		bullet->render(window);
 }
 
 #pragma region Getters and Setters
@@ -123,11 +114,6 @@ sf::FloatRect Player::getCollisionBounds() const
 CollisionProfile Player::getCollisionProfile() const
 {
 	return p_collisionProfile;
-}
-
-std::vector<std::unique_ptr<Projectile>>& Player::getProjectiles()
-{
-	return p_projectiles;
 }
 
 void Player::setSpawnPosition(const Vector2f& spawnPos)
@@ -196,15 +182,6 @@ void Player::handleAiming(const Vector2f mousePos)
 
 	p_prevMousePos = mousePos;
 
-	//--------- shooting logic ---------//
-	if (InputManager::pad().rightTrigger() || Mouse::isButtonPressed(Mouse::Button::Left))
-	{
-		FireReq fireInfo;
-		fireInfo.aimDir = p_aimDir;
-		fireInfo.isFromPlayer = true;
-
-		p_weapons[p_currentWeaponID]->fire(fireInfo, p_projectiles);
-	}
 }
 
 void Player::takeDamage(int damage)

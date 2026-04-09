@@ -14,7 +14,7 @@ public:
 	~Player();
 
 	void init();
-	void update(float dt, const Vector2f& mousePos);
+    void update(float dt, const Vector2f& mousePos, std::vector<std::unique_ptr<Projectile>>& gameProjectiles);
 	void render(RenderWindow& window);
 
 	const Vector2f getPosition() const;
@@ -23,15 +23,12 @@ public:
 
 	void setSpawnPosition(const Vector2f& spawnPos);
 
-	void handleMovement(float dt);
+  void handleMovement(float dt);
 	void handleAiming(const Vector2f mousePos);
 
 	void takeDamage(int damage);
 
 	void hitWall();
-
-	// this functions will likely move to weapon class when made
-	std::vector<std::unique_ptr<Projectile>>& getProjectiles();
 
 private:
 	// FUNCTIONS
@@ -60,8 +57,6 @@ private:
 	int p_maxHealth;
 	int p_health;
 
-	// projectiles --> test. this will move to weapon class when made
-	std::vector<std::unique_ptr<Projectile>> p_projectiles;
 	std::vector<std::unique_ptr<Weapon>> p_weapons;
 	
 	std::unique_ptr<Weapon> p_currentWeapon;

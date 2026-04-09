@@ -102,6 +102,9 @@ private:
 	// Enemy management
 	std::vector<std::unique_ptr<Enemy>> m_enemies;
 
+	// Bullet management
+	std::vector<std::unique_ptr<Projectile>> m_gameProjectiles;
+
 	// Room management
 	vector<RoomPlan> m_roomPlans;
 	vector<RoomInstance> m_roomInstances;

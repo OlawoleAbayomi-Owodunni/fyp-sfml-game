@@ -6,7 +6,7 @@
 void PistolWeapon::spawnProjectile(const FireReq& info, std::vector<std::unique_ptr<Projectile>>& projectileList)
 {
 	sf::Vector2f dir = info.aimDir.normalized();
-	float speed = 250.0f;
+	float speed = 550.0f;
 	int damage = 10;
 	projectileList.push_back(std::make_unique<NormalBulletProjectile>(w_spawnPos, dir, speed, damage, info.isFromPlayer));
 }
@@ -14,7 +14,7 @@ void PistolWeapon::spawnProjectile(const FireReq& info, std::vector<std::unique_
 void ARWeapon::spawnProjectile(const FireReq& info, std::vector<std::unique_ptr<Projectile>>& projectileList)
 {
 	sf::Vector2f dir = info.aimDir.normalized();
-	float speed = 270.0f;
+	float speed = 600.f;
 	int damage = 8;
 	projectileList.push_back(std::make_unique<NormalBulletProjectile>(w_spawnPos, dir, speed, damage, info.isFromPlayer));
 }
@@ -22,7 +22,7 @@ void ARWeapon::spawnProjectile(const FireReq& info, std::vector<std::unique_ptr<
 void ShotgunWeapon::spawnProjectile(const FireReq& info, std::vector<std::unique_ptr<Projectile>>& projectileList)
 {
 	sf::Vector2f dir = info.aimDir.normalized();
-	float speed = 240.0f;
+	float speed = 500.f;
 	int damage = 5;
 
 	// For shotgun, we want to spawn multiple projectiles in a spread pattern. E.G: spawn 5 projectiles with a spread of 30 degrees.
