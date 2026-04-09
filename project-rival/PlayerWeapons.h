@@ -3,23 +3,21 @@
 
 class PistolWeapon : public Weapon
 {
-	virtual void spawnProjectile(const  FireInfo& info, std::vector<std::unique_ptr<Projectile>>& projectileList) override;
+public:
+	PistolWeapon() : Weapon(WeaponType::PISTOL) {}
+	virtual void spawnProjectile(const  FireReq& info, std::vector<std::unique_ptr<Projectile>>& projectileList) override;
 };
 
 class ARWeapon: public Weapon
 {
-	virtual void spawnProjectile(const  FireInfo& info, std::vector<std::unique_ptr<Projectile>>& projectileList) override;
-
+public:
+	ARWeapon() : Weapon(WeaponType::ASSAULT_RIFLE) {}
+	virtual void spawnProjectile(const  FireReq& info, std::vector<std::unique_ptr<Projectile>>& projectileList) override;
 };
 
 class ShotgunWeapon :public Weapon
 {
-	virtual void spawnProjectile(const  FireInfo& info, std::vector<std::unique_ptr<Projectile>>& projectileList) override;
-
-};
-
-class BurstRifleWeapon : public Weapon
-{
-	virtual void spawnProjectile(const  FireInfo& info, std::vector<std::unique_ptr<Projectile>>& projectileList) override;
-
+public:
+	ShotgunWeapon() : Weapon(WeaponType::SHOTGUN) {}
+	virtual void spawnProjectile(const  FireReq& info, std::vector<std::unique_ptr<Projectile>>& projectileList) override;
 };

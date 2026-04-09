@@ -1,35 +1,85 @@
 #include "Weapon.h"
+#include <cmath>
 
-void Weapon::update(float dt)
+Weapon::Weapon(WeaponType type)
 {
-	if (w_timeTillNextShot > 0.0f)
-		w_timeTillNextShot -= dt;
+	init(type);
 }
 
-const bool Weapon::canSpawn()
+void Weapon::init(WeaponType type)
 {
-	if(w_shotsRemaining > 0 && w_timeTillNextShot <= 0.0f)
-		return true;
-	else
-		return false;
-}
+	WeaponType weaponType = type;
+	switch(weaponType)
+	{
+		case PISTOL:
+			w_shape.setSize(sf::Vector2f(80.f, 20.f));
+			w_shape.setFillColor(sf::Color::Blue);
 
-void Weapon::fire(const FireInfo & fireInfo, std::vector<std::unique_ptr<Projectile>>&projectileList)
-{
-	w_currentFireInfo = fireInfo;
-	if (w_currentFireInfo.shotsToFire < 1)
-		return;
-	else {
-		w_shotsRemaining = w_currentFireInfo.shotsToFire;
+			w_fireMode = FireMode::AUTOMATIC;
+			w_fireRate = 0.5f;
+			break;
+
+		case ASSAULT_RIFLE:
+			w_shape.setSize(sf::Vector2f(120.f, 20.f));
+			w_shape.setFillColor(sf::Color::Red);
+
+			w_fireMode = FireMode::AUTOMATIC;
+			w_fireRate = 0.1f;
+			break;
+
+		case SHOTGUN:
+			w_shape.setSize(sf::Vector2f(100.f, 25.f));
+			w_shape.setFillColor(sf::Color::Yellow);
+
+			w_fireMode = FireMode::AUTOMATIC;
+			w_fireRate = 1.f;
+			break;
 	}
 
-	while (canSpawn())
+	w_shape.setOrigin({ w_shape.getSize().x / 4.f, w_shape.getSize().y / 2.f });
+
+	w_cooldownRemaining = 0.f;
+}
+
+void Weapon::update(float dt, const sf::Vector2f playerPos, const sf::Vector2f aimDir)
+{
+	handlePositioning(playerPos, aimDir);
+
+	if (w_cooldownRemaining > 0.0f)
+		w_cooldownRemaining -= dt;
+}
+
+void Weapon::render(sf::RenderWindow& window)
+{
+	window.draw(w_shape);
+}
+
+
+void Weapon::handlePositioning(const sf::Vector2f playerPos, const sf::Vector2f aimDir)
+{
+	sf::Vector2f position = playerPos;
+	w_shape.setPosition(position);
+
+	float angle = std::atan2(aimDir.y, aimDir.x);
+	w_shape.setRotation(sf::radians(angle));
+}
+
+void Weapon::fire(const FireReq& req, std::vector<std::unique_ptr<Projectile>>&projectileList)
+{
+	if (w_cooldownRemaining > 0.0f || req.aimDir == sf::Vector2f(0.f, 0.f))
+		return;
+
+	sf::Vector2f muzzleLocalPos = sf::Vector2f(w_shape.getSize().x, w_shape.getSize().y / 2.f);
+	w_spawnPos = w_shape.getTransform().transformPoint(muzzleLocalPos);
+	
+	switch (w_fireMode) 
 	{
-		spawnProjectile(w_currentFireInfo, projectileList);
-		w_shotsRemaining--;
-		if (w_shotsRemaining > 0)
-			w_timeTillNextShot = w_currentFireInfo.secondsBetweenShots;
-		else
-			w_timeTillNextShot = 0.0f;
+	case FireMode::AUTOMATIC:
+		spawnProjectile(req, projectileList);
+		w_cooldownRemaining = w_fireRate;
+		break;
+
+	case FireMode::BURST:
+		break;
 	}
 }

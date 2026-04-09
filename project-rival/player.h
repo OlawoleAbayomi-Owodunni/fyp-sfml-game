@@ -1,10 +1,9 @@
 #pragma once
 #include <SFML/Graphics.hpp>
-#include <Windows.h>
-#include <Xinput.h>
 
 #include "Projectile.h"
 #include "Collision.h"
+#include "Weapon.h"
 
 using namespace sf;
 
@@ -63,5 +62,8 @@ private:
 
 	// projectiles --> test. this will move to weapon class when made
 	std::vector<std::unique_ptr<Projectile>> p_projectiles;
+	std::vector<std::unique_ptr<Weapon>> p_weapons;
+	
+	std::unique_ptr<Weapon> p_currentWeapon;
+	int p_currentWeaponID;
 };
-

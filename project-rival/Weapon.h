@@ -5,45 +5,55 @@
 
 #include "Projectile.h"
 
-//enum WeaponType
-//{
-//	PISTOL,
-//	SHOTGUN,
-//	RIFLE,
-//	// Add more weapon types as needed
-//	
-//	COUNT
-//};
-
-struct FireInfo
+enum WeaponType
 {
-	sf::Vector2f spawnPos;
+	PISTOL,
+	ASSAULT_RIFLE,
+	SHOTGUN,
+	
+	COUNT
+};
+
+enum FireMode
+{
+	AUTOMATIC,
+	BURST
+};
+
+struct FireReq
+{
 	sf::Vector2f aimDir;
 	bool isFromPlayer;
-	
-	int shotsToFire;
-	float secondsBetweenShots;
-
-	//WeaponType weaponType;
 };
 
 class Weapon
 {
 public:
+	Weapon(WeaponType type);
 	virtual ~Weapon() = default;
 
-	virtual void update(float dt);
+	virtual void update(float dt, const sf::Vector2f playerPos, const sf::Vector2f aimDir);
+	virtual void render(sf::RenderWindow& window);
 
-	void fire(const FireInfo& fireInfo, std::vector<std::unique_ptr<Projectile>>& projectileList);
+	void fire(const FireReq& req, std::vector<std::unique_ptr<Projectile>>& projectileList);
+
 
 protected:
-	virtual void spawnProjectile(const FireInfo& info, std::vector<std::unique_ptr<Projectile>>& projectileList) = 0;
+	virtual void spawnProjectile(const FireReq& req, std::vector<std::unique_ptr<Projectile>>& projectileList) = 0;
+
+	sf::Vector2f w_spawnPos;
 
 private:
-	const bool canSpawn();
+	void init(WeaponType type);
+	void handlePositioning(const sf::Vector2f playerPos, const sf::Vector2f aimDir);
 
-	int w_shotsRemaining;
-	float w_timeTillNextShot;
-	FireInfo w_currentFireInfo;
+	FireMode w_fireMode;
+
+	float w_cooldownRemaining;
+	float w_fireRate;
+
+	sf::RectangleShape w_shape;
+
+	FireReq w_fireReq;
 };
 

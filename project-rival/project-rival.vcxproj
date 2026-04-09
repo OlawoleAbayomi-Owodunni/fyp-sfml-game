@@ -26,6 +26,7 @@
     <ClCompile Include="FloorLayout.cpp" />
     <ClCompile Include="LLMService.cpp" />
     <ClCompile Include="NormalBulletProjectile.cpp" />
+    <ClCompile Include="PlayerWeapons.cpp" />
     <ClCompile Include="PortalRoom.cpp" />
     <ClCompile Include="Projectile.cpp" />
     <ClCompile Include="Enemy.cpp" />
@@ -53,6 +54,7 @@
     <ClInclude Include="FloorLayout.h" />
     <ClInclude Include="LLMService.h" />
     <ClInclude Include="NormalBulletProjectile.h" />
+    <ClInclude Include="PlayerWeapons.h" />
     <ClInclude Include="PortalRoom.h" />
     <ClInclude Include="Projectile.h" />
     <ClInclude Include="Enemy.h" />
