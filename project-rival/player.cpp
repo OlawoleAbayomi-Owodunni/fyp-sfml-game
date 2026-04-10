@@ -1,3 +1,5 @@
+#include <iostream>
+
 #include "player.h"
 #include "InputManager.h"
 #include "PlayerWeapons.h"
@@ -42,6 +44,7 @@ void Player::init()
 	p_collisionProfile.mask = CollisionLayer::ENEMY_LAYER | CollisionLayer::ENEMY_BULLET_LAYER | CollisionLayer::WALL_LAYER | CollisionLayer::DOOR_LAYER | CollisionLayer::PORTAL_TRIGGER_LAYER | CollisionLayer::DOOR_TRIGGER_LAYER | CollisionLayer::DAMAGE_TRIGGER_LAYER;
 
 	p_maxHealth = 100;
+	p_isDead = false;
 
 	p_weapons.push_back(std::make_unique<PistolWeapon>());
 	p_weapons.push_back(std::make_unique<ARWeapon>());
@@ -133,6 +136,7 @@ void Player::reset()
 {
 	p_body.setPosition(Vector2f(1400, 500));
 	p_health = p_maxHealth;
+	p_isDead = false;
 }
 
 void Player::handleMovement(float dt)
@@ -194,9 +198,10 @@ void Player::handleAiming(const Vector2f mousePos)
 void Player::takeDamage(int damage)
 {
 	p_health -= damage;
+	std::cout << "Health: " << p_health << "\n";
 	if (p_health <= 0)
 	{
-		reset();
+		p_isDead = true;
 	}
 }
 

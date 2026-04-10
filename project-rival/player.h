@@ -30,6 +30,8 @@ public:
 
 	void hitWall();
 
+	const bool isDead() const { return p_isDead; }
+
 private:
 	// FUNCTIONS
 	void reset();
@@ -56,9 +58,10 @@ private:
 	// entity stats
 	int p_maxHealth;
 	int p_health;
+	bool p_isDead;
 
+	// weapons
 	std::vector<std::unique_ptr<Weapon>> p_weapons;
-
 	std::unique_ptr<Weapon> p_currentWeapon;
 	int p_currentWeaponID;
 };

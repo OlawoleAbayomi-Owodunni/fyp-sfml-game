@@ -181,6 +181,13 @@ void Game::update(float dt)
 
 	InputManager::update();
 	
+	if(m_player.isDead())
+	{
+		cout << "Player has died. Restarting game...\n";
+		gameStart();
+		return;
+	}
+
 	// Game manager controls
 	gameInput();
 	updateActiveRoom();
@@ -188,7 +195,6 @@ void Game::update(float dt)
 	// Update player and enemies
 	Vector2f oldPlayerPos = m_player.getPosition();
 	m_player.update(dt, mousePosF, m_gameProjectiles, m_activeDamageTriggers);
-
 
 	for (auto enemy_it = m_enemies.begin(); enemy_it != m_enemies.end();)
 	{
