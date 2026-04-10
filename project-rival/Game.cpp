@@ -336,16 +336,66 @@ void Game::enterHubWorld()
 {
 	resetGame();
 	m_gameMode = GameMode::HUB;
-
-	m_player.setSpawnPosition(m_playerCamera.getCenter());
-	m_isInRoom = false;
-	m_activeRoomId = -1;
+	buildHubWorld();
 	m_requestNextFloor = false;
 }
 
 void Game::startDungeonRun()
 {
 	gameStart();
+}
+
+void Game::buildHubWorld()
+{	
+	// Set Room PLan for Hub Room
+	RoomPlan hubRoom;
+	hubRoom.id = 0;
+	hubRoom.type = RoomType::SPAWN;
+	hubRoom.seed = 0;
+	hubRoom.width = 30;
+	hubRoom.height = 20;
+	hubRoom.tileSize = 64.f;
+	hubRoom.tileMap.assign(hubRoom.width * hubRoom.height, Tile::FLOOR);
+
+	// Build outer walls
+	for (int col = 0; col < hubRoom.width; col++) {
+		hubRoom.setTile(0, col, Tile::WALL);
+		hubRoom.setTile(hubRoom.height - 1, col, Tile::WALL);
+	}
+	for (int row = 0; row < hubRoom.height; row++) {
+		hubRoom.setTile(row, 0, Tile::WALL);
+		hubRoom.setTile(row, hubRoom.width - 1, Tile::WALL);
+	}
+
+	// Spawn point and Portal placement
+	const sf::Vector2i playerSpawnTile(hubRoom.width / 2, hubRoom.height / 2);
+	const sf::Vector2i portalTile(hubRoom.width / 2, hubRoom.height / 4);
+
+	hubRoom.spawners.push_back({ SpawnerType::PlayerSpawner, playerSpawnTile });
+	hubRoom.spawners.push_back({ SpawnerType::PortalSpawner, portalTile });
+	hubRoom.triggers.push_back({ TriggerType::PortalTrigger, portalTile });
+
+	m_roomPlans.clear();
+	m_roomInstances.clear();
+	m_roomWorldPositions.clear();
+
+	m_roomPlans.push_back(hubRoom);
+	m_roomInstances.resize(m_roomPlans.size());
+	m_roomWorldPositions.resize(m_roomPlans.size());
+
+	// For the hub world, we can just place the single room at the origin
+	m_roomWorldPositions[0] = sf::Vector2f(0.f, 0.f);
+	generateRoom(0);
+	spawnPlayer(0);
+
+	// Set active room to hub
+	m_activeRoomId = 0;
+	m_isInRoom = true;
+	m_isInCombat = false;
+	m_waveCounter = 0;
+
+	m_playerCamera.setCenter(m_player.getPosition());
+	m_floorCamera.setCenter(m_player.getPosition());
 }
 
 /// <summary>

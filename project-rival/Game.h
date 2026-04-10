@@ -89,8 +89,11 @@ private:
 	// Game management
 	void resetGame();
 	void gameStart();
+
 	void enterHubWorld();
 	void startDungeonRun();
+
+	void buildHubWorld();
 
 	// Room management
 	void spawnPlayer(const int roomId);
