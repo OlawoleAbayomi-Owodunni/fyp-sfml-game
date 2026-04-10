@@ -47,7 +47,7 @@ Corridors are currently generated inside `Game.cpp` (as temporary `RoomPlan`s co
 - `player.h` / `player.cpp`
 - `Enemy.h` / `Enemy.cpp` (base class)
 - `GruntEnemy.h` / `GruntEnemy.cpp` (moves using steering)
-- `TurretEnemy.h` / `TurretEnemy.cpp` (static enemy placeholder)
+- `TurretEnemy.h` / `TurretEnemy.cpp` (stationary ranged attacker)
 
 ### Input
 

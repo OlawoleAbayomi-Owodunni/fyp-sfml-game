@@ -6,7 +6,7 @@ param(
 )
 
 if (-not $Out) {
-	$Out = "automation/scripts/output/$Feature-merge-changes.txt"
+	$Out = "project-rival/automation/scripts/output/$Feature-merge-changes.txt"
 }
 
 New-Item -ItemType Directory -Force (Split-Path -Parent $Out) | Out-Null

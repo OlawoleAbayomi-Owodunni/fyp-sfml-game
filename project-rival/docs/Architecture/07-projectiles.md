@@ -2,48 +2,45 @@
 
 [Back to architecture index](README.md)
 
-The project has an early projectile system used for simple shooting.
+The project has a projectile subsystem used by both player and enemy weapons.
 
 ## `Projectile` (base class)
 
-`Projectile` (in `Projectile.h/.cpp`) is an abstract base class.
+`Projectile` (`Projectile.h/.cpp`) is an abstract base class.
 
 It provides:
 
 - a visible body (`sf::RectangleShape`)
-- a lifetime timer (`p_lifetime`)
-- `shouldDestroy()` so owners can remove expired projectiles
-- `render(...)`
+- lifetime tracking (`p_lifetime` + `onExpire(dt)`)
+- collision support via `ICollidable`
+- damage output via `applyDamage()`
+- destruction signaling via `shouldDestroy()` / `destroy()`
 
-It also implements `ICollidable` so projectiles can participate in collision checks.
+Collision profile setup depends on source:
 
-Projectiles also set a collision profile based on who fired them:
-
-- player-fired bullets collide with enemies
-- enemy-fired bullets collide with the player
-
-They also collide with walls (`WALL_LAYER`) & with locked doors (`DOOR_LAYER`) and are destroyed on impact.
-
-Derived projectiles are expected to:
-
-- implement `init()`
-- implement `update(double dt)`
-- call `onExpire(dt)` if they want lifetime-based cleanup
+- player-fired: `PLAYER_BULLET_LAYER`, mask includes `ENEMY_LAYER`
+- enemy-fired: `ENEMY_BULLET_LAYER`, mask includes `PLAYER_LAYER`
+- both also collide with `WALL_LAYER` and `DOOR_LAYER`
 
 ## `NormalBulletProjectile`
 
-`NormalBulletProjectile` is a simple bullet:
+`NormalBulletProjectile` is the current concrete bullet:
 
-- stores a direction
-- moves at a fixed speed each update
-- expires after a short lifetime
+- normalizes direction in `init()`
+- moves by `direction * speed * dt`
+- expires by lifetime or collision destruction
 
-It also sets a basic damage value (`applyDamage()`).
+## Current runtime ownership
 
-(Current `NormalBulletProjectile` damage is set to 10.)
+Projectiles are owned at `Game` level in `m_gameProjectiles`.
 
-## Current ownership
+- Player weapons append projectiles into this shared list.
+- Turret enemies also append projectiles into this shared list.
+- `Game::update(dt)` updates/removes projectiles and applies collision-driven damage.
 
-Right now, the `Player` owns a `std::vector<std::unique_ptr<Projectile>>` and spawns bullets when the player shoots.
+## Damage values (current)
 
-This is marked in code as “test” and can later be moved to a weapon system.
+Damage is defined by the weapon creating the projectile (not by projectile type alone). For example:
+
+- player pistol / AR / shotgun pass different values
+- enemy pistol also uses its own configured value

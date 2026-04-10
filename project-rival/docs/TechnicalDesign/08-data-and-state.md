@@ -6,36 +6,41 @@ This chapter describes what state exists, who owns it, and what might need savin
 
 ## Runtime state (prototype)
 
-- `Game`:
-  - room plans + room instances (multi-room floor view)
-  - active room id (used for future room-local logic)
+- `Game` owns:
+  - room plans + room instances + room world positions
+  - active room id and room-presence flags
   - enemy list
-  - room list / pool (prototype)
-  - combat state (e.g., in-combat flag, wave counter)
-  - floor plan + layout (prototype)
-  - dungeon plan (seed + current floor id)
-  - request-next-floor flag (set by portal interaction)
-- `Player`:
-  - transform/velocity
-  - current projectiles
-  - health (`p_health` / `p_maxHealth`)
-- `Enemy`:
-  - health/dead flag (`e_health` / `e_maxHealth`)
-  - steering state
+  - projectile list
+  - active damage-trigger list
+  - combat state (`m_isInCombat`, `m_waveCounter`)
+  - floor plan + floor layout
+  - dungeon plan (seed + floor progression/completion)
+  - next-floor request flag
+  - camera mode state
+  - LLM service state
+- `Player` owns:
+  - transform/velocity/previous position
+  - aim state + reticle state
+  - health/death state (`p_health`, `p_maxHealth`, `p_isDead`)
+  - weapon list + currently selected weapon id
+- `Enemy` (base + derived) owns:
+  - transform/target + collision profile
+  - health/dead flag (`e_health`, `e_maxHealth`, `e_isDead`)
+  - per-type state (steering agent, attack timers, weapon state)
 
 Additional notes:
 
-- `RoomPlan.spawners` are tile-space markers used to spawn runtime entities when a room is generated.
-- `RoomPlan.triggers` are tile-space markers used to detect interactions (doors / portal).
-- Wall/door collisions currently use a rollback approach by storing “old position” for player/enemies.
+- `RoomPlan.spawners` are tile-space markers used to spawn runtime entities when rooms are generated.
+- `RoomPlan.triggers` are tile-space markers used to build trigger interaction colliders.
+- Wall/door collisions currently use rollback by restoring previous entity position.
 
 ## Procedural generation state
 
-- Seeded generation (planned):
+- Seeded generation:
   - dungeon seed
-  - floor seed(s) derived from dungeon seed + floor index
-- Non-deterministic elements (allowed):
-  - room obstacles and spawns using `rand()` for variety
+  - floor seed(s) derived from `dungeonSeed + floorId`
+- Non-deterministic elements (currently allowed):
+  - room obstacles/spawns using `rand()` for per-run variation
 
 ## Persistence (planned)
 

@@ -129,28 +129,26 @@ In `Game`:
 - Spawner tiles in the plan are used to spawn runtime objects:
   - spawn room spawner → sets the player spawn position (`spawnPlayer(roomId)`)
   - combat room spawners → spawn enemies (`spawnEnemies(roomId)`)
-  - portal room spawner → (visual marker only for now)
-- The room instance is rendered before the entities.
+  - portal room spawner → visual marker/debug shape in room instance
+- The room instances are rendered before entities.
 
-Multi-room rendering (prototype):
+Multi-room rendering:
 
 - `Game` builds a floor instance by computing a world position per room (from the grid layout).
-- All room instances are rendered each frame.
-- There are currently two camera modes:
-  - player-follow camera (`sf::View` centered on the player)
-  - floor overview camera (zoomed out)
+- All room instances are rendered each frame (including corridor instances).
+- Two camera modes are available:
+  - player-follow camera
+  - floor overview camera
 
-Combat room flow (current prototype):
+Combat room flow:
 
-- `Game::updateActiveRoom()` sets `m_activeRoomId` based on which room bounds contains the player.
-- When the player collides with a door trigger in a combat room:
-  - a wave is generated (`CombatRoom::generateNewWave(...)`)
-  - enemies are spawned from the new spawner list
-  - doors are locked for the duration of combat
-- `Game::ManageWave()` starts new waves until `m_waveCounter` reaches 0, then clears the room and unlocks doors.
+- `Game::updateActiveRoom()` sets `m_activeRoomId` based on room bounds containing the player.
+- On combat room door trigger in an uncleared room, combat starts:
+  - generate new wave spawners
+  - spawn enemies
+  - lock doors
+- `Game::ManageWave()` decrements remaining waves as rooms are cleared, then unlocks doors and marks room cleared.
 
-## Likely next steps
+## Next likely steps
 
-- Decide what parts of generation should be deterministic (seed-based) vs “random each run”.
-- Add door geometry and room-to-room connections.
-- Add collision resolution against wall colliders (right now walls are generated + colliders exist, but movement resolution may still be pending).
+- Replace temporary dungeon completion behavior (window close) with proper run-end/hub transition flow.

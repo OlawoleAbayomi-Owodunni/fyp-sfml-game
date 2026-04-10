@@ -97,7 +97,6 @@
     <None Include="..\automation\prompts\player-aiming-mouse-right-stick-reticle-context.md" />
     <None Include="..\automation\prompts\steering-enemy-seek-step-by-step-context.md" />
     <None Include="..\automation\scripts\devlog-dump.ps1" />
-    <None Include="..\automation\scripts\merge-summary-generator.ps1" />
     <None Include="..\CMakePresets.json" />
     <None Include="..\docs\Architecture\01-project-structure.md" />
     <None Include="..\docs\Architecture\02-player.md" />
@@ -122,6 +121,7 @@
     <None Include="..\docs\TechnicalDesign\README.md" />
     <None Include="ASSETS\LLM\MODELS\Llama-3.2-1B-Instruct-Q4_K_M.gguf" />
     <None Include="automation\prompts\level-architecture-roomplan-generator-builder-static-colliders-context.md" />
+    <None Include="automation\scripts\merge-summary-generator.ps1" />
     <None Include="docs\Architecture\10-llm-integration.md" />
   </ItemGroup>
   <ItemGroup>
@@ -135,6 +135,7 @@
     <Text Include="..\automation\scripts\output\floor+dungeon-merge-changes.txt" />
     <Text Include="..\CMakeLists.txt" />
     <Text Include="automation\scripts\output\llm-integration-merge-changes.txt" />
+    <Text Include="automation\scripts\output\weapons-merge-changes.txt" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>

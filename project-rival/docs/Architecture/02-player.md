@@ -6,53 +6,56 @@
 
 ## Responsibilities (current)
 
-- Owns its SFML shape (`p_body`)
-- Reads input (keyboard or gamepad, via `InputManager`)
-- Moves by updating velocity and applying it every update
-- Exposes its position (used as an enemy target)
-
-Also:
-
-- Implements `ICollidable` (so it can participate in collision checks)
-- Has health (`p_health` / `p_maxHealth`) + `takeDamage(...)` (currently resets when health reaches 0)
-- Has basic collision response via `hitWall()` (currently a rollback to the previously stored position)
-
-Currently, the player collides with:
-
-- enemies
-- walls (`WALL_LAYER`)
-- triggers (`PORTAL_TRIGGER_LAYER`)
-
-Also (current prototype features):
-
-- Aiming (mouse or right stick)
-- Shooting simple projectiles
+- Owns its SFML body + reticle (`p_body`, `p_reticle`).
+- Reads movement/aiming/fire input (keyboard + mouse and gamepad via `InputManager`).
+- Handles movement, aim-direction selection, and weapon switching.
+- Implements `ICollidable` for collision checks.
+- Tracks health/death state (`p_health`, `p_maxHealth`, `p_isDead`).
+- Applies basic collision response via `hitWall()` (rollback to previous position).
 
 ## Movement (high level)
 
-Movement is handled in `Player::handleMovement(double dt)`:
+Movement is handled in `Player::handleMovement(float dt)`:
 
-- build a `direction` vector from input
-  - controller: use `InputManager::pad().leftStick()`
-  - keyboard: WASD
-- normalize it so diagonal movement isn’t faster
-- set `p_velocity = direction * p_moveSpeed`
-- move by `p_velocity * dt`
+- build a movement direction from either:
+  - gamepad left stick, or
+  - keyboard WASD
+- normalize where appropriate
+- apply `p_velocity = direction * p_moveSpeed`
+- move via `p_body.move(p_velocity * dt)`
 
-Note: `dt` is expected to be **seconds**.
+`dt` is expected to be in seconds.
 
-## Aiming + shooting (high level)
+## Aiming + weapons (high level)
 
-- Aiming:
-  - controller: uses the right stick (`InputManager::pad().rightStick()`)
-  - mouse: uses the direction from player → mouse position
-- A small “reticle” is drawn in front of the player to show aim direction.
-- Shooting:
-  - right trigger or left mouse button spawns a `NormalBulletProjectile`
-  - projectiles are currently owned by the player (temporary; likely to move into a weapon system later)
+Aiming is handled in `Player::handleAiming(const Vector2f mousePos)`:
+
+- if right stick is active, controller aiming is used
+- if mouse movement is detected, mouse aiming is used
+- aim direction is normalized and used to place the reticle
+
+Weapon flow:
+
+- Player owns a weapon list (`Pistol`, `AR`, `Shotgun`, `Knife`, `Sword`, `Axe`).
+- `RightBumper` / `LeftBumper` cycles current weapon.
+- Fire input (`rightTrigger` or left mouse) dispatches through current weapon:
+  - ranged weapons spawn `Projectile` instances into the game projectile list
+  - melee weapons spawn short-lived `DamageTrigger` instances
+
+## Collision profile (current)
+
+The player collision profile includes collisions with:
+
+- `ENEMY_LAYER`
+- `ENEMY_BULLET_LAYER`
+- `WALL_LAYER`
+- `DOOR_LAYER`
+- `PORTAL_TRIGGER_LAYER`
+- `DOOR_TRIGGER_LAYER`
+- `DAMAGE_TRIGGER_LAYER`
 
 ## Used by other systems
 
-Enemies use the player position as a target (via `m_player.getPosition()`).
-
-Game code also reads the player's projectiles via `m_player.getProjectiles()` for bullet-vs-enemy collision.
+- `Game` passes runtime containers into `Player::update(...)` so player weapons can emit projectiles/triggers.
+- Enemies use player position as their target (`m_player.getPosition()`).
+- `Game` checks `m_player.isDead()` and restarts the run when the player dies.

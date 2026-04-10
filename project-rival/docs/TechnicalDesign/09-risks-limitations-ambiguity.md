@@ -6,30 +6,27 @@ This chapter documents known shortcuts and future technical risks.
 
 ## Known prototype shortcuts
 
-- Collision response is mostly “rollback” (set old position) rather than slide.
+- Collision response is mostly rollback (set previous position) rather than sliding.
 - Collision checks are simple AABB intersections (no broadphase).
-- Player owns bullets (may move to a world/weapon system later).
-- Some generation uses `rand()` directly (non-deterministic by design for room details).
-- Room generation currently does not use `seed` to drive deterministic outcomes (even though `RoomPlan` stores a seed).
-- Door placement currently depends on the generated floor layout (direction inferred from grid positions) and corridor generation assumes doors are aligned well enough to connect.
-- Portal interaction currently advances floors, but completion behavior is temporary (on dungeon complete, the game exits instead of returning to a menu/hub).
-- Active-room detection is a simple bounds check against each room’s rectangle (no spatial indexing).
-- Corridor generation is procedural and may need extra handling for edge cases (misaligned door spans, overlapping corridors, or collisions near door thresholds).
-- LLM integration is currently a thin synchronous wrapper; there is no budgeting for latency, no streaming, and no gameplay-level dialogue system yet.
+- Some generation uses `rand()` directly (non-deterministic room details by design for now).
+- Room generation still does not fully use `RoomPlan.seed` for deterministic local outcomes.
+- Door placement depends on floor-layout direction inference, and corridor generation may need additional edge-case handling.
+- Portal progression completion behavior is temporary (dungeon completion currently closes the game window).
+- Active-room detection is simple bounds checking against room rectangles.
+- Corridor generation is procedural and may need extra handling for alignment/overlap edge cases.
+- LLM integration is async and service-level/debug-trigger only; there is no streaming output, no gameplay-level NPC dialogue system, and no formal latency budget policy yet.
 
 ## Technical risks
 
-- Performance risk if entity counts scale up without broadphase collision.
-- Complexity risk as more room types and interactables are added.
-- Refactor risk when integrating the LLM wrapper and NPC dialogue system.
+- Performance risk if entity counts scale without broadphase/spatial partitioning.
+- Complexity risk as room types/interactions and combat systems expand.
+- Refactor risk when moving from debug LLM flow to production dialogue systems.
 
 ## Ambiguities / decisions still open
 
 - Final architecture style (OOP vs ECS-like patterns).
-- How deterministic “room appearance” should be.
+- How deterministic room appearance/spawn behavior should be long-term.
 - How boss generation presets and constraints should be represented in data.
+- End-of-run transition behavior after final floor completion (menu/hub/results).
 
-## Near-term follow-ups (not blockers)
 
-- Decide whether to keep rollback collisions or implement axis-separated sliding for walls.
-- Decide whether enemy-wall response should differ per enemy type (bounce/slide/stop).

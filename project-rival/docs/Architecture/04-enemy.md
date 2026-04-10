@@ -2,78 +2,55 @@
 
 [Back to architecture index](README.md)
 
-The project currently has an enemy **base class** (`Enemy`) and a couple of concrete enemy types.
+The project currently has an enemy base class (`Enemy`) and two concrete enemy types.
 
 ## `Enemy` (base class)
 
-`Enemy` (in `Enemy.h/.cpp`) is an **abstract base class** (it has pure virtual functions), so it cannot be instantiated directly.
+`Enemy` (`Enemy.h/.cpp`) is an abstract base class.
 
 It provides:
 
-- a visible SFML body (`sf::RectangleShape`)
-- common setup via `initBody(...)`
-- a shared `render(...)`
-- a shared `e_target` member that derived enemies can use
+- shared SFML body setup/rendering (`initBody(...)`, `render(...)`)
+- shared target state (`e_target`)
+- shared collision profile (`ENEMY_LAYER`)
+- shared health/death state (`e_health`, `e_maxHealth`, `e_isDead`)
 
-It also implements `ICollidable` and includes basic “combat” state:
+It also implements `ICollidable` and exposes common behavior like `takeDamage(...)`, `isDead()`, and `reset()`.
 
-- collision profile (layer/mask)
-- health (`e_health` / `e_maxHealth`, via `takeDamage(...)`)
-- death flag (`isDead()`)
-
-It also provides `reset()` (restore start position and health).
-
-Currently, enemies collide with:
-
-- the player
-- player-fired bullets
-- walls (`WALL_LAYER`)
-- locked doors (`DOOR_LAYER`)
-
-Derived classes must implement:
+Derived classes implement:
 
 - `init()`
-- `update(double dt)`
-- `setTarget(const sf::Vector2f& target)`
-- `hitWall()` (wall/door collision response)
+- `update(float dt)`
+- `setTarget(...)`
+- `hitWall()`
 
 ## `GruntEnemy`
 
-`GruntEnemy` (in `GruntEnemy.h/.cpp`) is a steering-driven moving enemy.
+`GruntEnemy` is a steering-driven mover:
 
-- Owns a `SteeringAgent`
-- Owns both `SeekBehaviour` and `ArriveBehaviour`
-- Auto-switches between behaviours based on distance to target (hysteresis via enter/exit distances)
+- owns a `SteeringAgent`
+- switches between `SeekBehaviour` and `ArriveBehaviour` using distance hysteresis
+- uses an `EnemyWeapon` (`KNIFE`) while in arrive range to spawn melee `DamageTrigger`s
 
 ## `TurretEnemy`
 
-`TurretEnemy` (in `TurretEnemy.h/.cpp`) is currently a placeholder enemy that:
+`TurretEnemy` is a stationary attacker:
 
-- has a body
-- stores a target (`setTarget` updates `e_target`)
-- does not yet implement any attack or aiming logic
+- tracks the player target direction
+- updates and renders its `EnemyWeapon` (`PISTOL`)
+- fires projectiles on a randomized cooldown timer
 
-## How enemies are used in the game
+## Game integration
 
-In `Game`, enemies are stored as `std::vector<std::unique_ptr<Enemy>>`.
+`Game` stores enemies in `std::vector<std::unique_ptr<Enemy>>`.
 
-Each update:
+Per update:
 
-- the target is set to the player position (`enemy->setTarget(m_player.getPosition())`)
-- then each enemy is updated (`enemy->update(dt)`)
+- each enemy target is set to player position
+- concrete enemy update path is selected (`TurretEnemy` projectile update, `GruntEnemy` melee-trigger update)
+- dead enemies are removed from the vector
 
-Enemies are spawned when the current room is generated (based on room spawner tiles).
+Collisions/damage are resolved in `Game::CollisionChecks()`:
 
-Collision + damage (current approach):
-
-- If player collides with an enemy, the player takes damage.
-- Player projectiles are checked against enemies; on hit:
-  - enemy takes damage
-  - projectile is destroyed
-- Enemies are checked against static room colliders (walls + locked doors); on hit, `enemy->hitWall()` is called (currently rollback for `GruntEnemy`).
-- Dead enemies are removed from the `m_enemies` list.
-
-## Likely next steps
-
-- Add actual turret behaviour (aiming / firing / cooldown) for `TurretEnemy`.
-- Consider making enemy tuning values configurable (speed/acceleration/radii) per enemy type.
+- bullets/triggers can damage enemies
+- enemies collide with walls and locked doors (`hitWall()` handling)

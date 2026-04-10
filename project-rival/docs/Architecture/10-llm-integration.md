@@ -1,4 +1,4 @@
-# 10) LLM integration (prototype)
+﻿# 10) LLM integration (prototype)
 
 [Back to architecture index](README.md)
 
@@ -23,13 +23,16 @@ Responsibilities:
 
 - Owns an `LLMWrapper` instance.
 - Tracks readiness (`llm_isReady`).
-- Provides a minimal API:
+- Provides API methods for async load + async generate polling flow:
   - `init(modelPath)` → loads a model.
   - `initAsync(modelPath)` → begins loading a model on a worker thread.
   - `tryConsumeInitResult()` → polls for async init completion.
   - `isReady()` → reports status.
+  - `isInitInProgress()` → reports async init status.
+  - `isBusy()` → reports whether a generation request is in progress.
   - `requestGenerate(prompt)` → queues a generation request on a worker thread.
   - `tryConsumeLatestResponse()` → polls for the most recent completed response.
+  - `shutdown()` → joins worker threads and unloads the model.
 
 The game currently uses the async flow (init + request + poll) rather than calling `generateResponse(prompt)` directly.
 
@@ -47,6 +50,15 @@ Notes:
   - `UnloadModel()`
   - `Generate(prompt)`
 
+## Current game usage
+
+`Game` currently:
+
+- starts async model init during construction
+- polls init/result state during `update(dt)`
+- allows a debug generation request on `Num0` (room-context prompt)
+- logs generated response to console when available
+
 ## Model assets
 
 A `.gguf` model is currently present under:
@@ -57,7 +69,7 @@ A `.gguf` model is currently present under:
 
 - Generation is currently asynchronous in the game loop, but responses are consumed as whole strings (no token streaming to UI).
 - No conversation state/history handling exists yet.
-- No gameplay integration exists yet (no NPC entities, no UI layer for dialogue, no prompt templates).
+- No dedicated NPC entities or dialogue UI layer exists yet.
 
 ## Performance notes (local benchmarks)
 

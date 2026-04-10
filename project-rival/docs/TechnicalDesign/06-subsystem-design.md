@@ -12,60 +12,46 @@ Core files:
 
 Key concepts:
 
-- `CollisionLayer` bitflags (e.g., player, enemy, wall).
+- `CollisionLayer` bitflags (player/enemy/bullets/walls/doors/triggers).
 - `CollisionProfile` (layer + mask).
 - `ICollidable` (bounds + profile).
 
 Current behaviour:
 
-- Collision checks are centralized in `Game::update(dt)` (via `Game::CollisionChecks()`) using `CollisionCheck::areColliding(...)`.
+- Collision checks are centralized in `Game::CollisionChecks()` using `CollisionCheck::areColliding(...)`.
 - Response is currently a simple rollback for player/enemies (`hitWall()`) and destruction for projectiles on wall/door hit.
 
-Extension points:
 
-- Replace basic “rollback” collision response with axis-separated slide.
-- Add broadphase if entity counts become high.
 
 ## Rooms / procedural generation
 
 Core files:
 
-- `project-rival/RoomBlueprint.h` (RoomPlan + `IRoomGenerator`)
-- `project-rival/CombatRoom.h/.cpp` (prototype generator)
+- `project-rival/RoomBlueprint.h` (`RoomPlan` + `IRoomGenerator`)
+- `project-rival/CombatRoom.h/.cpp`, `project-rival/SpawnRoom.h/.cpp`, `project-rival/PortalRoom.h/.cpp`
 - `project-rival/RoomInstance.h/.cpp` (runtime build)
-- `project-rival/StaticCollision.h/.cpp` (wall collider type)
+- `project-rival/StaticCollision.h/.cpp` (static collider type)
 
 Key data structures:
 
 - `RoomPlan.tileMap`: 1D array with indexing `row * width + col`.
-- `RoomPlan.spawners`: tile-space markers that can be converted to world-space.
-
-Extension points:
-
-- Add additional generators per room type.
-- Add doors and room-to-room connections.
-- Seeded deterministic dungeon/floor graph generation.
+- `RoomPlan.spawners`: tile-space runtime spawn markers.
+- `RoomPlan.doors` + `RoomPlan.triggers`: room connectivity/interaction metadata.
 
 Current behaviour:
 
-- `CombatRoom` currently chooses a random width/height in a small range.
-- Spawn points and obstacle density are derived from interior size (via `interiorArea`).
-- `RoomInstance` converts all `Tile::WALL` tiles (outer walls + obstacles) into wall shapes + `StaticCollision` colliders.
-- `Game::generateRoom(roomId)` rebuilds the `RoomInstance` from the current `RoomPlan` (used after door lock/unlock or wave generation).
-- `Game::spawnEnemies(roomId)` spawns runtime enemies from `RoomPlan.spawners` (world position = `roomWorldPos + tilePos * tileSize`).
-
-Doors and triggers (current):
-
-- Door tiles can span 2–3 tiles depending on room size.
-- Door tiles create `DoorTrigger` entries.
-- Locked doors become `DOOR_LAYER` colliders at build time.
-- Portal rooms can add a `PortalTrigger` collider.
+- `CombatRoom` chooses random width/height in a small range.
+- Spawn points and obstacle density are derived from interior size (`interiorArea`).
+- `RoomInstance` converts all `Tile::WALL` tiles into wall shapes + wall colliders.
+- Door tiles are rendered; locked doors add `DOOR_LAYER` colliders.
+- Trigger plans become portal/door trigger colliders.
+- `Game::generateRoom(roomId)` rebuilds `RoomInstance` from current `RoomPlan`.
+- `Game::spawnEnemies(roomId)` spawns enemies from `RoomPlan.spawners`.
 
 Corridors (current):
 
-- Corridors are generated at runtime in `Game::buildCorridors()` as `RoomPlan` objects of type `RoomType::CORRIDOR`.
-- Corridor plans are immediately built into `RoomInstance` objects and appended to `m_roomInstances`.
-- Corridors use `Tile::WALL` for borders and a strip of `Tile::FLOOR` through the middle.
+- Generated at runtime in `Game::buildCorridors()` as temporary `RoomPlan` objects of type `RoomType::CORRIDOR`.
+- Immediately built into `RoomInstance` objects and appended to `m_roomInstances`.
 
 ## Floor generation / layout (prototype)
 
@@ -78,18 +64,18 @@ Core files:
 
 Key behaviours:
 
-- The floor plan is generated deterministically from `dungeonSeed + floorId`.
-- Rooms are represented as a graph (edges = connections).
-- The current generator enforces simple constraints (spawn first, portal last, no direct spawn -> portal edge).
-- Room count is currently randomized per floor in the range `[3..10]`.
-- Middle rooms currently resolve to `COMBAT` (other room types are planned).
-- A simple BFS-based layout places rooms on a 2D grid without overlaps.
+- Floor plan is generated deterministically from `dungeonSeed + floorId`.
+- Rooms are a graph (edges = connections).
+- Generator constraints: spawn first, portal last, no direct spawn -> portal edge.
+- Room count currently randomized in `[3..10]`.
+- Middle rooms currently resolve to `COMBAT`.
+- BFS-style layout places rooms on a 2D grid without overlaps.
 - Doors are cleared and re-added to room plans based on graph edges.
 
-Current runtime build:
+Runtime build:
 
-- `Game::buildFloorInstance()` builds all room instances from their plans.
-- `Game::buildCorridors()` builds additional corridor instances that connect matching doors between connected rooms.
+- `Game::buildFloorInstance()` builds all room instances from room plans.
+- `Game::buildCorridors()` builds and appends corridor instances connecting matched door spans.
 
 ## Dungeon progression (prototype)
 
@@ -99,32 +85,31 @@ Core files:
 
 Key behaviours:
 
-- `DungeonPlan` tracks a dungeon seed, current floor id, total floor count, and whether the dungeon is complete.
-- Portal triggers can request a floor advance; `Game` consumes the request and calls `loadNewFloor()`.
+- Tracks dungeon seed, current floor id, floor count, completion flag.
+- Portal trigger interaction requests floor advance; `Game` consumes request and loads next floor.
 
-## Combat / projectiles
+## Combat / projectiles / melee triggers
 
 Core files:
 
+- `project-rival/Weapon.h/.cpp`
+- `project-rival/PlayerWeapons.h/.cpp`
+- `project-rival/EnemyWeapon.h/.cpp`
 - `project-rival/Projectile.h/.cpp`
 - `project-rival/NormalBulletProjectile.h/.cpp`
+- `project-rival/DamageTrigger.h/.cpp`
 
 Key behaviours:
 
-- Projectiles move each update and can expire or be destroyed on collision.
-- Damage is provided via `applyDamage()`.
-
-Current behaviour:
-
-- Player bullets are destroyed when they hit walls.
-- `NormalBulletProjectile` currently applies 10 damage.
-
-(Projectiles also collide with locked doors.)
+- Weapons gate fire by cooldown and emit either projectiles or melee `DamageTrigger`s.
+- Projectile damage is set by weapon spawn functions.
+- `Game` owns projectile and active damage-trigger runtime vectors and updates/removes expired entries.
+- Projectiles collide with walls and locked doors.
 
 Extension points:
 
-- Move projectile ownership from `Player` into a weapon system or a world-level projectile manager.
-- Add weapon types (melee, missiles, etc.).
+- Add richer fire modes/effects.
+- Add new projectile and trigger types.
 
 ## Enemies / AI (steering)
 
@@ -132,21 +117,19 @@ Core files:
 
 - `project-rival/Enemy.h/.cpp`
 - `project-rival/GruntEnemy.h/.cpp`
+- `project-rival/TurretEnemy.h/.cpp`
 - `project-rival/SeekBehaviour.*`, `project-rival/ArriveBehaviour.*`
-
-Key algorithms:
-
-- Steering-based movement (seek/arrive) with behaviour switching based on distance.
 
 Current behaviour:
 
-- Enemies track max health (`e_maxHealth`) and can be reset to their start state via `Enemy::reset()`.
-- Enemies respond to wall/door collisions via `hitWall()` (e.g., `GruntEnemy` rolls back).
+- `GruntEnemy` uses steering movement (`Seek`/`Arrive`) and melee attacks via `EnemyWeapon`.
+- `TurretEnemy` aims at player target and fires projectiles on a randomized timer.
+- Enemies use shared base health/death handling.
 
 Extension points:
 
-- Introduce enemy attacks (turrets firing, cooldowns).
-- Add navigation constraints within rooms.
+- Add navigation/path constraints.
+- Add more enemy archetypes and attack patterns.
 
 ## LLM integration (prototype)
 
@@ -157,19 +140,15 @@ Core files:
 
 Current behaviour:
 
-- The LLM is initialized asynchronously from `Game` using `LLMService::initAsync(modelPath)`.
+- LLM is initialized asynchronously from `Game` via `LLMService::initAsync(modelPath)`.
 - `Game::update(dt)` polls:
-  - `LLMService::tryConsumeInitResult()` to detect init completion/failure
-  - `LLMService::tryConsumeLatestResponse()` to print completed generations
-- Generation requests are queued explicitly using `LLMService::requestGenerate(prompt)`.
-- `LLMService::isReady()` and `LLMService::isBusy()` are used to gate requests.
-
-Synchronous entrypoint:
-
-- `LLMService::init(modelPath)` and direct `generateResponse(prompt)` still exist for synchronous usage, but the current game loop uses the async APIs.
+  - `tryConsumeInitResult()` for init completion/failure
+  - `tryConsumeLatestResponse()` for completed generation output
+- Generation requests are queued using `requestGenerate(prompt)` and gated by `isReady()` / `isBusy()`.
+- `shutdown()` joins worker threads and unloads model.
 
 Extension points:
 
-- Provide a structured NPC dialogue API (speaker id, conversation history, system prompt).
-- Add caching and streaming generation support (if supported by the wrapper).
-- Define safety constraints and prompt templates.
+- Structured NPC dialogue API (speaker id, context/history, templates).
+- Streaming/caching/latency handling.
+- Prompt safety/format constraints.

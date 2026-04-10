@@ -353,9 +353,6 @@
     <None Include="..\automation\prompts\steering-enemy-seek-step-by-step-context.md">
       <Filter>Resource Files\AUTOMATIONS\Agent</Filter>
     </None>
-    <None Include="..\automation\scripts\merge-summary-generator.ps1">
-      <Filter>Resource Files\AUTOMATIONS\Scripts</Filter>
-    </None>
     <None Include="automation\prompts\level-architecture-roomplan-generator-builder-static-colliders-context.md">
       <Filter>Resource Files\AUTOMATIONS\Agent</Filter>
     </None>
@@ -434,6 +431,9 @@
     <None Include="docs\Architecture\10-llm-integration.md">
       <Filter>Resource Files\DOCUMENTATION\Architecture</Filter>
     </None>
+    <None Include="automation\scripts\merge-summary-generator.ps1">
+      <Filter>Resource Files\AUTOMATIONS\Scripts</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Text Include="..\automation\scripts\output\aiming-merge-changes.txt">
@@ -464,6 +464,9 @@
       <Filter>Resource Files\BUILD</Filter>
     </Text>
     <Text Include="automation\scripts\output\llm-integration-merge-changes.txt">
+      <Filter>Resource Files\DOCUMENTATION\Git Summaries</Filter>
+    </Text>
+    <Text Include="automation\scripts\output\weapons-merge-changes.txt">
       <Filter>Resource Files\DOCUMENTATION\Git Summaries</Filter>
     </Text>
   </ItemGroup>
