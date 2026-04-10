@@ -1,7 +1,6 @@
 #pragma once
 #include <SFML/Graphics.hpp>
 
-#include "Projectile.h"
 #include "Collision.h"
 #include "Weapon.h"
 
@@ -14,16 +13,17 @@ public:
 	~Player();
 
 	void init();
-    void update(float dt, const Vector2f& mousePos, std::vector<std::unique_ptr<Projectile>>& gameProjectiles);
+	void update(float dt, const Vector2f& mousePos, std::vector<std::unique_ptr<Projectile>>& gameProjectiles, std::vector<std::unique_ptr<DamageTrigger>>& instantiableTriggers);
 	void render(RenderWindow& window);
 
 	const Vector2f getPosition() const;
+
 	sf::FloatRect getCollisionBounds() const override;
 	CollisionProfile getCollisionProfile() const override;
 
 	void setSpawnPosition(const Vector2f& spawnPos);
 
-  void handleMovement(float dt);
+	void handleMovement(float dt);
 	void handleAiming(const Vector2f mousePos);
 
 	void takeDamage(int damage);
@@ -58,7 +58,7 @@ private:
 	int p_health;
 
 	std::vector<std::unique_ptr<Weapon>> p_weapons;
-	
+
 	std::unique_ptr<Weapon> p_currentWeapon;
 	int p_currentWeaponID;
 };

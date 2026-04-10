@@ -22,6 +22,7 @@
     <ClCompile Include="ArriveBehaviour.cpp" />
     <ClCompile Include="Collision.cpp" />
     <ClCompile Include="CombatRoom.cpp" />
+    <ClCompile Include="DamageTrigger.cpp" />
     <ClCompile Include="EnemyWeapon.cpp" />
     <ClCompile Include="FloorGenerator.cpp" />
     <ClCompile Include="FloorLayout.cpp" />
@@ -49,6 +50,7 @@
     <ClInclude Include="ArriveBehaviour.h" />
     <ClInclude Include="Collision.h" />
     <ClInclude Include="CombatRoom.h" />
+    <ClInclude Include="DamageTrigger.h" />
     <ClInclude Include="DungeonPlan.h" />
     <ClInclude Include="EnemyWeapon.h" />
     <ClInclude Include="FloorBlueprint.h" />

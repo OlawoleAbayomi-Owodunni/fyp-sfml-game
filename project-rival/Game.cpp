@@ -187,7 +187,7 @@ void Game::update(float dt)
 
 	// Update player and enemies
 	Vector2f oldPlayerPos = m_player.getPosition();
-	m_player.update(dt, mousePosF, m_gameProjectiles);
+	m_player.update(dt, mousePosF, m_gameProjectiles, m_activeDamageTriggers);
 
 
 	for (auto enemy_it = m_enemies.begin(); enemy_it != m_enemies.end();)
@@ -196,6 +196,8 @@ void Game::update(float dt)
 		enemy->setTarget(m_player.getPosition());
 		if (auto* turret = dynamic_cast<TurretEnemy*>(enemy.get()))
 			turret->update(dt, m_gameProjectiles);
+		else if (auto* grunt = dynamic_cast<GruntEnemy*>(enemy.get()))
+			grunt->update(dt, m_activeDamageTriggers);
 		else
 			enemy->update(dt);
 
@@ -221,6 +223,15 @@ void Game::update(float dt)
 			++it;
 	}
 
+	// Instantiable trigger management
+	for (auto it = m_activeDamageTriggers.begin(); it != m_activeDamageTriggers.end();)
+	{
+		(*it)->update(dt);
+		if ((*it)->shouldDestroy())
+			it = m_activeDamageTriggers.erase(it);
+		else
+			++it;
+	}
 
 	// Wave management for combat rooms
 	if (m_isInRoom)
@@ -280,11 +291,16 @@ void Game::render()
 
 	m_player.render(m_window);
 
-	for (auto& bullet : m_gameProjectiles)
-		bullet->render(m_window);
-
 	for (auto& enemy : m_enemies) {
 		enemy->render(m_window);
+	}
+
+	for (auto& bullet : m_gameProjectiles) {
+		bullet->render(m_window);
+	}
+
+	for(auto& trigger:m_activeDamageTriggers) {
+		trigger->render(m_window);
 	}
 
 #ifdef TEST_FPS
@@ -380,7 +396,7 @@ void Game::CollisionChecks()
 		// Enemy -> Player
 		if (CollisionCheck::areColliding(m_player, *enemy)) {
 			cout << "Player collided with enemy!\n";
-			m_player.takeDamage(1);
+			
 			break;
 		}
 	}
@@ -410,6 +426,32 @@ void Game::CollisionChecks()
 			m_player.takeDamage(bullet->applyDamage());
 			bullet->destroy();
 			break;
+		}
+	}
+
+	// ------------------- DAMAGE TRIGGER CHECKS -------------------
+	for (auto& trigger : m_activeDamageTriggers)
+	{
+		if (trigger->shouldDestroy())
+			continue;
+
+		// Trigger -> Player
+		if (CollisionCheck::areColliding(*trigger, m_player))
+		{
+			m_player.takeDamage(trigger->damage());
+			break;
+		}
+
+		// Trigger -> Enemy
+		for (auto& enemy : m_enemies) {
+			if (enemy->isDead())
+				continue;
+
+			if (CollisionCheck::areColliding(*trigger, *enemy))
+			{
+				enemy->takeDamage(trigger->damage());
+				break;
+			}
 		}
 	}
 
@@ -600,9 +642,9 @@ void Game::spawnEnemies(const int roomId)
 
 				int enemyToSpawn = rand() % totalEnemyTypes;
 				if (enemyToSpawn == 0)
-					m_enemies.push_back(std::make_unique<GruntEnemy>(spawnPos, 150));
+					m_enemies.push_back(std::make_unique<GruntEnemy>(spawnPos, 50));
 				else if (enemyToSpawn == 1)
-					m_enemies.push_back(std::make_unique<TurretEnemy>(spawnPos, 250));
+					m_enemies.push_back(std::make_unique<TurretEnemy>(spawnPos, 75));
 			}
 		}
 	}

@@ -12,6 +12,9 @@
 #include "player.h"
 #include "Enemy.h"
 
+#include "Projectile.h"
+#include "DamageTrigger.h"
+
 #include "RoomInstance.h"
 #include "FloorGenerator.h"
 #include "FloorLayout.h"
@@ -104,6 +107,9 @@ private:
 
 	// Bullet management
 	std::vector<std::unique_ptr<Projectile>> m_gameProjectiles;
+
+	// Instantiable trigger management
+	std::vector<std::unique_ptr<DamageTrigger>> m_activeDamageTriggers;
 
 	// Room management
 	vector<RoomPlan> m_roomPlans;

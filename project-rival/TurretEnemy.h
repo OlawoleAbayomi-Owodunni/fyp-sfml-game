@@ -18,8 +18,7 @@ public:
 	void hitWall() override;
 
 private:
-	EnemyWeapon e_weapon{ WeaponType::PISTOL };
-
-	float e_fireTimer{ 0.f };
+	EnemyWeapon te_weapon{ WeaponType::PISTOL };
+	float te_fireTimer{ 0.f };
 };
 

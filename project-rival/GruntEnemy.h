@@ -1,5 +1,6 @@
 #pragma once
 #include "Enemy.h"
+#include "EnemyWeapon.h"
 
 class GruntEnemy : public Enemy
 {
@@ -9,6 +10,7 @@ public:
 
 	void init() override;
 	void update(float dt) override;
+	void update(float dt, std::vector<std::unique_ptr<DamageTrigger>>& instantiableTriggers);
 	void setTarget(const Vector2f& target) override;
 
 	void hitWall() override;
@@ -21,5 +23,8 @@ private:
 
 	float e_arriveEnterDist;
 	float e_arriveExitDist;
+
+	EnemyWeapon ge_weapon{ WeaponType::KNIFE };
+	float ge_attackTimer;
 };
 

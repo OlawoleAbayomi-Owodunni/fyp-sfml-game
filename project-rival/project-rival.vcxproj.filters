@@ -133,6 +133,12 @@
     <Filter Include="Header Files\Weapons\PlayerWeapons">
       <UniqueIdentifier>{c99f9334-8a50-4371-b34e-9340b13f5e26}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Weapons\EnemyWeapon">
+      <UniqueIdentifier>{13469c44-582a-4d6d-a4b0-54eac05d26ab}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Weapons\DamageTrigger">
+      <UniqueIdentifier>{ee532bbc-f880-4db6-afc6-41a060c4bf8c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -217,7 +223,10 @@
       <Filter>Header Files\Weapons\PlayerWeapons</Filter>
     </ClCompile>
     <ClCompile Include="EnemyWeapon.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Header Files\Weapons\EnemyWeapon</Filter>
+    </ClCompile>
+    <ClCompile Include="DamageTrigger.cpp">
+      <Filter>Header Files\Weapons\DamageTrigger</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -315,7 +324,10 @@
       <Filter>Header Files\Weapons\PlayerWeapons</Filter>
     </ClInclude>
     <ClInclude Include="EnemyWeapon.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\Weapons\EnemyWeapon</Filter>
+    </ClInclude>
+    <ClInclude Include="DamageTrigger.h">
+      <Filter>Header Files\Weapons\DamageTrigger</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

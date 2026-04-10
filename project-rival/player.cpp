@@ -1,6 +1,5 @@
 #include "player.h"
 #include "InputManager.h"
-#include "NormalBulletProjectile.h"
 #include "PlayerWeapons.h"
 
 namespace {
@@ -40,7 +39,7 @@ void Player::init()
 
 	//collision
 	p_collisionProfile.layer = CollisionLayer::PLAYER_LAYER;
-	p_collisionProfile.mask = CollisionLayer::ENEMY_LAYER | CollisionLayer::ENEMY_BULLET_LAYER | CollisionLayer::WALL_LAYER | CollisionLayer::DOOR_LAYER | CollisionLayer::PORTAL_TRIGGER_LAYER | CollisionLayer::DOOR_TRIGGER_LAYER;
+	p_collisionProfile.mask = CollisionLayer::ENEMY_LAYER | CollisionLayer::ENEMY_BULLET_LAYER | CollisionLayer::WALL_LAYER | CollisionLayer::DOOR_LAYER | CollisionLayer::PORTAL_TRIGGER_LAYER | CollisionLayer::DOOR_TRIGGER_LAYER | CollisionLayer::DAMAGE_TRIGGER_LAYER;
 
 	p_maxHealth = 100;
 
@@ -48,12 +47,18 @@ void Player::init()
 	p_weapons.push_back(std::make_unique<ARWeapon>());
 	p_weapons.push_back(std::make_unique<ShotgunWeapon>());
 
+	p_weapons.push_back(std::make_unique<KnifeWeapon>());
+	p_weapons.push_back(std::make_unique<SwordWeapon>());
+	p_weapons.push_back(std::make_unique<AxeWeapon>());
+
 	p_currentWeaponID = 0;
 
 	reset();
 }
 
-void Player::update(float dt, const Vector2f& mousePos, std::vector<std::unique_ptr<Projectile>>& gameProjectiles)
+void Player::update(float dt, const Vector2f& mousePos, 
+	std::vector<std::unique_ptr<Projectile>>& gameProjectiles, 
+	std::vector<std::unique_ptr<DamageTrigger>>& instantiableTriggers)
 {
 	p_prevPos = p_body.getPosition();
 
@@ -62,17 +67,6 @@ void Player::update(float dt, const Vector2f& mousePos, std::vector<std::unique_
 
 	if (InputManager::pad().rightTrigger()) InputManager::pad().setRumble(0.2f, 0.8f);
 	else InputManager::pad().setRumble(0.0f, 0.0f);
-
-
-	//--------- shooting logic ---------//
-	if (InputManager::pad().rightTrigger() || Mouse::isButtonPressed(Mouse::Button::Left))
-	{
-		FireReq fireInfo;
-		fireInfo.aimDir = p_aimDir;
-		fireInfo.isFromPlayer = true;
-
-		p_weapons[p_currentWeaponID]->fire(fireInfo, gameProjectiles);
-	}
 
 	// Update Weapon (for positioning and firing cooldowns)
 	if (InputManager::pad().pressed(GamepadButton::RightBumper))
@@ -86,6 +80,19 @@ void Player::update(float dt, const Vector2f& mousePos, std::vector<std::unique_
 		p_currentWeaponID--;
 		if (p_currentWeaponID < 0)
 			p_currentWeaponID = p_weapons.size() - 1;
+	}
+
+	//--------- shooting logic ---------//
+	if (InputManager::pad().rightTrigger() || Mouse::isButtonPressed(Mouse::Button::Left))
+	{
+		FireReq fireInfo;
+		fireInfo.aimDir = p_aimDir;
+		fireInfo.isFromPlayer = true;
+
+		if (p_weapons[p_currentWeaponID]->isMelee())
+			p_weapons[p_currentWeaponID]->fire(fireInfo, instantiableTriggers);
+		else
+			p_weapons[p_currentWeaponID]->fire(fireInfo, gameProjectiles);
 	}
 
 	p_weapons[p_currentWeaponID]->update(dt, p_body.getPosition(), p_aimDir);
