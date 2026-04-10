@@ -14,6 +14,7 @@ public:
 
 	void init();
 	void update(float dt, const Vector2f& mousePos, std::vector<std::unique_ptr<Projectile>>& gameProjectiles, std::vector<std::unique_ptr<DamageTrigger>>& instantiableTriggers);
+	void ManageWeapons(std::vector<std::unique_ptr<DamageTrigger>>& instantiableTriggers, std::vector<std::unique_ptr<Projectile>>& gameProjectiles, float dt);
 	void render(RenderWindow& window);
 
 	const Vector2f getPosition() const;
@@ -64,4 +65,9 @@ private:
 	std::vector<std::unique_ptr<Weapon>> p_weapons;
 	std::unique_ptr<Weapon> p_currentWeapon;
 	int p_currentWeaponID;
+	
+	float p_rumbleTimer;
+	float p_lowRumble;
+	float p_highRumble;
+
 };

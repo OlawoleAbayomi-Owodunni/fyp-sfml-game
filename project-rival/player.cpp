@@ -43,9 +43,11 @@ void Player::init()
 	p_collisionProfile.layer = CollisionLayer::PLAYER_LAYER;
 	p_collisionProfile.mask = CollisionLayer::ENEMY_LAYER | CollisionLayer::ENEMY_BULLET_LAYER | CollisionLayer::WALL_LAYER | CollisionLayer::DOOR_LAYER | CollisionLayer::PORTAL_TRIGGER_LAYER | CollisionLayer::DOOR_TRIGGER_LAYER | CollisionLayer::DAMAGE_TRIGGER_LAYER;
 
+	// stats
 	p_maxHealth = 100;
 	p_isDead = false;
 
+	// Weapons
 	p_weapons.push_back(std::make_unique<PistolWeapon>());
 	p_weapons.push_back(std::make_unique<ARWeapon>());
 	p_weapons.push_back(std::make_unique<ShotgunWeapon>());
@@ -55,6 +57,8 @@ void Player::init()
 	p_weapons.push_back(std::make_unique<AxeWeapon>());
 
 	p_currentWeaponID = 0;
+	
+	p_rumbleTimer = 0.f;
 
 	reset();
 }
@@ -68,39 +72,8 @@ void Player::update(float dt, const Vector2f& mousePos,
 	handleMovement(dt);
 	handleAiming(mousePos);
 
-	if (InputManager::pad().rightTrigger()) InputManager::pad().setRumble(0.2f, 0.8f);
-	else InputManager::pad().setRumble(0.0f, 0.0f);
-
-	// Update Weapon (for positioning and firing cooldowns)
-	if (InputManager::pad().pressed(GamepadButton::RightBumper))
-	{
-		p_currentWeaponID++;
-		if (p_currentWeaponID >= p_weapons.size())
-			p_currentWeaponID = 0;
-	}
-	if (InputManager::pad().pressed(GamepadButton::LeftBumper))
-	{
-		p_currentWeaponID--;
-		if (p_currentWeaponID < 0)
-			p_currentWeaponID = p_weapons.size() - 1;
-	}
-
-	//--------- shooting logic ---------//
-	if (InputManager::pad().rightTrigger() || Mouse::isButtonPressed(Mouse::Button::Left))
-	{
-		FireReq fireInfo;
-		fireInfo.aimDir = p_aimDir;
-		fireInfo.isFromPlayer = true;
-
-		if (p_weapons[p_currentWeaponID]->isMelee())
-			p_weapons[p_currentWeaponID]->fire(fireInfo, instantiableTriggers);
-		else
-			p_weapons[p_currentWeaponID]->fire(fireInfo, gameProjectiles);
-	}
-
-	p_weapons[p_currentWeaponID]->update(dt, p_body.getPosition(), p_aimDir);
+	ManageWeapons(instantiableTriggers, gameProjectiles, dt);
 }
-
 
 void Player::render(RenderWindow& window)
 {
@@ -137,6 +110,9 @@ void Player::reset()
 	p_body.setPosition(Vector2f(1400, 500));
 	p_health = p_maxHealth;
 	p_isDead = false;
+	p_rumbleTimer = 0.f;
+	p_lowRumble = 0.f;
+	p_highRumble = 0.f;
 }
 
 void Player::handleMovement(float dt)
@@ -194,6 +170,79 @@ void Player::handleAiming(const Vector2f mousePos)
 	p_prevMousePos = mousePos;
 
 }
+
+void Player::ManageWeapons(std::vector<std::unique_ptr<DamageTrigger>>& instantiableTriggers, std::vector<std::unique_ptr<Projectile>>& gameProjectiles, float dt)
+{
+	// Update Weapon (for positioning and firing cooldowns)
+	if (InputManager::pad().pressed(GamepadButton::RightBumper))
+	{
+		p_currentWeaponID++;
+		if (p_currentWeaponID >= p_weapons.size())
+			p_currentWeaponID = 0;
+	}
+	if (InputManager::pad().pressed(GamepadButton::LeftBumper))
+	{
+		p_currentWeaponID--;
+		if (p_currentWeaponID < 0)
+			p_currentWeaponID = p_weapons.size() - 1;
+	}
+
+	//--------- shooting logic ---------//
+	bool isAttacking = false;
+	if (InputManager::pad().rightTrigger() || Mouse::isButtonPressed(Mouse::Button::Left))
+	{
+		FireReq fireInfo;
+		fireInfo.aimDir = p_aimDir;
+		fireInfo.isFromPlayer = true;
+
+		if (p_weapons[p_currentWeaponID]->isMelee())
+		{
+			auto const triggersBefore = instantiableTriggers.size();
+			p_weapons[p_currentWeaponID]->fire(fireInfo, instantiableTriggers);
+			isAttacking = (instantiableTriggers.size() > triggersBefore);
+		}
+		else
+		{
+			auto const bulletsBefore = gameProjectiles.size();
+			p_weapons[p_currentWeaponID]->fire(fireInfo, gameProjectiles);
+			isAttacking = (gameProjectiles.size() > bulletsBefore);
+		}
+	}
+
+	// Rumble logic
+	if (isAttacking)
+	{
+		switch (p_weapons[p_currentWeaponID]->rumbleIntensity())
+		{
+		case Intensity::LOW:
+			p_rumbleTimer = 0.05f;
+			p_lowRumble = 0.2f;
+			p_highRumble = 0.2f;
+			break;
+		case Intensity::MEDIUM:
+			p_rumbleTimer = 0.05f;
+			p_lowRumble = 0.2f;
+			p_highRumble = 0.5f;
+			break;
+		case Intensity::HIGH:
+			p_rumbleTimer = 0.1f;
+			p_lowRumble = 0.8f;
+			p_highRumble = 0.8f;
+			break;
+		}
+	}
+
+	if (p_rumbleTimer > 0.f) {
+		p_rumbleTimer -= dt;
+		InputManager::pad().setRumble(p_lowRumble, p_highRumble);
+	}
+	else
+		InputManager::pad().setRumble(0.0f, 0.0f);
+
+
+	p_weapons[p_currentWeaponID]->update(dt, p_body.getPosition(), p_aimDir);
+}
+
 
 void Player::takeDamage(int damage)
 {

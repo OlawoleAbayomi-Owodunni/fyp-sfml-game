@@ -27,6 +27,13 @@ enum FireMode
 	BURST
 };
 
+enum Intensity
+{
+	LOW,
+	MEDIUM,
+	HIGH
+};
+
 struct FireReq
 {
 	sf::Vector2f aimDir;
@@ -46,6 +53,7 @@ public:
 	void fire(const FireReq& req, std::vector<std::unique_ptr<DamageTrigger>>& damageTriggerList);
 
 	const bool isMelee() const { return w_isMelee; }
+	const Intensity rumbleIntensity() const { return w_rumbleIntensity; }
 
 protected:
 	virtual void spawnProjectile(const FireReq& req, std::vector<std::unique_ptr<Projectile>>& projectileList) = 0;
@@ -67,5 +75,7 @@ private:
 	FireReq w_fireReq;
 
 	bool w_isMelee;
+
+	Intensity w_rumbleIntensity;
 };
 

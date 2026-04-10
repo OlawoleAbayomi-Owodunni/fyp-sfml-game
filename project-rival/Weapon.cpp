@@ -17,6 +17,7 @@ void Weapon::init(WeaponType type)
 			w_shape.setFillColor(sf::Color::Blue);
 			w_fireMode = FireMode::AUTOMATIC;
 			w_fireRate = 0.5f;
+			w_rumbleIntensity = Intensity::LOW;
 			break;
 
 		case ASSAULT_RIFLE:
@@ -24,6 +25,7 @@ void Weapon::init(WeaponType type)
 			w_shape.setFillColor(sf::Color::Red);
 			w_fireMode = FireMode::AUTOMATIC;
 			w_fireRate = 0.1f;
+			w_rumbleIntensity = Intensity::MEDIUM;
 			break;
 
 		case SHOTGUN:
@@ -31,6 +33,7 @@ void Weapon::init(WeaponType type)
 			w_shape.setFillColor(sf::Color::Yellow);
 			w_fireMode = FireMode::AUTOMATIC;
 			w_fireRate = 1.f;
+			w_rumbleIntensity = Intensity::HIGH;
 			break;
 
 		// Melee
@@ -39,6 +42,7 @@ void Weapon::init(WeaponType type)
 			w_shape.setFillColor(sf::Color::Blue);
 			w_fireMode = FireMode::AUTOMATIC;
 			w_fireRate = 0.25f;
+			w_rumbleIntensity = Intensity::LOW;
 			break;
 
 		case SWORD:
@@ -46,6 +50,7 @@ void Weapon::init(WeaponType type)
 			w_shape.setFillColor(sf::Color::Green);
 			w_fireMode = FireMode::AUTOMATIC;
 			w_fireRate = 0.4f;
+			w_rumbleIntensity = Intensity::MEDIUM;
 			break;
 
 		case AXE:
@@ -53,6 +58,7 @@ void Weapon::init(WeaponType type)
 			w_shape.setFillColor(sf::Color::Red);
 			w_fireMode = FireMode::AUTOMATIC;
 			w_fireRate = 0.6f;
+			w_rumbleIntensity = Intensity::HIGH;
 			break;
 	}
 
