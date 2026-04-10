@@ -174,27 +174,38 @@ void Game::processGameEvents(const sf::Event& event)
 
 
 ////////////////////////////////////////////////////////////
-void Game::update(double dt)
+void Game::update(float dt)
 {
 	const Vector2i mousePos = Mouse::getPosition(m_window);
 	const Vector2f mousePosF = m_window.mapPixelToCoords(mousePos);
 
 	InputManager::update();
 	
+	if(m_player.isDead())
+	{
+		cout << "Player has died. Restarting game...\n";
+		gameStart();
+		return;
+	}
+
 	// Game manager controls
 	gameInput();
 	updateActiveRoom();
 
 	// Update player and enemies
 	Vector2f oldPlayerPos = m_player.getPosition();
-	m_player.update(dt, mousePosF);
-
+	m_player.update(dt, mousePosF, m_gameProjectiles, m_activeDamageTriggers);
 
 	for (auto enemy_it = m_enemies.begin(); enemy_it != m_enemies.end();)
 	{
 		auto& enemy = *enemy_it;
 		enemy->setTarget(m_player.getPosition());
-		enemy->update(dt);
+		if (auto* turret = dynamic_cast<TurretEnemy*>(enemy.get()))
+			turret->update(dt, m_gameProjectiles);
+		else if (auto* grunt = dynamic_cast<GruntEnemy*>(enemy.get()))
+			grunt->update(dt, m_activeDamageTriggers);
+		else
+			enemy->update(dt);
 
 		// Check if enemy is dead and remove if so
 		if (enemy->isDead())
@@ -208,6 +219,25 @@ void Game::update(double dt)
 	//Collision checks
 	CollisionChecks();
 
+	// Projectile Management
+	for (auto it = m_gameProjectiles.begin(); it != m_gameProjectiles.end();)
+	{
+		(*it)->update(dt);
+		if ((*it)->shouldDestroy())
+			it = m_gameProjectiles.erase(it);
+		else
+			++it;
+	}
+
+	// Instantiable trigger management
+	for (auto it = m_activeDamageTriggers.begin(); it != m_activeDamageTriggers.end();)
+	{
+		(*it)->update(dt);
+		if ((*it)->shouldDestroy())
+			it = m_activeDamageTriggers.erase(it);
+		else
+			++it;
+	}
 
 	// Wave management for combat rooms
 	if (m_isInRoom)
@@ -269,6 +299,14 @@ void Game::render()
 
 	for (auto& enemy : m_enemies) {
 		enemy->render(m_window);
+	}
+
+	for (auto& bullet : m_gameProjectiles) {
+		bullet->render(m_window);
+	}
+
+	for(auto& trigger:m_activeDamageTriggers) {
+		trigger->render(m_window);
 	}
 
 #ifdef TEST_FPS
@@ -364,18 +402,18 @@ void Game::CollisionChecks()
 		// Enemy -> Player
 		if (CollisionCheck::areColliding(m_player, *enemy)) {
 			cout << "Player collided with enemy!\n";
-			m_player.takeDamage(1);
+			
 			break;
 		}
 	}
 
 	// ------------------- BULLET CHECKS -------------------
-	for (auto& bullet : m_player.getProjectiles())
+	for (auto& bullet : m_gameProjectiles)
 	{
 		if (bullet->shouldDestroy())
 			continue;
 
-		// Bullet -> Enemy
+		// Bullet -> Enemy (Player Projectiles)
 		for (auto& enemy : m_enemies) {
 			if (enemy->isDead())
 				continue;
@@ -384,6 +422,40 @@ void Game::CollisionChecks()
 			{
 				enemy->takeDamage(bullet->applyDamage());
 				bullet->destroy();
+				break;
+			}
+		}
+
+		// Bullet -> Player (Enemy Projectiles)
+		if (CollisionCheck::areColliding(m_player, *bullet))
+		{
+			m_player.takeDamage(bullet->applyDamage());
+			bullet->destroy();
+			break;
+		}
+	}
+
+	// ------------------- DAMAGE TRIGGER CHECKS -------------------
+	for (auto& trigger : m_activeDamageTriggers)
+	{
+		if (trigger->shouldDestroy())
+			continue;
+
+		// Trigger -> Player
+		if (CollisionCheck::areColliding(*trigger, m_player))
+		{
+			m_player.takeDamage(trigger->damage());
+			break;
+		}
+
+		// Trigger -> Enemy
+		for (auto& enemy : m_enemies) {
+			if (enemy->isDead())
+				continue;
+
+			if (CollisionCheck::areColliding(*trigger, *enemy))
+			{
+				enemy->takeDamage(trigger->damage());
 				break;
 			}
 		}
@@ -406,8 +478,8 @@ void Game::CollisionChecks()
 					break;
 				}
 
-				// Wall/Door -> Player Projectiles
-				for (auto& bullet : m_player.getProjectiles())
+				// Wall/Door -> Projectiles
+				for (auto& bullet : m_gameProjectiles)
 				{
 					if (bullet->shouldDestroy())
 						continue;
@@ -576,9 +648,9 @@ void Game::spawnEnemies(const int roomId)
 
 				int enemyToSpawn = rand() % totalEnemyTypes;
 				if (enemyToSpawn == 0)
-					m_enemies.push_back(std::make_unique<GruntEnemy>(spawnPos, 150));
+					m_enemies.push_back(std::make_unique<GruntEnemy>(spawnPos, 50));
 				else if (enemyToSpawn == 1)
-					m_enemies.push_back(std::make_unique<TurretEnemy>(spawnPos, 250));
+					m_enemies.push_back(std::make_unique<TurretEnemy>(spawnPos, 75));
 			}
 		}
 	}

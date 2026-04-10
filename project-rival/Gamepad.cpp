@@ -93,8 +93,8 @@ uint16_t Gamepad::toXInputMask(GamepadButton button)
 	case GamepadButton::B: return XINPUT_GAMEPAD_B;
 	case GamepadButton::X: return XINPUT_GAMEPAD_X;
 	case GamepadButton::Y: return XINPUT_GAMEPAD_Y;
-	case GamepadButton::LeftShoulder: return XINPUT_GAMEPAD_LEFT_SHOULDER;
-	case GamepadButton::RightShoulder: return XINPUT_GAMEPAD_RIGHT_SHOULDER;
+	case GamepadButton::LeftBumper: return XINPUT_GAMEPAD_LEFT_SHOULDER;
+	case GamepadButton::RightBumper: return XINPUT_GAMEPAD_RIGHT_SHOULDER;
 	case GamepadButton::Select: return XINPUT_GAMEPAD_BACK;
 	case GamepadButton::Start: return XINPUT_GAMEPAD_START;
 	case GamepadButton::LeftThumb: return XINPUT_GAMEPAD_LEFT_THUMB;

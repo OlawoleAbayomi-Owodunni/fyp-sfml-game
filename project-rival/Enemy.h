@@ -21,7 +21,7 @@ public:
 	Enemy(const sf::Vector2f startPos, int totalHealth);
 
 	virtual void init() = 0;
-	virtual void update(double dt) = 0;
+	virtual void update(float dt) = 0;
 	virtual void render(sf::RenderWindow& window);
 	virtual void reset();
 

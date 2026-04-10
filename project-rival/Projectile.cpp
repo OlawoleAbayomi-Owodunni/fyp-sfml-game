@@ -1,7 +1,7 @@
 #include "Projectile.h"
 
-Projectile::Projectile(sf::Vector2f spawnPoint, float lifetime, bool isFromPlayer) :
-	p_spawnPoint(spawnPoint), p_lifetime(lifetime), p_isFromPlayer(isFromPlayer)
+Projectile::Projectile(sf::Vector2f spawnPoint, sf::Vector2f direction, float speed, int damage, bool isFromPlayer) :
+	p_spawnPoint(spawnPoint), p_direction(direction), p_speed(speed), p_damage(damage), p_isFromPlayer(isFromPlayer)
 {
 	init_body();
 

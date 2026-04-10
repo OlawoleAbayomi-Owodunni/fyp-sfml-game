@@ -8,7 +8,7 @@ Enemy::Enemy(const sf::Vector2f startPos, int totalHealth) :
 	e_isDead = false;
 
 	e_collisionProfile.layer = CollisionLayer::ENEMY_LAYER;
-	e_collisionProfile.mask = CollisionLayer::PLAYER_LAYER | CollisionLayer::PLAYER_BULLET_LAYER | CollisionLayer::WALL_LAYER | CollisionLayer::DOOR_LAYER;
+	e_collisionProfile.mask = CollisionLayer::PLAYER_LAYER | CollisionLayer::PLAYER_BULLET_LAYER | CollisionLayer::WALL_LAYER | CollisionLayer::DOOR_LAYER | CollisionLayer::DAMAGE_TRIGGER_LAYER;
 }
 
 void Enemy::initBody(const sf::Vector2f& size, const sf::Color& colour)

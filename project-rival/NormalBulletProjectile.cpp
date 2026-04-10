@@ -1,25 +1,21 @@
 #include "NormalBulletProjectile.h"
 
-NormalBulletProjectile::NormalBulletProjectile(sf::Vector2f spawnPoint, sf::Vector2f direction, bool isFromPlayer) :
-	Projectile(spawnPoint, nbp_lifetime, isFromPlayer), nbp_dir(direction)
+NormalBulletProjectile::NormalBulletProjectile(sf::Vector2f spawnPoint, sf::Vector2f direction, float speed, int damage, bool isFromPlayer) :
+	Projectile(spawnPoint, direction, speed, damage, isFromPlayer)
 {
 	init();
 }
 
 void NormalBulletProjectile::init()
 {
-	if (nbp_dir != sf::Vector2f{ 0.f,0.f })
-		nbp_dir = nbp_dir.normalized();
+	if (p_direction != sf::Vector2f{ 0.f,0.f })
+		p_direction = p_direction.normalized();
 	else
 		destroy();
-
-	// set damage
-	p_damage = 10;
 }
 
-void NormalBulletProjectile::update(double dt)
+void NormalBulletProjectile::update(float dt)
 {
-	float dtf = static_cast<float>(dt);
-	p_body.move(nbp_dir * nbp_speed * dtf);
-	onExpire(dtf);
+	p_body.move(p_direction * p_speed * dt);
+	onExpire(dt);
 }

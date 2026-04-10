@@ -12,6 +12,9 @@
 #include "player.h"
 #include "Enemy.h"
 
+#include "Projectile.h"
+#include "DamageTrigger.h"
+
 #include "RoomInstance.h"
 #include "FloorGenerator.h"
 #include "FloorLayout.h"
@@ -45,7 +48,7 @@ public:
 
 protected:
 	void init();
-	void update(double dt);
+	void update(float dt);
 
 	void ManageWave();
 
@@ -61,7 +64,7 @@ protected:
 
 #ifdef TEST_FPS
 	sf::Text x_updateFPS{ m_arialFont };	// text used to display updates per second.
-	sf::Text x_drawFPS{  m_arialFont };	// text used to display draw calls per second.
+	sf::Text x_drawFPS{ m_arialFont };	// text used to display draw calls per second.
 	sf::Time x_secondTime{ sf::Time::Zero };			// counter used to establish when a second has passed.
 	int x_updateFrameCount{ 0 };						// updates per second counter.
 	int x_drawFrameCount{ 0 };							// draws per second counter.
@@ -71,8 +74,8 @@ private:
 	// ----------------------------------> FUNCTIONS <---------------------------------- //
 	// Update subfunctions
 	void CollisionChecks();
-	void gameInput();	
-	
+	void gameInput();
+
 	// Game management
 	void resetGame();
 	void gameStart();
@@ -92,7 +95,7 @@ private:
 	// Game Management
 	sf::View m_gameCamera;
 	bool m_isPlayerCamera;
-	
+
 	// Player management
 	Player m_player;
 	bool m_isInCombat;
@@ -101,6 +104,12 @@ private:
 
 	// Enemy management
 	std::vector<std::unique_ptr<Enemy>> m_enemies;
+
+	// Bullet management
+	std::vector<std::unique_ptr<Projectile>> m_gameProjectiles;
+
+	// Instantiable trigger management
+	std::vector<std::unique_ptr<DamageTrigger>> m_activeDamageTriggers;
 
 	// Room management
 	vector<RoomPlan> m_roomPlans;

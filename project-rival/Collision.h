@@ -20,6 +20,7 @@ enum CollisionLayer : uint32_t
 	// Trigger layers
 	PORTAL_TRIGGER_LAYER = 1 << 6,
 	DOOR_TRIGGER_LAYER = 1 << 7,
+	DAMAGE_TRIGGER_LAYER = 1 << 8,
 
 	ALL = 0xFFFFFFFF
 };

@@ -22,10 +22,13 @@
     <ClCompile Include="ArriveBehaviour.cpp" />
     <ClCompile Include="Collision.cpp" />
     <ClCompile Include="CombatRoom.cpp" />
+    <ClCompile Include="DamageTrigger.cpp" />
+    <ClCompile Include="EnemyWeapon.cpp" />
     <ClCompile Include="FloorGenerator.cpp" />
     <ClCompile Include="FloorLayout.cpp" />
     <ClCompile Include="LLMService.cpp" />
     <ClCompile Include="NormalBulletProjectile.cpp" />
+    <ClCompile Include="PlayerWeapons.cpp" />
     <ClCompile Include="PortalRoom.cpp" />
     <ClCompile Include="Projectile.cpp" />
     <ClCompile Include="Enemy.cpp" />
@@ -41,17 +44,21 @@
     <ClCompile Include="SpawnRoom.cpp" />
     <ClCompile Include="StaticCollision.cpp" />
     <ClCompile Include="TurretEnemy.cpp" />
+    <ClCompile Include="Weapon.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ArriveBehaviour.h" />
     <ClInclude Include="Collision.h" />
     <ClInclude Include="CombatRoom.h" />
+    <ClInclude Include="DamageTrigger.h" />
     <ClInclude Include="DungeonPlan.h" />
+    <ClInclude Include="EnemyWeapon.h" />
     <ClInclude Include="FloorBlueprint.h" />
     <ClInclude Include="FloorGenerator.h" />
     <ClInclude Include="FloorLayout.h" />
     <ClInclude Include="LLMService.h" />
     <ClInclude Include="NormalBulletProjectile.h" />
+    <ClInclude Include="PlayerWeapons.h" />
     <ClInclude Include="PortalRoom.h" />
     <ClInclude Include="Projectile.h" />
     <ClInclude Include="Enemy.h" />
@@ -68,6 +75,7 @@
     <ClInclude Include="StaticCollision.h" />
     <ClInclude Include="Steering.h" />
     <ClInclude Include="TurretEnemy.h" />
+    <ClInclude Include="Weapon.h" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="ASSETS\IMAGES\SFML-LOGO.png">

@@ -1,10 +1,8 @@
 #pragma once
 #include <SFML/Graphics.hpp>
-#include <Windows.h>
-#include <Xinput.h>
 
-#include "Projectile.h"
 #include "Collision.h"
+#include "Weapon.h"
 
 using namespace sf;
 
@@ -15,24 +13,24 @@ public:
 	~Player();
 
 	void init();
-	void update(double dt, const Vector2f& mousePos);
+	void update(float dt, const Vector2f& mousePos, std::vector<std::unique_ptr<Projectile>>& gameProjectiles, std::vector<std::unique_ptr<DamageTrigger>>& instantiableTriggers);
 	void render(RenderWindow& window);
 
 	const Vector2f getPosition() const;
+
 	sf::FloatRect getCollisionBounds() const override;
 	CollisionProfile getCollisionProfile() const override;
 
 	void setSpawnPosition(const Vector2f& spawnPos);
 
-	void handleMovement(double dt);
+	void handleMovement(float dt);
 	void handleAiming(const Vector2f mousePos);
 
 	void takeDamage(int damage);
 
 	void hitWall();
 
-	// this functions will likely move to weapon class when made
-	std::vector<std::unique_ptr<Projectile>>& getProjectiles();
+	const bool isDead() const { return p_isDead; }
 
 private:
 	// FUNCTIONS
@@ -60,8 +58,10 @@ private:
 	// entity stats
 	int p_maxHealth;
 	int p_health;
+	bool p_isDead;
 
-	// projectiles --> test. this will move to weapon class when made
-	std::vector<std::unique_ptr<Projectile>> p_projectiles;
+	// weapons
+	std::vector<std::unique_ptr<Weapon>> p_weapons;
+	std::unique_ptr<Weapon> p_currentWeapon;
+	int p_currentWeaponID;
 };
-
