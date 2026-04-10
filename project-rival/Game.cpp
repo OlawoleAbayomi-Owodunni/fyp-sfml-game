@@ -48,7 +48,7 @@ void Game::init()
 	x_drawFPS.setFillColor(sf::Color::White);
 #endif
 
-	gameStart();
+	enterHubWorld();
 }
 
 ////////////////////////////////////////////////////////////
@@ -113,64 +113,33 @@ void Game::processGameEvents(const sf::Event& event)
 		case sf::Keyboard::Scancode::Escape:
 			m_window.close();
 			break;
-		
+
 		case sf::Keyboard::Scancode::Num0:
-			if (!m_llmManager.isReady()) {
-				cout << "LLM model is not ready.\n";
+			if (m_gameMode != GameMode::DUNGEON || m_activeRoomId < 0 || m_activeRoomId >= static_cast<int>(m_roomPlans.size()))
+			{
+				cout << "No active dungeon room for LLM prompt.\n";
+				break;
 			}
-			else {
-				// LLM Prompt/Response test
-				// Request generation of p
-				if (!m_llmManager.isBusy())
-				{
-					// Generate Prompt
-					RoomPlan currRoom = m_roomPlans[m_activeRoomId];
-
-					std::string roomTypeStr;
-					switch (currRoom.type) {
-					case RoomType::CORRIDOR:
-						roomTypeStr = "Corridor";
-						break;
-					case RoomType::SPAWN:
-						roomTypeStr = "Spawn Room";
-						break;
-					case RoomType::PORTAL:
-						roomTypeStr = "Portal Room";
-						break;
-					case RoomType::COMBAT:
-						roomTypeStr = "Combat Room";
-						break;
-					}
-
-					std::string clearedStr = currRoom.isCleared ? "Yes" : "No";
-
-					cout << "Generating response...\n";
-					const std::string prompt = "Generate a 2 sentence description of the room the player is in currently based on the following properties: Room Type: " + roomTypeStr
-						+ ", Is Room Cleared: " + clearedStr
-						+ ", Room Height: " + to_string(currRoom.height)
-						+ ", Room Width: " + to_string(currRoom.width)
-						+ ", Dungeon Floor: " + to_string(m_dungeonPlan.currentFloorId) + "\n";
-
-					cout << "Prompt: " << prompt << "\n";
-
-					const bool queued = m_llmManager.requestGenerate(prompt);
-					if (queued)
-						cout << "Generation request queued successfully.\n";
-					else
-						cout << "Failed to queue generation request.\n";
-				}
-				else
-				{
-					cout << "Generation in progress, please wait...\n";
-				}
-			}			
+			LLM_GenerateRoomInfo();
 			break;
-		
+
+		case sf::Keyboard::Scancode::R:
+			if (m_gameMode == GameMode::HUB)
+				startDungeonRun();
+			else
+				gameStart();
+			break;
+
+		case sf::Keyboard::Scancode::V:
+			m_isPlayerCamera = !m_isPlayerCamera;
+			break;
+
 		default:
 			break;
-		}
+		};
 	}
 }
+
 
 
 ////////////////////////////////////////////////////////////
@@ -181,19 +150,18 @@ void Game::update(float dt)
 
 	InputManager::update();
 	
-	if(m_player.isDead())
+	if( m_gameMode == GameMode::DUNGEON && m_player.isDead())
 	{
 		cout << "Player has died. Restarting game...\n";
-		gameStart();
+		enterHubWorld();
 		return;
 	}
 
 	// Game manager controls
-	gameInput();
+	ControllerInputHandler();
 	updateActiveRoom();
 
 	// Update player and enemies
-	Vector2f oldPlayerPos = m_player.getPosition();
 	m_player.update(dt, mousePosF, m_gameProjectiles, m_activeDamageTriggers);
 
 	for (auto enemy_it = m_enemies.begin(); enemy_it != m_enemies.end();)
@@ -253,7 +221,7 @@ void Game::update(float dt)
 		m_dungeonPlan.advanceFloor();
 
 		if (m_dungeonPlan.isDungeonComplete)
-			m_window.close();
+			enterHubWorld();
 		else
 			loadNewFloor();
 	}
@@ -357,10 +325,27 @@ void Game::resetGame()
 void Game::gameStart()
 {
 	resetGame();
+	m_gameMode = GameMode::DUNGEON;
 
 	m_dungeonPlan.start(/*rand() % 50000*/12344); // using a fixed seed for testing purposes, can be randomized for more variety
 
 	loadNewFloor();
+}
+
+void Game::enterHubWorld()
+{
+	resetGame();
+	m_gameMode = GameMode::HUB;
+
+	m_player.setSpawnPosition(m_playerCamera.getCenter());
+	m_isInRoom = false;
+	m_activeRoomId = -1;
+	m_requestNextFloor = false;
+}
+
+void Game::startDungeonRun()
+{
+	gameStart();
 }
 
 /// <summary>
@@ -511,7 +496,10 @@ void Game::CollisionChecks()
 				{
 					if (InputManager::pad().pressed(GamepadButton::A) || Keyboard::isKeyPressed(Keyboard::Key::Space))
 					{
-						m_requestNextFloor = true;
+						if (m_gameMode == GameMode::HUB)
+							startDungeonRun();
+						else
+							m_requestNextFloor = true;
 					}
 					break;
 				}
@@ -571,19 +559,31 @@ void Game::updateActiveRoom()
 /// <summary>
 /// Handles game input for controlling game state, including closing the window and restarting the game.
 /// </summary>
-void Game::gameInput()
+void Game::ControllerInputHandler()
 {
-	if (Keyboard::isKeyPressed(Keyboard::Key::Escape) || InputManager::pad().pressed(GamepadButton::Start))
+	if (InputManager::pad().pressed(GamepadButton::Start))
 	{
 		m_window.close();
 	}
-	if (Keyboard::isKeyPressed(Keyboard::Key::R) || InputManager::pad().pressed(GamepadButton::Select))
+	if (InputManager::pad().pressed(GamepadButton::Select))
 	{
-		gameStart();
+		if (m_gameMode == GameMode::HUB)
+			startDungeonRun();
+		else
+			gameStart();
 	}
-	if (Keyboard::isKeyPressed(Keyboard::Key::V) || InputManager::pad().pressed(GamepadButton::DPadDown))
+	if (InputManager::pad().pressed(GamepadButton::DPadDown))
 	{
 		m_isPlayerCamera = !m_isPlayerCamera;
+	}
+	if (InputManager::pad().pressed(GamepadButton::DPadUp))
+	{
+		if (m_gameMode != GameMode::DUNGEON || m_activeRoomId < 0 || m_activeRoomId >= static_cast<int>(m_roomPlans.size()))
+		{
+			cout << "No active dungeon room for LLM prompt.\n";
+			return;
+		}
+		LLM_GenerateRoomInfo();
 	}
 }
 
@@ -942,3 +942,59 @@ void Game::loadNewFloor()
 }
 
 #pragma endregion
+
+
+/////////////////////////////////////////////////////////////////
+
+void Game::LLM_GenerateRoomInfo()
+{
+	if (!m_llmManager.isReady()) {
+		cout << "LLM model is not ready.\n";
+	}
+	else {
+		// LLM Prompt/Response test
+		// Request generation of p
+		if (!m_llmManager.isBusy())
+		{
+			// Generate Prompt
+			RoomPlan currRoom = m_roomPlans[m_activeRoomId];
+
+			std::string roomTypeStr;
+			switch (currRoom.type) {
+			case RoomType::CORRIDOR:
+				roomTypeStr = "Corridor";
+				break;
+			case RoomType::SPAWN:
+				roomTypeStr = "Spawn Room";
+				break;
+			case RoomType::PORTAL:
+				roomTypeStr = "Portal Room";
+				break;
+			case RoomType::COMBAT:
+				roomTypeStr = "Combat Room";
+				break;
+			}
+
+			std::string clearedStr = currRoom.isCleared ? "Yes" : "No";
+
+			cout << "Generating response...\n";
+			const std::string prompt = "Generate a 2 sentence description of the room the player is in currently based on the following properties: Room Type: " + roomTypeStr
+				+ ", Is Room Cleared: " + clearedStr
+				+ ", Room Height: " + to_string(currRoom.height)
+				+ ", Room Width: " + to_string(currRoom.width)
+				+ ", Dungeon Floor: " + to_string(m_dungeonPlan.currentFloorId) + "\n";
+
+			cout << "Prompt: " << prompt << "\n";
+
+			const bool queued = m_llmManager.requestGenerate(prompt);
+			if (queued)
+				cout << "Generation request queued successfully.\n";
+			else
+				cout << "Failed to queue generation request.\n";
+		}
+		else
+		{
+			cout << "Generation in progress, please wait...\n";
+		}
+	}
+}

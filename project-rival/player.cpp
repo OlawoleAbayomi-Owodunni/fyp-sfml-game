@@ -48,6 +48,8 @@ void Player::init()
 	p_isDead = false;
 
 	// Weapons
+	p_weapons.clear();
+
 	p_weapons.push_back(std::make_unique<PistolWeapon>());
 	p_weapons.push_back(std::make_unique<ARWeapon>());
 	p_weapons.push_back(std::make_unique<ShotgunWeapon>());

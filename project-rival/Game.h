@@ -32,6 +32,14 @@ using namespace sf;
 /// 
 /// </summary>
 
+enum GameMode
+{
+	HUB,
+	DUNGEON,
+
+	MODE_COUNT
+};
+
 struct ScreenSize
 {
 public:
@@ -59,6 +67,8 @@ protected:
 	void processEvents();
 	void processGameEvents(const sf::Event&);
 
+	void LLM_GenerateRoomInfo();
+
 	sf::Font m_arialFont{ "ASSETS/FONTS/ariblk.ttf" };
 	sf::RenderWindow m_window;
 
@@ -74,11 +84,13 @@ private:
 	// ----------------------------------> FUNCTIONS <---------------------------------- //
 	// Update subfunctions
 	void CollisionChecks();
-	void gameInput();
+	void ControllerInputHandler();
 
 	// Game management
 	void resetGame();
 	void gameStart();
+	void enterHubWorld();
+	void startDungeonRun();
 
 	// Room management
 	void spawnPlayer(const int roomId);
@@ -95,6 +107,7 @@ private:
 	// Game Management
 	sf::View m_gameCamera;
 	bool m_isPlayerCamera;
+	GameMode m_gameMode;
 
 	// Player management
 	Player m_player;
