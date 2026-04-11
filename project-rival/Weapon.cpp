@@ -8,6 +8,7 @@ Weapon::Weapon(WeaponType type, int level) : w_weaponLevel(level)
 
 void Weapon::init(WeaponType type)
 {
+	const int level = w_weaponLevel;
 	WeaponType weaponType = type;
 	switch(weaponType)
 	{
@@ -16,27 +17,27 @@ void Weapon::init(WeaponType type)
 			w_shape.setSize(sf::Vector2f(80.f, 20.f));
 			w_shape.setFillColor(sf::Color::Blue);
 			w_fireMode = FireMode::AUTOMATIC;
-			w_fireRate = 0.5f + ((w_weaponLevel) / 25);
+			w_fireRate = 0.5f + (0.05f * (level - 1));
 			w_rumbleIntensity = Intensity::LOW;
-			w_damage = 10 * (w_weaponLevel);
+			w_damage = 10 + ((level - 1) * 4);
 			break;
 
 		case ASSAULT_RIFLE:
 			w_shape.setSize(sf::Vector2f(120.f, 20.f));
 			w_shape.setFillColor(sf::Color::Red);
 			w_fireMode = FireMode::AUTOMATIC;
-			w_fireRate = 0.1f + ((w_weaponLevel) / 25);
+			w_fireRate = 0.1f + (0.02f * (level - 1));
 			w_rumbleIntensity = Intensity::MEDIUM;
-			w_damage = 8 * (w_weaponLevel);
+			w_damage = 6 + ((level - 1) * 2);
 			break;
 
 		case SHOTGUN:
 			w_shape.setSize(sf::Vector2f(100.f, 25.f));
 			w_shape.setFillColor(sf::Color::Yellow);
 			w_fireMode = FireMode::AUTOMATIC;
-			w_fireRate = 1.f + ((w_weaponLevel) / 25);
+			w_fireRate = 1.f + (0.04f * (level - 1));
 			w_rumbleIntensity = Intensity::HIGH;
-			w_damage = 20 * (w_weaponLevel);
+			w_damage = 15 + ((level - 1) * 5);
 			break;
 
 		// Melee

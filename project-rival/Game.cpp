@@ -312,7 +312,7 @@ void Game::resetGame()
 	m_isPlayerCamera = true;
 
 	m_player.init();
-	m_player.applyUpgrade(m_pistolUpgradeLevel, m_arUpgradeLevel, m_shotgunUpgradeLevel);
+	m_player.applyUpgrade(m_playerHealthUpgradeLevel, m_playerSpeedUpgradeLevel, m_playerAmmoUpgradeLevel);
 	m_isInCombat = false;
 	m_isInRoom = true;
 

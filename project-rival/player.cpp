@@ -22,9 +22,10 @@ Player::~Player()
 
 void Player::init()
 {
-	// stats
+	// Base stats
 	p_maxHealth = 100;
-	p_isDead = false;
+	p_moveSpeed = 200.f;
+	p_playerAmmo = 50;
 
 	// Weapons
 	p_currentWeaponID = 0;
@@ -71,10 +72,10 @@ void Player::hitWall()
 
 void Player::applyUpgrade(int healthLevel, int speedLevel, int ammoLevel)
 {
-	p_maxHealth += healthLevel * 25;
+	p_maxHealth = 100 + (healthLevel-1) * 25;
 	p_health = p_maxHealth;
-	p_moveSpeed += speedLevel * 20.f;
-	p_playerAmmo += ammoLevel * 10;
+	p_moveSpeed = 200.f + (speedLevel-1) * 20.f;
+	p_playerAmmo = 50 + (ammoLevel-1) * 10;
 }
 
 bool Player::addWeaponToLoadout(WeaponType type, int level)
@@ -224,7 +225,7 @@ void Player::ManageWeapons(std::vector<std::unique_ptr<DamageTrigger>>& instanti
 			p_currentWeaponID = p_weapons.size() - 1;
 	}
 
-	//--------- shooting logic ---------//
+	//--------- attacking logic ---------//
 	bool isAttacking = false;
 	if (InputManager::pad().rightTrigger() || sf::Mouse::isButtonPressed(sf::Mouse::Button::Left))
 	{
@@ -240,9 +241,19 @@ void Player::ManageWeapons(std::vector<std::unique_ptr<DamageTrigger>>& instanti
 		}
 		else
 		{
-			auto const bulletsBefore = gameProjectiles.size();
-			p_weapons[p_currentWeaponID]->fire(fireInfo, gameProjectiles);
-			isAttacking = (gameProjectiles.size() > bulletsBefore);
+			if (p_playerAmmo > 0)
+			{
+				auto const bulletsBefore = gameProjectiles.size();
+				p_weapons[p_currentWeaponID]->fire(fireInfo, gameProjectiles);
+				isAttacking = (gameProjectiles.size() > bulletsBefore);
+
+				if (isAttacking) {
+					if (WeaponType::SHOTGUN == p_weaponLoadout[p_currentWeaponID].type)
+						p_playerAmmo -= 5; // Shotgun consumes 5 ammo per shot
+					else
+						p_playerAmmo -= 1; // Other guns consume 1 ammo per shot
+				}
+			}
 		}
 	}
 
