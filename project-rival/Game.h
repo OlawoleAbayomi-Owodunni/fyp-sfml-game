@@ -45,6 +45,7 @@ enum HubShopType
 	NONE_SHOP,
 	WEAPON_SHOP,
 	COSMETIC_SHOP,
+	ARMORY_SHOP,
 
 	SHOP_COUNT
 };
@@ -141,6 +142,7 @@ private:
 	// Hub management
 	sf::RectangleShape m_weaponShop;
 	sf::RectangleShape m_cosmeticShop;
+	sf::RectangleShape m_armoryShop;
 	HubShopType m_activeShop;
 
 	// Room management
@@ -168,11 +170,21 @@ private:
 	LLMService m_llmManager;
 
 	// Economy, Upgrades & Progression
-	int m_coins;
+	int m_coins = 500;
 
-	int m_pistolUpgradeLevel;
-	int m_arUpgradeLevel;
-	int m_shotgunUpgradeLevel;
+	int m_pistolUpgradeLevel = 1;
+	int m_arUpgradeLevel = 1;
+	int m_shotgunUpgradeLevel = 1;
+
+	std::vector<WeaponType> m_armoryCatalog{
+		WeaponType::PISTOL,
+		WeaponType::ASSAULT_RIFLE,
+		WeaponType::SHOTGUN,
+		WeaponType::KNIFE,
+		WeaponType::SWORD,
+		WeaponType::AXE
+	};
+	int m_armoryCatalogIndex;
 
 	int m_playerHealthUpgradeLevel;
 	int m_playerSpeedUpgradeLevel;

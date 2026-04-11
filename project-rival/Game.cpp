@@ -286,6 +286,7 @@ void Game::render()
 	{
 		m_window.draw(m_weaponShop);
 		m_window.draw(m_cosmeticShop);
+		m_window.draw(m_armoryShop);
 		renderHubShopPrompt();
 	}
 
@@ -385,6 +386,7 @@ void Game::buildHubWorld()
 
 	const sf::Vector2i gunShopTile(hubRoom.width / 4, hubRoom.height / 2);
 	const sf::Vector2i cosmeticShopTile(3 * hubRoom.width / 4, hubRoom.height / 2);
+	const sf::Vector2i armoryShopTile(hubRoom.width / 2, 3 * hubRoom.height / 4);
 
 	hubRoom.spawners.push_back({ SpawnerType::PlayerSpawner, playerSpawnTile });
 	hubRoom.spawners.push_back({ SpawnerType::PortalSpawner, portalTile });
@@ -416,15 +418,23 @@ void Game::buildHubWorld()
 	const sf::Vector2f worldOrigin = m_roomWorldPositions[0];
 	const sf::Vector2f gunShopCenter = worldOrigin + sf::Vector2f(gunShopTile.x * tileSize + tileSize / 2, gunShopTile.y * tileSize + tileSize / 2);
 	const sf::Vector2f cosmeticShopCenter = worldOrigin + sf::Vector2f(cosmeticShopTile.x * tileSize + tileSize / 2, cosmeticShopTile.y * tileSize + tileSize / 2);
+	const sf::Vector2f armoryShopCenter = worldOrigin + sf::Vector2f(armoryShopTile.x * tileSize + tileSize / 2, armoryShopTile.y * tileSize + tileSize / 2);
 
 	// Initialize shops
-	m_weaponShop.setSize(sf::Vector2f(tileSize * 2, tileSize * 2));
+	m_weaponShop.setSize(sf::Vector2f(tileSize * 3, tileSize * 3));
 	m_weaponShop.setOrigin(m_weaponShop.getSize() / 2.f);
 	m_weaponShop.setPosition(gunShopCenter);
+	m_weaponShop.setFillColor(sf::Color::Cyan);
 
-	m_cosmeticShop.setSize(sf::Vector2f(tileSize * 2, tileSize * 2));
+	m_cosmeticShop.setSize(sf::Vector2f(tileSize * 3, tileSize * 3));
 	m_cosmeticShop.setOrigin(m_cosmeticShop.getSize() / 2.f);
 	m_cosmeticShop.setPosition(cosmeticShopCenter);
+	m_cosmeticShop.setFillColor(sf::Color::Magenta);
+
+	m_armoryShop.setSize(sf::Vector2f(tileSize * 3, tileSize * 3));
+	m_armoryShop.setOrigin(m_armoryShop.getSize() / 2.f);
+	m_armoryShop.setPosition(armoryShopCenter);
+	m_armoryShop.setFillColor(sf::Color::White);
 }
 
 void Game::updateHubShops()
@@ -435,11 +445,14 @@ void Game::updateHubShops()
 
 	const sf::FloatRect weaponShopBounds = m_weaponShop.getGlobalBounds();
 	const sf::FloatRect cosmeticShopBounds = m_cosmeticShop.getGlobalBounds();
+	const sf::FloatRect armoryShopBounds = m_armoryShop.getGlobalBounds();
 
 	if (weaponShopBounds.findIntersection(playerBounds))
 		m_activeShop = HubShopType::WEAPON_SHOP;
 	else if (cosmeticShopBounds.findIntersection(playerBounds))
 		m_activeShop = HubShopType::COSMETIC_SHOP;
+	else if (armoryShopBounds.findIntersection(playerBounds))
+		m_activeShop = HubShopType::ARMORY_SHOP;
 
 	const bool interactPressed = InputManager::pad().pressed(GamepadButton::A) || Keyboard::isKeyPressed(Keyboard::Key::Space);
 	if (!interactPressed)
@@ -448,12 +461,45 @@ void Game::updateHubShops()
 	switch (m_activeShop)
 	{
 	case HubShopType::WEAPON_SHOP: {
-		const int weaponCost = 100; // Placeholder cost
-		if (m_coins >= weaponCost)
+		const auto& loadout = m_player.getWeaponLoadout();
+		const int currentSlot = m_player.getCurrentWeaponID();
+		
+		const WeaponType selectedType = loadout[currentSlot].type;
+		int* selectedUpgradeLevel = nullptr;
+		std::string weaponName = "";
+
+		if (selectedType >= WeaponType::KNIFE)
+			break;
+
+		switch (selectedType)
 		{
-			m_coins -= weaponCost;
-			m_pistolUpgradeLevel++;
-			cout << "Pistol upgraded to level " << m_pistolUpgradeLevel << "!\n"
+		case WeaponType::PISTOL:
+			selectedUpgradeLevel = &m_pistolUpgradeLevel;
+			weaponName = "Pistol";
+			break;
+
+		case WeaponType::ASSAULT_RIFLE:
+			selectedUpgradeLevel = &m_arUpgradeLevel;
+			weaponName = "Assault Rifle";
+			break;
+
+		case WeaponType::SHOTGUN:
+			selectedUpgradeLevel = &m_shotgunUpgradeLevel;
+			weaponName = "Shotgun";
+			break;
+
+		default:
+			cout << "Selected weapon unupgradable...\n";
+		}
+
+		const int upgradeCost = 100;
+		if (m_coins >= upgradeCost)
+		{
+			m_coins -= upgradeCost;
+			(*selectedUpgradeLevel)++;
+			WeaponInLoadout droppedWeapon;
+			m_player.swapCurrentWeapon(selectedType, *selectedUpgradeLevel, droppedWeapon);
+			cout << weaponName << " upgraded to level " << *selectedUpgradeLevel << "!\n"
 				<< "Coins remaining: " << m_coins << "\n";
 		}
 		else {
@@ -467,6 +513,42 @@ void Game::updateHubShops()
 		m_player.setBodyColor(m_playerColorOptions[m_playerColorIndex]);
 		cout << "Player color changed to " << m_playerColorIndex << "!\n";
 		break;
+
+	case HubShopType::ARMORY_SHOP: {
+		const WeaponType weaponToEquip = m_armoryCatalog[m_armoryCatalogIndex];
+
+		int equipLevel = 1;
+		switch (weaponToEquip)
+		{
+		case WeaponType::PISTOL:
+			equipLevel = m_pistolUpgradeLevel;
+			break;
+		case WeaponType::ASSAULT_RIFLE:
+			equipLevel = m_arUpgradeLevel;
+			break;
+		case WeaponType::SHOTGUN:
+			equipLevel = m_shotgunUpgradeLevel;
+			break;
+		}
+
+		WeaponInLoadout droppedWeapon;
+		if (m_player.swapCurrentWeapon(weaponToEquip, equipLevel, droppedWeapon))
+		{
+			cout << "Equipped " << weaponToEquip << " at level " << equipLevel << "!\n";
+			if (droppedWeapon.type != WeaponType::COUNT)
+				cout << "Dropped " << droppedWeapon.type << " at level " << droppedWeapon.level << ".\n";
+		}
+		else
+		{
+			cout << "Failed to equip weapon. Loadout may be full.\n";
+		}
+
+		m_armoryCatalogIndex++;
+		if (m_armoryCatalogIndex >= m_armoryCatalog.size())
+			m_armoryCatalogIndex = 0;
+
+		break;
+	}
 	}
 }
 
@@ -491,7 +573,13 @@ void Game::renderHubShopPrompt()
 	case HubShopType::COSMETIC_SHOP:
 		promptText.setString("Press A / Space to change player color!");
 		break;
+
+	case HubShopType::ARMORY_SHOP:
+		promptText.setString("Press A / Space to swap current weapon with one from the armory!");
+		break;
 	}
+
+	m_window.draw(promptText);
 }
 
 /// <summary>

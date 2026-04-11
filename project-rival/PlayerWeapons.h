@@ -5,7 +5,7 @@
 class PistolWeapon : public Weapon
 {
 public:
-	PistolWeapon() : Weapon(WeaponType::PISTOL) {}
+	PistolWeapon(int level) : Weapon(WeaponType::PISTOL, level) {}
 protected:
 	virtual void spawnProjectile(const  FireReq& info, std::vector<std::unique_ptr<Projectile>>& projectileList) override;
 
@@ -16,7 +16,7 @@ private:
 class ARWeapon: public Weapon
 {
 public:
-	ARWeapon() : Weapon(WeaponType::ASSAULT_RIFLE) {}
+	ARWeapon(int level) : Weapon(WeaponType::ASSAULT_RIFLE, level) {}
 protected:
 	virtual void spawnProjectile(const  FireReq& info, std::vector<std::unique_ptr<Projectile>>& projectileList) override;
 
@@ -27,7 +27,7 @@ private:
 class ShotgunWeapon : public Weapon
 {
 public:
-	ShotgunWeapon() : Weapon(WeaponType::SHOTGUN) {}
+	ShotgunWeapon(int level) : Weapon(WeaponType::SHOTGUN, level) {}
 protected:
 	virtual void spawnProjectile(const  FireReq& info, std::vector<std::unique_ptr<Projectile>>& projectileList) override;
 
@@ -40,7 +40,7 @@ private:
 class KnifeWeapon : public Weapon
 {
 public:
-	KnifeWeapon() : Weapon(WeaponType::KNIFE) {}
+	KnifeWeapon() : Weapon(WeaponType::KNIFE, 1) {}
 protected:
 	virtual void spawnMeleeHit(const  FireReq& info, std::vector<std::unique_ptr<DamageTrigger>>& damageTriggerList) override;
 
@@ -51,7 +51,7 @@ private:
 class SwordWeapon : public Weapon
 {
 public:
-	SwordWeapon() : Weapon(WeaponType::SWORD) {}
+	SwordWeapon() : Weapon(WeaponType::SWORD, 1) {}
 protected:
 	virtual void spawnMeleeHit(const  FireReq& info, std::vector<std::unique_ptr<DamageTrigger>>& damageTriggerList) override;
 
@@ -62,7 +62,7 @@ private:
 class AxeWeapon : public Weapon
 {
 public:
-	AxeWeapon() : Weapon(WeaponType::AXE) {}
+	AxeWeapon() : Weapon(WeaponType::AXE, 1) {}
 protected:
 	virtual void spawnMeleeHit(const  FireReq& info, std::vector<std::unique_ptr<DamageTrigger>>& damageTriggerList) override;
 

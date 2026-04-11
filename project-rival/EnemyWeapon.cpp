@@ -1,7 +1,7 @@
 #include "EnemyWeapon.h"
 #include "NormalBulletProjectile.h"
 
-EnemyWeapon::EnemyWeapon(WeaponType type) : Weapon(type)
+EnemyWeapon::EnemyWeapon(WeaponType type) : Weapon(type, 1)
 {
 	switch (type)
 	{
