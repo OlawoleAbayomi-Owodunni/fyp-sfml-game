@@ -150,6 +150,11 @@ void Game::update(float dt)
 
 	InputManager::update();
 	
+	if (m_gameMode == GameMode::HUB)
+	{
+		updateHubShops();
+	}
+
 	if( m_gameMode == GameMode::DUNGEON && m_player.isDead())
 	{
 		cout << "Player has died. Restarting game...\n";
@@ -277,6 +282,13 @@ void Game::render()
 		trigger->render(m_window);
 	}
 
+	if (m_gameMode == GameMode::HUB)
+	{
+		m_window.draw(m_weaponShop);
+		m_window.draw(m_cosmeticShop);
+		renderHubShopPrompt();
+	}
+
 #ifdef TEST_FPS
 	m_window.draw(x_updateFPS); //ups is 60 and dps is 61
 	m_window.draw(x_drawFPS);
@@ -371,6 +383,9 @@ void Game::buildHubWorld()
 	const sf::Vector2i playerSpawnTile(hubRoom.width / 2, hubRoom.height / 2);
 	const sf::Vector2i portalTile(hubRoom.width / 2, hubRoom.height / 4);
 
+	const sf::Vector2i gunShopTile(hubRoom.width / 4, hubRoom.height / 2);
+	const sf::Vector2i cosmeticShopTile(3 * hubRoom.width / 4, hubRoom.height / 2);
+
 	hubRoom.spawners.push_back({ SpawnerType::PlayerSpawner, playerSpawnTile });
 	hubRoom.spawners.push_back({ SpawnerType::PortalSpawner, portalTile });
 	hubRoom.triggers.push_back({ TriggerType::PortalTrigger, portalTile });
@@ -396,6 +411,87 @@ void Game::buildHubWorld()
 
 	m_playerCamera.setCenter(m_player.getPosition());
 	m_floorCamera.setCenter(m_player.getPosition());
+
+	const float tileSize = hubRoom.tileSize;
+	const sf::Vector2f worldOrigin = m_roomWorldPositions[0];
+	const sf::Vector2f gunShopCenter = worldOrigin + sf::Vector2f(gunShopTile.x * tileSize + tileSize / 2, gunShopTile.y * tileSize + tileSize / 2);
+	const sf::Vector2f cosmeticShopCenter = worldOrigin + sf::Vector2f(cosmeticShopTile.x * tileSize + tileSize / 2, cosmeticShopTile.y * tileSize + tileSize / 2);
+
+	// Initialize shops
+	m_weaponShop.setSize(sf::Vector2f(tileSize * 2, tileSize * 2));
+	m_weaponShop.setOrigin(m_weaponShop.getSize() / 2.f);
+	m_weaponShop.setPosition(gunShopCenter);
+
+	m_cosmeticShop.setSize(sf::Vector2f(tileSize * 2, tileSize * 2));
+	m_cosmeticShop.setOrigin(m_cosmeticShop.getSize() / 2.f);
+	m_cosmeticShop.setPosition(cosmeticShopCenter);
+}
+
+void Game::updateHubShops()
+{
+	m_activeShop = HubShopType::NONE_SHOP;
+
+	const sf::FloatRect playerBounds = m_player.getCollisionBounds();
+
+	const sf::FloatRect weaponShopBounds = m_weaponShop.getGlobalBounds();
+	const sf::FloatRect cosmeticShopBounds = m_cosmeticShop.getGlobalBounds();
+
+	if (weaponShopBounds.findIntersection(playerBounds))
+		m_activeShop = HubShopType::WEAPON_SHOP;
+	else if (cosmeticShopBounds.findIntersection(playerBounds))
+		m_activeShop = HubShopType::COSMETIC_SHOP;
+
+	const bool interactPressed = InputManager::pad().pressed(GamepadButton::A) || Keyboard::isKeyPressed(Keyboard::Key::Space);
+	if (!interactPressed)
+		return;
+
+	switch (m_activeShop)
+	{
+	case HubShopType::WEAPON_SHOP: {
+		const int weaponCost = 100; // Placeholder cost
+		if (m_coins >= weaponCost)
+		{
+			m_coins -= weaponCost;
+			m_pistolUpgradeLevel++;
+			cout << "Pistol upgraded to level " << m_pistolUpgradeLevel << "!\n"
+				<< "Coins remaining: " << m_coins << "\n";
+		}
+		else {
+			cout << "Not enough coins to upgrade weapon! Coins: " << m_coins << "\n";
+		}
+		break;
+	}
+
+	case HubShopType::COSMETIC_SHOP:
+		m_playerColorIndex = (m_playerColorIndex + 1) % m_playerColorOptions.size();
+		m_player.setBodyColor(m_playerColorOptions[m_playerColorIndex]);
+		cout << "Player color changed to " << m_playerColorIndex << "!\n";
+		break;
+	}
+}
+
+void Game::renderHubShopPrompt()
+{
+	if (m_activeShop == HubShopType::NONE_SHOP)
+		return;
+
+	sf::Text promptText(m_arialFont);
+	promptText.setCharacterSize(24);
+	promptText.setFillColor(sf::Color::Black);
+	promptText.setOutlineColor(sf::Color::White);
+	promptText.setOutlineThickness(1.f);
+	promptText.setPosition({ m_player.getPosition().x - 50, m_player.getPosition().y - 50 });
+
+	switch (m_activeShop)
+	{
+	case HubShopType::WEAPON_SHOP:
+		promptText.setString("Press A / Space to upgrade weapon for 100 coins!");
+		break;
+
+	case HubShopType::COSMETIC_SHOP:
+		promptText.setString("Press A / Space to change player color!");
+		break;
+	}
 }
 
 /// <summary>

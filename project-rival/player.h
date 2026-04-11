@@ -18,24 +18,22 @@ public:
 	void render(RenderWindow& window);
 
 	const Vector2f getPosition() const;
-
 	sf::FloatRect getCollisionBounds() const override;
 	CollisionProfile getCollisionProfile() const override;
 
 	void setSpawnPosition(const Vector2f& spawnPos);
-
-	void handleMovement(float dt);
-	void handleAiming(const Vector2f mousePos);
-
-	void takeDamage(int damage);
+	void setBodyColor(const Color& color);
 
 	void hitWall();
 
+	void takeDamage(int damage);
 	const bool isDead() const { return p_isDead; }
 
 private:
 	// FUNCTIONS
 	void reset();
+	void handleMovement(float dt);
+	void handleAiming(const Vector2f mousePos);
 
 	// VARIABLES
 	RectangleShape p_body;

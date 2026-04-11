@@ -105,6 +105,10 @@ void Player::setSpawnPosition(const Vector2f& spawnPos)
 {
 	p_body.setPosition(spawnPos);
 }
+void Player::setBodyColor(const Color& color)
+{
+	p_body.setFillColor(color);
+}
 #pragma endregion
 
 void Player::reset()

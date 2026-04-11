@@ -40,6 +40,15 @@ enum GameMode
 	MODE_COUNT
 };
 
+enum HubShopType
+{
+	NONE_SHOP,
+	WEAPON_SHOP,
+	COSMETIC_SHOP,
+
+	SHOP_COUNT
+};
+
 struct ScreenSize
 {
 public:
@@ -89,11 +98,13 @@ private:
 	// Game management
 	void resetGame();
 	void gameStart();
-
 	void enterHubWorld();
 	void startDungeonRun();
 
+	// Hub management
 	void buildHubWorld();
+	void updateHubShops();
+	void renderHubShopPrompt();
 
 	// Room management
 	void spawnPlayer(const int roomId);
@@ -127,6 +138,11 @@ private:
 	// Instantiable trigger management
 	std::vector<std::unique_ptr<DamageTrigger>> m_activeDamageTriggers;
 
+	// Hub management
+	sf::RectangleShape m_weaponShop;
+	sf::RectangleShape m_cosmeticShop;
+	HubShopType m_activeShop;
+
 	// Room management
 	vector<RoomPlan> m_roomPlans;
 	vector<RoomInstance> m_roomInstances;
@@ -150,4 +166,23 @@ private:
 
 	// LLM management
 	LLMService m_llmManager;
+
+	// Economy, Upgrades & Progression
+	int m_coins;
+
+	int m_pistolUpgradeLevel;
+	int m_arUpgradeLevel;
+	int m_shotgunUpgradeLevel;
+
+	int m_playerHealthUpgradeLevel;
+	int m_playerSpeedUpgradeLevel;
+	int m_playerAmmoUpgradeLevel;
+
+	std::vector<sf::Color> m_playerColorOptions{
+		sf::Color::Green,
+		sf::Color::Cyan,
+		sf::Color::Magenta,
+		sf::Color::Yellow
+	};
+	int m_playerColorIndex;
 };
