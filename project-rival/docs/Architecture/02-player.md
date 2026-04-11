@@ -8,7 +8,7 @@
 
 - Owns its SFML body + reticle (`p_body`, `p_reticle`).
 - Reads movement/aiming/fire input (keyboard + mouse and gamepad via `InputManager`).
-- Handles movement, aim-direction selection, and weapon switching.
+- Handles movement, aim-direction selection, weapon switching, and attack rumble feedback.
 - Implements `ICollidable` for collision checks.
 - Tracks health/death state (`p_health`, `p_maxHealth`, `p_isDead`).
 - Applies basic collision response via `hitWall()` (rollback to previous position).
@@ -36,11 +36,18 @@ Aiming is handled in `Player::handleAiming(const Vector2f mousePos)`:
 
 Weapon flow:
 
-- Player owns a weapon list (`Pistol`, `AR`, `Shotgun`, `Knife`, `Sword`, `Axe`).
-- `RightBumper` / `LeftBumper` cycles current weapon.
+- Player now uses a loadout system (`WeaponInLoadout`) with a maximum of 3 equipped weapons.
+- Default loadout starts with `Pistol` + `Knife`.
+- `RightBumper` / `LeftBumper` cycles current equipped weapon.
 - Fire input (`rightTrigger` or left mouse) dispatches through current weapon:
   - ranged weapons spawn `Projectile` instances into the game projectile list
   - melee weapons spawn short-lived `DamageTrigger` instances
+- Weapon instances are rebuilt from loadout entries using `buildWeaponsFromLoadout()`.
+
+Upgrades/loadout hooks exposed by `Player`:
+
+- `applyUpgrade(...)` for health/speed/ammo progression.
+- `addWeaponToLoadout(...)`, `dropWeaponFromLoadout(...)`, `swapCurrentWeapon(...)`.
 
 ## Collision profile (current)
 
@@ -58,4 +65,4 @@ The player collision profile includes collisions with:
 
 - `Game` passes runtime containers into `Player::update(...)` so player weapons can emit projectiles/triggers.
 - Enemies use player position as their target (`m_player.getPosition()`).
-- `Game` checks `m_player.isDead()` and restarts the run when the player dies.
+- In dungeon mode, `Game` checks `m_player.isDead()` and currently returns flow to the hub world.

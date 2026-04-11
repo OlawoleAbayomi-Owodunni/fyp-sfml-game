@@ -14,8 +14,8 @@ Defined in `Collision.h`:
   - `mask`: what this object *can collide with*
 
 Two objects are allowed to collide if:
-- A’s mask contains B’s layer **and**
-- B’s mask contains A’s layer
+- A's mask contains B's layer **and**
+- B's mask contains A's layer
 
 ## `ICollidable`
 
@@ -48,7 +48,10 @@ Current gameplay implementations include:
 - portal triggers (`PORTAL_TRIGGER_LAYER`)
 - door triggers (`DOOR_TRIGGER_LAYER`)
 
-Portal triggers are interaction volumes: when the player is inside and presses `Space` or gamepad `A`, `Game` raises a next-floor request.
+Portal triggers are interaction volumes:
+
+- in `HUB` mode: interaction starts a dungeon run
+- in `DUNGEON` mode: interaction requests the next floor
 
 ## Collision response (current)
 
@@ -57,7 +60,7 @@ Handled in `Game::CollisionChecks()`:
 - player/enemy wall-door collisions use rollback (`hitWall()`)
 - projectiles are destroyed on wall/door impact
 - door triggers can start combat waves (in uncleared combat rooms)
-- portal triggers can request floor advancement
+- portal triggers can start runs / request floor advancement (by mode)
 
 ## Damage flow (high level)
 

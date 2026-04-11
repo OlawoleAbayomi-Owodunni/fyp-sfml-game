@@ -7,6 +7,7 @@ This chapter describes what state exists, who owns it, and what might need savin
 ## Runtime state (prototype)
 
 - `Game` owns:
+  - game mode (`HUB` / `DUNGEON`)
   - room plans + room instances + room world positions
   - active room id and room-presence flags
   - enemy list
@@ -17,12 +18,15 @@ This chapter describes what state exists, who owns it, and what might need savin
   - dungeon plan (seed + floor progression/completion)
   - next-floor request flag
   - camera mode state
+  - hub shop interaction state (`m_activeShop`) and shop zone shapes
+  - economy/upgrade state (coins, weapon/player upgrade levels, catalog indices, cosmetic index)
   - LLM service state
 - `Player` owns:
   - transform/velocity/previous position
   - aim state + reticle state
   - health/death state (`p_health`, `p_maxHealth`, `p_isDead`)
-  - weapon list + currently selected weapon id
+  - weapon loadout entries (`WeaponInLoadout`) and runtime weapon list + selected weapon id
+  - player ammo/speed and rumble state
 - `Enemy` (base + derived) owns:
   - transform/target + collision profile
   - health/dead flag (`e_health`, `e_maxHealth`, `e_isDead`)

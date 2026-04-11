@@ -20,7 +20,9 @@ The long-term vision includes:
 As of the current prototype, the project has:
 
 - Core SFML game loop (`Game`) with fixed timestep updates.
+- Two runtime modes: `HUB` and `DUNGEON`.
 - Player movement + aiming + weapon switching.
+- Player loadout/economy hooks (weapon swapping and upgrade application in hub flow).
 - Ranged projectiles and melee damage triggers via weapon classes.
 - Enemies with steering behaviours and turret projectile attacks.
 - A minimal collision system (AABB + layer/mask filtering).
@@ -34,8 +36,8 @@ As of the current prototype, the project has:
   - player-follow camera
   - zoomed-out floor overview (toggle)
 - Early combat wave logic for combat rooms (door trigger starts combat, waves spawn enemies, doors lock/unlock).
-- Multi-floor progression (prototype): portal interaction can advance to the next floor; when the dungeon is complete, the game currently exits (temporary).
-- Prototype LLM async integration with a debug prompt trigger and polled console output.
+- Multi-floor progression (prototype): portal interaction can advance to the next floor; when the dungeon is complete, flow currently returns to hub.
+- Prototype LLM async integration with debug prompt triggers and polled console output.
 
 ## Core / key terminology
 

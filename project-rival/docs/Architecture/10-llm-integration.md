@@ -8,7 +8,7 @@ This document describes the current **local LLM integration** in the solution.
 
 The goal is to support future NPC dialogue and lore generation using a locally-run model.
 
-At the moment, the integration is **service-level only** (load model + generate a string). There is not yet a gameplay-level NPC dialogue system.
+At the moment, the integration is **service-level with debug gameplay hooks** (load model + queue request + consume generated string). There is not yet a gameplay-level NPC dialogue system.
 
 ## Key components
 
@@ -34,7 +34,7 @@ Responsibilities:
   - `tryConsumeLatestResponse()` → polls for the most recent completed response.
   - `shutdown()` → joins worker threads and unloads the model.
 
-The game currently uses the async flow (init + request + poll) rather than calling `generateResponse(prompt)` directly.
+The game currently uses the async flow (init + request + poll) rather than calling synchronous generation directly.
 
 ### `LLMWrapper` (vendored dependency)
 
@@ -56,7 +56,7 @@ Notes:
 
 - starts async model init during construction
 - polls init/result state during `update(dt)`
-- allows a debug generation request on `Num0` (room-context prompt)
+- allows a debug generation request in dungeon mode (`Num0` keyboard, `DPadUp` gamepad)
 - logs generated response to console when available
 
 ## Model assets

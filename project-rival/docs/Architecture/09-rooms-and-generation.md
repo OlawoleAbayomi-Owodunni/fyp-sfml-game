@@ -98,8 +98,18 @@ In `Game`:
 - `gameStart()` initializes a new dungeon plan (currently using a fixed seed for testing) and calls `loadNewFloor()`.
 - Standing in a portal trigger and pressing interact (`Space` / `A`) sets a `m_requestNextFloor` flag.
 - `Game::update(dt)` consumes the flag and advances the dungeon:
-  - if the dungeon is complete → close window (temporary)
+  - if the dungeon is complete → return to hub world (current temporary run-end behavior)
   - otherwise → load the next floor via `loadNewFloor()`
+
+## Hub room usage (current)
+
+`Game::buildHubWorld()` currently builds a large single-room hub using a `RoomPlan`, including:
+
+- player spawn marker
+- portal trigger to start a dungeon run
+- shop zones rendered as extra world shapes
+
+This reuses the same room/runtime pipeline while the project transitions toward a fuller hub-world system.
 
 ## `RoomInstance` (runtime)
 
@@ -151,4 +161,4 @@ Combat room flow:
 
 ## Next likely steps
 
-- Replace temporary dungeon completion behavior (window close) with proper run-end/hub transition flow.
+- Move from temporary hub implementation to full hub/NPC/shop interaction systems while keeping the existing room pipeline.

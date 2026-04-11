@@ -29,13 +29,21 @@ Current gameplay usage examples:
 
 - left stick: movement
 - right stick or mouse: aiming
-- right trigger or left mouse button: shoot
+- right trigger or left mouse button: attack
+- left/right bumper: cycle equipped weapon
 
-High-level game controls (in `Game::gameInput()`):
+High-level game controls:
 
-- Exit: `Escape` or controller `Start`
-- Restart run: `R` or controller `Select`
-- Toggle camera mode (player cam vs floor overview): `V` or controller `DPadDown`
+- Keyboard event controls (`Game::processGameEvents(...)`):
+  - Exit: `Escape`
+  - Restart / start run: `R`
+  - Toggle camera mode (player cam vs floor overview): `V`
+  - Debug LLM room prompt: `Num0`
+- Controller controls (`Game::ControllerInputHandler()`):
+  - Exit: `Start`
+  - Restart / start run: `Select`
+  - Toggle camera mode: `DPadDown`
+  - Debug LLM room prompt: `DPadUp`
 
 Contextual interactions:
 

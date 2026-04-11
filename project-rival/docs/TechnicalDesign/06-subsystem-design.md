@@ -21,8 +21,6 @@ Current behaviour:
 - Collision checks are centralized in `Game::CollisionChecks()` using `CollisionCheck::areColliding(...)`.
 - Response is currently a simple rollback for player/enemies (`hitWall()`) and destruction for projectiles on wall/door hit.
 
-
-
 ## Rooms / procedural generation
 
 Core files:
@@ -52,6 +50,10 @@ Corridors (current):
 
 - Generated at runtime in `Game::buildCorridors()` as temporary `RoomPlan` objects of type `RoomType::CORRIDOR`.
 - Immediately built into `RoomInstance` objects and appended to `m_roomInstances`.
+
+Hub-room reuse (current):
+
+- `Game::buildHubWorld()` builds a single large room plan/instance (spawn + portal trigger) using the same room pipeline.
 
 ## Floor generation / layout (prototype)
 
@@ -87,6 +89,22 @@ Key behaviours:
 
 - Tracks dungeon seed, current floor id, floor count, completion flag.
 - Portal trigger interaction requests floor advance; `Game` consumes request and loads next floor.
+- Current completion behavior returns flow to hub mode.
+
+## Player loadout/upgrades (prototype)
+
+Core files:
+
+- `project-rival/player.h/.cpp`
+- `project-rival/Weapon.h/.cpp`
+- `project-rival/PlayerWeapons.h/.cpp`
+
+Current behaviour:
+
+- Player keeps a loadout (`WeaponInLoadout`) with max 3 slots.
+- Runtime weapon objects are rebuilt from loadout entries.
+- Upgrade application currently adjusts health, speed, and ammo capacity.
+- Weapon level currently scales gun damage/fire tuning.
 
 ## Combat / projectiles / melee triggers
 

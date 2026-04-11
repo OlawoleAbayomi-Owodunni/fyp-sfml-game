@@ -15,7 +15,8 @@ This chapter summarizes the major subsystems, who owns what, and how data flows.
 ### Game loop / orchestration
 
 - `Game` owns the top-level SFML window and drives update + render.
-- `Game` is the integration point for cross-owner systems (collisions, room triggers, combat waves, floor transitions).
+- `Game` is the integration point for cross-owner systems (collisions, room triggers, combat waves, floor transitions, hub interactions).
+- `Game` manages runtime mode (`HUB` / `DUNGEON`) and transitions between modes.
 - `Game` manages floor runtime state (room plans, room instances, corridor instances) and handles spawning entities from spawner tiles.
 
 ### Input
@@ -26,6 +27,7 @@ This chapter summarizes the major subsystems, who owns what, and how data flows.
 ### Player
 
 - `Player` updates movement + aiming + weapon selection.
+- `Player` uses a loadout model and exposes loadout/upgrade hooks.
 - `Player` emits projectile/melee trigger requests into game-owned runtime containers.
 
 ### Enemies / AI
@@ -50,6 +52,7 @@ This chapter summarizes the major subsystems, who owns what, and how data flows.
 - `RoomPlan` contains tile/spawn/door/trigger data.
 - `IRoomGenerator` builds room plans (`CombatRoom`, `SpawnRoom`, `PortalRoom`).
 - `RoomInstance` builds runtime shapes + `StaticCollision` colliders.
+- The current hub implementation also uses the room pipeline (`buildHubWorld()` builds a single large hub room plan/instance).
 
 ### Floor generation / layout (prototype)
 
@@ -60,10 +63,21 @@ This chapter summarizes the major subsystems, who owns what, and how data flows.
 
 Corridors are generated in `Game` from floor edges and appended as extra `RoomInstance` objects.
 
+### Hub economy / upgrades (prototype)
+
+- `Game` currently owns currency and upgrade-level state.
+- Hub shop zones are represented by world-space rectangles and checked against player overlap.
+- Shop actions currently include:
+  - weapon upgrades (gun levels)
+  - ammo upgrade
+  - player stat upgrades (health/speed)
+  - cosmetic color cycling
+  - armory cycling/swap into current loadout slot
+
 ### LLM dialogue (prototype integration)
 
 - `LLMService` wraps the vendored `LLMWrapper` (`external/fyp-llm-lib`).
-- `Game` uses async init/request/poll APIs and currently exposes a debug generation trigger (`Num0`).
+- `Game` uses async init/request/poll APIs and currently exposes debug generation triggers (`Num0` keyboard, `DPadUp` gamepad) in dungeon mode.
 
 ## Ownership + data flow (prototype)
 
@@ -75,13 +89,14 @@ Corridors are generated in `Game` from floor edges and appended as extra `RoomIn
   - room plans + room instances
   - floor plan + floor layout
   - dungeon plan state
+  - game mode/hub state
   - LLM service state
 
 Data flow example:
 
 - `Game` updates player/enemies and lifecycle-manages projectiles/triggers.
 - `Game` checks collisions (entity hits, bullets, melee triggers, environment, portal/door triggers).
-- `Game` processes combat waves/floor transitions/LLM polling.
+- `Game` processes hub interactions, combat waves, floor transitions, and LLM polling.
 - `Game` renders rooms → player → enemies → projectiles → triggers.
 
 Current camera behavior supports both player-follow and floor-overview modes.
@@ -89,4 +104,4 @@ Current camera behavior supports both player-follow and floor-overview modes.
 Game management input:
 
 - Exit: `Escape` or controller `Start`
-- Restart: `R` or controller `Select`
+- Restart/start run: `R` or controller `Select`

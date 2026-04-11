@@ -469,5 +469,8 @@
     <Text Include="automation\scripts\output\weapons-merge-changes.txt">
       <Filter>Resource Files\DOCUMENTATION\Git Summaries</Filter>
     </Text>
+    <Text Include="automation\scripts\output\hub-merge-changes.txt">
+      <Filter>Resource Files\DOCUMENTATION\Git Summaries</Filter>
+    </Text>
   </ItemGroup>
 </Project>
