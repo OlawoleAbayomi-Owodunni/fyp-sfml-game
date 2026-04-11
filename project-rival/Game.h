@@ -32,6 +32,25 @@ using namespace sf;
 /// 
 /// </summary>
 
+enum GameMode
+{
+	HUB,
+	DUNGEON,
+
+	MODE_COUNT
+};
+
+enum HubShopType
+{
+	NONE_SHOP,
+	WEAPON_SHOP,
+	COSMETIC_SHOP,
+	ARMORY_SHOP,
+	PLAYER_SHOP,
+
+	SHOP_COUNT
+};
+
 struct ScreenSize
 {
 public:
@@ -59,6 +78,8 @@ protected:
 	void processEvents();
 	void processGameEvents(const sf::Event&);
 
+	void LLM_GenerateRoomInfo();
+
 	sf::Font m_arialFont{ "ASSETS/FONTS/ariblk.ttf" };
 	sf::RenderWindow m_window;
 
@@ -74,11 +95,18 @@ private:
 	// ----------------------------------> FUNCTIONS <---------------------------------- //
 	// Update subfunctions
 	void CollisionChecks();
-	void gameInput();
+	void ControllerInputHandler();
 
 	// Game management
 	void resetGame();
 	void gameStart();
+	void enterHubWorld();
+	void startDungeonRun();
+
+	// Hub management
+	void buildHubWorld();
+	void updateHubShops();
+	void renderHubShopPrompt();
 
 	// Room management
 	void spawnPlayer(const int roomId);
@@ -95,6 +123,7 @@ private:
 	// Game Management
 	sf::View m_gameCamera;
 	bool m_isPlayerCamera;
+	GameMode m_gameMode;
 
 	// Player management
 	Player m_player;
@@ -110,6 +139,13 @@ private:
 
 	// Instantiable trigger management
 	std::vector<std::unique_ptr<DamageTrigger>> m_activeDamageTriggers;
+
+	// Hub management
+	sf::RectangleShape m_weaponShop;
+	sf::RectangleShape m_cosmeticShop;
+	sf::RectangleShape m_armoryShop;
+	sf::RectangleShape m_playerShop;
+	HubShopType m_activeShop;
 
 	// Room management
 	vector<RoomPlan> m_roomPlans;
@@ -134,4 +170,33 @@ private:
 
 	// LLM management
 	LLMService m_llmManager;
+
+	// Economy, Upgrades & Progression
+	int m_coins = 500;
+
+	int m_pistolUpgradeLevel = 1;
+	int m_arUpgradeLevel = 1;
+	int m_shotgunUpgradeLevel = 1;
+
+	std::vector<WeaponType> m_armoryCatalog{
+		WeaponType::PISTOL,
+		WeaponType::ASSAULT_RIFLE,
+		WeaponType::SHOTGUN,
+		WeaponType::KNIFE,
+		WeaponType::SWORD,
+		WeaponType::AXE
+	};
+	int m_armoryCatalogIndex;
+
+	int m_playerHealthUpgradeLevel = 1;
+	int m_playerSpeedUpgradeLevel = 1;
+	int m_playerAmmoUpgradeLevel = 1;
+
+	std::vector<sf::Color> m_playerColorOptions{
+		sf::Color::Green,
+		sf::Color::Cyan,
+		sf::Color::Magenta,
+		sf::Color::Yellow
+	};
+	int m_playerColorIndex;
 };

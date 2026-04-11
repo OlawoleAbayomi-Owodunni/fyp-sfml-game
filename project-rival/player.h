@@ -4,7 +4,11 @@
 #include "Collision.h"
 #include "Weapon.h"
 
-using namespace sf;
+struct WeaponInLoadout
+{
+	WeaponType type;
+	int level;
+};
 
 class Player : public ICollidable
 {
@@ -13,45 +17,59 @@ public:
 	~Player();
 
 	void init();
-	void update(float dt, const Vector2f& mousePos, std::vector<std::unique_ptr<Projectile>>& gameProjectiles, std::vector<std::unique_ptr<DamageTrigger>>& instantiableTriggers);
-	void ManageWeapons(std::vector<std::unique_ptr<DamageTrigger>>& instantiableTriggers, std::vector<std::unique_ptr<Projectile>>& gameProjectiles, float dt);
-	void render(RenderWindow& window);
+	void update(float dt, const sf::Vector2f& mousePos, std::vector<std::unique_ptr<Projectile>>& gameProjectiles, std::vector<std::unique_ptr<DamageTrigger>>& instantiableTriggers);
+	void render(sf::RenderWindow& window);
 
-	const Vector2f getPosition() const;
+	const sf::Vector2f getPosition() const { return p_body.getPosition(); }
+	sf::FloatRect getCollisionBounds() const override { return p_body.getGlobalBounds(); }
+	CollisionProfile getCollisionProfile() const override { return p_collisionProfile; }
+	const std::vector<WeaponInLoadout>& getWeaponLoadout() const { return p_weaponLoadout; }
+	int getCurrentWeaponID() const { return p_currentWeaponID; }
+	int getAmmo() const { return p_playerAmmo; }
 
-	sf::FloatRect getCollisionBounds() const override;
-	CollisionProfile getCollisionProfile() const override;
-
-	void setSpawnPosition(const Vector2f& spawnPos);
-
-	void handleMovement(float dt);
-	void handleAiming(const Vector2f mousePos);
-
-	void takeDamage(int damage);
+	void setSpawnPosition(const sf::Vector2f& spawnPos) { p_body.setPosition(spawnPos); }
+	void setBodyColor(const sf::Color& color) { p_body.setFillColor(color); }
+	void setCurrentWeaponID(int id) { if (id >= 0 && id < p_weapons.size()) p_currentWeaponID = id; }
 
 	void hitWall();
 
+	void takeDamage(int damage);
 	const bool isDead() const { return p_isDead; }
+
+	void applyUpgrade(int healthLevel, int speedLevel, int ammoLevel);
+
+	bool addWeaponToLoadout(WeaponType type, int level);
+	bool dropWeaponFromLoadout(int slotIndex);
+	bool swapCurrentWeapon(WeaponType type, int level, WeaponInLoadout& weaponToDrop);
+	void clearLoadout() { p_weapons.clear(); p_weaponLoadout.clear(); p_currentWeaponID = 0; }
+
 
 private:
 	// FUNCTIONS
+	void startUp();
 	void reset();
+	void handleMovement(float dt);
+	void handleAiming(const sf::Vector2f mousePos);
+	void ManageWeapons(std::vector<std::unique_ptr<DamageTrigger>>& instantiableTriggers, std::vector<std::unique_ptr<Projectile>>& gameProjectiles, float dt);
+
+
+	void buildWeaponsFromLoadout();
+	std::unique_ptr<Weapon> createWeapon(WeaponType type, int level);
 
 	// VARIABLES
-	RectangleShape p_body;
+	sf::RectangleShape p_body;
 
-	Vector2f p_velocity{ 0.f, 0.f };
-	float p_moveSpeed{ 200.f };
+	sf::Vector2f p_velocity{ 0.f, 0.f };
 
-	Vector2f p_prevPos;
+	sf::Vector2f p_prevPos;
 
 	bool p_isController;
 
 	// reticle
-	RectangleShape p_reticle;
-	Vector2f p_aimDir{ 0.f,0.f };
+	sf:: RectangleShape p_reticle;
+	sf::Vector2f p_aimDir{ 0.f,0.f };
 	float p_reticleDistance;
-	Vector2f p_prevMousePos;
+	sf::Vector2f p_prevMousePos;
 
 	// collsion
 	CollisionProfile p_collisionProfile;
@@ -60,11 +78,14 @@ private:
 	int p_maxHealth;
 	int p_health;
 	bool p_isDead;
+	int p_playerAmmo;
+	float p_moveSpeed{ 200.f };
 
 	// weapons
+	static constexpr int MAX_WEAPONS = 3;
+	std::vector<WeaponInLoadout> p_weaponLoadout;
 	std::vector<std::unique_ptr<Weapon>> p_weapons;
-	std::unique_ptr<Weapon> p_currentWeapon;
-	int p_currentWeaponID;
+	int p_currentWeaponID; 
 	
 	float p_rumbleTimer;
 	float p_lowRumble;

@@ -48,7 +48,7 @@ void Game::init()
 	x_drawFPS.setFillColor(sf::Color::White);
 #endif
 
-	gameStart();
+	enterHubWorld();
 }
 
 ////////////////////////////////////////////////////////////
@@ -113,64 +113,33 @@ void Game::processGameEvents(const sf::Event& event)
 		case sf::Keyboard::Scancode::Escape:
 			m_window.close();
 			break;
-		
+
 		case sf::Keyboard::Scancode::Num0:
-			if (!m_llmManager.isReady()) {
-				cout << "LLM model is not ready.\n";
+			if (m_gameMode != GameMode::DUNGEON || m_activeRoomId < 0 || m_activeRoomId >= static_cast<int>(m_roomPlans.size()))
+			{
+				cout << "No active dungeon room for LLM prompt.\n";
+				break;
 			}
-			else {
-				// LLM Prompt/Response test
-				// Request generation of p
-				if (!m_llmManager.isBusy())
-				{
-					// Generate Prompt
-					RoomPlan currRoom = m_roomPlans[m_activeRoomId];
-
-					std::string roomTypeStr;
-					switch (currRoom.type) {
-					case RoomType::CORRIDOR:
-						roomTypeStr = "Corridor";
-						break;
-					case RoomType::SPAWN:
-						roomTypeStr = "Spawn Room";
-						break;
-					case RoomType::PORTAL:
-						roomTypeStr = "Portal Room";
-						break;
-					case RoomType::COMBAT:
-						roomTypeStr = "Combat Room";
-						break;
-					}
-
-					std::string clearedStr = currRoom.isCleared ? "Yes" : "No";
-
-					cout << "Generating response...\n";
-					const std::string prompt = "Generate a 2 sentence description of the room the player is in currently based on the following properties: Room Type: " + roomTypeStr
-						+ ", Is Room Cleared: " + clearedStr
-						+ ", Room Height: " + to_string(currRoom.height)
-						+ ", Room Width: " + to_string(currRoom.width)
-						+ ", Dungeon Floor: " + to_string(m_dungeonPlan.currentFloorId) + "\n";
-
-					cout << "Prompt: " << prompt << "\n";
-
-					const bool queued = m_llmManager.requestGenerate(prompt);
-					if (queued)
-						cout << "Generation request queued successfully.\n";
-					else
-						cout << "Failed to queue generation request.\n";
-				}
-				else
-				{
-					cout << "Generation in progress, please wait...\n";
-				}
-			}			
+			LLM_GenerateRoomInfo();
 			break;
-		
+
+		case sf::Keyboard::Scancode::R:
+			if (m_gameMode == GameMode::HUB)
+				startDungeonRun();
+			else
+				gameStart();
+			break;
+
+		case sf::Keyboard::Scancode::V:
+			m_isPlayerCamera = !m_isPlayerCamera;
+			break;
+
 		default:
 			break;
-		}
+		};
 	}
 }
+
 
 
 ////////////////////////////////////////////////////////////
@@ -181,19 +150,23 @@ void Game::update(float dt)
 
 	InputManager::update();
 	
-	if(m_player.isDead())
+	if (m_gameMode == GameMode::HUB)
+	{
+		updateHubShops();
+	}
+
+	if( m_gameMode == GameMode::DUNGEON && m_player.isDead())
 	{
 		cout << "Player has died. Restarting game...\n";
-		gameStart();
+		enterHubWorld();
 		return;
 	}
 
 	// Game manager controls
-	gameInput();
+	ControllerInputHandler();
 	updateActiveRoom();
 
 	// Update player and enemies
-	Vector2f oldPlayerPos = m_player.getPosition();
 	m_player.update(dt, mousePosF, m_gameProjectiles, m_activeDamageTriggers);
 
 	for (auto enemy_it = m_enemies.begin(); enemy_it != m_enemies.end();)
@@ -253,7 +226,7 @@ void Game::update(float dt)
 		m_dungeonPlan.advanceFloor();
 
 		if (m_dungeonPlan.isDungeonComplete)
-			m_window.close();
+			enterHubWorld();
 		else
 			loadNewFloor();
 	}
@@ -309,6 +282,15 @@ void Game::render()
 		trigger->render(m_window);
 	}
 
+	if (m_gameMode == GameMode::HUB)
+	{
+		m_window.draw(m_weaponShop);
+		m_window.draw(m_cosmeticShop);
+		m_window.draw(m_armoryShop);
+		m_window.draw(m_playerShop);
+		renderHubShopPrompt();
+	}
+
 #ifdef TEST_FPS
 	m_window.draw(x_updateFPS); //ups is 60 and dps is 61
 	m_window.draw(x_drawFPS);
@@ -330,6 +312,7 @@ void Game::resetGame()
 	m_isPlayerCamera = true;
 
 	m_player.init();
+	m_player.applyUpgrade(m_pistolUpgradeLevel, m_arUpgradeLevel, m_shotgunUpgradeLevel);
 	m_isInCombat = false;
 	m_isInRoom = true;
 
@@ -357,10 +340,316 @@ void Game::resetGame()
 void Game::gameStart()
 {
 	resetGame();
+	m_gameMode = GameMode::DUNGEON;
 
 	m_dungeonPlan.start(/*rand() % 50000*/12344); // using a fixed seed for testing purposes, can be randomized for more variety
 
 	loadNewFloor();
+}
+
+void Game::enterHubWorld()
+{
+	resetGame();
+	m_gameMode = GameMode::HUB;
+	buildHubWorld();
+	m_requestNextFloor = false;
+}
+
+void Game::startDungeonRun()
+{
+	gameStart();
+}
+
+void Game::buildHubWorld()
+{	
+	// Set Room PLan for Hub Room
+	RoomPlan hubRoom;
+	hubRoom.id = 0;
+	hubRoom.type = RoomType::SPAWN;
+	hubRoom.seed = 0;
+	hubRoom.width = 30;
+	hubRoom.height = 20;
+	hubRoom.tileSize = 64.f;
+	hubRoom.tileMap.assign(hubRoom.width * hubRoom.height, Tile::FLOOR);
+
+	// Build outer walls
+	for (int col = 0; col < hubRoom.width; col++) {
+		hubRoom.setTile(0, col, Tile::WALL);
+		hubRoom.setTile(hubRoom.height - 1, col, Tile::WALL);
+	}
+	for (int row = 0; row < hubRoom.height; row++) {
+		hubRoom.setTile(row, 0, Tile::WALL);
+		hubRoom.setTile(row, hubRoom.width - 1, Tile::WALL);
+	}
+
+	// Spawn point and Portal placement
+	const sf::Vector2i playerSpawnTile(hubRoom.width / 2, hubRoom.height / 2);
+	const sf::Vector2i portalTile(hubRoom.width / 2, hubRoom.height / 4);
+
+	const sf::Vector2i gunShopTile(hubRoom.width / 4, hubRoom.height / 2);
+	const sf::Vector2i armoryShopTile(hubRoom.width / 4, 3 * hubRoom.height / 4);
+	const sf::Vector2i cosmeticShopTile(3 * hubRoom.width / 4, hubRoom.height / 2);
+	const sf::Vector2i playerShopTile(3 * hubRoom.width / 4, 3 * hubRoom.height / 4);
+
+	hubRoom.spawners.push_back({ SpawnerType::PlayerSpawner, playerSpawnTile });
+	hubRoom.spawners.push_back({ SpawnerType::PortalSpawner, portalTile });
+	hubRoom.triggers.push_back({ TriggerType::PortalTrigger, portalTile });
+
+	m_roomPlans.clear();
+	m_roomInstances.clear();
+	m_roomWorldPositions.clear();
+
+	m_roomPlans.push_back(hubRoom);
+	m_roomInstances.resize(m_roomPlans.size());
+	m_roomWorldPositions.resize(m_roomPlans.size());
+
+	// For the hub world, we can just place the single room at the origin
+	m_roomWorldPositions[0] = sf::Vector2f(0.f, 0.f);
+	generateRoom(0);
+	spawnPlayer(0);
+
+	// Set active room to hub
+	m_activeRoomId = 0;
+	m_isInRoom = true;
+	m_isInCombat = false;
+	m_waveCounter = 0;
+
+	m_playerCamera.setCenter(m_player.getPosition());
+	m_floorCamera.setCenter(m_player.getPosition());
+
+	const float tileSize = hubRoom.tileSize;
+	const sf::Vector2f worldOrigin = m_roomWorldPositions[0];
+	const sf::Vector2f gunShopCenter = worldOrigin + sf::Vector2f(gunShopTile.x * tileSize + tileSize / 2, gunShopTile.y * tileSize + tileSize / 2);
+	const sf::Vector2f cosmeticShopCenter = worldOrigin + sf::Vector2f(cosmeticShopTile.x * tileSize + tileSize / 2, cosmeticShopTile.y * tileSize + tileSize / 2);
+	const sf::Vector2f armoryShopCenter = worldOrigin + sf::Vector2f(armoryShopTile.x * tileSize + tileSize / 2, armoryShopTile.y * tileSize + tileSize / 2);
+	const sf::Vector2f playerShopCenter = worldOrigin + sf::Vector2f(playerShopTile.x * tileSize + tileSize / 2, playerShopTile.y * tileSize + tileSize / 2);
+
+	// Initialize shops
+	m_weaponShop.setSize(sf::Vector2f(tileSize * 3, tileSize * 3));
+	m_weaponShop.setOrigin(m_weaponShop.getSize() / 2.f);
+	m_weaponShop.setPosition(gunShopCenter);
+	m_weaponShop.setFillColor(sf::Color::Cyan);
+
+	m_cosmeticShop.setSize(sf::Vector2f(tileSize * 3, tileSize * 3));
+	m_cosmeticShop.setOrigin(m_cosmeticShop.getSize() / 2.f);
+	m_cosmeticShop.setPosition(cosmeticShopCenter);
+	m_cosmeticShop.setFillColor(sf::Color::Magenta);
+
+	m_armoryShop.setSize(sf::Vector2f(tileSize * 3, tileSize * 3));
+	m_armoryShop.setOrigin(m_armoryShop.getSize() / 2.f);
+	m_armoryShop.setPosition(armoryShopCenter);
+	m_armoryShop.setFillColor(sf::Color::White);
+
+	m_playerShop.setSize(sf::Vector2f(tileSize * 3, tileSize * 3));
+	m_playerShop.setOrigin(m_playerShop.getSize() / 2.f);
+	m_playerShop.setPosition(playerShopCenter);
+	m_playerShop.setFillColor(sf::Color(255, 165, 0)); // Orange color
+}
+
+void Game::updateHubShops()
+{
+	m_activeShop = HubShopType::NONE_SHOP;
+
+	const sf::FloatRect playerBounds = m_player.getCollisionBounds();
+
+	const sf::FloatRect weaponShopBounds = m_weaponShop.getGlobalBounds();
+	const sf::FloatRect cosmeticShopBounds = m_cosmeticShop.getGlobalBounds();
+	const sf::FloatRect armoryShopBounds = m_armoryShop.getGlobalBounds();
+	const sf::FloatRect playerShopBounds = m_playerShop.getGlobalBounds();
+
+	if (weaponShopBounds.findIntersection(playerBounds))
+		m_activeShop = HubShopType::WEAPON_SHOP;
+	else if (cosmeticShopBounds.findIntersection(playerBounds))
+		m_activeShop = HubShopType::COSMETIC_SHOP;
+	else if (armoryShopBounds.findIntersection(playerBounds))
+		m_activeShop = HubShopType::ARMORY_SHOP;
+	else if (playerShopBounds.findIntersection(playerBounds))
+		m_activeShop = HubShopType::PLAYER_SHOP;
+
+	switch (m_activeShop)
+	{
+	case HubShopType::WEAPON_SHOP: {
+		const bool WeaponUpgradeInput = InputManager::pad().pressed(GamepadButton::A) || Keyboard::isKeyPressed(Keyboard::Key::Space);
+		const bool AmmoUpgradeInput = InputManager::pad().pressed(GamepadButton::B) || Keyboard::isKeyPressed(Keyboard::Key::Enter);
+
+		if (!WeaponUpgradeInput && !AmmoUpgradeInput)
+			return;
+
+		const int upgradeCost = 100;
+
+		// Weapon Upgrades
+		if (WeaponUpgradeInput && m_coins >= upgradeCost)
+		{
+			const auto& loadout = m_player.getWeaponLoadout();
+			const int currentSlot = m_player.getCurrentWeaponID();
+
+			const WeaponType selectedType = loadout[currentSlot].type;
+			int* selectedUpgradeLevel = nullptr;
+			std::string weaponName = "";
+
+			if (selectedType >= WeaponType::KNIFE)
+				break;
+
+			switch (selectedType)
+			{
+			case WeaponType::PISTOL:
+				selectedUpgradeLevel = &m_pistolUpgradeLevel;
+				weaponName = "Pistol";
+				break;
+
+			case WeaponType::ASSAULT_RIFLE:
+				selectedUpgradeLevel = &m_arUpgradeLevel;
+				weaponName = "Assault Rifle";
+				break;
+
+			case WeaponType::SHOTGUN:
+				selectedUpgradeLevel = &m_shotgunUpgradeLevel;
+				weaponName = "Shotgun";
+				break;
+			}
+
+			m_coins -= upgradeCost;
+			(*selectedUpgradeLevel)++;
+			WeaponInLoadout droppedWeapon;
+			m_player.swapCurrentWeapon(selectedType, *selectedUpgradeLevel, droppedWeapon);
+			cout << weaponName << " upgraded to level " << *selectedUpgradeLevel << "!\n"
+				<< "Coins remaining: " << m_coins << "\n";
+		}
+		
+		// Ammo Upgrades
+		else if (AmmoUpgradeInput && m_coins >= upgradeCost)
+		{
+			m_coins -= upgradeCost;
+			m_playerAmmoUpgradeLevel++;
+			m_player.applyUpgrade(m_playerHealthUpgradeLevel, m_playerSpeedUpgradeLevel, m_playerAmmoUpgradeLevel);
+			cout << "Player ammo capacity upgraded to level " << m_playerAmmoUpgradeLevel << "!\n"
+				<< "Coins remaining: " << m_coins << "\n";
+		}
+		
+		// Not enough coins
+		else
+		{
+			cout << "Not enough coins to upgrade weapon or ammo! Coins: " << m_coins << "\n";
+		}
+
+		break;
+	}
+
+	case HubShopType::COSMETIC_SHOP: {
+		const bool interactPressed = InputManager::pad().pressed(GamepadButton::A) || Keyboard::isKeyPressed(Keyboard::Key::Space);
+		if (!interactPressed)
+			return;
+
+		m_playerColorIndex = (m_playerColorIndex + 1) % m_playerColorOptions.size();
+		m_player.setBodyColor(m_playerColorOptions[m_playerColorIndex]);
+		cout << "Player color changed to " << m_playerColorIndex << "!\n";
+		break;
+	}
+
+	case HubShopType::ARMORY_SHOP: {
+		const bool interactPressed = InputManager::pad().pressed(GamepadButton::A) || Keyboard::isKeyPressed(Keyboard::Key::Space);
+		if (!interactPressed)
+			return;
+
+		const WeaponType weaponToEquip = m_armoryCatalog[m_armoryCatalogIndex];
+
+		int equipLevel = 1;
+		switch (weaponToEquip)
+		{
+		case WeaponType::PISTOL:
+			equipLevel = m_pistolUpgradeLevel;
+			break;
+		case WeaponType::ASSAULT_RIFLE:
+			equipLevel = m_arUpgradeLevel;
+			break;
+		case WeaponType::SHOTGUN:
+			equipLevel = m_shotgunUpgradeLevel;
+			break;
+		}
+
+		WeaponInLoadout droppedWeapon;
+		if (m_player.swapCurrentWeapon(weaponToEquip, equipLevel, droppedWeapon))
+		{
+			cout << "Equipped " << weaponToEquip << " at level " << equipLevel << "!\n";
+			if (droppedWeapon.type != WeaponType::COUNT)
+				cout << "Dropped " << droppedWeapon.type << " at level " << droppedWeapon.level << ".\n";
+		}
+		else
+		{
+			cout << "Failed to equip weapon. Loadout may be full.\n";
+		}
+
+		m_armoryCatalogIndex++;
+		if (m_armoryCatalogIndex >= m_armoryCatalog.size())
+			m_armoryCatalogIndex = 0;
+
+		break;
+	}
+
+	case HubShopType::PLAYER_SHOP: {
+		const bool healthUpgradeInput = InputManager::pad().pressed(GamepadButton::A) || Keyboard::isKeyPressed(Keyboard::Key::Space);
+		const bool speedUpgradeInput = InputManager::pad().pressed(GamepadButton::B) || Keyboard::isKeyPressed(Keyboard::Key::Enter);
+
+		if (!healthUpgradeInput && !speedUpgradeInput)
+			return;
+
+		const int upgradeCost = 100;
+
+		if (healthUpgradeInput && m_coins >= upgradeCost)
+		{
+			m_coins -= upgradeCost;
+			m_playerHealthUpgradeLevel++;
+			m_player.applyUpgrade(m_playerHealthUpgradeLevel, m_playerSpeedUpgradeLevel, m_playerAmmoUpgradeLevel);
+			cout << "Player health upgraded! Coins remaining: " << m_coins << "\n";
+		}
+		else if (speedUpgradeInput && m_coins >= upgradeCost)
+		{
+			m_coins -= upgradeCost;
+			m_playerSpeedUpgradeLevel++;
+			m_player.applyUpgrade(m_playerHealthUpgradeLevel, m_playerSpeedUpgradeLevel, m_playerAmmoUpgradeLevel);
+			cout << "Player speed upgraded! Coins remaining: " << m_coins << "\n";
+		}
+		else
+		{
+			cout << "Not enough coins to upgrade player! Coins: " << m_coins << "\n";
+		}
+
+		break;
+	}
+	}
+}
+
+void Game::renderHubShopPrompt()
+{
+	if (m_activeShop == HubShopType::NONE_SHOP)
+		return;
+
+	sf::Text promptText(m_arialFont);
+	promptText.setCharacterSize(12);
+	promptText.setFillColor(sf::Color::White);
+
+	switch (m_activeShop)
+	{
+	case HubShopType::WEAPON_SHOP:
+		promptText.setString("Press A / Space to upgrade equipped weapon for 100 coins!\n Press B / Enter to Upgrade Ammo capacity for 100 coins");
+		break;
+
+	case HubShopType::COSMETIC_SHOP:
+		promptText.setString("Press A / Space to change player color!");
+		break;
+
+	case HubShopType::ARMORY_SHOP:
+		promptText.setString("Press A / Space to swap current weapon with one from the armory!");
+		break;
+
+	case HubShopType::PLAYER_SHOP:
+		promptText.setString("Press A / Space to Upgrade Player Health for 100 coins\n Press B / Enter to Upgrade Player Speed for 100 coins");
+	}
+
+	promptText.setOrigin(promptText.getGlobalBounds().getCenter());
+	promptText.setPosition({ m_player.getPosition().x, m_player.getPosition().y - 50 });
+
+	m_window.draw(promptText);
 }
 
 /// <summary>
@@ -511,7 +800,10 @@ void Game::CollisionChecks()
 				{
 					if (InputManager::pad().pressed(GamepadButton::A) || Keyboard::isKeyPressed(Keyboard::Key::Space))
 					{
-						m_requestNextFloor = true;
+						if (m_gameMode == GameMode::HUB)
+							startDungeonRun();
+						else
+							m_requestNextFloor = true;
 					}
 					break;
 				}
@@ -571,19 +863,31 @@ void Game::updateActiveRoom()
 /// <summary>
 /// Handles game input for controlling game state, including closing the window and restarting the game.
 /// </summary>
-void Game::gameInput()
+void Game::ControllerInputHandler()
 {
-	if (Keyboard::isKeyPressed(Keyboard::Key::Escape) || InputManager::pad().pressed(GamepadButton::Start))
+	if (InputManager::pad().pressed(GamepadButton::Start))
 	{
 		m_window.close();
 	}
-	if (Keyboard::isKeyPressed(Keyboard::Key::R) || InputManager::pad().pressed(GamepadButton::Select))
+	if (InputManager::pad().pressed(GamepadButton::Select))
 	{
-		gameStart();
+		if (m_gameMode == GameMode::HUB)
+			startDungeonRun();
+		else
+			gameStart();
 	}
-	if (Keyboard::isKeyPressed(Keyboard::Key::V) || InputManager::pad().pressed(GamepadButton::DPadDown))
+	if (InputManager::pad().pressed(GamepadButton::DPadDown))
 	{
 		m_isPlayerCamera = !m_isPlayerCamera;
+	}
+	if (InputManager::pad().pressed(GamepadButton::DPadUp))
+	{
+		if (m_gameMode != GameMode::DUNGEON || m_activeRoomId < 0 || m_activeRoomId >= static_cast<int>(m_roomPlans.size()))
+		{
+			cout << "No active dungeon room for LLM prompt.\n";
+			return;
+		}
+		LLM_GenerateRoomInfo();
 	}
 }
 
@@ -942,3 +1246,59 @@ void Game::loadNewFloor()
 }
 
 #pragma endregion
+
+
+/////////////////////////////////////////////////////////////////
+
+void Game::LLM_GenerateRoomInfo()
+{
+	if (!m_llmManager.isReady()) {
+		cout << "LLM model is not ready.\n";
+	}
+	else {
+		// LLM Prompt/Response test
+		// Request generation of p
+		if (!m_llmManager.isBusy())
+		{
+			// Generate Prompt
+			RoomPlan currRoom = m_roomPlans[m_activeRoomId];
+
+			std::string roomTypeStr;
+			switch (currRoom.type) {
+			case RoomType::CORRIDOR:
+				roomTypeStr = "Corridor";
+				break;
+			case RoomType::SPAWN:
+				roomTypeStr = "Spawn Room";
+				break;
+			case RoomType::PORTAL:
+				roomTypeStr = "Portal Room";
+				break;
+			case RoomType::COMBAT:
+				roomTypeStr = "Combat Room";
+				break;
+			}
+
+			std::string clearedStr = currRoom.isCleared ? "Yes" : "No";
+
+			cout << "Generating response...\n";
+			const std::string prompt = "Generate a 2 sentence description of the room the player is in currently based on the following properties: Room Type: " + roomTypeStr
+				+ ", Is Room Cleared: " + clearedStr
+				+ ", Room Height: " + to_string(currRoom.height)
+				+ ", Room Width: " + to_string(currRoom.width)
+				+ ", Dungeon Floor: " + to_string(m_dungeonPlan.currentFloorId) + "\n";
+
+			cout << "Prompt: " << prompt << "\n";
+
+			const bool queued = m_llmManager.requestGenerate(prompt);
+			if (queued)
+				cout << "Generation request queued successfully.\n";
+			else
+				cout << "Failed to queue generation request.\n";
+		}
+		else
+		{
+			cout << "Generation in progress, please wait...\n";
+		}
+	}
+}

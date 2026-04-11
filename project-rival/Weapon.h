@@ -43,7 +43,7 @@ struct FireReq
 class Weapon
 {
 public:
-	Weapon(WeaponType type);
+	Weapon(WeaponType type, int level);
 	virtual ~Weapon() = default;
 
 	virtual void update(float dt, const sf::Vector2f playerPos, const sf::Vector2f aimDir);
@@ -60,6 +60,7 @@ protected:
 	virtual void spawnMeleeHit(const FireReq& req, std::vector<std::unique_ptr<DamageTrigger>>& damageTriggerList) = 0;
 
 	sf::Vector2f w_spawnPos;
+	int w_damage;
 
 private:
 	void init(WeaponType type);
@@ -67,6 +68,7 @@ private:
 
 	FireMode w_fireMode;
 
+	int w_weaponLevel;
 	float w_cooldownRemaining;
 	float w_fireRate;
 
