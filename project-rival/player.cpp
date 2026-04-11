@@ -69,6 +69,14 @@ void Player::hitWall()
 	p_body.setPosition(p_prevPos);
 }
 
+void Player::applyUpgrade(int healthLevel, int speedLevel, int ammoLevel)
+{
+	p_maxHealth += healthLevel * 25;
+	p_health = p_maxHealth;
+	p_moveSpeed += speedLevel * 20.f;
+	p_playerAmmo += ammoLevel * 10;
+}
+
 bool Player::addWeaponToLoadout(WeaponType type, int level)
 {
 	if (p_weaponLoadout.size() >= MAX_WEAPONS)

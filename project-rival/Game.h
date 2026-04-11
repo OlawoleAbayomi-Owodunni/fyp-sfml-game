@@ -46,6 +46,7 @@ enum HubShopType
 	WEAPON_SHOP,
 	COSMETIC_SHOP,
 	ARMORY_SHOP,
+	PLAYER_SHOP,
 
 	SHOP_COUNT
 };
@@ -143,6 +144,7 @@ private:
 	sf::RectangleShape m_weaponShop;
 	sf::RectangleShape m_cosmeticShop;
 	sf::RectangleShape m_armoryShop;
+	sf::RectangleShape m_playerShop;
 	HubShopType m_activeShop;
 
 	// Room management
@@ -186,9 +188,9 @@ private:
 	};
 	int m_armoryCatalogIndex;
 
-	int m_playerHealthUpgradeLevel;
-	int m_playerSpeedUpgradeLevel;
-	int m_playerAmmoUpgradeLevel;
+	int m_playerHealthUpgradeLevel = 1;
+	int m_playerSpeedUpgradeLevel = 1;
+	int m_playerAmmoUpgradeLevel = 1;
 
 	std::vector<sf::Color> m_playerColorOptions{
 		sf::Color::Green,

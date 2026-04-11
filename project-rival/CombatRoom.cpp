@@ -121,7 +121,7 @@ void CombatRoom::generateSpawnPoints(RoomPlan& room, int interiorArea)
 	room.spawners.clear();	// clear any existing spawners
 
 	const int minEnemies = 1 + interiorArea / (room.tileSize * 2);
-	int maxEnemies = 10 + interiorArea / (room.tileSize / 2);
+	int maxEnemies = 3 + interiorArea / (room.tileSize / 2);
 
 	if (maxEnemies < minEnemies)
 		maxEnemies = minEnemies;

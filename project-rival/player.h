@@ -25,6 +25,7 @@ public:
 	CollisionProfile getCollisionProfile() const override { return p_collisionProfile; }
 	const std::vector<WeaponInLoadout>& getWeaponLoadout() const { return p_weaponLoadout; }
 	int getCurrentWeaponID() const { return p_currentWeaponID; }
+	int getAmmo() const { return p_playerAmmo; }
 
 	void setSpawnPosition(const sf::Vector2f& spawnPos) { p_body.setPosition(spawnPos); }
 	void setBodyColor(const sf::Color& color) { p_body.setFillColor(color); }
@@ -34,6 +35,8 @@ public:
 
 	void takeDamage(int damage);
 	const bool isDead() const { return p_isDead; }
+
+	void applyUpgrade(int healthLevel, int speedLevel, int ammoLevel);
 
 	bool addWeaponToLoadout(WeaponType type, int level);
 	bool dropWeaponFromLoadout(int slotIndex);
@@ -57,7 +60,6 @@ private:
 	sf::RectangleShape p_body;
 
 	sf::Vector2f p_velocity{ 0.f, 0.f };
-	float p_moveSpeed{ 200.f };
 
 	sf::Vector2f p_prevPos;
 
@@ -76,6 +78,8 @@ private:
 	int p_maxHealth;
 	int p_health;
 	bool p_isDead;
+	int p_playerAmmo;
+	float p_moveSpeed{ 200.f };
 
 	// weapons
 	static constexpr int MAX_WEAPONS = 3;
