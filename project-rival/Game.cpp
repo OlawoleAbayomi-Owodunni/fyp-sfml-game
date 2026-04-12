@@ -49,6 +49,11 @@ void Game::init()
 #endif
 
 	m_hud.init(m_arialFont);
+
+#pragma region Menu UI
+    m_menuUI.init(m_arialFont, m_window.getDefaultView());
+    m_menuUI.setScreen(MenuScreen::MAIN_MENU_SCREEN);
+#pragma endregion
 	enterHubWorld();
 }
 
@@ -107,12 +112,21 @@ void Game::processEvents()
 ////////////////////////////////////////////////////////////
 void Game::processGameEvents(const sf::Event& event)
 {
+#pragma region Menu UI
+    if (!m_menuUI.isGameplayScreen())
+	{
+        m_menuUI.processEvent(event, m_window);
+		applyMenuAction(m_menuUI.consumeAction());
+		return;
+	}
+#pragma endregion
+
 	if (const auto* keyPressed = event.getIf<sf::Event::KeyPressed>())
 	{
 		switch (keyPressed->scancode)
 		{
 		case sf::Keyboard::Scancode::Escape:
-			m_window.close();
+            m_menuUI.setScreen(MenuScreen::PAUSE_MENU_SCREEN);
 			break;
 
 		case sf::Keyboard::Scancode::Num0:
@@ -158,6 +172,16 @@ void Game::update(float dt)
 	const sf::Vector2f mousePosF = static_cast<sf::Vector2f>(m_window.mapPixelToCoords(mousePos, inputView));
 
 	InputManager::update();
+
+	// Game manager controls
+	ControllerInputHandler();
+
+#pragma region Menu UI
+    if (!m_menuUI.isGameplayScreen())
+	{
+		return;
+	}
+#pragma endregion
 	
 	if (m_gameMode == GameMode::HUB)
 	{
@@ -166,13 +190,10 @@ void Game::update(float dt)
 
 	if( m_gameMode == GameMode::DUNGEON && m_player.isDead())
 	{
-		cout << "Player has died. Restarting game...\n";
-		enterHubWorld();
+        cout << "Player has died. Showing game over screen...\n";
+        m_menuUI.setScreen(MenuScreen::GAME_OVER_SCREEN);
 		return;
 	}
-
-	// Game manager controls
-	ControllerInputHandler();
 	updateActiveRoom();
 
 	// Update player and enemies
@@ -303,7 +324,13 @@ void Game::render()
 	}
 
 	m_window.setView(m_window.getDefaultView());
-	m_hud.render(m_window);
+
+#pragma region Menu UI
+    if (m_menuUI.isGameplayScreen())
+		m_hud.render(m_window);
+	else
+       m_menuUI.render(m_window);
+#pragma endregion
 
 #ifdef TEST_FPS
 	m_window.draw(x_updateFPS); //ups is 60 and dps is 61
@@ -314,6 +341,23 @@ void Game::render()
 
 ///////////////////////////////////////////////////////////
 #pragma region GAME MANAGEMENT
+void Game::startNewGame()
+{
+	m_coins = 1000;
+
+	m_pistolUpgradeLevel = 1;
+	m_arUpgradeLevel = 1;
+	m_shotgunUpgradeLevel = 1;
+	m_armoryCatalogIndex = 0;
+
+	m_playerHealthUpgradeLevel = 1;
+	m_playerSpeedUpgradeLevel = 1;
+	m_playerAmmoUpgradeLevel = 1;
+	m_playerColorIndex = 0;
+	resetGame();
+	enterHubWorld();
+}
+
 /// <summary>
 /// Resets the game to its initial state, clearing all progress and reinitializing game systems.
 /// </summary>
@@ -373,6 +417,45 @@ void Game::startDungeonRun()
 {
 	gameStart();
 }
+
+#pragma region Menu UI
+void Game::applyMenuAction(MenuAction action)
+{
+	switch (action)
+	{
+	case MenuAction::ACTION_NEW_GAME:
+		startNewGame();
+		m_menuUI.setScreen(MenuScreen::GAMEPLAY_SCREEN);
+		break;
+
+	case MenuAction::ACTION_CONTINUE:
+		m_gameMode = GameMode::HUB;
+		enterHubWorld();
+		m_menuUI.setScreen(MenuScreen::GAMEPLAY_SCREEN);
+		break;
+
+	case MenuAction::ACTION_EXIT:
+		m_window.close();
+		break;
+
+	case MenuAction::ACTION_RESUME:
+		m_menuUI.setScreen(MenuScreen::GAMEPLAY_SCREEN);
+		break;
+
+	case MenuAction::ACTION_HUB_WORLD:
+		enterHubWorld();
+		m_menuUI.setScreen(MenuScreen::GAMEPLAY_SCREEN);
+		break;
+
+	case MenuAction::ACTION_MAIN_MENU:
+		m_menuUI.setScreen(MenuScreen::MAIN_MENU_SCREEN);
+		break;
+
+	default:
+		break;
+	}
+}
+#pragma endregion
 
 void Game::buildHubWorld()
 {	
@@ -442,22 +525,22 @@ void Game::buildHubWorld()
 	m_weaponShop.setSize(sf::Vector2f(tileSize * 3, tileSize * 3));
 	m_weaponShop.setOrigin(m_weaponShop.getSize() / 2.f);
 	m_weaponShop.setPosition(gunShopCenter);
-	m_weaponShop.setFillColor(sf::Color::Cyan);
+	m_weaponShop.setFillColor(sf::Color(0, 255, 255, 180)); // Cyan color
 
 	m_cosmeticShop.setSize(sf::Vector2f(tileSize * 3, tileSize * 3));
 	m_cosmeticShop.setOrigin(m_cosmeticShop.getSize() / 2.f);
 	m_cosmeticShop.setPosition(cosmeticShopCenter);
-	m_cosmeticShop.setFillColor(sf::Color::Magenta);
+	m_cosmeticShop.setFillColor(sf::Color(255, 0, 255, 180)); // Magenta color
 
 	m_armoryShop.setSize(sf::Vector2f(tileSize * 3, tileSize * 3));
 	m_armoryShop.setOrigin(m_armoryShop.getSize() / 2.f);
 	m_armoryShop.setPosition(armoryShopCenter);
-	m_armoryShop.setFillColor(sf::Color::White);
+	m_armoryShop.setFillColor(sf::Color(255, 255, 255, 180)); // White color
 
 	m_playerShop.setSize(sf::Vector2f(tileSize * 3, tileSize * 3));
 	m_playerShop.setOrigin(m_playerShop.getSize() / 2.f);
 	m_playerShop.setPosition(playerShopCenter);
-	m_playerShop.setFillColor(sf::Color(255, 165, 0)); // Orange color
+	m_playerShop.setFillColor(sf::Color(255, 165, 0, 180)); // Orange color
 }
 
 void Game::updateHubShops()
@@ -640,6 +723,8 @@ void Game::renderHubShopPrompt()
 
 	sf::Text promptText(m_arialFont);
 	promptText.setCharacterSize(12);
+	promptText.setOutlineThickness(1.f);
+	promptText.setOutlineColor(sf::Color::Black);
 	promptText.setFillColor(sf::Color::White);
 
 	switch (m_activeShop)
@@ -879,10 +964,33 @@ void Game::updateActiveRoom()
 /// </summary>
 void Game::ControllerInputHandler()
 {
-	if (InputManager::pad().pressed(GamepadButton::Start))
+  if (InputManager::pad().pressed(GamepadButton::Start))
 	{
-		m_window.close();
+#pragma region Menu UI
+        if (m_menuUI.isGameplayScreen())
+		{
+           m_menuUI.setScreen(MenuScreen::PAUSE_MENU_SCREEN);
+		}
+     else if (m_menuUI.screen() == MenuScreen::PAUSE_MENU_SCREEN)
+		{
+         m_menuUI.setScreen(MenuScreen::GAMEPLAY_SCREEN);
+		}
+		return;
+#pragma endregion
 	}
+
+#pragma region Menu UI
+    if (!m_menuUI.isGameplayScreen())
+	{
+       m_menuUI.processControllerNavigation(
+			InputManager::pad().pressed(GamepadButton::DPadUp),
+			InputManager::pad().pressed(GamepadButton::DPadDown),
+			InputManager::pad().pressed(GamepadButton::A));
+		applyMenuAction(m_menuUI.consumeAction());
+		return;
+	}
+#pragma endregion
+
 	if (InputManager::pad().pressed(GamepadButton::Select))
 	{
 		if (m_gameMode == GameMode::HUB)

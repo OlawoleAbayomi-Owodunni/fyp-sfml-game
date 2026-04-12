@@ -67,4 +67,4 @@ The player collision profile includes collisions with:
 
 - `Game` passes runtime containers into `Player::update(...)` so player weapons can emit projectiles/triggers.
 - Enemies use player position as their target (`m_player.getPosition()`).
-- In dungeon mode, `Game` checks `m_player.isDead()` and currently returns flow to the hub world.
+- In dungeon mode, `Game` checks `m_player.isDead()` and currently switches to the game-over menu screen.

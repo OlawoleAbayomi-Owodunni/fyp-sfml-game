@@ -62,6 +62,7 @@ Corridors are currently generated inside `Game.cpp` (as temporary `RoomPlan`s co
 ### UI
 
 - `PlayerHUD.h` / `PlayerHUD.cpp` (health/ammo/coins HUD overlay)
+- `MenuUI.h` / `MenuUI.cpp` (main/pause/game-over menu screens and actions)
 
 ### AI / Movement
 

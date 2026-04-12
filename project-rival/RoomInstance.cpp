@@ -14,6 +14,17 @@ void RoomInstance::buildFromPlan(const RoomPlan& plan, const sf::Vector2f& world
 	for (int row = 0; row < plan.height; row++) {
 		for (int col = 0; col < plan.width; col++) {
 			const Tile tile = plan.getTile(row, col);
+			// Floors
+			if (tile == Tile::FLOOR) {
+				// setup floor shape
+				sf::RectangleShape floor;
+				floor.setSize(sf::Vector2f(tileSize, tileSize));
+				floor.setOrigin(floor.getSize() / 2.f);
+				floor.setPosition(worldPos + sf::Vector2f(col * tileSize, row * tileSize));
+				floor.setFillColor(sf::Color(200, 200, 200)); // light grey floor
+				ri_staticRoomShapes.push_back(floor);
+			}
+
 			// Walls
 			if (tile == Tile::WALL) {
 				// setup wall shape

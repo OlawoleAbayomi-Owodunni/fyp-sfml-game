@@ -35,15 +35,20 @@ Current gameplay usage examples:
 High-level game controls:
 
 - Keyboard event controls (`Game::processGameEvents(...)`):
-  - Exit: `Escape`
-  - Restart / start run: `R`
-  - Toggle camera mode (player cam vs floor overview): `V`
-  - Debug LLM room prompt: `Num0`
+  - `Escape`: open pause menu from gameplay
+  - `R`: restart / start run
+  - `V`: toggle camera mode (player cam vs floor overview)
+  - `Num0`: debug LLM room prompt
 - Controller controls (`Game::ControllerInputHandler()`):
-  - Exit: `Start`
-  - Restart / start run: `Select`
-  - Toggle camera mode: `DPadDown`
-  - Debug LLM room prompt: `DPadUp`
+  - `Start`: toggle pause <-> gameplay screens
+  - `Select`: restart / start run
+  - `DPadDown`: toggle camera mode
+  - `DPadUp`: debug LLM room prompt
+
+Menu navigation:
+
+- Keyboard menu nav: `Up/W`, `Down/S`, `Enter`
+- Controller menu nav: `DPadUp`, `DPadDown`, `A`
 
 Contextual interactions:
 

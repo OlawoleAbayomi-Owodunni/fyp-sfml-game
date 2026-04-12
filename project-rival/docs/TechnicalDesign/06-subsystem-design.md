@@ -150,16 +150,19 @@ Extension points:
 - Add navigation/path constraints.
 - Add more enemy archetypes and attack patterns.
 
-## UI / HUD (prototype)
+## UI / HUD + menus (prototype)
 
 Core files:
 
 - `project-rival/PlayerHUD.h/.cpp`
+- `project-rival/MenuUI.h/.cpp`
 
 Current behaviour:
 
-- HUD currently displays health, ammo, and coin totals.
-- `Game` updates HUD values per frame and renders HUD in screen-space.
+- HUD displays health, ammo, and coin totals during gameplay screens.
+- Menu UI manages `MAIN_MENU`, `PAUSE_MENU`, `GAMEPLAY`, and `GAME_OVER` screens.
+- Game-over currently switches to a game-over menu screen instead of instant reset.
+- Menu actions are consumed in `Game::applyMenuAction(...)`.
 
 ## LLM integration (prototype)
 

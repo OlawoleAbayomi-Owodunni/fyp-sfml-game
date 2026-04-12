@@ -21,6 +21,7 @@ As of the current prototype, the project has:
 
 - Core SFML game loop (`Game`) with fixed timestep updates.
 - Two runtime modes: `HUB` and `DUNGEON`.
+- `MenuUI` screen flow for main menu, pause menu, gameplay, and game-over screen.
 - Player movement + aiming + weapon switching.
 - Player loadout/economy hooks (weapon swapping and upgrade application in hub flow).
 - Ranged projectiles and melee damage triggers via weapon classes.

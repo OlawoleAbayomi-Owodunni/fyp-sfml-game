@@ -8,6 +8,7 @@ This chapter describes what state exists, who owns it, and what might need savin
 
 - `Game` owns:
   - game mode (`HUB` / `DUNGEON`)
+  - menu UI state (`MenuUI` screen, button selections, pending menu action)
   - room plans + room instances + room world positions
   - active room id and room-presence flags
   - enemy list

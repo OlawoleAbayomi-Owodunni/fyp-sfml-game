@@ -23,6 +23,7 @@
 #include "LLMService.h"
 
 #include "PlayerHUD.h"
+#include "MenuUI.h"
 
 using namespace std;
 using namespace sf;
@@ -100,10 +101,14 @@ private:
 	void ControllerInputHandler();
 
 	// Game management
+	void startNewGame();
 	void resetGame();
 	void gameStart();
 	void enterHubWorld();
 	void startDungeonRun();
+	#pragma region Menu UI
+	void applyMenuAction(MenuAction action);
+	#pragma endregion
 
 	// Hub management
 	void buildHubWorld();
@@ -126,6 +131,10 @@ private:
 	sf::View m_gameCamera;
 	bool m_isPlayerCamera;
 	GameMode m_gameMode;
+
+	#pragma region Menu UI
+	MenuUI m_menuUI;
+	#pragma endregion
 
 	// Player management
 	Player m_player;
