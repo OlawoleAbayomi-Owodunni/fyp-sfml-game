@@ -44,7 +44,7 @@ namespace
 Game::Game()
 	: m_window(sf::VideoMode::getDesktopMode(), "FYP: Dungeonish Crawler", sf::State::Fullscreen)
 {
-	m_llmManager.initAsync("ASSETS/LLM/MODELS/Llama-3.2-1B-Instruct-Q4_K_M.gguf");
+	m_llmManager.initAsync("ASSETS/LLM/MODELS/Qwen2.5-0.5B-Instruct-Q8_0.gguf");
 
 	srand(time(NULL));
 	init();
@@ -1410,14 +1410,16 @@ std::string Game::buildQuestMetadataPrompt(int questIndex) const
 			? "Arnold from the Armory Shop needs supplies to prepare for incoming conflict."
 			: "Petra from the Player Shop needs medical resources for wounded adventurers.";
 	}
-
-	return "Create quest metadata for a roguelike hub job board. Return exactly two lines:\n"
+	
+	std::string prompt = "Create quest metadata for a roguelike hub job board. Return exactly two lines:\n"
 		"TITLE: <short quest title under 5 words>\n"
 		"LORE: <one immersive sentence tied to NPC context>\n"
 		"Quest Type: " + questTypeStr + "\n"
 		"Target: " + std::to_string(quest->targetCount) + " " + targetStr + "\n"
 		"Reward: " + std::to_string(quest->rewardCoins) + " coins\n"
 		"NPC Context: " + npcContext;
+
+	return prompt;
 }
 
 void Game::LLM_GenerateRoomInfo()
