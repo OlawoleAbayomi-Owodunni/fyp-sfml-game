@@ -14,6 +14,7 @@ public:
 	void render(sf::RenderWindow& window) override;
 
 	void setTarget(const Vector2f& target) override;
+	EnemyType getEnemyType() const override { return EnemyType::TURRET; }
 
 	void hitWall() override;
 

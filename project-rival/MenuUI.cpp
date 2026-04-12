@@ -1,12 +1,21 @@
 #include "MenuUI.h"
 
+MenuUI::MenuUI(const sf::Font& font, const sf::View& defaultView):
+	m_font(font),
+	m_defaultView(defaultView)
+{
+	init(font, defaultView);
+}
+
 void MenuUI::init(const sf::Font& font, const sf::View& defaultView)
 {
-	m_font = &font;
+	m_font = font;
+	m_defaultView = defaultView;
 	m_screen = MenuScreen::MAIN_MENU_SCREEN;
 	m_mainMenuSelection = 0;
 	m_pauseMenuSelection = 0;
 	m_gameOverSelection = 0;
+	m_questBoardSelection = 0;
 	m_pendingAction = MenuAction::ACTION_NONE;
 
 	m_menuCursor.setSize(sf::Vector2f(16.f, 16.f));
@@ -46,17 +55,121 @@ void MenuUI::init(const sf::Font& font, const sf::View& defaultView)
 		makeButton("Go To Hub World", MenuAction::ACTION_HUB_WORLD)
 	};
 
+	#pragma region Quest System
+	m_questBoardButtons = {
+		makeButton("Quest 1", MenuAction::ACTION_QUEST_0),
+		makeButton("Quest 2", MenuAction::ACTION_QUEST_1),
+		makeButton("Quest 3", MenuAction::ACTION_QUEST_2)
+	};
+
+	m_questBoardPanel.setFillColor(sf::Color(18, 18, 18, 240));
+	m_questBoardPanel.setOutlineThickness(2.f);
+	m_questBoardPanel.setOutlineColor(sf::Color::White);
+
+	m_questBoardDivider.setFillColor(sf::Color::White);
+
+	m_questBoardTitle.setFont(font);
+	m_questBoardTitle.setCharacterSize(38);
+	m_questBoardTitle.setFillColor(sf::Color::White);
+
+	m_questBoardLore.setFont(font);
+	m_questBoardLore.setCharacterSize(22);
+	m_questBoardLore.setFillColor(sf::Color(220, 220, 220));
+
+	m_questBoardGameplay.setFont(font);
+	m_questBoardGameplay.setCharacterSize(24);
+	m_questBoardGameplay.setFillColor(sf::Color::White);
+
+	m_questBoardReward.setFont(font);
+	m_questBoardReward.setCharacterSize(26);
+	m_questBoardReward.setFillColor(sf::Color::Yellow);
+	#pragma endregion
+
 	layoutMenu(m_mainMenuButtons, defaultView, 360.f);
 	layoutMenu(m_pauseMenuButtons, defaultView, 360.f);
 	layoutMenu(m_gameOverButtons, defaultView, 390.f);
+	layoutQuestBoard(defaultView);
+	updateQuestBoardButtons();
 	updateMenuCursorPosition();
+}
+
+void MenuUI::render(sf::RenderWindow& window)
+{
+	auto* buttons = getActiveButtons();
+	int* selectedIndex = getActiveSelection();
+	if (!buttons || !selectedIndex)
+		return;
+
+	const sf::View defaultView = window.getDefaultView();
+	const sf::Vector2f viewCenter = defaultView.getCenter();
+	const sf::Vector2f viewSize = defaultView.getSize();
+
+	sf::RectangleShape overlay(viewSize);
+	//set the overlay to solid black if in main menu and then to semi-transparent black if in pause or game over menu
+	if (m_screen == MenuScreen::MAIN_MENU_SCREEN)
+		overlay.setFillColor(sf::Color::Black);
+	else
+		overlay.setFillColor(sf::Color(0, 0, 0, 170));
+	overlay.setOrigin(viewSize * 0.5f);
+	overlay.setPosition(viewCenter);
+	window.draw(overlay);
+
+	if (m_screen == MenuScreen::QUEST_BOARD_SCREEN)
+	{
+		renderQuestBoard(window);
+		updateMenuCursorPosition();
+		window.draw(m_menuCursor);
+		return;
+	}
+
+	sf::Text title(m_font);
+	title.setCharacterSize(48);
+	title.setFillColor(sf::Color::White);
+
+	if (m_screen == MenuScreen::MAIN_MENU_SCREEN)
+		title.setString("Space Raider");
+	else if (m_screen == MenuScreen::PAUSE_MENU_SCREEN)
+		title.setString("Paused");
+	else
+		title.setString("Game Over");
+
+	title.setOrigin(title.getGlobalBounds().getCenter());
+	title.setPosition(sf::Vector2f(viewCenter.x, viewCenter.y - 210.f));
+	window.draw(title);
+
+	for (int i = 0; i < static_cast<int>(buttons->size()); i++)
+	{
+		auto& button = (*buttons)[i];
+		const bool isSelected = (i == *selectedIndex);
+		button.shape.setFillColor(isSelected ? sf::Color(60, 60, 60, 240) : sf::Color(30, 30, 30, 220));
+		button.shape.setOutlineColor(isSelected ? sf::Color::Yellow : sf::Color::White);
+		window.draw(button.shape);
+		window.draw(button.label);
+	}
+
+	updateMenuCursorPosition();
+	window.draw(m_menuCursor);
 }
 
 void MenuUI::setScreen(MenuScreen screen)
 {
 	m_screen = screen;
+	if (m_screen == MenuScreen::QUEST_BOARD_SCREEN)
+	{
+		m_questBoardSelection = 0;
+		layoutQuestBoard(m_defaultView);
+		updateQuestBoardButtons();
+	}
 	updateMenuCursorPosition();
 }
+
+#pragma region Quest System
+void MenuUI::setQuestBoardQuests(const std::vector<QuestData>& quests)
+{
+	m_questBoardQuests = quests;
+	updateQuestBoardButtons();
+}
+#pragma endregion
 
 void MenuUI::processEvent(const sf::Event& event, sf::RenderWindow& window)
 {
@@ -76,7 +189,7 @@ void MenuUI::processEvent(const sf::Event& event, sf::RenderWindow& window)
 			activateSelectedButton();
 			break;
 		case sf::Keyboard::Scancode::Escape:
-			if (m_screen == MenuScreen::PAUSE_MENU_SCREEN)
+			if (m_screen == MenuScreen::PAUSE_MENU_SCREEN || m_screen == MenuScreen::QUEST_BOARD_SCREEN)
 				m_screen = MenuScreen::GAMEPLAY_SCREEN;
 			break;
 		default:
@@ -115,7 +228,7 @@ void MenuUI::processEvent(const sf::Event& event, sf::RenderWindow& window)
 	updateMenuCursorPosition();
 }
 
-void MenuUI::processControllerNavigation(bool upPressed, bool downPressed, bool activatePressed)
+void MenuUI::processControllerNavigation(bool upPressed, bool downPressed, bool activatePressed, bool backPressed)
 {
 	if (upPressed)
 		moveSelection(-1);
@@ -123,6 +236,9 @@ void MenuUI::processControllerNavigation(bool upPressed, bool downPressed, bool 
 		moveSelection(1);
 	if (activatePressed)
 		activateSelectedButton();
+	if (backPressed)
+		if (m_screen == MenuScreen::PAUSE_MENU_SCREEN || m_screen == MenuScreen::QUEST_BOARD_SCREEN)
+			m_screen = MenuScreen::GAMEPLAY_SCREEN;
 }
 
 MenuAction MenuUI::consumeAction()
@@ -132,55 +248,6 @@ MenuAction MenuUI::consumeAction()
 	return action;
 }
 
-void MenuUI::render(sf::RenderWindow& window)
-{
-	auto* buttons = getActiveButtons();
-	int* selectedIndex = getActiveSelection();
-	if (!buttons || !selectedIndex || !m_font)
-		return;
-
-	const sf::View defaultView = window.getDefaultView();
-	const sf::Vector2f viewCenter = defaultView.getCenter();
-	const sf::Vector2f viewSize = defaultView.getSize();
-
-	sf::RectangleShape overlay(viewSize);
-	//set the overlay to solid black if in main menu and then to semi-transparent black if in pause or game over menu
-	if (m_screen == MenuScreen::MAIN_MENU_SCREEN)
-		overlay.setFillColor(sf::Color::Black);
-	else
-		overlay.setFillColor(sf::Color(0, 0, 0, 170));
-	overlay.setOrigin(viewSize * 0.5f);
-	overlay.setPosition(viewCenter);
-	window.draw(overlay);
-
-	sf::Text title(*m_font);
-	title.setCharacterSize(48);
-	title.setFillColor(sf::Color::White);
-
-	if (m_screen == MenuScreen::MAIN_MENU_SCREEN)
-		title.setString("Space Raider");
-	else if (m_screen == MenuScreen::PAUSE_MENU_SCREEN)
-		title.setString("Paused");
-	else
-		title.setString("Game Over");
-
-	title.setOrigin(title.getGlobalBounds().getCenter());
-	title.setPosition(sf::Vector2f(viewCenter.x, viewCenter.y - 210.f));
-	window.draw(title);
-
-	for (int i = 0; i < static_cast<int>(buttons->size()); i++)
-	{
-		auto& button = (*buttons)[i];
-		const bool isSelected = (i == *selectedIndex);
-		button.shape.setFillColor(isSelected ? sf::Color(60, 60, 60, 240) : sf::Color(30, 30, 30, 220));
-		button.shape.setOutlineColor(isSelected ? sf::Color::Yellow : sf::Color::White);
-		window.draw(button.shape);
-		window.draw(button.label);
-	}
-
-	updateMenuCursorPosition();
-	window.draw(m_menuCursor);
-}
 
 void MenuUI::layoutMenu(std::vector<MenuButton>& buttons, const sf::View& defaultView, float startY)
 {
@@ -196,6 +263,123 @@ void MenuUI::layoutMenu(std::vector<MenuButton>& buttons, const sf::View& defaul
 	}
 }
 
+#pragma region Quest System
+void MenuUI::layoutQuestBoard(const sf::View& defaultView)
+{
+	const sf::Vector2f viewCenter = defaultView.getCenter();
+	const sf::Vector2f viewSize = defaultView.getSize();
+	const sf::Vector2f panelSize(viewSize.x * 0.82f, viewSize.y * 0.72f);
+	const sf::Vector2f panelOrigin = panelSize / 2.f;
+
+	m_questBoardPanel.setSize(panelSize);
+	m_questBoardPanel.setOrigin(panelOrigin);
+	m_questBoardPanel.setPosition(viewCenter);
+
+	const float leftWidth = panelSize.x * 0.25f;
+	const float leftPadding = 22.f;
+	const float buttonWidth = leftWidth - leftPadding * 2.f;
+	const float buttonHeight = 72.f;
+	const float buttonStartX = viewCenter.x - panelOrigin.x + leftWidth / 2.f;
+	const float buttonStartY = viewCenter.y - panelOrigin.y + 170.f;
+	const float buttonSpacing = 100.f;
+
+	for (int i = 0; i < m_questBoardButtons.size(); i++)
+	{
+		auto& button = m_questBoardButtons[i];
+		button.shape.setSize(sf::Vector2f(buttonWidth, buttonHeight));
+		button.shape.setOrigin(button.shape.getSize() / 2.f);
+		button.shape.setPosition(sf::Vector2f(buttonStartX, buttonStartY + static_cast<float>(i) * buttonSpacing));
+
+		const sf::FloatRect bounds = button.label.getLocalBounds();
+
+		button.label.setOrigin({
+			bounds.position.x + bounds.size.x / 2.f,
+			bounds.position.y + bounds.size.y / 2.f
+			});
+		button.label.setPosition(button.shape.getPosition());
+	}
+
+	m_questBoardDivider.setSize(sf::Vector2f(4.f, panelSize.y - 40.f));
+	m_questBoardDivider.setOrigin(m_questBoardDivider.getSize() / 2.f);
+	m_questBoardDivider.setPosition(sf::Vector2f(viewCenter.x - panelOrigin.x + leftWidth, viewCenter.y));
+
+	m_questBoardTitle.setPosition(sf::Vector2f(viewCenter.x - panelOrigin.x + leftWidth + 36.f, viewCenter.y - panelOrigin.y + 48.f));
+	m_questBoardLore.setPosition(sf::Vector2f(viewCenter.x - panelOrigin.x + leftWidth + 36.f, viewCenter.y - panelOrigin.y + 130.f));
+	m_questBoardGameplay.setPosition(sf::Vector2f(viewCenter.x - panelOrigin.x + leftWidth + 36.f, viewCenter.y - panelOrigin.y + 260.f));
+	m_questBoardReward.setPosition(sf::Vector2f(viewCenter.x - panelOrigin.x + leftWidth + 36.f, viewCenter.y + panelOrigin.y - 110.f));
+}
+
+void MenuUI::updateQuestBoardButtons()
+{
+	for (int i = 0; i < m_questBoardButtons.size(); i++)
+	{
+		std::string label;
+		if (i < m_questBoardQuests.size() && !m_questBoardQuests[i].title.empty())
+			label = m_questBoardQuests[i].title;
+		else
+			label = "Quest " + std::to_string(i + 1);
+
+		m_questBoardButtons[i].label.setString(label);
+
+		const auto bounds = m_questBoardButtons[i].label.getLocalBounds();
+		m_questBoardButtons[i].label.setOrigin({
+			bounds.position.x + bounds.size.x / 2.f, 
+			bounds.position.y + bounds.size.y / 2.f});
+		m_questBoardButtons[i].label.setPosition(m_questBoardButtons[i].shape.getPosition());
+	}
+}
+
+void MenuUI::renderQuestBoard(sf::RenderWindow& window)
+{
+	if (m_questBoardQuests.empty())
+		return;
+
+	auto* buttons = getActiveButtons();
+	int* selectedIndex = getActiveSelection();
+	if (!buttons || !selectedIndex)
+		return;
+
+	if (*selectedIndex < 0 || *selectedIndex >= static_cast<int>(m_questBoardQuests.size()))
+		*selectedIndex = 0;
+
+	const QuestData& quest = m_questBoardQuests[*selectedIndex];
+	m_questBoardTitle.setString(quest.title);
+	m_questBoardLore.setString(quest.loreDescription);
+	m_questBoardGameplay.setString(quest.buildGameplayDescription());
+	m_questBoardReward.setString(quest.buildRewardDescription());
+
+	window.draw(m_questBoardPanel);
+	window.draw(m_questBoardDivider);
+
+	for (int i = 0; i < static_cast<int>(buttons->size()); i++)
+	{
+		auto& button = (*buttons)[i];
+		const bool isSelected = (i == *selectedIndex);
+		button.shape.setFillColor(isSelected ? sf::Color(60, 60, 60, 240) : sf::Color(30, 30, 30, 220));
+		button.shape.setOutlineColor(isSelected ? sf::Color::Yellow : sf::Color::White);
+		window.draw(button.shape);
+		window.draw(button.label);
+	}
+
+	window.draw(m_questBoardTitle);
+	window.draw(m_questBoardLore);
+	window.draw(m_questBoardGameplay);
+	window.draw(m_questBoardReward);
+}
+
+void MenuUI::applyQuestBoardSelection(int index)
+{
+	#pragma region Quest System
+	m_questBoardSelection = index;
+	if (m_questBoardSelection < 0)
+		m_questBoardSelection = 0;
+	if (m_questBoardSelection >= static_cast<int>(m_questBoardButtons.size()))
+		m_questBoardSelection = static_cast<int>(m_questBoardButtons.size()) - 1;
+	updateMenuCursorPosition();
+	#pragma endregion
+}
+#pragma endregion
+
 std::vector<MenuButton>* MenuUI::getActiveButtons()
 {
 	switch (m_screen)
@@ -206,6 +390,8 @@ std::vector<MenuButton>* MenuUI::getActiveButtons()
 		return &m_pauseMenuButtons;
 	case MenuScreen::GAME_OVER_SCREEN:
 		return &m_gameOverButtons;
+	case MenuScreen::QUEST_BOARD_SCREEN:
+		return &m_questBoardButtons;
 	default:
 		return nullptr;
 	}
@@ -221,6 +407,8 @@ int* MenuUI::getActiveSelection()
 		return &m_pauseMenuSelection;
 	case MenuScreen::GAME_OVER_SCREEN:
 		return &m_gameOverSelection;
+	case MenuScreen::QUEST_BOARD_SCREEN:
+		return &m_questBoardSelection;
 	default:
 		return nullptr;
 	}

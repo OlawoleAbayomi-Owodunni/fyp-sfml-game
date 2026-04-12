@@ -26,6 +26,7 @@ public:
 	virtual void reset();
 
 	virtual void setTarget(const Vector2f& target) = 0;
+	virtual EnemyType getEnemyType() const = 0;
 
 	virtual sf::FloatRect getCollisionBounds() const override;
 	virtual CollisionProfile getCollisionProfile() const override;

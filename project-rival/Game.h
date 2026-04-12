@@ -22,6 +22,7 @@
 
 #include "Pickup.h"
 #include "Chest.h"
+#include "Quest.h"
 
 #include "LLMService.h"
 
@@ -109,6 +110,8 @@ private:
 	void gameStart();
 	void enterHubWorld();
 	void startDungeonRun();
+
+	// UI management
 	#pragma region Menu UI
 	void applyMenuAction(MenuAction action);
 	#pragma endregion
@@ -139,7 +142,7 @@ private:
 	GameMode m_gameMode;
 
 	#pragma region Menu UI
-	MenuUI m_menuUI;
+	MenuUI m_menuUI{ m_arialFont, m_gameCamera };
 	#pragma endregion
 
 	// Player management
@@ -167,7 +170,10 @@ private:
 	sf::RectangleShape m_cosmeticShop;
 	sf::RectangleShape m_armoryShop;
 	sf::RectangleShape m_playerShop;
+	sf::RectangleShape m_jobBoard;
 	HubShopType m_activeShop;
+	bool m_isAtJobBoard;
+	bool m_blockJobBoardInteract{ false };
 
 	// Room management
 	vector<RoomPlan> m_roomPlans;
@@ -225,9 +231,8 @@ private:
 	// UI management
 	PlayerHUD m_hud{ m_arialFont };
 
-	// Quest Tracker Management
-	int m_activeQuestId;
-	int m_questKillCount;
-	int m_questHealthPickupCount;
-	int m_questAmmoPickupCount;
+	#pragma region Quest System
+	// Quest management
+	QuestManager m_questManager;
+	#pragma endregion
 };

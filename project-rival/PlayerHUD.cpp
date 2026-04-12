@@ -1,7 +1,8 @@
 #include "PlayerHUD.h"
+#include "Quest.h"
 
 PlayerHUD::PlayerHUD(const sf::Font& font)
-	: m_healthText(font), m_ammoText(font), m_coinsText(font)
+	: m_healthText(font), m_ammoText(font), m_coinsText(font), m_questText(font)
 {
 	init(font);
 }
@@ -43,9 +44,16 @@ void PlayerHUD::init(const sf::Font& font)
 	m_coinsText.setCharacterSize(14);
 	m_coinsText.setFillColor(sf::Color::Yellow);
 	// place coin on the right side of the screen
+
+	// Quest tracker text
+	m_questText.setFont(font);
+	m_questText.setCharacterSize(14);
+	m_questText.setFillColor(sf::Color::White);
+	m_questText.setOutlineThickness(1.f);
+	m_questText.setOutlineColor(sf::Color::Black);
 }
 
-void PlayerHUD::update(int currentHealth, int maxHealth, int currentAmmo, int maxAmmo, int coins)
+void PlayerHUD::update(int currentHealth, int maxHealth, int currentAmmo, int maxAmmo, int coins, const QuestData* activeQuest)
 {
 	// Update health bar
 	const float healthPercent = static_cast<float>(currentHealth) / maxHealth;
@@ -62,6 +70,18 @@ void PlayerHUD::update(int currentHealth, int maxHealth, int currentAmmo, int ma
 	// Update coins text
 	m_coinsText.setString("Coins: " + std::to_string(coins));
 	m_coinsText.setPosition({ phud_marginLeft, phud_marginTop + 2 * (phud_barHeight + phud_spacing) });
+
+	// Update quest tracker
+	if (activeQuest)
+	{
+		const std::string progressText = std::to_string(activeQuest->progress) + " / " + std::to_string(activeQuest->targetCount);
+		m_questText.setString("Quest: " + activeQuest->title + " (" + progressText + ")");
+		m_questText.setPosition({ phud_marginLeft, phud_marginTop + 3 * (phud_barHeight + phud_spacing) });
+	}
+	else
+	{
+		m_questText.setString("");
+	}
 }
 
 void PlayerHUD::render(sf::RenderWindow & window)
@@ -75,6 +95,8 @@ void PlayerHUD::render(sf::RenderWindow & window)
 	window.draw(m_ammoText);
 	
 	window.draw(m_coinsText);
+	if (!m_questText.getString().isEmpty())
+		window.draw(m_questText);
 }
 
 void PlayerHUD::centerText(sf::Text & text, const sf::RectangleShape & rect)

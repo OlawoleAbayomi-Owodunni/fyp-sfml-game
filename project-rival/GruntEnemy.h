@@ -12,6 +12,7 @@ public:
 	void update(float dt) override;
 	void update(float dt, std::vector<std::unique_ptr<DamageTrigger>>& instantiableTriggers);
 	void setTarget(const Vector2f& target) override;
+	EnemyType getEnemyType() const override { return EnemyType::GRUNT; }
 
 	void hitWall() override;
 
