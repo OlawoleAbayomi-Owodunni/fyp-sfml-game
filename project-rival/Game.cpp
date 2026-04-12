@@ -136,6 +136,41 @@ void Game::processGameEvents(const sf::Event& event)
 	}
 #pragma endregion
 
+	// NPC Typed Input
+	if (m_isNPCDialogueOpen && m_activeNPCId >= 0 && m_activeNPCId < m_hubNPCs.size())
+	{
+		if (const auto* textEntered = event.getIf<sf::Event::TextEntered>())
+		{
+			const char32_t unicode = textEntered->unicode;
+			//Backspace
+			if (unicode == 8) {
+				if (!m_npcInputBuffer.empty())
+					m_npcInputBuffer.pop_back();
+			}
+			// Printable charachters
+			else if (unicode >= 32 && unicode <= 126) {
+				m_npcInputBuffer.push_back(static_cast<char>(unicode));
+			}
+		}
+
+		if (const auto* keyPressed = event.getIf<sf::Event::KeyPressed>())
+		{
+			// Submit input
+			if (keyPressed->scancode == sf::Keyboard::Scancode::Enter)
+			{
+				const HubNPCInfo& npcInfo = m_hubNPCs[m_activeNPCId].getInfo();
+				const std::string prompt = "You are roleplaying this NPC in a game hub.\n"
+					"Name: " + npcInfo.name + "\n" +
+					"Background: " + npcInfo.background + "\n" +
+					"Player said: " + m_npcInputBuffer + "\n"
+					"Reply as this NPC in 1-2 immersive sentences.";
+
+				enqueLLMJob(LLMJobType::NPC_REPLY, m_activeNPCId, -1, prompt);
+				m_npcInputBuffer.clear();
+			}
+		}
+	}
+
 	if (const auto* keyPressed = event.getIf<sf::Event::KeyPressed>())
 	{
 		switch (keyPressed->scancode)
@@ -1385,6 +1420,7 @@ void Game::handleLLMResponse(const std::string & response)
 		break;
 
 	case LLMJobType::NPC_REPLY:
+		m_npcLastResponse = response;
 		std::cout << "NPC Reply (npcId: " << m_currentLLMJob.npcId << "): " << response << "\n";
 		break;
 
@@ -1577,6 +1613,9 @@ void Game::updateHubShops()
 
 	if (m_isNPCDialogueOpen)
 	{
+		m_npcInputBuffer.clear();
+		m_npcLastResponse.clear();
+
 		if (upPressed || downPressed)
 			m_selectedResponse = (m_selectedResponse == 0) ? 1 : 0;
 
@@ -1597,6 +1636,8 @@ void Game::updateHubShops()
 			m_isNPCDialogueOpen = false;
 			m_currentDialogueOptions.clear();
 			m_selectedResponse = -1;
+
+			m_npcInputBuffer.clear();
 		}
 
 		return;
@@ -1819,11 +1860,10 @@ void Game::renderHubShopPrompt()
 		const std::string option1Prefix = (m_selectedResponse == 1) ? "> " : "  ";
 
 		std::string dialogue =
-			npc.getInfo().name + " - " + shopTypeToString(npc.getInfo().shopType) + "\n" +
-			npc.getDialogue() + "\n\n" +
-			option0Prefix + m_currentDialogueOptions[0] + "\n" +
-			option1Prefix + m_currentDialogueOptions[1] + "\n\n" +
-			"Confirm: A/Space   Cancel: B/Esc";
+			npc.getInfo().name + " - " + shopTypeToString(npc.getInfo().shopType) + "\n\n" +
+			"NPC: " + (m_npcLastResponse.empty() ? npc.getDialogue() : m_npcLastResponse) + "\n\n" +
+			"You: " + (m_npcInputBuffer.empty() ? "_" : m_npcInputBuffer) + "\n\n" +
+			"Type to chat | Enter = Send | B/Esc = Close";
 
 		const sf::View previousView = m_window.getView();
 		m_window.setView(m_window.getDefaultView());

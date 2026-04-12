@@ -227,6 +227,9 @@ private:
 	float m_roomDescriptionTtl = 0.f;
 	sf::Text m_roomDescriptionText{ m_arialFont };
 
+	std::string m_npcInputBuffer;
+	std::string m_npcLastResponse;
+
 	// Economy, Upgrades & Progression
 	int m_coins = 500;
 
