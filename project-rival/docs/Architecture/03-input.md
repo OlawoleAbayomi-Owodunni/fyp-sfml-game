@@ -36,23 +36,23 @@ High-level game controls:
 
 - Keyboard event controls (`Game::processGameEvents(...)`):
   - `Escape`: open pause menu from gameplay
-  - `R`: restart / start run
+  - `R`: start/restart dungeon run
   - `V`: toggle camera mode (player cam vs floor overview)
   - `Num0`: debug LLM room prompt
 - Controller controls (`Game::ControllerInputHandler()`):
-  - `Start`: toggle pause <-> gameplay screens
-  - `Select`: restart / start run
-  - `DPadDown`: toggle camera mode
-  - `DPadUp`: debug LLM room prompt
+  - `Start`: pause/menu back behavior (context dependent)
+  - `Select`: toggle camera mode
+  - `DPadUp`: debug LLM room prompt (gameplay)
 
 Menu navigation:
 
 - Keyboard menu nav: `Up/W`, `Down/S`, `Enter`, `Escape` (back from pause/quest-board)
-- Controller menu nav: `DPadUp`, `DPadDown`, `A`, `B` (back from pause/quest-board)
+- Controller menu nav: `DPadUp`, `DPadDown`, `A`, `Start` (back from pause/quest-board)
 
 Contextual interactions:
 
 - Use portal (when standing inside a portal trigger): `Space` or controller `A`
-- Use job board in hub (when overlapping board): `Space` or controller `A` (opens quest-board menu)
+- Talk to hub NPC (when in interaction range): `Space` or controller `A`
+- Use job board in hub (when overlapping board): `Space` or controller `A`
 
 Also applies deadzones to reduce controller drift.

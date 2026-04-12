@@ -12,6 +12,7 @@
 - Implements `ICollidable` for collision checks.
 - Tracks health/death state (`p_health`, `p_maxHealth`, `p_isDead`).
 - Tracks ammo capacity/usage (`p_playerAmmo`, `p_maxAmmo`) for ranged attacks.
+- Exposes pickup effect hooks (`heal(...)`, `addAmmo(...)`) used by game collision flow.
 - Applies basic collision response via `hitWall()` (rollback to previous position).
 
 ## Movement (high level)
@@ -62,6 +63,9 @@ The player collision profile includes collisions with:
 - `PORTAL_TRIGGER_LAYER`
 - `DOOR_TRIGGER_LAYER`
 - `DAMAGE_TRIGGER_LAYER`
+- `PICKUP_OBJECT_LAYER`
+- `CHEST_TRIGGER_LAYER`
+- `NPC_LAYER`
 
 ## Used by other systems
 

@@ -15,6 +15,7 @@ Defined in `Collision.h`:
 
 Current trigger/object additions also include:
 
+- `NPC_LAYER`
 - `CHEST_TRIGGER_LAYER`
 - `PICKUP_OBJECT_LAYER`
 
@@ -37,6 +38,7 @@ Current gameplay implementations include:
 - `DamageTrigger`
 - `Pickup`
 - `Chest`
+- `NPC`
 - `StaticCollision`
 
 ## Collision checks

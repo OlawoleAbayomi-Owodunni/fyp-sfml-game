@@ -16,6 +16,7 @@ This chapter describes what state exists, who owns it, and what might need savin
   - active damage-trigger list
   - pickup list
   - chest list
+  - hub NPC list and dialogue state (`m_hubNPCs`, active NPC id, dialogue-open flag, selected response/options)
   - combat state (`m_isInCombat`, `m_waveCounter`)
   - floor plan + floor layout
   - dungeon plan (seed + floor progression/completion)

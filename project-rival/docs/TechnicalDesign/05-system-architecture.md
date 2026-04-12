@@ -23,12 +23,18 @@ This chapter summarizes the major subsystems, who owns what, and how data flows.
 
 - `InputManager` provides a simple access point.
 - `Gamepad` wraps XInput and normalizes inputs.
+- Current controller mapping includes pause/menu back on `Start`, camera toggle on `Select`, and context-dependent interactions on `A`.
 
 ### Player
 
 - `Player` updates movement + aiming + weapon selection.
 - `Player` uses a loadout model and exposes loadout/upgrade hooks.
 - `Player` emits projectile/melee trigger requests into game-owned runtime containers.
+
+### NPC interaction (prototype)
+
+- `NPC` stores hub NPC metadata (name/shop/personality/background) and interaction bounds.
+- `Game` tracks active NPC overlap and drives lightweight dialogue choice UI flow in hub mode.
 
 ### UI / HUD
 

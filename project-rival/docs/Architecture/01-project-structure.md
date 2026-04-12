@@ -48,6 +48,11 @@ Corridors are currently generated inside `Game.cpp` (as temporary `RoomPlan`s co
 - `Enemy.h` / `Enemy.cpp` (base class)
 - `GruntEnemy.h` / `GruntEnemy.cpp` (moves using steering)
 - `TurretEnemy.h` / `TurretEnemy.cpp` (stationary ranged attacker)
+- `NPC.h` / `NPC.cpp` (hub NPC info, interaction bounds, dialogue text)
+
+### Hub abstractions
+
+- `HubShop.h` (`HubShopType` used by hub systems/NPC metadata)
 
 ### Spawnables / loot (prototype)
 
@@ -70,7 +75,7 @@ Corridors are currently generated inside `Game.cpp` (as temporary `RoomPlan`s co
 
 ### UI
 
-- `PlayerHUD.h` / `PlayerHUD.cpp` (health/ammo/coins HUD overlay)
+- `PlayerHUD.h` / `PlayerHUD.cpp` (health/ammo/coins + active quest HUD overlay)
 - `MenuUI.h` / `MenuUI.cpp` (main/pause/game-over/quest-board menu screens and actions)
 
 ### AI / Movement

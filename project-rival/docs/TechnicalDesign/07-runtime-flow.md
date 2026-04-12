@@ -21,47 +21,49 @@ At a high level:
 6. Prepare aim input coordinates:
    - choose active gameplay view (player/floor)
    - map mouse pixel position into world-space for aiming
-7. Branch by game mode:
-   - `HUB`: update shop/job-board overlap + interaction state (`updateHubShops()`)
-   - `DUNGEON`: continue dungeon-combat flow
-8. If player dies in dungeon mode:
+7. If player dies in dungeon mode:
    - finalize quest run state
    - set menu to `GAME_OVER` screen
    - return from update
-9. Update active room context (`updateActiveRoom()`).
-10. Update player:
-    - movement
-    - aiming
-    - weapon logic (may emit projectiles or melee triggers)
-11. Update enemies:
+8. Update active room context (`updateActiveRoom()`).
+9. Update player:
+   - movement
+   - aiming
+   - weapon logic (may emit projectiles or melee triggers)
+10. Update enemies:
     - set targets
     - run type-specific update paths (`TurretEnemy` projectile path, `GruntEnemy` melee-trigger path)
     - on enemy death: record quest kill progress, roll pickup spawn, remove enemy
-12. Update/remove transient combat objects:
+11. Update/remove transient combat objects:
     - update/remove destroyed projectiles
     - update/remove expired damage triggers
-13. Resolve collisions (`CollisionChecks()`):
+12. Resolve collisions (`CollisionChecks()`):
     - player vs enemies
     - projectiles vs enemies/player
     - damage triggers vs enemies/player
     - pickups/chests vs player
+    - NPC interaction overlaps vs player
     - player/enemies/projectiles vs walls/locked doors
     - player vs door/portal triggers
-14. Remove destroyed pickups from runtime list.
-15. Manage combat wave logic (`ManageWave()` when in active combat room).
-16. Handle floor progression:
+13. Remove destroyed pickups from runtime list.
+14. Manage combat wave logic (`ManageWave()` when in active combat room).
+15. Handle floor progression:
     - consume `m_requestNextFloor`
     - advance dungeon plan
     - load next floor or return to hub on completion
     - when returning to hub, commit quest run result/reward
-17. Poll LLM service:
+16. Poll LLM service:
     - consume async init result
     - consume latest response when complete
-18. Update HUD values from player/economy state.
+17. Process hub interactions (when in `HUB` mode):
+    - shops
+    - job board / quest board opening
+    - NPC dialogue interactions
+18. Update HUD values from player/economy/quest state.
 19. Render:
     - choose camera mode (player/floor)
-    - render rooms, player, enemies, projectiles, triggers, pickups, chests, overlays
-    - in hub mode, render hub shop zones + prompt UI
+    - render rooms, player, enemies, projectiles, triggers, pickups, chests, hub NPCs, overlays
+    - in hub mode, render shop/job-board prompts and NPC dialogue prompts
     - switch to default view
     - render HUD on gameplay screen, otherwise render menu UI
 

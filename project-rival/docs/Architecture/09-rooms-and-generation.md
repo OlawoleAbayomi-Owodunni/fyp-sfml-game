@@ -109,6 +109,7 @@ In `Game`:
 - portal trigger to start a dungeon run
 - shop zones rendered as extra world shapes
 - a job-board zone that opens the quest-board menu when interacted with
+- NPC placement near hub shops (with dedicated interaction bounds)
 
 This reuses the same room/runtime pipeline while the project transitions toward a fuller hub-world system.
 

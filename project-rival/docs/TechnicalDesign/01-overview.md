@@ -28,6 +28,7 @@ As of the current prototype, the project has:
 - Enemies with steering behaviours and turret projectile attacks.
 - A minimal collision system (AABB + layer/mask filtering).
 - Spawnable world objects (pickups + chests) with collision-driven collection/opening behavior.
+- Hub NPC interaction prototypes (shop-linked NPC metadata + lightweight dialogue choices).
 - Rooms pipeline: `RoomPlan` (data) → `RoomInstance` (render + static colliders) → runtime collision checks.
 - Floor pipeline (prototype):
   - `FloorPlan` graph generation (`FloorGenerator`)
@@ -41,7 +42,7 @@ As of the current prototype, the project has:
 - Multi-floor progression (prototype): portal interaction can advance to the next floor; when the dungeon is complete, flow currently returns to hub.
 - Prototype quest-board flow in hub (`QuestManager` + job board interaction + run reward commit).
 - Prototype LLM async integration with debug prompt triggers and polled console output.
-- On-screen `PlayerHUD` overlay for health, ammo, and coin display.
+- On-screen `PlayerHUD` overlay for health, ammo, coin, and active-quest display.
 
 ## Core / key terminology
 

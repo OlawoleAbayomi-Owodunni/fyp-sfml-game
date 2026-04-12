@@ -144,6 +144,19 @@ Current behaviour:
 - Chest overlap opens the chest and spawns chest coin pickups.
 - Pickup overlap applies effects to player (`heal`, `addAmmo`, coin increments).
 
+## NPC interaction (prototype)
+
+Core files:
+
+- `project-rival/NPC.h/.cpp`
+- `project-rival/HubShop.h`
+
+Current behaviour:
+
+- Hub NPCs are instantiated near shop zones with personality-tagged metadata.
+- NPC interaction uses overlap checks plus interact/cancel input.
+- Dialogue flow currently presents lightweight two-choice responses in a hub dialogue panel.
+
 ## Quest system (prototype)
 
 Core files:
@@ -159,26 +172,6 @@ Current behaviour:
 - Active quest progress can be recorded from enemy kills and pickup collection.
 - Run finalization/commit flow currently controls quest reward payout and board replacement for completed quests.
 
-## Enemies / AI (steering)
-
-Core files:
-
-- `project-rival/Enemy.h/.cpp`
-- `project-rival/GruntEnemy.h/.cpp`
-- `project-rival/TurretEnemy.h/.cpp`
-- `project-rival/SeekBehaviour.*`, `project-rival/ArriveBehaviour.*`
-
-Current behaviour:
-
-- `GruntEnemy` uses steering movement (`Seek`/`Arrive`) and melee attacks via `EnemyWeapon`.
-- `TurretEnemy` aims at player target and fires projectiles on a randomized timer.
-- Enemies use shared base health/death handling.
-
-Extension points:
-
-- Add navigation/path constraints.
-- Add more enemy archetypes and attack patterns.
-
 ## UI / HUD + menus (prototype)
 
 Core files:
@@ -188,7 +181,7 @@ Core files:
 
 Current behaviour:
 
-- HUD displays health, ammo, and coin totals during gameplay screens.
+- HUD displays health, ammo, coin totals, and active quest context during gameplay.
 - Menu UI manages `MAIN_MENU`, `PAUSE_MENU`, `GAMEPLAY`, `GAME_OVER`, and `QUEST_BOARD` screens.
 - Menu actions are consumed in `Game::applyMenuAction(...)`.
 
