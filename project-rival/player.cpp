@@ -154,7 +154,7 @@ void Player::startUp()
 
 	//collision
 	p_collisionProfile.layer = CollisionLayer::PLAYER_LAYER;
-	p_collisionProfile.mask = CollisionLayer::ENEMY_LAYER | CollisionLayer::ENEMY_BULLET_LAYER | CollisionLayer::WALL_LAYER | CollisionLayer::DOOR_LAYER | CollisionLayer::PORTAL_TRIGGER_LAYER | CollisionLayer::DOOR_TRIGGER_LAYER | CollisionLayer::DAMAGE_TRIGGER_LAYER | CollisionLayer::PICKUP_OBJECT_LAYER | CollisionLayer::CHEST_TRIGGER_LAYER;
+	p_collisionProfile.mask = CollisionLayer::ENEMY_LAYER | CollisionLayer::ENEMY_BULLET_LAYER | CollisionLayer::WALL_LAYER | CollisionLayer::DOOR_LAYER | CollisionLayer::PORTAL_TRIGGER_LAYER | CollisionLayer::DOOR_TRIGGER_LAYER | CollisionLayer::DAMAGE_TRIGGER_LAYER | CollisionLayer::PICKUP_OBJECT_LAYER | CollisionLayer::CHEST_TRIGGER_LAYER | CollisionLayer::NPC_LAYER;
 
 	addWeaponToLoadout(WeaponType::PISTOL, 1);
 	addWeaponToLoadout(WeaponType::KNIFE, 1);
