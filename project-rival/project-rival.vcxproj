@@ -20,6 +20,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ArriveBehaviour.cpp" />
+    <ClCompile Include="Chest.cpp" />
     <ClCompile Include="Collision.cpp" />
     <ClCompile Include="CombatRoom.cpp" />
     <ClCompile Include="DamageTrigger.cpp" />
@@ -29,6 +30,7 @@
     <ClCompile Include="LLMService.cpp" />
     <ClCompile Include="MenuUI.cpp" />
     <ClCompile Include="NormalBulletProjectile.cpp" />
+    <ClCompile Include="Pickup.cpp" />
     <ClCompile Include="PlayerHUD.cpp" />
     <ClCompile Include="PlayerWeapons.cpp" />
     <ClCompile Include="PortalRoom.cpp" />
@@ -50,6 +52,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ArriveBehaviour.h" />
+    <ClInclude Include="Chest.h" />
     <ClInclude Include="Collision.h" />
     <ClInclude Include="CombatRoom.h" />
     <ClInclude Include="DamageTrigger.h" />
@@ -61,6 +64,7 @@
     <ClInclude Include="LLMService.h" />
     <ClInclude Include="MenuUI.h" />
     <ClInclude Include="NormalBulletProjectile.h" />
+    <ClInclude Include="Pickup.h" />
     <ClInclude Include="PlayerHUD.h" />
     <ClInclude Include="PlayerWeapons.h" />
     <ClInclude Include="PortalRoom.h" />
@@ -140,6 +144,7 @@
     <Text Include="..\CMakeLists.txt" />
     <Text Include="automation\scripts\output\hub-merge-changes.txt" />
     <Text Include="automation\scripts\output\llm-integration-merge-changes.txt" />
+    <Text Include="automation\scripts\output\menu-merge-changes.txt" />
     <Text Include="automation\scripts\output\upgrades-merge-changes.txt" />
     <Text Include="automation\scripts\output\weapons-merge-changes.txt" />
   </ItemGroup>
