@@ -148,6 +148,8 @@ private:
 	void enqueLLMJob(LLMJobType jobType, int npcId, int questIndex, const std::string& prompt);
 	void processLLMQueue();
 	void handleLLMResponse(const std::string& response);
+	void queueQuestMetadataJobs();
+	std::string buildQuestMetadataPrompt(int questIndex) const;
 
 	// ----------------------------------> VARIABLES <---------------------------------- //	
 	// Game Management

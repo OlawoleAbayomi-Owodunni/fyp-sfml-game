@@ -90,6 +90,7 @@ public:
 
 		return &m_boardQuests[index];
 	}
+    bool updateBoardQuestText(int index, const std::string& title, const std::string& loreDescription);
 	bool hasActiveQuest() const { return m_hasActiveQuest; }
 	const QuestData* getActiveQuest() const { return m_hasActiveQuest ? &m_activeQuest : nullptr; }
 	int getActiveQuestIndex() const { return m_activeQuestIndex; }

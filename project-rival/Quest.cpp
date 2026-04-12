@@ -32,6 +32,20 @@ void QuestManager::acceptQuest(int index)
 	m_pendingRewardCoins = 0;
 }
 
+bool QuestManager::updateBoardQuestText(int index, const std::string& title, const std::string& loreDescription)
+{
+	if (index < 0 || index >= static_cast<int>(m_boardQuests.size()))
+		return false;
+
+	if (!title.empty())
+		m_boardQuests[index].title = title;
+
+	if (!loreDescription.empty())
+		m_boardQuests[index].loreDescription = loreDescription;
+
+	return true;
+}
+
 void QuestManager::recordEnemyKill(EnemyType enemyType)
 {
 	if (!m_hasActiveQuest || m_runFinalised)

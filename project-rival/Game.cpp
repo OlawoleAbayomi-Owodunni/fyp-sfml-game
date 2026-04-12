@@ -11,10 +11,34 @@
 #include "RoomDoorUtils.h"
 
 #include <iostream>
+#include <sstream>
 #include <string>
 
 // Our target FPS
 static double const FPS{ 60.0f };
+
+namespace
+{
+	std::string extractTaggedLineValue(const std::string& text, const std::string& tag)
+	{
+		const std::size_t tagPos = text.find(tag);
+		if (tagPos == std::string::npos)
+			return "";
+
+		const std::size_t valueStart = tagPos + tag.size();
+		std::size_t valueEnd = text.find('\n', valueStart);
+		if (valueEnd == std::string::npos)
+			valueEnd = text.size();
+
+		std::string value = text.substr(valueStart, valueEnd - valueStart);
+		while (!value.empty() && (value.front() == ' ' || value.front() == '\t'))
+			value.erase(value.begin());
+		while (!value.empty() && (value.back() == ' ' || value.back() == '\t' || value.back() == '\r'))
+			value.pop_back();
+
+		return value;
+	}
+}
 
 ////////////////////////////////////////////////////////////
 Game::Game()
@@ -476,6 +500,7 @@ void Game::startNewGame()
 {
 	m_coins = 1000;
 	m_questManager.resetBoard();
+	queueQuestMetadataJobs();
 
 	m_pistolUpgradeLevel = 1;
 	m_arUpgradeLevel = 1;
@@ -559,6 +584,7 @@ void Game::enterHubWorld()
 	resetGame();
 	m_questManager.finaliseRun();
 	m_coins += m_questManager.commitRunResult();
+	queueQuestMetadataJobs();
 	m_gameMode = GameMode::HUB;
 	buildHubWorld();
 	m_requestNextFloor = false;
@@ -1351,6 +1377,49 @@ void Game::loadNewFloor()
 
 /////////////////////////////////////////////////////////////////
 #pragma region LLM INTERACTION
+void Game::queueQuestMetadataJobs()
+{
+	const auto& boardQuests = m_questManager.getBoardQuests();
+	for (int i = 0; i < static_cast<int>(boardQuests.size()); ++i)
+	{
+		const std::string prompt = buildQuestMetadataPrompt(i);
+		if (!prompt.empty())
+			enqueLLMJob(LLMJobType::QUEST_METADATA, -1, i, prompt);
+	}
+}
+
+std::string Game::buildQuestMetadataPrompt(int questIndex) const
+{
+	const QuestData* quest = m_questManager.getBoardQuest(questIndex);
+	if (!quest)
+		return "";
+
+	std::string questTypeStr = (quest->type == QuestType::KILL) ? "Kill" : "Fetch";
+	std::string targetStr;
+	std::string npcContext;
+
+	if (quest->type == QuestType::KILL)
+	{
+		targetStr = QuestData::getEnemyName(quest->enemyType) + " enemies";
+		npcContext = "Gunther from the Weapon Shop wants local threats reduced before trade routes reopen.";
+	}
+	else
+	{
+		targetStr = QuestData::getPickupName(quest->pickupType) + " packs";
+		npcContext = (quest->pickupType == PickupType::AMMO)
+			? "Arnold from the Armory Shop needs supplies to prepare for incoming conflict."
+			: "Petra from the Player Shop needs medical resources for wounded adventurers.";
+	}
+
+	return "Create quest metadata for a roguelike hub job board. Return exactly two lines:\n"
+		"TITLE: <short quest title under 5 words>\n"
+		"LORE: <one immersive sentence tied to NPC context>\n"
+		"Quest Type: " + questTypeStr + "\n"
+		"Target: " + std::to_string(quest->targetCount) + " " + targetStr + "\n"
+		"Reward: " + std::to_string(quest->rewardCoins) + " coins\n"
+		"NPC Context: " + npcContext;
+}
+
 void Game::LLM_GenerateRoomInfo()
 {
 	if (!m_llmManager.isReady()) {
@@ -1407,9 +1476,9 @@ void Game::processLLMQueue()
 	}
 }
 
-void Game::handleLLMResponse(const std::string & response)
+void Game::handleLLMResponse(const std::string& response)
 {
-	if(!m_hasActiveLLMJob) {
+	if (!m_hasActiveLLMJob) {
 		std::cout << "No active LLM job to handle response for.\n";
 		return;
 	}
@@ -1428,8 +1497,16 @@ void Game::handleLLMResponse(const std::string & response)
 		break;
 
 	case LLMJobType::QUEST_METADATA:
+	{
+		const std::string title = extractTaggedLineValue(response, "TITLE:");
+		const std::string lore = extractTaggedLineValue(response, "LORE:");
+		if (m_questManager.updateBoardQuestText(m_currentLLMJob.questIndex, title, lore))
+		{
+			m_menuUI.setQuestBoardQuests(m_questManager.getBoardQuests());
+		}
 		std::cout << "Quest Metadata (questIndex=" << m_currentLLMJob.questIndex << "): " << response << "\n";
 		break;
+	}
 	}
 
 	m_hasActiveLLMJob = false;
