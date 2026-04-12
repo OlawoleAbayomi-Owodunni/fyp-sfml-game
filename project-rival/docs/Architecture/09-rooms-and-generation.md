@@ -108,6 +108,7 @@ In `Game`:
 - player spawn marker
 - portal trigger to start a dungeon run
 - shop zones rendered as extra world shapes
+- a job-board zone that opens the quest-board menu when interacted with
 
 This reuses the same room/runtime pipeline while the project transitions toward a fuller hub-world system.
 

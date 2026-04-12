@@ -86,6 +86,13 @@ Corridors are generated in `Game` from floor edges and appended as extra `RoomIn
   - cosmetic color cycling
   - armory cycling/swap into current loadout slot
 
+### Quest system (prototype)
+
+- `QuestManager` owns quest board options and active quest state.
+- Hub job-board interaction opens a quest-board menu screen through `MenuUI`.
+- Enemy kills and selected pickup collections are recorded toward active quest progress.
+- Run finalization/commit is currently applied on return-to-hub flow.
+
 ### LLM dialogue (prototype integration)
 
 - `LLMService` wraps the vendored `LLMWrapper` (`external/fyp-llm-lib`).
@@ -97,6 +104,7 @@ Corridors are generated in `Game` from floor edges and appended as extra `RoomIn
   - `Player`
   - `PlayerHUD`
   - `MenuUI`
+  - `QuestManager`
   - enemies list (`std::vector<std::unique_ptr<Enemy>>`)
   - projectile list (`std::vector<std::unique_ptr<Projectile>>`)
   - active melee trigger list (`std::vector<std::unique_ptr<DamageTrigger>>`)
@@ -107,13 +115,12 @@ Corridors are generated in `Game` from floor edges and appended as extra `RoomIn
   - dungeon plan state
   - game mode/hub state
   - LLM service state
-  - prototype quest tracker counters/state
 
 Data flow example:
 
 - `Game` updates player/enemies and lifecycle-manages projectiles/triggers.
 - `Game` checks collisions (entity hits, bullets, melee triggers, pickups/chests, environment, portal/door triggers).
-- `Game` processes menu actions, hub interactions, combat waves, floor transitions, and LLM polling.
+- `Game` routes menu actions, hub interactions, combat waves, quest updates, floor transitions, and LLM polling.
 - `Game` updates HUD values from player/economy state.
 - `Game` renders rooms → player → enemies → projectiles → triggers/pickups/chests.
 

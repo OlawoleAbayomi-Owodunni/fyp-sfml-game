@@ -21,12 +21,13 @@ As of the current prototype, the project has:
 
 - Core SFML game loop (`Game`) with fixed timestep updates.
 - Two runtime modes: `HUB` and `DUNGEON`.
-- `MenuUI` screen flow for main menu, pause menu, gameplay, and game-over screen.
+- `MenuUI` screen flow for main menu, pause menu, gameplay, game-over, and quest-board screens.
 - Player movement + aiming + weapon switching.
 - Player loadout/economy hooks (weapon swapping and upgrade application in hub flow).
 - Ranged projectiles and melee damage triggers via weapon classes.
 - Enemies with steering behaviours and turret projectile attacks.
 - A minimal collision system (AABB + layer/mask filtering).
+- Spawnable world objects (pickups + chests) with collision-driven collection/opening behavior.
 - Rooms pipeline: `RoomPlan` (data) → `RoomInstance` (render + static colliders) → runtime collision checks.
 - Floor pipeline (prototype):
   - `FloorPlan` graph generation (`FloorGenerator`)
@@ -38,6 +39,7 @@ As of the current prototype, the project has:
   - zoomed-out floor overview (toggle)
 - Early combat wave logic for combat rooms (door trigger starts combat, waves spawn enemies, doors lock/unlock).
 - Multi-floor progression (prototype): portal interaction can advance to the next floor; when the dungeon is complete, flow currently returns to hub.
+- Prototype quest-board flow in hub (`QuestManager` + job board interaction + run reward commit).
 - Prototype LLM async integration with debug prompt triggers and polled console output.
 - On-screen `PlayerHUD` overlay for health, ammo, and coin display.
 

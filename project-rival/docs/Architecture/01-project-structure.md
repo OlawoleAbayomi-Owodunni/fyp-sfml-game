@@ -54,6 +54,10 @@ Corridors are currently generated inside `Game.cpp` (as temporary `RoomPlan`s co
 - `Pickup.h` / `Pickup.cpp` (health/ammo/coin pickups)
 - `Chest.h` / `Chest.cpp` (interactable chest trigger object)
 
+### Quest system (prototype)
+
+- `Quest.h` / `Quest.cpp` (`QuestData`, quest board generation, active quest tracking + run reward commit)
+
 ### Input
 
 - `InputManager.h` / `InputManager.cpp`
@@ -67,7 +71,7 @@ Corridors are currently generated inside `Game.cpp` (as temporary `RoomPlan`s co
 ### UI
 
 - `PlayerHUD.h` / `PlayerHUD.cpp` (health/ammo/coins HUD overlay)
-- `MenuUI.h` / `MenuUI.cpp` (main/pause/game-over menu screens and actions)
+- `MenuUI.h` / `MenuUI.cpp` (main/pause/game-over/quest-board menu screens and actions)
 
 ### AI / Movement
 

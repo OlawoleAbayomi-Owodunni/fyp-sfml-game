@@ -21,11 +21,12 @@ This chapter describes what state exists, who owns it, and what might need savin
   - dungeon plan (seed + floor progression/completion)
   - next-floor request flag
   - camera mode state
-  - hub shop interaction state (`m_activeShop`) and shop zone shapes
+  - hub shop interaction state (`m_activeShop`) and shop/job-board zone shapes
+  - job-board interaction flags (`m_isAtJobBoard`, `m_blockJobBoardInteract`)
   - economy/upgrade state (coins, weapon/player upgrade levels, catalog indices, cosmetic index)
+  - quest state manager (`QuestManager`)
   - LLM service state
   - HUD state container (`PlayerHUD`)
-  - prototype quest-tracker counters/state
 - `Player` owns:
   - transform/velocity/previous position
   - aim state + reticle state

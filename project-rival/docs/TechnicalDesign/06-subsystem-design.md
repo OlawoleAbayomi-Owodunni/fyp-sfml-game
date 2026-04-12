@@ -144,6 +144,21 @@ Current behaviour:
 - Chest overlap opens the chest and spawns chest coin pickups.
 - Pickup overlap applies effects to player (`heal`, `addAmmo`, coin increments).
 
+## Quest system (prototype)
+
+Core files:
+
+- `project-rival/Quest.h/.cpp`
+
+Current behaviour:
+
+- `QuestManager` maintains a 3-slot quest board and optional active quest.
+- Quest types currently include:
+  - kill quests (`EnemyType` targets)
+  - fetch quests (`PickupType` targets for health/ammo)
+- Active quest progress can be recorded from enemy kills and pickup collection.
+- Run finalization/commit flow currently controls quest reward payout and board replacement for completed quests.
+
 ## Enemies / AI (steering)
 
 Core files:
@@ -174,8 +189,7 @@ Core files:
 Current behaviour:
 
 - HUD displays health, ammo, and coin totals during gameplay screens.
-- Menu UI manages `MAIN_MENU`, `PAUSE_MENU`, `GAMEPLAY`, and `GAME_OVER` screens.
-- Game-over currently switches to a game-over menu screen instead of instant reset.
+- Menu UI manages `MAIN_MENU`, `PAUSE_MENU`, `GAMEPLAY`, `GAME_OVER`, and `QUEST_BOARD` screens.
 - Menu actions are consumed in `Game::applyMenuAction(...)`.
 
 ## LLM integration (prototype)

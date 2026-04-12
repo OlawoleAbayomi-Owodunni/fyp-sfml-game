@@ -22,9 +22,10 @@ At a high level:
    - choose active gameplay view (player/floor)
    - map mouse pixel position into world-space for aiming
 7. Branch by game mode:
-   - `HUB`: update shop overlap/interaction state (`updateHubShops()`)
+   - `HUB`: update shop/job-board overlap + interaction state (`updateHubShops()`)
    - `DUNGEON`: continue dungeon-combat flow
 8. If player dies in dungeon mode:
+   - finalize quest run state
    - set menu to `GAME_OVER` screen
    - return from update
 9. Update active room context (`updateActiveRoom()`).
@@ -35,6 +36,7 @@ At a high level:
 11. Update enemies:
     - set targets
     - run type-specific update paths (`TurretEnemy` projectile path, `GruntEnemy` melee-trigger path)
+    - on enemy death: record quest kill progress, roll pickup spawn, remove enemy
 12. Update/remove transient combat objects:
     - update/remove destroyed projectiles
     - update/remove expired damage triggers
@@ -51,6 +53,7 @@ At a high level:
     - consume `m_requestNextFloor`
     - advance dungeon plan
     - load next floor or return to hub on completion
+    - when returning to hub, commit quest run result/reward
 17. Poll LLM service:
     - consume async init result
     - consume latest response when complete

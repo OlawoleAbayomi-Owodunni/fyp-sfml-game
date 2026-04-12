@@ -47,11 +47,12 @@ High-level game controls:
 
 Menu navigation:
 
-- Keyboard menu nav: `Up/W`, `Down/S`, `Enter`
-- Controller menu nav: `DPadUp`, `DPadDown`, `A`
+- Keyboard menu nav: `Up/W`, `Down/S`, `Enter`, `Escape` (back from pause/quest-board)
+- Controller menu nav: `DPadUp`, `DPadDown`, `A`, `B` (back from pause/quest-board)
 
 Contextual interactions:
 
 - Use portal (when standing inside a portal trigger): `Space` or controller `A`
+- Use job board in hub (when overlapping board): `Space` or controller `A` (opens quest-board menu)
 
 Also applies deadzones to reduce controller drift.
