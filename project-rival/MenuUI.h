@@ -3,7 +3,6 @@
 #include <SFML/Graphics.hpp>
 #include <vector>
 #include <string>
-#include <optional>
 
 #include "Quest.h"
 
@@ -42,7 +41,7 @@ struct MenuButton
 class MenuUI
 {
 public:
-	MenuUI() = default;
+	MenuUI(const sf::Font& font, const sf::View& defaultView);
 	void init(const sf::Font& font, const sf::View& defaultView);
 
 	void setScreen(MenuScreen screen);
@@ -53,7 +52,7 @@ public:
 	void setQuestBoardQuests(const std::vector<QuestData>& quests);
 
 	void processEvent(const sf::Event& event, sf::RenderWindow& window);
-	void processControllerNavigation(bool upPressed, bool downPressed, bool activatePressed);
+	void processControllerNavigation(bool upPressed, bool downPressed, bool activatePressed, bool backPressed);
 
 	MenuAction consumeAction();
 
@@ -77,7 +76,7 @@ private:
 
 	void updateMenuCursorPosition();
 
-	const sf::Font* m_font{ nullptr };
+	sf::Font m_font;
 	sf::View m_defaultView;
 	MenuScreen m_screen{ MenuScreen::MAIN_MENU_SCREEN };
 	MenuAction m_pendingAction{ MenuAction::ACTION_NONE };
@@ -95,11 +94,11 @@ private:
 	std::vector<QuestData> m_questBoardQuests{};
 	sf::RectangleShape m_questBoardPanel;
 	sf::RectangleShape m_questBoardDivider;
-	std::optional<sf::Text> m_questBoardTitle;
-	std::optional<sf::Text> m_questBoardLore;
-	std::optional<sf::Text> m_questBoardGameplay;
-	std::optional<sf::Text> m_questBoardReward;
-	#pragma region LLM Generated
+	sf::Text m_questBoardTitle{ m_font };
+	sf::Text m_questBoardLore{ m_font };
+	sf::Text m_questBoardGameplay{ m_font };
+	sf::Text m_questBoardReward{ m_font };
+	#pragma region Quest System
 	void applyQuestBoardSelection(int index);
 	#pragma endregion
 

@@ -44,7 +44,7 @@ void Game::init()
 	x_updateFPS.setFillColor(sf::Color::White);
 	x_drawFPS.setFont(m_arialFont);
 	x_drawFPS.setPosition(sf::Vector2f(20, 350));
-	x_drawFPS.setCharacterSize(24);
+x_drawFPS.setCharacterSize(24);
 	x_drawFPS.setFillColor(sf::Color::White);
 #endif
 
@@ -193,7 +193,7 @@ void Game::update(float dt)
 	if( m_gameMode == GameMode::DUNGEON && m_player.isDead())
 	{
 		std::cout << "Player has died. Showing game over screen...\n";
-		m_questManager.finalizeRun();
+		m_questManager.finaliseRun();
         m_menuUI.setScreen(MenuScreen::GAME_OVER_SCREEN);
 		return;
 	}
@@ -252,7 +252,7 @@ void Game::update(float dt)
 	for (auto it = m_gamePickups.begin(); it != m_gamePickups.end();)
 	{
 		if ((*it)->shouldDestroy())
-			it = m_gamePickups.erase(it);
+		it = m_gamePickups.erase(it);
 		else
 			++it;
 	}
@@ -272,7 +272,6 @@ void Game::update(float dt)
 
 		if (m_dungeonPlan.isDungeonComplete)
 		{
-			m_questManager.finalizeRun();
 			enterHubWorld();
 		}
 		else
@@ -296,7 +295,7 @@ void Game::update(float dt)
 		std::cout << "LLM Response: " << *response << "\n";
 	}
 
-	m_hud.update(m_player.getHealth(), m_player.getMaxHealth(), m_player.getAmmo(), m_player.getMaxAmmo(), m_coins);
+	m_hud.update(m_player.getHealth(), m_player.getMaxHealth(), m_player.getAmmo(), m_player.getMaxAmmo(), m_coins, m_questManager.getActiveQuest());
 }
 
 ////////////////////////////////////////////////////////////
@@ -403,6 +402,7 @@ void Game::resetGame()
 	m_isInRoom = true;
 	m_activeShop = HubShopType::NONE_SHOP;
 	m_isAtJobBoard = false;
+	m_blockJobBoardInteract = false;
 
 	m_enemies.clear();
 
@@ -446,6 +446,7 @@ void Game::startDungeonRun()
 void Game::enterHubWorld()
 {
 	resetGame();
+	m_questManager.finaliseRun();
 	m_coins += m_questManager.commitRunResult();
 	m_gameMode = GameMode::HUB;
 	buildHubWorld();
@@ -486,14 +487,17 @@ void Game::applyMenuAction(MenuAction action)
 		break;
 	case MenuAction::ACTION_QUEST_0:
 		m_questManager.acceptQuest(0);
+		m_blockJobBoardInteract = true;
 		m_menuUI.setScreen(MenuScreen::GAMEPLAY_SCREEN);
 		break;
 	case MenuAction::ACTION_QUEST_1:
 		m_questManager.acceptQuest(1);
+		m_blockJobBoardInteract = true;
 		m_menuUI.setScreen(MenuScreen::GAMEPLAY_SCREEN);
 		break;
 	case MenuAction::ACTION_QUEST_2:
 		m_questManager.acceptQuest(2);
+		m_blockJobBoardInteract = true;
 		m_menuUI.setScreen(MenuScreen::GAMEPLAY_SCREEN);
 		break;
 
@@ -501,6 +505,7 @@ void Game::applyMenuAction(MenuAction action)
 		break;
 	}
 }
+#pragma endregion
 
 void Game::buildHubWorld()
 {   
@@ -591,13 +596,20 @@ void Game::buildHubWorld()
 	m_jobBoard.setSize(sf::Vector2f(tileSize * 4.f, tileSize * 2.f));
 	m_jobBoard.setOrigin(m_jobBoard.getSize() / 2.f);
 	m_jobBoard.setPosition(worldOrigin + sf::Vector2f(jobBoardTile.x * tileSize + tileSize / 2.f, jobBoardTile.y * tileSize + tileSize / 2.f));
-	m_jobBoard.setFillColor(sf::Color(120, 84, 54, 200));
+	m_jobBoard.setFillColor(sf::Color(120, 84, 54, 200)); // Brown color
 }
 
 void Game::updateHubShops()
 {
 	m_activeShop = HubShopType::NONE_SHOP;
 	m_isAtJobBoard = false;
+
+	if (m_blockJobBoardInteract)
+	{
+		const bool interactHeld = InputManager::pad().down(GamepadButton::A) || Keyboard::isKeyPressed(Keyboard::Key::Space);
+		if (!interactHeld)
+			m_blockJobBoardInteract = false;
+	}
 
 	const sf::FloatRect playerBounds = m_player.getCollisionBounds();
 
@@ -609,8 +621,7 @@ void Game::updateHubShops()
 
 	if (jobBoardBounds.findIntersection(playerBounds))
 		m_isAtJobBoard = true;
-
-	if (weaponShopBounds.findIntersection(playerBounds))
+	else if (weaponShopBounds.findIntersection(playerBounds))
 		m_activeShop = HubShopType::WEAPON_SHOP;
 	else if (cosmeticShopBounds.findIntersection(playerBounds))
 		m_activeShop = HubShopType::COSMETIC_SHOP;
@@ -622,10 +633,11 @@ void Game::updateHubShops()
 	if (m_isAtJobBoard)
 	{
 		const bool interactPressed = InputManager::pad().pressed(GamepadButton::A) || Keyboard::isKeyPressed(Keyboard::Key::Space);
-		if (interactPressed)
+		if (interactPressed && !m_blockJobBoardInteract)
 		{
 			m_menuUI.setQuestBoardQuests(m_questManager.getBoardQuests());
 			m_menuUI.setScreen(MenuScreen::QUEST_BOARD_SCREEN);
+			m_blockJobBoardInteract = true;
 			return;
 		}
 	}
@@ -840,7 +852,7 @@ void Game::ManageWave()
 			spawnEnemies(m_activeRoomId);
 			generateRoom(m_activeRoomId);
 		}
-		else {		// end combat
+		else {	// end combat
 			std::cout << "Combat Room Cleared at ID " << m_activeRoomId << "!\n";
 			m_roomPlans[m_activeRoomId] = CombatRoom().setRoomCleared(m_roomPlans[m_activeRoomId]);
 			generateRoom(m_activeRoomId);
@@ -852,7 +864,7 @@ void Game::ManageWave()
 #pragma endregion
 
 
-//////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////
 #pragma region UPDATE SUBFUNCTIONS
 /// <summary>
 /// Performs collision detection and response for all game entities including enemies, projectiles, the player, and environment objects.
@@ -935,12 +947,14 @@ void Game::CollisionChecks()
 			switch (pickup->getType())
 			{
 			case PickupType::HEALTH: {
+				m_questManager.recordPickup(PickupType::HEALTH);
 				m_player.heal(pickup->getEffectAmount());
 				std::cout << "Player picked up health! Current health: " << m_player.getHealth() << endl;
 				pickup->destroy();
 				break;
 			}
 			case PickupType::AMMO: {
+				m_questManager.recordPickup(PickupType::AMMO);
 				m_player.addAmmo(pickup->getEffectAmount());
 				std::cout << "Player picked up ammo! Current ammo: " << m_player.getAmmo() << endl;
 				pickup->destroy();
@@ -1089,43 +1103,46 @@ void Game::updateActiveRoom()
 	}
 }
 
+/// <summary>
+/// Handles game input for controlling game state, including closing the window and restarting the game.
+/// </summary>
 void Game::ControllerInputHandler()
 {
-  if (InputManager::pad().pressed(GamepadButton::Start))
+	if (InputManager::pad().pressed(GamepadButton::Start))
 	{
-#pragma region Menu UI
-        if (m_menuUI.isGameplayScreen())
+	#pragma region Menu UI
+		if (m_menuUI.screen() == MenuScreen::QUEST_BOARD_SCREEN)
 		{
-           m_menuUI.setScreen(MenuScreen::PAUSE_MENU_SCREEN);
+			m_menuUI.setScreen(MenuScreen::GAMEPLAY_SCREEN);
+			m_blockJobBoardInteract = true;
+			return;
 		}
-     else if (m_menuUI.screen() == MenuScreen::PAUSE_MENU_SCREEN)
+		if (m_menuUI.isGameplayScreen())
 		{
-         m_menuUI.setScreen(MenuScreen::GAMEPLAY_SCREEN);
+			m_menuUI.setScreen(MenuScreen::PAUSE_MENU_SCREEN);
+		}
+		else if (m_menuUI.screen() == MenuScreen::PAUSE_MENU_SCREEN)
+		{
+			m_menuUI.setScreen(MenuScreen::GAMEPLAY_SCREEN);
 		}
 		return;
-#pragma endregion
+	#pragma endregion
 	}
 
-#pragma region Menu UI
-    if (!m_menuUI.isGameplayScreen())
+	#pragma region Menu UI
+	if (!m_menuUI.isGameplayScreen())
 	{
-       m_menuUI.processControllerNavigation(
+		m_menuUI.processControllerNavigation(
 			InputManager::pad().pressed(GamepadButton::DPadUp),
 			InputManager::pad().pressed(GamepadButton::DPadDown),
-			InputManager::pad().pressed(GamepadButton::A));
+			InputManager::pad().pressed(GamepadButton::A),
+			InputManager::pad().pressed(GamepadButton::Start));
 		applyMenuAction(m_menuUI.consumeAction());
 		return;
 	}
-#pragma endregion
+	#pragma endregion
 
 	if (InputManager::pad().pressed(GamepadButton::Select))
-	{
-		if (m_gameMode == GameMode::HUB)
-			startDungeonRun();
-		else
-			gameStart();
-	}
-	if (InputManager::pad().pressed(GamepadButton::DPadDown))
 	{
 		m_isPlayerCamera = !m_isPlayerCamera;
 	}

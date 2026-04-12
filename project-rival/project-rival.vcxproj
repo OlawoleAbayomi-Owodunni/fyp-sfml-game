@@ -42,6 +42,7 @@
     <ClCompile Include="InputManager.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="player.cpp" />
+    <ClCompile Include="Quest.cpp" />
     <ClCompile Include="RoomDoorUtils.cpp" />
     <ClCompile Include="RoomInstance.cpp" />
     <ClCompile Include="SeekBehaviour.cpp" />

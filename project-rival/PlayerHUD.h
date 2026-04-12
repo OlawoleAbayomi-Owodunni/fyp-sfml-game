@@ -1,12 +1,14 @@
 #pragma once
 #include <SFML/Graphics.hpp>
 
+struct QuestData;
+
 class PlayerHUD
 {
 public:
 	PlayerHUD(const sf::Font& font);
 	void init(const sf::Font& font);
-	void update(int currentHealth, int maxHealth, int currentAmmo, int maxAmmo, int coins);
+	void update(int currentHealth, int maxHealth, int currentAmmo, int maxAmmo, int coins, const QuestData* activeQuest = nullptr);
 	void render(sf::RenderWindow& window);
 
 private:
@@ -21,6 +23,7 @@ private:
 	sf::Text m_ammoText;
 
 	sf::Text m_coinsText;
+	sf::Text m_questText;
 
 	float phud_barWidth{ 200.f };
 	float phud_barHeight{ 20.f };
