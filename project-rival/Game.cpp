@@ -38,6 +38,112 @@ namespace
 
 		return value;
 	}
+
+	std::string trimWhitespace(std::string text)
+	{
+		while (!text.empty() && (text.front() == ' ' || text.front() == '\t' || text.front() == '\n' || text.front() == '\r'))
+			text.erase(text.begin());
+		while (!text.empty() && (text.back() == ' ' || text.back() == '\t' || text.back() == '\n' || text.back() == '\r'))
+			text.pop_back();
+		return text;
+	}
+
+	std::string extractFirstLine(const std::string& text)
+	{
+		std::size_t end = text.find('\n');
+		if (end == std::string::npos)
+			end = text.size();
+		return trimWhitespace(text.substr(0, end));
+	}
+
+	std::string stripTaggedPrefix(const std::string& text, const std::string& tag)
+	{
+		std::string value = trimWhitespace(text);
+		if (value.rfind(tag, 0) == 0)
+			value = trimWhitespace(value.substr(tag.size()));
+		return value;
+	}
+
+	std::string extractLorePayload(const std::string& text)
+	{
+		const std::size_t tagPos = text.find("LORE:");
+		if (tagPos != std::string::npos)
+			return trimWhitespace(text.substr(tagPos + 5));
+
+		return trimWhitespace(text);
+	}
+
+	std::string formatLoreTwoLines(const std::string& rawLore)
+	{
+		std::string lore = trimWhitespace(rawLore);
+		if (lore.empty())
+			return lore;
+
+		std::vector<std::string> lines;
+		std::stringstream ss(lore);
+		std::string line;
+		while (std::getline(ss, line))
+		{
+			line = trimWhitespace(line);
+			if (!line.empty())
+				lines.push_back(line);
+		}
+
+		if (lines.size() >= 2)
+			return lines[0] + "\n" + lines[1];
+
+		std::vector<std::string> sentences;
+		std::string current;
+		for (char c : lore)
+		{
+			current.push_back(c);
+			if (c == '.' || c == '!' || c == '?')
+			{
+				std::string sentence = trimWhitespace(current);
+				if (!sentence.empty())
+					sentences.push_back(sentence);
+				current.clear();
+			}
+		}
+
+		if (!trimWhitespace(current).empty())
+			sentences.push_back(trimWhitespace(current));
+
+		if (sentences.size() >= 2)
+			return sentences[0] + "\n" + sentences[1];
+
+		return lore;
+	}
+
+	std::string getRandomQuestNpcContext(const QuestData& quest)
+	{
+		if (quest.type == QuestType::KILL)
+		{
+			static const std::vector<std::string> guntherContexts{
+				"Gunther needs the tunnels cleared so black market shipments can move safely again.",
+				"Gunther put a bounty out after armed stragglers started extorting his suppliers.",
+				"Gunther wants local hostiles reduced before a high-value weapons convoy arrives."
+			};
+			return guntherContexts[rand() % guntherContexts.size()];
+		}
+
+		if (quest.pickupType == PickupType::AMMO)
+		{
+			static const std::vector<std::string> arnoldContexts{
+				"Arnold is reinforcing defenses and needs fresh ammunition caches before nightfall.",
+				"Arnold's forge guards are rationing rounds, so he is paying for every recovered ammo pack.",
+				"Arnold expects a siege and needs emergency stockpiles delivered from the lower floors."
+			};
+			return arnoldContexts[rand() % arnoldContexts.size()];
+		}
+
+		static const std::vector<std::string> petraContexts{
+			"Petra is treating wounded hunters and needs medical packs before the clinic runs dry.",
+			"Petra promised sanctuary to injured adventurers and is desperate for more supplies.",
+			"Petra's triage station is overloaded, so she is paying for urgent recovery packs."
+		};
+		return petraContexts[rand() % petraContexts.size()];
+	}
 }
 
 ////////////////////////////////////////////////////////////
@@ -1383,16 +1489,24 @@ void Game::loadNewFloor()
 #pragma region LLM INTERACTION
 void Game::queueQuestMetadataJobs()
 {
+	m_pendingQuestTitles.clear();
+	m_pendingQuestTitles.resize(m_questManager.getBoardQuests().size());
+	m_pendingQuestContexts.clear();
+	m_pendingQuestContexts.resize(m_questManager.getBoardQuests().size());
+
 	const auto& boardQuests = m_questManager.getBoardQuests();
-	for (int i = 0; i < static_cast<int>(boardQuests.size()); ++i)
+  if (!boardQuests.empty())
 	{
-		const std::string prompt = buildQuestMetadataPrompt(i);
+        const QuestData* firstQuest = m_questManager.getBoardQuest(0);
+		const std::string context = firstQuest ? getRandomQuestNpcContext(*firstQuest) : "";
+		m_pendingQuestContexts[0] = context;
+		const std::string prompt = buildQuestTitlePrompt(0, context);
 		if (!prompt.empty())
-			enqueLLMJob(LLMJobType::QUEST_METADATA, -1, i, prompt);
+            enqueLLMJob(LLMJobType::QUEST_TITLE, -1, 0, prompt);
 	}
 }
 
-std::string Game::buildQuestMetadataPrompt(int questIndex) const
+std::string Game::buildQuestTitlePrompt(int questIndex, const std::string& npcContext) const
 {
 	const QuestData* quest = m_questManager.getBoardQuest(questIndex);
 	if (!quest)
@@ -1400,32 +1514,26 @@ std::string Game::buildQuestMetadataPrompt(int questIndex) const
 
 	std::string questTypeStr = (quest->type == QuestType::KILL) ? "Kill" : "Fetch";
 	std::string targetStr;
-	std::string npcContext;
 
 	if (quest->type == QuestType::KILL)
 	{
 		targetStr = QuestData::getEnemyName(quest->enemyType) + " enemies";
-		npcContext = "Gunther from the Weapon Shop wants local threats reduced before trade routes reopen.";
 	}
 	else
 	{
 		targetStr = QuestData::getPickupName(quest->pickupType) + " packs";
-		npcContext = (quest->pickupType == PickupType::AMMO)
-			? "Arnold from the Armory Shop needs supplies to prepare for incoming conflict."
-			: "Petra from the Player Shop needs medical resources for wounded adventurers.";
 	}
-	
+
 	std::string prompt =
-		"Generate a quest TITLE and 2-sentence LORE for a bulletin board.\n"
+		"Generate only the quest title for a bulletin board.\n"
 		"\n"
 		"FORMAT:\n"
 		"TITLE: <2 to 5 words>\n"
-		"LORE: <exactly 2 short sentences, max 44 words total>\n"
 		"\n"
 		"RULES:\n"
-		"- Output exactly 2 lines.\n"
+		"- Output exactly 1 line.\n"
+		"- Begin with 'TITLE: '.\n"
 		"- TITLE must be 2 to 5 words.\n"
-		"- LORE must be exactly 2 short sentences.\n"
 		"- Preserve the exact quest type, target type, target count, reward, and NPC context.\n"
 		"- No extra text.\n"
 		"\n"
@@ -1437,6 +1545,52 @@ std::string Game::buildQuestMetadataPrompt(int questIndex) const
 		"\n"
 		"OUTPUT:\n"
 		"TITLE: ";
+
+	return prompt;
+}
+
+std::string Game::buildQuestLorePrompt(int questIndex, const std::string& title, const std::string& npcContext) const
+{
+	const QuestData* quest = m_questManager.getBoardQuest(questIndex);
+	if (!quest)
+		return "";
+
+	std::string questTypeStr = (quest->type == QuestType::KILL) ? "Kill" : "Fetch";
+	std::string targetStr;
+
+	if (quest->type == QuestType::KILL)
+	{
+		targetStr = QuestData::getEnemyName(quest->enemyType) + " enemies";
+	}
+	else
+	{
+		targetStr = QuestData::getPickupName(quest->pickupType) + " packs";
+	}
+
+	std::string prompt =
+		"Generate only the quest lore for a bulletin board using the provided title.\n"
+		"\n"
+		"FORMAT:\n"
+       "LORE: <sentence 1>\n"
+		"<sentence 2>\n"
+		"\n"
+		"RULES:\n"
+        "- Output exactly 2 lines.\n"
+		"- Begin with 'LORE: '.\n"
+		"- Use the provided title naturally as context.\n"
+		"- LORE must be exactly 2 short sentences.\n"
+		"- Preserve the exact quest type, target type, target count, reward, and NPC context.\n"
+		"- No extra text.\n"
+		"\n"
+		"INPUT:\n"
+		"Title: " + title + "\n"
+		"Quest Type: " + questTypeStr + "\n"
+		"Target: " + std::to_string(quest->targetCount) + " " + targetStr + "\n"
+		"Reward: " + std::to_string(quest->rewardCoins) + " coins\n"
+		"NPC Context: " + npcContext + "\n"
+		"\n"
+		"OUTPUT:\n"
+		"LORE: ";
 
 	return prompt;
 }
@@ -1533,16 +1687,56 @@ void Game::handleLLMResponse(const std::string& response)
 		std::cout << "NPC Reply (npcId: " << m_currentLLMJob.npcId << "): " << response << "\n";
 		break;
 
-	case LLMJobType::QUEST_METADATA:
+    case LLMJobType::QUEST_TITLE:
 	{
-		std::cout << "Raw LLM Quest Metadata Response for questIndex " << m_currentLLMJob.questIndex << ": " << response << "\n";
-		const std::string title = extractTaggedLineValue(response, "TITLE:");
-		const std::string lore = extractTaggedLineValue(response, "LORE:");
-		if (m_questManager.updateBoardQuestText(m_currentLLMJob.questIndex, title, lore))
+       const int questIndex = m_currentLLMJob.questIndex;
+		std::string title = extractTaggedLineValue(response, "TITLE:");
+		if (title.empty())
+			title = stripTaggedPrefix(extractFirstLine(response), "TITLE:");
+
+		if (questIndex >= 0 && questIndex < static_cast<int>(m_pendingQuestTitles.size()))
+			m_pendingQuestTitles[questIndex] = title;
+
+		std::string context;
+		if (questIndex >= 0 && questIndex < static_cast<int>(m_pendingQuestContexts.size()))
+			context = m_pendingQuestContexts[questIndex];
+
+     const std::string lorePrompt = buildQuestLorePrompt(questIndex, title, context);
+		if (!lorePrompt.empty())
+			enqueLLMJob(LLMJobType::QUEST_LORE, -1, questIndex, lorePrompt);
+
+		std::cout << "Quest Title (questIndex=" << questIndex << "): " << title << "\n";
+		break;
+	}
+
+	case LLMJobType::QUEST_LORE:
+	{
+		const int questIndex = m_currentLLMJob.questIndex;
+       std::string lore = formatLoreTwoLines(extractLorePayload(response));
+
+		std::string title;
+		if (questIndex >= 0 && questIndex < static_cast<int>(m_pendingQuestTitles.size()))
+			title = m_pendingQuestTitles[questIndex];
+
+		if (m_questManager.updateBoardQuestText(questIndex, title, lore))
 		{
 			m_menuUI.setQuestBoardQuests(m_questManager.getBoardQuests());
 		}
-		std::cout << "Quest Metadata (questIndex=" << m_currentLLMJob.questIndex << "): " << response << "\n";
+
+		const int nextQuestIndex = questIndex + 1;
+		if (nextQuestIndex < static_cast<int>(m_questManager.getBoardQuests().size()))
+		{
+          const QuestData* nextQuest = m_questManager.getBoardQuest(nextQuestIndex);
+			const std::string nextContext = nextQuest ? getRandomQuestNpcContext(*nextQuest) : "";
+			if (nextQuestIndex >= 0 && nextQuestIndex < static_cast<int>(m_pendingQuestContexts.size()))
+				m_pendingQuestContexts[nextQuestIndex] = nextContext;
+
+			const std::string nextTitlePrompt = buildQuestTitlePrompt(nextQuestIndex, nextContext);
+			if (!nextTitlePrompt.empty())
+				enqueLLMJob(LLMJobType::QUEST_TITLE, -1, nextQuestIndex, nextTitlePrompt);
+		}
+
+      std::cout << "Quest Lore (questIndex=" << questIndex << "): " << lore << "\n";
 		break;
 	}
 	}

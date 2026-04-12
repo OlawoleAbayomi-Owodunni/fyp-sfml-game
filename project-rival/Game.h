@@ -55,7 +55,8 @@ enum LLMJobType
 {
 	ROOM_DESCRIPTION,
 	NPC_REPLY,
-	QUEST_METADATA,
+ QUEST_TITLE,
+	QUEST_LORE,
 
 	LLM_JOB_TYPE_COUNT
 };
@@ -149,7 +150,8 @@ private:
 	void processLLMQueue();
 	void handleLLMResponse(const std::string& response);
 	void queueQuestMetadataJobs();
-	std::string buildQuestMetadataPrompt(int questIndex) const;
+   std::string buildQuestTitlePrompt(int questIndex, const std::string& npcContext) const;
+	std::string buildQuestLorePrompt(int questIndex, const std::string& title, const std::string& npcContext) const;
 
 	// ----------------------------------> VARIABLES <---------------------------------- //	
 	// Game Management
@@ -231,6 +233,8 @@ private:
 
 	std::string m_npcInputBuffer;
 	std::string m_npcLastResponse;
+	std::vector<std::string> m_pendingQuestTitles;
+	std::vector<std::string> m_pendingQuestContexts;
 
 	// Economy, Upgrades & Progression
 	int m_coins = 500;
