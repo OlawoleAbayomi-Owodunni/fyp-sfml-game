@@ -36,14 +36,14 @@ void Player::init()
 	reset();
 }
 
-void Player::update(float dt, const sf::Vector2f& mousePos, 
+void Player::update(float dt, const sf::Vector2f& mousePos, const sf::Vector2i& mousePixelPos,
 	std::vector<std::unique_ptr<Projectile>>& gameProjectiles, 
 	std::vector<std::unique_ptr<DamageTrigger>>& instantiableTriggers)
 {
 	p_prevPos = p_body.getPosition();
 
 	handleMovement(dt);
-	handleAiming(mousePos);
+	handleAiming(mousePos, mousePixelPos);
 
 	ManageWeapons(instantiableTriggers, gameProjectiles, dt);
 }
@@ -183,7 +183,7 @@ void Player::handleMovement(float dt)
 	p_body.move(p_velocity * dt);
 }
 
-void Player::handleAiming(const sf::Vector2f mousePos)
+void Player::handleAiming(const sf::Vector2f& mouseWorldPos, const sf::Vector2i& mousePixelPos)
 {
 	//--------- aiming logic ---------//
 	
@@ -191,8 +191,9 @@ void Player::handleAiming(const sf::Vector2f mousePos)
 	const sf::Vector2f rs = InputManager::pad().rightStick();
 	const bool isRSMoved = (rs.x != 0.f || rs.y != 0.f);
 
-	const sf::Vector2f mouseDelta = mousePos - p_prevMousePos;
-	const bool isMouseMoved = (length(mouseDelta) > 0.5f);
+	const sf::Vector2f mouseDelta = mouseWorldPos - p_prevMousePos;
+	const sf::Vector2i mousePixelDelta = mousePixelPos - p_prevMousePixelPos;
+	const bool isMouseMoved = (mousePixelDelta.x != 0 || mousePixelDelta.y != 0);
 
 	if (isRSMoved) p_isController = true;
 	else if (isMouseMoved) p_isController = false;
@@ -200,7 +201,7 @@ void Player::handleAiming(const sf::Vector2f mousePos)
 	// Calculate and normalise aim direction
 	sf::Vector2f aimVector;
 	if (p_isController) aimVector = rs;
-	else aimVector = mousePos - p_body.getPosition();
+	else aimVector = mouseWorldPos - p_body.getPosition();
 
 	if (aimVector != sf::Vector2f(0.f, 0.f))	// avoid crash out on controller since we can't normalise a zero vector
 		p_aimDir = aimVector.normalized();
@@ -208,8 +209,8 @@ void Player::handleAiming(const sf::Vector2f mousePos)
 
 	p_reticle.setPosition(p_body.getPosition() + p_aimDir * p_reticleDistance);
 
-	p_prevMousePos = mousePos;
-
+	p_prevMousePos = mouseWorldPos;
+	p_prevMousePixelPos = mousePixelPos;
 }
 
 void Player::ManageWeapons(std::vector<std::unique_ptr<DamageTrigger>>& instantiableTriggers, std::vector<std::unique_ptr<Projectile>>& gameProjectiles, float dt)
