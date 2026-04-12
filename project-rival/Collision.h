@@ -10,21 +10,22 @@ enum CollisionLayer : uint32_t
 	ENEMY_LAYER = 1 << 1,
 	PLAYER_BULLET_LAYER = 1 << 2,
 	ENEMY_BULLET_LAYER = 1 << 3,
+	NPC_LAYER = 1 << 4,
 
 	// Static Environment layers
-	WALL_LAYER = 1 << 4,
-	DOOR_LAYER = 1 << 5,
+	WALL_LAYER = 1 << 5,
+	DOOR_LAYER = 1 << 6,
 
 	// World Environment layers
 
 	// Trigger layers
-	PORTAL_TRIGGER_LAYER = 1 << 6,
-	DOOR_TRIGGER_LAYER = 1 << 7,
-	DAMAGE_TRIGGER_LAYER = 1 << 8,
-	CHEST_TRIGGER_LAYER = 1 << 9,
+	PORTAL_TRIGGER_LAYER = 1 << 7,
+	DOOR_TRIGGER_LAYER = 1 << 8,
+	DAMAGE_TRIGGER_LAYER = 1 << 9,
+	CHEST_TRIGGER_LAYER = 1 << 10,
 
 	// Game Object Layers
-	PICKUP_OBJECT_LAYER = 1 << 10,
+	PICKUP_OBJECT_LAYER = 1 << 11,
 
 	ALL = 0xFFFFFFFF
 };

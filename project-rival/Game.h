@@ -11,6 +11,7 @@
 
 #include "player.h"
 #include "Enemy.h"
+#include "NPC.h"
 
 #include "Projectile.h"
 #include "DamageTrigger.h"
@@ -19,6 +20,8 @@
 #include "FloorGenerator.h"
 #include "FloorLayout.h"
 #include "DungeonPlan.h"
+
+#include "HubShop.h"
 
 #include "Pickup.h"
 #include "Chest.h"
@@ -45,17 +48,6 @@ enum GameMode
 	DUNGEON,
 
 	MODE_COUNT
-};
-
-enum HubShopType
-{
-	NONE_SHOP,
-	WEAPON_SHOP,
-	COSMETIC_SHOP,
-	ARMORY_SHOP,
-	PLAYER_SHOP,
-
-	SHOP_COUNT
 };
 
 struct ScreenSize
@@ -164,6 +156,13 @@ private:
 	std::vector<std::unique_ptr<Pickup>> m_gamePickups;
 	float m_playerPickupDropTimer = 0.f;
 	std::vector<std::unique_ptr<Chest>> m_gameChests;
+
+	// NPC management
+	std::vector<NPC> m_hubNPCs;
+	int m_activeNPCId;
+	bool m_isNPCDialogueOpen;
+	int m_selectedResponse;
+	std::vector<std::string> m_currentDialogueOptions;
 
 	// Hub management
 	sf::RectangleShape m_weaponShop;

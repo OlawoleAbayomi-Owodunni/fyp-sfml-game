@@ -1,0 +1,12 @@
+#pragma once
+
+enum HubShopType
+{
+	NONE_SHOP,
+	WEAPON_SHOP,
+	COSMETIC_SHOP,
+	ARMORY_SHOP,
+	PLAYER_SHOP,
+
+	SHOP_COUNT
+};
