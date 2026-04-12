@@ -29,6 +29,7 @@ public:
 
 	virtual sf::FloatRect getCollisionBounds() const override;
 	virtual CollisionProfile getCollisionProfile() const override;
+	virtual sf::Vector2f getPosition() const { return e_body.getPosition(); }
 
 	virtual void hitWall() = 0;
 

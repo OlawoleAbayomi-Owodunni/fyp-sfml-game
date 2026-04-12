@@ -36,14 +36,14 @@ void Pickup::initVisual(float tileSize)
 	case PickupType::SINGLE_COIN: {
 		size = tileSize / 4.f;
 		p_shape.setFillColor(sf::Color::Yellow);
-		p_effectAmount = 1;
+		p_effectAmount = 5;
 		break;
 	}
 
 	case PickupType::CHEST_COIN: {
 		size = tileSize / 2.f;
 		p_shape.setFillColor(sf::Color(255, 215, 0)); // Gold
-		p_effectAmount = 25;
+		p_effectAmount = 50;
 		break;
 	}
 	}

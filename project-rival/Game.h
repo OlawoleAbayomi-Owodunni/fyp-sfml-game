@@ -20,6 +20,9 @@
 #include "FloorLayout.h"
 #include "DungeonPlan.h"
 
+#include "Pickup.h"
+#include "Chest.h"
+
 #include "LLMService.h"
 
 #include "PlayerHUD.h"
@@ -125,6 +128,9 @@ private:
 	void buildCorridors();
 	void loadNewFloor();
 
+	// Spawnable Management
+	void spawnRandomPickup(const sf::Vector2f& worldPos, float tilesize, bool isFromChest);
+	void trySpawnPickup(const sf::Vector2f& worldPos, float tilesize, int spawnChance);
 
 	// ----------------------------------> VARIABLES <---------------------------------- //	
 	// Game Management
@@ -150,6 +156,11 @@ private:
 
 	// Instantiable trigger management
 	std::vector<std::unique_ptr<DamageTrigger>> m_activeDamageTriggers;
+
+	// Spawnable management
+	std::vector<std::unique_ptr<Pickup>> m_gamePickups;
+	float m_playerPickupDropTimer = 0.f;
+	std::vector<std::unique_ptr<Chest>> m_gameChests;
 
 	// Hub management
 	sf::RectangleShape m_weaponShop;
@@ -213,4 +224,10 @@ private:
 
 	// UI management
 	PlayerHUD m_hud{ m_arialFont };
+
+	// Quest Tracker Management
+	int m_activeQuestId;
+	int m_questKillCount;
+	int m_questHealthPickupCount;
+	int m_questAmmoPickupCount;
 };

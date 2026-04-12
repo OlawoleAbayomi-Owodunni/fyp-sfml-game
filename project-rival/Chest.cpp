@@ -12,8 +12,7 @@ Chest::Chest(const sf::Vector2f& worldPos, float tileSize)
 
 void Chest::render(sf::RenderWindow & window) const
 {
-	if (!c_isOpened)
-		window.draw(c_shape);
+	window.draw(c_shape);
 }
 
 void Chest::open()

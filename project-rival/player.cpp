@@ -72,6 +72,20 @@ void Player::hitWall()
 	p_body.setPosition(p_prevPos);
 }
 
+void Player::heal(int amount)
+{
+	p_health += amount;
+	if (p_health > p_maxHealth)
+		p_health = p_maxHealth;
+}
+
+void Player::addAmmo(int amount)
+{
+	p_playerAmmo += amount;
+	if (p_playerAmmo > p_maxAmmo)
+		p_playerAmmo = p_maxAmmo;
+}
+
 void Player::applyUpgrade(int healthLevel, int speedLevel, int ammoLevel)
 {
 	p_maxHealth = 100 + (healthLevel-1) * 25;
@@ -140,7 +154,7 @@ void Player::startUp()
 
 	//collision
 	p_collisionProfile.layer = CollisionLayer::PLAYER_LAYER;
-	p_collisionProfile.mask = CollisionLayer::ENEMY_LAYER | CollisionLayer::ENEMY_BULLET_LAYER | CollisionLayer::WALL_LAYER | CollisionLayer::DOOR_LAYER | CollisionLayer::PORTAL_TRIGGER_LAYER | CollisionLayer::DOOR_TRIGGER_LAYER | CollisionLayer::DAMAGE_TRIGGER_LAYER;
+	p_collisionProfile.mask = CollisionLayer::ENEMY_LAYER | CollisionLayer::ENEMY_BULLET_LAYER | CollisionLayer::WALL_LAYER | CollisionLayer::DOOR_LAYER | CollisionLayer::PORTAL_TRIGGER_LAYER | CollisionLayer::DOOR_TRIGGER_LAYER | CollisionLayer::DAMAGE_TRIGGER_LAYER | CollisionLayer::PICKUP_OBJECT_LAYER | CollisionLayer::CHEST_TRIGGER_LAYER;
 
 	addWeaponToLoadout(WeaponType::PISTOL, 1);
 	addWeaponToLoadout(WeaponType::KNIFE, 1);

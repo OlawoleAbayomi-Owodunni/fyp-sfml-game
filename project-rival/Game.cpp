@@ -132,7 +132,7 @@ void Game::processGameEvents(const sf::Event& event)
 		case sf::Keyboard::Scancode::Num0:
 			if (m_gameMode != GameMode::DUNGEON || m_activeRoomId < 0 || m_activeRoomId >= static_cast<int>(m_roomPlans.size()))
 			{
-				cout << "No active dungeon room for LLM prompt.\n";
+				std::cout << "No active dungeon room for LLM prompt.\n";
 				break;
 			}
 			LLM_GenerateRoomInfo();
@@ -190,15 +190,16 @@ void Game::update(float dt)
 
 	if( m_gameMode == GameMode::DUNGEON && m_player.isDead())
 	{
-        cout << "Player has died. Showing game over screen...\n";
+		std::cout << "Player has died. Showing game over screen...\n";
         m_menuUI.setScreen(MenuScreen::GAME_OVER_SCREEN);
 		return;
 	}
 	updateActiveRoom();
 
-	// Update player and enemies
+	// Update player
 	m_player.update(dt, mousePosF, mousePos, m_gameProjectiles, m_activeDamageTriggers);
 
+	// Enemy Management
 	for (auto enemy_it = m_enemies.begin(); enemy_it != m_enemies.end();)
 	{
 		auto& enemy = *enemy_it;
@@ -213,14 +214,12 @@ void Game::update(float dt)
 		// Check if enemy is dead and remove if so
 		if (enemy->isDead())
 		{
+			trySpawnPickup(enemy->getPosition(), 64.f, 40);
 			enemy_it = m_enemies.erase(enemy_it);
 		}
 		else
 			enemy_it++;
 	}
-
-	//Collision checks
-	CollisionChecks();
 
 	// Projectile Management
 	for (auto it = m_gameProjectiles.begin(); it != m_gameProjectiles.end();)
@@ -238,6 +237,18 @@ void Game::update(float dt)
 		(*it)->update(dt);
 		if ((*it)->shouldDestroy())
 			it = m_activeDamageTriggers.erase(it);
+		else
+			++it;
+	}
+
+	//Collision checks
+	CollisionChecks();
+
+	// Spawnable management
+	for (auto it = m_gamePickups.begin(); it != m_gamePickups.end();)
+	{
+		if ((*it)->shouldDestroy())
+			it = m_gamePickups.erase(it);
 		else
 			++it;
 	}
@@ -265,17 +276,17 @@ void Game::update(float dt)
 	if (auto initOk = m_llmManager.tryConsumeInitResult())
 	{
 		if (*initOk) {
-			cout << "LLM initialized successfully.\n";
+			std::cout << "LLM initialized successfully.\n";
 		}
 		else {
-			cout << "LLM failed to initialize.\n";
+			std::cout << "LLM failed to initialize.\n";
 			m_llmManager.initAsync("ASSETS/LLM/MODELS/Llama-3.2-1B-Instruct-Q4_K_M.gguf"); // Retry initialization
 		}
 	}
 
 	if (auto response = m_llmManager.tryConsumeLatestResponse())
 	{
-		cout << "LLM Response: " << *response << "\n";
+		std::cout << "LLM Response: " << *response << "\n";
 	}
 
 	m_hud.update(m_player.getHealth(), m_player.getMaxHealth(), m_player.getAmmo(), m_player.getMaxAmmo(), m_coins);
@@ -312,6 +323,14 @@ void Game::render()
 
 	for(auto& trigger:m_activeDamageTriggers) {
 		trigger->render(m_window);
+	}
+
+	for(auto& pickup:m_gamePickups) {
+		pickup->render(m_window);
+	}
+
+	for(auto& chest:m_gameChests) {
+		chest->render(m_window);
 	}
 
 	if (m_gameMode == GameMode::HUB)
@@ -390,6 +409,9 @@ void Game::resetGame()
 	m_requestNextFloor = false;
 
 	m_waveCounter = 0;
+
+	m_gamePickups.clear();
+	m_gameChests.clear();
 }
 
 /// <summary>
@@ -609,7 +631,7 @@ void Game::updateHubShops()
 			(*selectedUpgradeLevel)++;
 			WeaponInLoadout droppedWeapon;
 			m_player.swapCurrentWeapon(selectedType, *selectedUpgradeLevel, droppedWeapon);
-			cout << weaponName << " upgraded to level " << *selectedUpgradeLevel << "!\n"
+			std::cout << weaponName << " upgraded to level " << *selectedUpgradeLevel << "!\n"
 				<< "Coins remaining: " << m_coins << "\n";
 		}
 		
@@ -619,14 +641,14 @@ void Game::updateHubShops()
 			m_coins -= upgradeCost;
 			m_playerAmmoUpgradeLevel++;
 			m_player.applyUpgrade(m_playerHealthUpgradeLevel, m_playerSpeedUpgradeLevel, m_playerAmmoUpgradeLevel);
-			cout << "Player ammo capacity upgraded to level " << m_playerAmmoUpgradeLevel << "!\n"
+			std::cout << "Player ammo capacity upgraded to level " << m_playerAmmoUpgradeLevel << "!\n"
 				<< "Coins remaining: " << m_coins << "\n";
 		}
 		
 		// Not enough coins
 		else
 		{
-			cout << "Not enough coins to upgrade weapon or ammo! Coins: " << m_coins << "\n";
+			std::cout << "Not enough coins to upgrade weapon or ammo! Coins: " << m_coins << "\n";
 		}
 
 		break;
@@ -639,7 +661,7 @@ void Game::updateHubShops()
 
 		m_playerColorIndex = (m_playerColorIndex + 1) % m_playerColorOptions.size();
 		m_player.setBodyColor(m_playerColorOptions[m_playerColorIndex]);
-		cout << "Player color changed to " << m_playerColorIndex << "!\n";
+		std::cout << "Player color changed to " << m_playerColorIndex << "!\n";
 		break;
 	}
 
@@ -667,13 +689,13 @@ void Game::updateHubShops()
 		WeaponInLoadout droppedWeapon;
 		if (m_player.swapCurrentWeapon(weaponToEquip, equipLevel, droppedWeapon))
 		{
-			cout << "Equipped " << weaponToEquip << " at level " << equipLevel << "!\n";
+			std::cout << "Equipped " << weaponToEquip << " at level " << equipLevel << "!\n";
 			if (droppedWeapon.type != WeaponType::COUNT)
-				cout << "Dropped " << droppedWeapon.type << " at level " << droppedWeapon.level << ".\n";
+				std::cout << "Dropped " << droppedWeapon.type << " at level " << droppedWeapon.level << ".\n";
 		}
 		else
 		{
-			cout << "Failed to equip weapon. Loadout may be full.\n";
+			std::cout << "Failed to equip weapon. Loadout may be full.\n";
 		}
 
 		m_armoryCatalogIndex++;
@@ -697,18 +719,18 @@ void Game::updateHubShops()
 			m_coins -= upgradeCost;
 			m_playerHealthUpgradeLevel++;
 			m_player.applyUpgrade(m_playerHealthUpgradeLevel, m_playerSpeedUpgradeLevel, m_playerAmmoUpgradeLevel);
-			cout << "Player health upgraded! Coins remaining: " << m_coins << "\n";
+			std::cout << "Player health upgraded! Coins remaining: " << m_coins << "\n";
 		}
 		else if (speedUpgradeInput && m_coins >= upgradeCost)
 		{
 			m_coins -= upgradeCost;
 			m_playerSpeedUpgradeLevel++;
 			m_player.applyUpgrade(m_playerHealthUpgradeLevel, m_playerSpeedUpgradeLevel, m_playerAmmoUpgradeLevel);
-			cout << "Player speed upgraded! Coins remaining: " << m_coins << "\n";
+			std::cout << "Player speed upgraded! Coins remaining: " << m_coins << "\n";
 		}
 		else
 		{
-			cout << "Not enough coins to upgrade player! Coins: " << m_coins << "\n";
+			std::cout << "Not enough coins to upgrade player! Coins: " << m_coins << "\n";
 		}
 
 		break;
@@ -760,13 +782,13 @@ void Game::ManageWave()
 	if (m_enemies.empty()) {
 		m_waveCounter--;
 		if (m_waveCounter > 0) {	// start new wave
-			cout << "New Wave Starting! Remaining Waves: " << m_waveCounter << endl;
+			std::cout << "New Wave Starting! Remaining Waves: " << m_waveCounter << endl;
 			m_roomPlans[m_activeRoomId] = CombatRoom().generateNewWave(m_roomPlans[m_activeRoomId]);
 			spawnEnemies(m_activeRoomId);
 			generateRoom(m_activeRoomId);
 		}
 		else {	// end combat
-			cout << "Combat Room Cleared at ID " << m_activeRoomId << "!\n";
+			std::cout << "Combat Room Cleared at ID " << m_activeRoomId << "!\n";
 			m_roomPlans[m_activeRoomId] = CombatRoom().setRoomCleared(m_roomPlans[m_activeRoomId]);
 			generateRoom(m_activeRoomId);
 			m_isInCombat = false;
@@ -789,7 +811,7 @@ void Game::CollisionChecks()
 	{
 		// Enemy -> Player
 		if (CollisionCheck::areColliding(m_player, *enemy)) {
-			cout << "Player collided with enemy!\n";
+			std::cout << "Player collided with enemy!\n";
 			
 			break;
 		}
@@ -846,6 +868,61 @@ void Game::CollisionChecks()
 				enemy->takeDamage(trigger->damage());
 				break;
 			}
+		}
+	}
+
+	// -------------------- PICKUP TRIGGER CHECKS -------------------
+	for (auto& pickup : m_gamePickups)
+	{
+		if (pickup->shouldDestroy())
+			continue;
+
+		if (CollisionCheck::areColliding(*pickup, m_player))
+		{
+			switch (pickup->getType())
+			{
+			case PickupType::HEALTH: {
+				m_player.heal(pickup->getEffectAmount());
+				std::cout << "Player picked up health! Current health: " << m_player.getHealth() << endl;
+				pickup->destroy();
+				break;
+			}
+			case PickupType::AMMO: {
+				m_player.addAmmo(pickup->getEffectAmount());
+				std::cout << "Player picked up ammo! Current ammo: " << m_player.getAmmo() << endl;
+				pickup->destroy();
+				break;
+			}
+			case PickupType::SINGLE_COIN: {
+				m_coins += pickup->getEffectAmount();
+				std::cout << "Player picked up a coin! Current coins: " << m_coins << endl;
+				pickup->destroy();
+				break;
+			}
+			case PickupType::CHEST_COIN: {
+				m_coins += pickup->getEffectAmount();
+				std::cout << "Player picked up a bag of coins! Current coins: " << m_coins << endl;
+				pickup->destroy();
+				break;
+			}
+			}
+		}
+	}
+
+	// ------------------- CHEST TRIGGER CHECKS -------------------
+	for (auto& chest : m_gameChests)
+	{
+		if (chest->isOpened())
+			continue;
+
+		if (CollisionCheck::areColliding(*chest, m_player))
+		{
+			chest->open();
+
+			const sf::FloatRect bounds = chest->getCollisionBounds();
+			const sf::Vector2f chestCenter = sf::Vector2f(bounds.position.x + bounds.size.x / 2, bounds.position.y + bounds.size.y / 2);
+			spawnRandomPickup(chestCenter, 64, true);
+			break;
 		}
 	}
 
@@ -922,7 +999,7 @@ void Game::CollisionChecks()
 							spawnEnemies(m_activeRoomId);
 							m_isInCombat = true;
 							m_waveCounter = rand() % 3 + 1;
-							cout << "Starting combat room wave!\nWaves Remaining: " << m_waveCounter << "\n";
+							std::cout << "Starting combat room wave!\nWaves Remaining: " << m_waveCounter << "\n";
 							generateRoom(m_activeRoomId);
 						}
 					}
@@ -1006,7 +1083,7 @@ void Game::ControllerInputHandler()
 	{
 		if (m_gameMode != GameMode::DUNGEON || m_activeRoomId < 0 || m_activeRoomId >= static_cast<int>(m_roomPlans.size()))
 		{
-			cout << "No active dungeon room for LLM prompt.\n";
+			std::cout << "No active dungeon room for LLM prompt.\n";
 			return;
 		}
 		LLM_GenerateRoomInfo();
@@ -1081,6 +1158,32 @@ void Game::spawnEnemies(const int roomId)
 		}
 	}
 }
+
+void Game::spawnRandomPickup(const sf::Vector2f& worldPos, float tilesize, bool isFromChest)
+{
+	PickupType type = PickupType::PICKUP_COUNT;
+	const int roll = rand() % 3;
+	if (roll == 0)
+		type = PickupType::HEALTH;
+	else if (roll == 1)
+		type = PickupType::AMMO;
+	else {
+		if (isFromChest)
+			type = PickupType::CHEST_COIN;
+		else
+			type = PickupType::SINGLE_COIN;
+	}
+
+	m_gamePickups.push_back(std::make_unique<Pickup>(type, worldPos, tilesize));
+}
+
+void Game::trySpawnPickup(const sf::Vector2f& worldPos, float tilesize, int spawnChance)
+{
+	const int chance = rand() % 100;
+	if (chance <= spawnChance)
+		spawnRandomPickup(worldPos, tilesize, false);
+}
+
 
 #pragma endregion
 
@@ -1364,8 +1467,25 @@ void Game::loadNewFloor()
 
 	buildFloorInstance();
 
+	m_gameChests.clear();
+	m_gamePickups.clear();
+
+	for (const auto& roomPlan : m_roomPlans)
+	{
+		int spawnChance = rand() % 100;
+		if (spawnChance <= 60 && roomPlan.type != RoomType::COMBAT)
+		{
+			const sf::Vector2f roomPos = m_roomWorldPositions[roomPlan.id];
+			const float tileSize = roomPlan.tileSize;
+			const sf::Vector2f roomCenter = roomPos + sf::Vector2f((roomPlan.width * tileSize) / 2, (roomPlan.height * tileSize) / 2);
+
+			m_gameChests.push_back(std::make_unique<Chest>(roomCenter, tileSize));
+		}
+	}
+
 	m_floorCamera.setCenter(m_roomWorldPositions[0]);
 }
+
 
 #pragma endregion
 
@@ -1375,7 +1495,7 @@ void Game::loadNewFloor()
 void Game::LLM_GenerateRoomInfo()
 {
 	if (!m_llmManager.isReady()) {
-		cout << "LLM model is not ready.\n";
+		std::cout << "LLM model is not ready.\n";
 	}
 	else {
 		// LLM Prompt/Response test
@@ -1403,24 +1523,24 @@ void Game::LLM_GenerateRoomInfo()
 
 			std::string clearedStr = currRoom.isCleared ? "Yes" : "No";
 
-			cout << "Generating response...\n";
+			std::cout << "Generating response...\n";
 			const std::string prompt = "Generate a 2 sentence description of the room the player is in currently based on the following properties: Room Type: " + roomTypeStr
 				+ ", Is Room Cleared: " + clearedStr
 				+ ", Room Height: " + to_string(currRoom.height)
 				+ ", Room Width: " + to_string(currRoom.width)
 				+ ", Dungeon Floor: " + to_string(m_dungeonPlan.currentFloorId) + "\n";
 
-			cout << "Prompt: " << prompt << "\n";
+			std::cout << "Prompt: " << prompt << "\n";
 
 			const bool queued = m_llmManager.requestGenerate(prompt);
 			if (queued)
-				cout << "Generation request queued successfully.\n";
+				std::cout << "Generation request queued successfully.\n";
 			else
-				cout << "Failed to queue generation request.\n";
+				std::cout << "Failed to queue generation request.\n";
 		}
 		else
 		{
-			cout << "Generation in progress, please wait...\n";
+			std::cout << "Generation in progress, please wait...\n";
 		}
 	}
 }

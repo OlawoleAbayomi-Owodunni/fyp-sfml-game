@@ -21,11 +21,12 @@ public:
 
 	CollisionProfile getCollisionProfile() const override { return p_collisionProfile; }
 	sf::FloatRect getCollisionBounds() const override { return p_shape.getGlobalBounds(); }
+	int getEffectAmount() const { return p_effectAmount; }
+	PickupType getType() const { return p_type; }
 
 	bool shouldDestroy() const { return p_shouldDestroy; }
 	void destroy() { p_shouldDestroy = true; }
 
-	int getEffectAmount() const { return p_effectAmount; }
 
 private:
 	void initVisual(float tileSize);
