@@ -35,27 +35,29 @@ At a high level:
 11. Update enemies:
     - set targets
     - run type-specific update paths (`TurretEnemy` projectile path, `GruntEnemy` melee-trigger path)
-12. Resolve collisions (`CollisionChecks()`):
+12. Update/remove transient combat objects:
+    - update/remove destroyed projectiles
+    - update/remove expired damage triggers
+13. Resolve collisions (`CollisionChecks()`):
     - player vs enemies
     - projectiles vs enemies/player
     - damage triggers vs enemies/player
+    - pickups/chests vs player
     - player/enemies/projectiles vs walls/locked doors
     - player vs door/portal triggers
-13. Update transient combat objects:
-    - update/remove destroyed projectiles
-    - update/remove expired damage triggers
-14. Manage combat wave logic (`ManageWave()` when in active combat room).
-15. Handle floor progression:
+14. Remove destroyed pickups from runtime list.
+15. Manage combat wave logic (`ManageWave()` when in active combat room).
+16. Handle floor progression:
     - consume `m_requestNextFloor`
     - advance dungeon plan
     - load next floor or return to hub on completion
-16. Poll LLM service:
+17. Poll LLM service:
     - consume async init result
     - consume latest response when complete
-17. Update HUD values from player/economy state.
-18. Render:
+18. Update HUD values from player/economy state.
+19. Render:
     - choose camera mode (player/floor)
-    - render rooms, player, enemies, projectiles, triggers, overlays
+    - render rooms, player, enemies, projectiles, triggers, pickups, chests, overlays
     - in hub mode, render hub shop zones + prompt UI
     - switch to default view
     - render HUD on gameplay screen, otherwise render menu UI

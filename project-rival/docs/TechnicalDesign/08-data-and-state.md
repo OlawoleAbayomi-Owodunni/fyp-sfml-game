@@ -14,6 +14,8 @@ This chapter describes what state exists, who owns it, and what might need savin
   - enemy list
   - projectile list
   - active damage-trigger list
+  - pickup list
+  - chest list
   - combat state (`m_isInCombat`, `m_waveCounter`)
   - floor plan + floor layout
   - dungeon plan (seed + floor progression/completion)
@@ -23,6 +25,7 @@ This chapter describes what state exists, who owns it, and what might need savin
   - economy/upgrade state (coins, weapon/player upgrade levels, catalog indices, cosmetic index)
   - LLM service state
   - HUD state container (`PlayerHUD`)
+  - prototype quest-tracker counters/state
 - `Player` owns:
   - transform/velocity/previous position
   - aim state + reticle state

@@ -130,6 +130,20 @@ Extension points:
 - Add richer fire modes/effects.
 - Add new projectile and trigger types.
 
+## Spawnables / loot (prototype)
+
+Core files:
+
+- `project-rival/Pickup.h/.cpp`
+- `project-rival/Chest.h/.cpp`
+
+Current behaviour:
+
+- Enemy deaths can roll pickup spawns (health/ammo/single coin).
+- Floor load can place chests in some non-combat rooms.
+- Chest overlap opens the chest and spawns chest coin pickups.
+- Pickup overlap applies effects to player (`heal`, `addAmmo`, coin increments).
+
 ## Enemies / AI (steering)
 
 Core files:

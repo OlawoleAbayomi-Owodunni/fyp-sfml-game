@@ -13,6 +13,11 @@ Defined in `Collision.h`:
   - `layer`: what this object *is*
   - `mask`: what this object *can collide with*
 
+Current trigger/object additions also include:
+
+- `CHEST_TRIGGER_LAYER`
+- `PICKUP_OBJECT_LAYER`
+
 Two objects are allowed to collide if:
 - A's mask contains B's layer **and**
 - B's mask contains A's layer
@@ -30,6 +35,8 @@ Current gameplay implementations include:
 - `Enemy` hierarchy
 - `Projectile` hierarchy
 - `DamageTrigger`
+- `Pickup`
+- `Chest`
 - `StaticCollision`
 
 ## Collision checks
@@ -61,6 +68,8 @@ Handled in `Game::CollisionChecks()`:
 - projectiles are destroyed on wall/door impact
 - door triggers can start combat waves (in uncleared combat rooms)
 - portal triggers can start runs / request floor advancement (by mode)
+- pickups apply effects on player overlap and are marked for removal
+- chests open on player overlap and spawn chest loot pickups
 
 ## Damage flow (high level)
 

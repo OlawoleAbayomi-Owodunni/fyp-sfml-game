@@ -159,6 +159,12 @@ Combat room flow:
   - lock doors
 - `Game::ManageWave()` decrements remaining waves as rooms are cleared, then unlocks doors and marks room cleared.
 
+Spawnables integration (current):
+
+- On floor load, `Game` currently places chest objects in some non-combat rooms.
+- Chests open on player overlap and spawn loot pickups.
+- Enemy deaths can also roll loot-drop pickup spawns.
+
 ## Next likely steps
 
 - Move from temporary hub implementation to full hub/NPC/shop interaction systems while keeping the existing room pipeline.

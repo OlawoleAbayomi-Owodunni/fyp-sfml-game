@@ -49,6 +49,11 @@ Corridors are currently generated inside `Game.cpp` (as temporary `RoomPlan`s co
 - `GruntEnemy.h` / `GruntEnemy.cpp` (moves using steering)
 - `TurretEnemy.h` / `TurretEnemy.cpp` (stationary ranged attacker)
 
+### Spawnables / loot (prototype)
+
+- `Pickup.h` / `Pickup.cpp` (health/ammo/coin pickups)
+- `Chest.h` / `Chest.cpp` (interactable chest trigger object)
+
 ### Input
 
 - `InputManager.h` / `InputManager.cpp`

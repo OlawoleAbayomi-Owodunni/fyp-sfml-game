@@ -47,6 +47,12 @@ This chapter summarizes the major subsystems, who owns what, and how data flows.
 - `DamageTrigger` supports short-lived melee hit volumes.
 - Damage is applied on collision; bullets/triggers are destroyed/expired and removed by `Game`.
 
+### Spawnables / pickups (prototype)
+
+- `Pickup` represents collectible world drops (health/ammo/coins).
+- `Chest` represents interactable loot containers.
+- `Game` owns pickup/chest runtime lists and controls spawning/removal.
+
 ### Collision
 
 - Layer/mask filtering using `CollisionLayer` + `CollisionProfile`.
@@ -94,19 +100,22 @@ Corridors are generated in `Game` from floor edges and appended as extra `RoomIn
   - enemies list (`std::vector<std::unique_ptr<Enemy>>`)
   - projectile list (`std::vector<std::unique_ptr<Projectile>>`)
   - active melee trigger list (`std::vector<std::unique_ptr<DamageTrigger>>`)
+  - pickup list (`std::vector<std::unique_ptr<Pickup>>`)
+  - chest list (`std::vector<std::unique_ptr<Chest>>`)
   - room plans + room instances
   - floor plan + floor layout
   - dungeon plan state
   - game mode/hub state
   - LLM service state
+  - prototype quest tracker counters/state
 
 Data flow example:
 
 - `Game` updates player/enemies and lifecycle-manages projectiles/triggers.
-- `Game` checks collisions (entity hits, bullets, melee triggers, environment, portal/door triggers).
+- `Game` checks collisions (entity hits, bullets, melee triggers, pickups/chests, environment, portal/door triggers).
 - `Game` processes menu actions, hub interactions, combat waves, floor transitions, and LLM polling.
 - `Game` updates HUD values from player/economy state.
-- `Game` renders rooms → player → enemies → projectiles → triggers.
+- `Game` renders rooms → player → enemies → projectiles → triggers/pickups/chests.
 
 Current camera behavior supports both player-follow and floor-overview modes.
 
