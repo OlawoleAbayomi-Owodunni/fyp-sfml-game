@@ -18,7 +18,7 @@ static double const FPS{ 60.0f };
 
 ////////////////////////////////////////////////////////////
 Game::Game()
-	: m_window(sf::VideoMode(sf::Vector2u(ScreenSize::s_width, ScreenSize::s_height), 32), "FYP: Dungeonish Crawler", sf::Style::Default)
+	: m_window(sf::VideoMode::getDesktopMode(), "FYP: Dungeonish Crawler", sf::State::Fullscreen)
 {
 	m_llmManager.initAsync("ASSETS/LLM/MODELS/Llama-3.2-1B-Instruct-Q4_K_M.gguf");
 
@@ -150,6 +150,32 @@ void Game::processGameEvents(const sf::Event& event)
 		case sf::Keyboard::Scancode::V:
 			m_isPlayerCamera = !m_isPlayerCamera;
 			break;
+
+		case sf::Keyboard::Scancode::Q:
+		{
+			const int weaponCount = static_cast<int>(m_player.getWeaponLoadout().size());
+			if (weaponCount > 0)
+			{
+				int nextWeaponId = m_player.getCurrentWeaponID() - 1;
+				if (nextWeaponId < 0)
+					nextWeaponId = weaponCount - 1;
+				m_player.setCurrentWeaponID(nextWeaponId);
+			}
+			break;
+		}
+
+		case sf::Keyboard::Scancode::E:
+		{
+			const int weaponCount = static_cast<int>(m_player.getWeaponLoadout().size());
+			if (weaponCount > 0)
+			{
+				int nextWeaponId = m_player.getCurrentWeaponID() + 1;
+				if (nextWeaponId >= weaponCount)
+					nextWeaponId = 0;
+				m_player.setCurrentWeaponID(nextWeaponId);
+			}
+			break;
+		}
 
 		default:
 			break;
