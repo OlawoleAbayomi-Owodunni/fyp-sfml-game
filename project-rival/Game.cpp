@@ -38,13 +38,82 @@ namespace
 
 		return value;
 	}
+
+	std::string trimCopy(const std::string& text)
+	{
+		std::size_t start = 0;
+		while (start < text.size() && (text[start] == ' ' || text[start] == '\t' || text[start] == '\n' || text[start] == '\r'))
+			++start;
+
+		std::size_t end = text.size();
+		while (end > start && (text[end - 1] == ' ' || text[end - 1] == '\t' || text[end - 1] == '\n' || text[end - 1] == '\r'))
+			--end;
+
+		return text.substr(start, end - start);
+	}
+
+	std::string normalizeWhitespace(const std::string& text)
+	{
+		std::string out;
+		out.reserve(text.size());
+		bool lastWasSpace = false;
+
+		for (char ch : text)
+		{
+			const bool isWs = (ch == ' ' || ch == '\t' || ch == '\n' || ch == '\r');
+			if (isWs)
+			{
+				if (!lastWasSpace)
+				{
+					out.push_back(' ');
+					lastWasSpace = true;
+				}
+			}
+			else
+			{
+				out.push_back(ch);
+				lastWasSpace = false;
+			}
+		}
+
+		return trimCopy(out);
+	}
+
+	std::string limitSentenceCount(const std::string& text, int maxSentences)
+	{
+		if (maxSentences <= 0)
+			return "";
+
+		const std::string normalized = normalizeWhitespace(text);
+		int sentenceCount = 0;
+		std::size_t cutPos = std::string::npos;
+
+		for (std::size_t i = 0; i < normalized.size(); ++i)
+		{
+			const char ch = normalized[i];
+			if (ch == '.' || ch == '!' || ch == '?')
+			{
+				++sentenceCount;
+				if (sentenceCount >= maxSentences)
+				{
+					cutPos = i + 1;
+					break;
+				}
+			}
+		}
+
+		if (cutPos == std::string::npos)
+			return normalized;
+
+		return trimCopy(normalized.substr(0, cutPos));
+	}
 }
 
 ////////////////////////////////////////////////////////////
 Game::Game()
 	: m_window(sf::VideoMode::getDesktopMode(), "FYP: Dungeonish Crawler", sf::State::Fullscreen)
 {
-	m_llmManager.initAsync("ASSETS/LLM/MODELS/Qwen2.5-0.5B-Instruct-Q8_0.gguf");
+	m_llmManager.initAsync("ASSETS/LLM/MODELS/Llama-3.2-1B-Instruct-Q4_K_M.gguf");
 
 	srand(time(NULL));
 	init();
@@ -183,11 +252,16 @@ void Game::processGameEvents(const sf::Event& event)
           if (keyPressed->scancode == sf::Keyboard::Scancode::Enter && !m_npcInputBuffer.empty())
 			{
 				const HubNPCInfo& npcInfo = m_hubNPCs[m_activeNPCId].getInfo();
-				const std::string prompt = "You are roleplaying this NPC in a game hub.\n"
+              const std::string prompt = "You are roleplaying this NPC in a game hub.\n"
+					"STRICT OUTPUT RULES (must follow):\n"
+					"1) Return ONLY the NPC reply text.\n"
+					"2) Maximum 2 sentences total. Never exceed 2 sentences.\n"
+					"3) No speaker labels, names, prefixes, or transcript text.\n"
+					"4) Do not repeat the player message.\n"
 					"Name: " + npcInfo.name + "\n" +
 					"Background: " + npcInfo.background + "\n" +
 					"Player said: " + m_npcInputBuffer + "\n"
-					"Reply as this NPC in 1-2 immersive sentences.";
+                    "Now reply as this NPC in at most 2 immersive sentences.";
 
 				enqueLLMJob(LLMJobType::NPC_REPLY, m_activeNPCId, -1, prompt);
 				m_npcInputBuffer.clear();
@@ -1441,7 +1515,12 @@ void Game::LLM_GenerateRoomInfo()
 
 	std::string clearedStr = currRoom.isCleared ? "Yes" : "No";
 
-	const std::string prompt = "Generate a 2 sentence description of the room the player is in currently based on the following properties: Room Type: " + roomTypeStr
+  const std::string prompt = "You describe rooms for a dungeon crawler.\n"
+		+ std::string("STRICT OUTPUT RULES (must follow):\n")
+		+ "1) Return plain text only.\n"
+		+ "2) Return exactly 2 sentences.\n"
+		+ "3) No bullet points, no labels, no extra commentary.\n"
+		+ "Room details: Room Type: " + roomTypeStr
 		+ ", Does room have enemies? " + clearedStr
 		+ ", Room Height (min is 4 max is 15): " + to_string(currRoom.height)
 		+ ", Room Width (min is 4 max is 15): " + to_string(currRoom.width)
@@ -1488,14 +1567,14 @@ void Game::handleLLMResponse(const std::string& response)
 	switch (m_currentLLMJob.jobType)
 	{
 	case LLMJobType::ROOM_DESCRIPTION:
-		m_latestRoomDescription = response;
+     m_latestRoomDescription = limitSentenceCount(response, 2);
 		m_roomDescriptionTtl = 10.f; // display room description for 10 seconds
-		std::cout << "LLM Room Description: " << response << "\n";
+      std::cout << "LLM Room Description: " << m_latestRoomDescription << "\n";
 		break;
 
 	case LLMJobType::NPC_REPLY:
-		m_npcLastResponse = response;
-		std::cout << "NPC Reply (npcId: " << m_currentLLMJob.npcId << "): " << response << "\n";
+       m_npcLastResponse = limitSentenceCount(response, 2);
+		std::cout << "NPC Reply (npcId: " << m_currentLLMJob.npcId << "): " << m_npcLastResponse << "\n";
 		break;
 
 	case LLMJobType::QUEST_METADATA:
