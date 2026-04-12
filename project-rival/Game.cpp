@@ -604,13 +604,6 @@ void Game::updateHubShops()
 	m_activeShop = HubShopType::NONE_SHOP;
 	m_isAtJobBoard = false;
 
-	if (m_blockJobBoardInteract)
-	{
-		const bool interactHeld = InputManager::pad().down(GamepadButton::A) || Keyboard::isKeyPressed(Keyboard::Key::Space);
-		if (!interactHeld)
-			m_blockJobBoardInteract = false;
-	}
-
 	const sf::FloatRect playerBounds = m_player.getCollisionBounds();
 
 	const sf::FloatRect weaponShopBounds = m_weaponShop.getGlobalBounds();
@@ -633,13 +626,12 @@ void Game::updateHubShops()
 	if (m_isAtJobBoard)
 	{
 		const bool interactPressed = InputManager::pad().pressed(GamepadButton::A) || Keyboard::isKeyPressed(Keyboard::Key::Space);
-		if (interactPressed && !m_blockJobBoardInteract)
-		{
+		if (!interactPressed || m_blockJobBoardInteract)
+			return;
+
 			m_menuUI.setQuestBoardQuests(m_questManager.getBoardQuests());
 			m_menuUI.setScreen(MenuScreen::QUEST_BOARD_SCREEN);
-			m_blockJobBoardInteract = true;
-			return;
-		}
+		m_blockJobBoardInteract = true; // Prevent multiple openings of the quest board while in range
 	}
 
 	switch (m_activeShop)
@@ -1111,12 +1103,6 @@ void Game::ControllerInputHandler()
 	if (InputManager::pad().pressed(GamepadButton::Start))
 	{
 	#pragma region Menu UI
-		if (m_menuUI.screen() == MenuScreen::QUEST_BOARD_SCREEN)
-		{
-			m_menuUI.setScreen(MenuScreen::GAMEPLAY_SCREEN);
-			m_blockJobBoardInteract = true;
-			return;
-		}
 		if (m_menuUI.isGameplayScreen())
 		{
 			m_menuUI.setScreen(MenuScreen::PAUSE_MENU_SCREEN);
@@ -1125,11 +1111,15 @@ void Game::ControllerInputHandler()
 		{
 			m_menuUI.setScreen(MenuScreen::GAMEPLAY_SCREEN);
 		}
+		else if (m_menuUI.screen() == MenuScreen::QUEST_BOARD_SCREEN)
+		{
+			m_menuUI.setScreen(MenuScreen::GAMEPLAY_SCREEN);
+			m_blockJobBoardInteract = false; // Allow quest board to be opened again when leaving the quest board screen
+		}
 		return;
-	#pragma endregion
+
 	}
 
-	#pragma region Menu UI
 	if (!m_menuUI.isGameplayScreen())
 	{
 		m_menuUI.processControllerNavigation(
@@ -1139,8 +1129,8 @@ void Game::ControllerInputHandler()
 			InputManager::pad().pressed(GamepadButton::Start));
 		applyMenuAction(m_menuUI.consumeAction());
 		return;
-	}
 	#pragma endregion
+	}
 
 	if (InputManager::pad().pressed(GamepadButton::Select))
 	{
