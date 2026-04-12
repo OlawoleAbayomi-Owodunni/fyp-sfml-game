@@ -75,6 +75,7 @@
     <ClInclude Include="GruntEnemy.h" />
     <ClInclude Include="InputManager.h" />
     <ClInclude Include="player.h" />
+    <ClInclude Include="Quest.h" />
     <ClInclude Include="RoomBlueprint.h" />
     <ClInclude Include="RoomDoorUtils.h" />
     <ClInclude Include="RoomInstance.h" />

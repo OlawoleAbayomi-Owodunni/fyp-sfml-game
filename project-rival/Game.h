@@ -22,6 +22,7 @@
 
 #include "Pickup.h"
 #include "Chest.h"
+#include "Quest.h"
 
 #include "LLMService.h"
 
@@ -167,7 +168,9 @@ private:
 	sf::RectangleShape m_cosmeticShop;
 	sf::RectangleShape m_armoryShop;
 	sf::RectangleShape m_playerShop;
+	sf::RectangleShape m_jobBoard;
 	HubShopType m_activeShop;
+	bool m_isAtJobBoard;
 
 	// Room management
 	vector<RoomPlan> m_roomPlans;
@@ -225,9 +228,8 @@ private:
 	// UI management
 	PlayerHUD m_hud{ m_arialFont };
 
-	// Quest Tracker Management
-	int m_activeQuestId;
-	int m_questKillCount;
-	int m_questHealthPickupCount;
-	int m_questAmmoPickupCount;
+	#pragma region LLM Generated
+	// Quest management
+	QuestManager m_questManager;
+	#pragma endregion
 };
