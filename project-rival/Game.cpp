@@ -48,6 +48,7 @@ void Game::init()
 	x_drawFPS.setFillColor(sf::Color::White);
 #endif
 
+	m_hud.init(m_arialFont);
 	enterHubWorld();
 }
 
@@ -247,6 +248,8 @@ void Game::update(float dt)
 	{
 		cout << "LLM Response: " << *response << "\n";
 	}
+
+	m_hud.update(m_player.getHealth(), m_player.getMaxHealth(), m_player.getAmmo(), m_player.getMaxAmmo(), m_coins);
 }
 
 ////////////////////////////////////////////////////////////
@@ -290,6 +293,9 @@ void Game::render()
 		m_window.draw(m_playerShop);
 		renderHubShopPrompt();
 	}
+
+	m_window.setView(m_window.getDefaultView());
+	m_hud.render(m_window);
 
 #ifdef TEST_FPS
 	m_window.draw(x_updateFPS); //ups is 60 and dps is 61

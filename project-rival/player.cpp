@@ -25,7 +25,9 @@ void Player::init()
 	// Base stats
 	p_maxHealth = 100;
 	p_moveSpeed = 200.f;
-	p_playerAmmo = 50;
+	p_maxAmmo = 50;
+	p_playerAmmo = p_maxAmmo;
+
 
 	// Weapons
 	p_currentWeaponID = 0;
@@ -75,7 +77,8 @@ void Player::applyUpgrade(int healthLevel, int speedLevel, int ammoLevel)
 	p_maxHealth = 100 + (healthLevel-1) * 25;
 	p_health = p_maxHealth;
 	p_moveSpeed = 200.f + (speedLevel-1) * 20.f;
-	p_playerAmmo = 50 + (ammoLevel-1) * 10;
+	p_maxAmmo = 50 + (ammoLevel-1) * 10;
+	p_playerAmmo = p_maxAmmo;
 }
 
 bool Player::addWeaponToLoadout(WeaponType type, int level)
@@ -241,18 +244,20 @@ void Player::ManageWeapons(std::vector<std::unique_ptr<DamageTrigger>>& instanti
 		}
 		else
 		{
-			if (p_playerAmmo > 0)
+			int ammoCost;
+			if (WeaponType::SHOTGUN == p_weaponLoadout[p_currentWeaponID].type)
+				ammoCost = 5; // Shotgun consumes 5 ammo per shot
+			else
+				ammoCost = 1; // Other guns consume 1 ammo per shot
+
+			if (p_playerAmmo >= ammoCost)
 			{
 				auto const bulletsBefore = gameProjectiles.size();
 				p_weapons[p_currentWeaponID]->fire(fireInfo, gameProjectiles);
 				isAttacking = (gameProjectiles.size() > bulletsBefore);
 
-				if (isAttacking) {
-					if (WeaponType::SHOTGUN == p_weaponLoadout[p_currentWeaponID].type)
-						p_playerAmmo -= 5; // Shotgun consumes 5 ammo per shot
-					else
-						p_playerAmmo -= 1; // Other guns consume 1 ammo per shot
-				}
+				if (isAttacking)
+					p_playerAmmo -= ammoCost;
 			}
 		}
 	}

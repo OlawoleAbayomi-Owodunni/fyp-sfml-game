@@ -139,6 +139,12 @@
     <Filter Include="Header Files\Weapons\DamageTrigger">
       <UniqueIdentifier>{ee532bbc-f880-4db6-afc6-41a060c4bf8c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\UI">
+      <UniqueIdentifier>{886284c3-c66a-45d7-9687-30a3fc07881d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\UI\HUD">
+      <UniqueIdentifier>{6c66099b-197f-457f-960e-fc128c1d85f7}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -227,6 +233,9 @@
     </ClCompile>
     <ClCompile Include="DamageTrigger.cpp">
       <Filter>Header Files\Weapons\DamageTrigger</Filter>
+    </ClCompile>
+    <ClCompile Include="PlayerHUD.cpp">
+      <Filter>Header Files\UI\HUD</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -328,6 +337,9 @@
     </ClInclude>
     <ClInclude Include="DamageTrigger.h">
       <Filter>Header Files\Weapons\DamageTrigger</Filter>
+    </ClInclude>
+    <ClInclude Include="PlayerHUD.h">
+      <Filter>Header Files\UI\HUD</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
