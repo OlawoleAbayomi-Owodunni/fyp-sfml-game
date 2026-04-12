@@ -22,6 +22,8 @@
 
 #include "LLMService.h"
 
+#include "PlayerHUD.h"
+
 using namespace std;
 using namespace sf;
 
@@ -199,4 +201,7 @@ private:
 		sf::Color::Yellow
 	};
 	int m_playerColorIndex;
+
+	// UI management
+	PlayerHUD m_hud{ m_arialFont };
 };

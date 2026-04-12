@@ -48,6 +48,7 @@ void Game::init()
 	x_drawFPS.setFillColor(sf::Color::White);
 #endif
 
+	m_hud.init(m_arialFont);
 	enterHubWorld();
 }
 
@@ -146,7 +147,15 @@ void Game::processGameEvents(const sf::Event& event)
 void Game::update(float dt)
 {
 	const Vector2i mousePos = Mouse::getPosition(m_window);
-	const Vector2f mousePosF = m_window.mapPixelToCoords(mousePos);
+	sf::View inputView;
+	if (m_isPlayerCamera) {
+		inputView = m_playerCamera;
+		inputView.setCenter(m_player.getPosition());
+	}
+	else {
+		inputView = m_floorCamera;
+	}
+	const sf::Vector2f mousePosF = static_cast<sf::Vector2f>(m_window.mapPixelToCoords(mousePos, inputView));
 
 	InputManager::update();
 	
@@ -167,7 +176,7 @@ void Game::update(float dt)
 	updateActiveRoom();
 
 	// Update player and enemies
-	m_player.update(dt, mousePosF, m_gameProjectiles, m_activeDamageTriggers);
+	m_player.update(dt, mousePosF, mousePos, m_gameProjectiles, m_activeDamageTriggers);
 
 	for (auto enemy_it = m_enemies.begin(); enemy_it != m_enemies.end();)
 	{
@@ -247,6 +256,8 @@ void Game::update(float dt)
 	{
 		cout << "LLM Response: " << *response << "\n";
 	}
+
+	m_hud.update(m_player.getHealth(), m_player.getMaxHealth(), m_player.getAmmo(), m_player.getMaxAmmo(), m_coins);
 }
 
 ////////////////////////////////////////////////////////////
@@ -291,6 +302,9 @@ void Game::render()
 		renderHubShopPrompt();
 	}
 
+	m_window.setView(m_window.getDefaultView());
+	m_hud.render(m_window);
+
 #ifdef TEST_FPS
 	m_window.draw(x_updateFPS); //ups is 60 and dps is 61
 	m_window.draw(x_drawFPS);
@@ -312,7 +326,7 @@ void Game::resetGame()
 	m_isPlayerCamera = true;
 
 	m_player.init();
-	m_player.applyUpgrade(m_pistolUpgradeLevel, m_arUpgradeLevel, m_shotgunUpgradeLevel);
+	m_player.applyUpgrade(m_playerHealthUpgradeLevel, m_playerSpeedUpgradeLevel, m_playerAmmoUpgradeLevel);
 	m_isInCombat = false;
 	m_isInRoom = true;
 

@@ -17,7 +17,11 @@ public:
 	~Player();
 
 	void init();
-	void update(float dt, const sf::Vector2f& mousePos, std::vector<std::unique_ptr<Projectile>>& gameProjectiles, std::vector<std::unique_ptr<DamageTrigger>>& instantiableTriggers);
+	void update(float dt, 
+		const sf::Vector2f& mouseWorldPos,
+		const sf::Vector2i& mousePixelPos,
+		std::vector<std::unique_ptr<Projectile>>& gameProjectiles, 
+		std::vector<std::unique_ptr<DamageTrigger>>& instantiableTriggers);
 	void render(sf::RenderWindow& window);
 
 	const sf::Vector2f getPosition() const { return p_body.getPosition(); }
@@ -25,7 +29,10 @@ public:
 	CollisionProfile getCollisionProfile() const override { return p_collisionProfile; }
 	const std::vector<WeaponInLoadout>& getWeaponLoadout() const { return p_weaponLoadout; }
 	int getCurrentWeaponID() const { return p_currentWeaponID; }
+	int getHealth() const { return p_health; }
+	int getMaxHealth() const { return p_maxHealth; }
 	int getAmmo() const { return p_playerAmmo; }
+	int getMaxAmmo() const { return p_maxAmmo; }
 
 	void setSpawnPosition(const sf::Vector2f& spawnPos) { p_body.setPosition(spawnPos); }
 	void setBodyColor(const sf::Color& color) { p_body.setFillColor(color); }
@@ -49,7 +56,7 @@ private:
 	void startUp();
 	void reset();
 	void handleMovement(float dt);
-	void handleAiming(const sf::Vector2f mousePos);
+	void handleAiming(const sf::Vector2f& mouseWorldPos, const sf::Vector2i& mousePixelPos);
 	void ManageWeapons(std::vector<std::unique_ptr<DamageTrigger>>& instantiableTriggers, std::vector<std::unique_ptr<Projectile>>& gameProjectiles, float dt);
 
 
@@ -70,6 +77,7 @@ private:
 	sf::Vector2f p_aimDir{ 0.f,0.f };
 	float p_reticleDistance;
 	sf::Vector2f p_prevMousePos;
+	sf::Vector2i p_prevMousePixelPos;
 
 	// collsion
 	CollisionProfile p_collisionProfile;
@@ -78,6 +86,7 @@ private:
 	int p_maxHealth;
 	int p_health;
 	bool p_isDead;
+	int p_maxAmmo;
 	int p_playerAmmo;
 	float p_moveSpeed{ 200.f };
 

@@ -22,9 +22,12 @@ Player::~Player()
 
 void Player::init()
 {
-	// stats
+	// Base stats
 	p_maxHealth = 100;
-	p_isDead = false;
+	p_moveSpeed = 200.f;
+	p_maxAmmo = 50;
+	p_playerAmmo = p_maxAmmo;
+
 
 	// Weapons
 	p_currentWeaponID = 0;
@@ -33,14 +36,14 @@ void Player::init()
 	reset();
 }
 
-void Player::update(float dt, const sf::Vector2f& mousePos, 
+void Player::update(float dt, const sf::Vector2f& mousePos, const sf::Vector2i& mousePixelPos,
 	std::vector<std::unique_ptr<Projectile>>& gameProjectiles, 
 	std::vector<std::unique_ptr<DamageTrigger>>& instantiableTriggers)
 {
 	p_prevPos = p_body.getPosition();
 
 	handleMovement(dt);
-	handleAiming(mousePos);
+	handleAiming(mousePos, mousePixelPos);
 
 	ManageWeapons(instantiableTriggers, gameProjectiles, dt);
 }
@@ -71,10 +74,11 @@ void Player::hitWall()
 
 void Player::applyUpgrade(int healthLevel, int speedLevel, int ammoLevel)
 {
-	p_maxHealth += healthLevel * 25;
+	p_maxHealth = 100 + (healthLevel-1) * 25;
 	p_health = p_maxHealth;
-	p_moveSpeed += speedLevel * 20.f;
-	p_playerAmmo += ammoLevel * 10;
+	p_moveSpeed = 200.f + (speedLevel-1) * 20.f;
+	p_maxAmmo = 50 + (ammoLevel-1) * 10;
+	p_playerAmmo = p_maxAmmo;
 }
 
 bool Player::addWeaponToLoadout(WeaponType type, int level)
@@ -179,7 +183,7 @@ void Player::handleMovement(float dt)
 	p_body.move(p_velocity * dt);
 }
 
-void Player::handleAiming(const sf::Vector2f mousePos)
+void Player::handleAiming(const sf::Vector2f& mouseWorldPos, const sf::Vector2i& mousePixelPos)
 {
 	//--------- aiming logic ---------//
 	
@@ -187,8 +191,9 @@ void Player::handleAiming(const sf::Vector2f mousePos)
 	const sf::Vector2f rs = InputManager::pad().rightStick();
 	const bool isRSMoved = (rs.x != 0.f || rs.y != 0.f);
 
-	const sf::Vector2f mouseDelta = mousePos - p_prevMousePos;
-	const bool isMouseMoved = (length(mouseDelta) > 0.5f);
+	const sf::Vector2f mouseDelta = mouseWorldPos - p_prevMousePos;
+	const sf::Vector2i mousePixelDelta = mousePixelPos - p_prevMousePixelPos;
+	const bool isMouseMoved = (mousePixelDelta.x != 0 || mousePixelDelta.y != 0);
 
 	if (isRSMoved) p_isController = true;
 	else if (isMouseMoved) p_isController = false;
@@ -196,7 +201,7 @@ void Player::handleAiming(const sf::Vector2f mousePos)
 	// Calculate and normalise aim direction
 	sf::Vector2f aimVector;
 	if (p_isController) aimVector = rs;
-	else aimVector = mousePos - p_body.getPosition();
+	else aimVector = mouseWorldPos - p_body.getPosition();
 
 	if (aimVector != sf::Vector2f(0.f, 0.f))	// avoid crash out on controller since we can't normalise a zero vector
 		p_aimDir = aimVector.normalized();
@@ -204,8 +209,8 @@ void Player::handleAiming(const sf::Vector2f mousePos)
 
 	p_reticle.setPosition(p_body.getPosition() + p_aimDir * p_reticleDistance);
 
-	p_prevMousePos = mousePos;
-
+	p_prevMousePos = mouseWorldPos;
+	p_prevMousePixelPos = mousePixelPos;
 }
 
 void Player::ManageWeapons(std::vector<std::unique_ptr<DamageTrigger>>& instantiableTriggers, std::vector<std::unique_ptr<Projectile>>& gameProjectiles, float dt)
@@ -224,7 +229,7 @@ void Player::ManageWeapons(std::vector<std::unique_ptr<DamageTrigger>>& instanti
 			p_currentWeaponID = p_weapons.size() - 1;
 	}
 
-	//--------- shooting logic ---------//
+	//--------- attacking logic ---------//
 	bool isAttacking = false;
 	if (InputManager::pad().rightTrigger() || sf::Mouse::isButtonPressed(sf::Mouse::Button::Left))
 	{
@@ -240,9 +245,21 @@ void Player::ManageWeapons(std::vector<std::unique_ptr<DamageTrigger>>& instanti
 		}
 		else
 		{
-			auto const bulletsBefore = gameProjectiles.size();
-			p_weapons[p_currentWeaponID]->fire(fireInfo, gameProjectiles);
-			isAttacking = (gameProjectiles.size() > bulletsBefore);
+			int ammoCost;
+			if (WeaponType::SHOTGUN == p_weaponLoadout[p_currentWeaponID].type)
+				ammoCost = 5; // Shotgun consumes 5 ammo per shot
+			else
+				ammoCost = 1; // Other guns consume 1 ammo per shot
+
+			if (p_playerAmmo >= ammoCost)
+			{
+				auto const bulletsBefore = gameProjectiles.size();
+				p_weapons[p_currentWeaponID]->fire(fireInfo, gameProjectiles);
+				isAttacking = (gameProjectiles.size() > bulletsBefore);
+
+				if (isAttacking)
+					p_playerAmmo -= ammoCost;
+			}
 		}
 	}
 
