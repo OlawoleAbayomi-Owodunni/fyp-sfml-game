@@ -40,6 +40,8 @@ public:
 
 	void hitWall();
 
+	void heal(int amount);
+	void addAmmo(int amount);
 	void takeDamage(int damage);
 	const bool isDead() const { return p_isDead; }
 
