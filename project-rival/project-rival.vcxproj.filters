@@ -145,6 +145,27 @@
     <Filter Include="Header Files\UI\HUD">
       <UniqueIdentifier>{6c66099b-197f-457f-960e-fc128c1d85f7}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Spawnables">
+      <UniqueIdentifier>{3a700397-608e-4bd9-a169-c31cd3f57702}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Spawnables\Pickups">
+      <UniqueIdentifier>{38d698da-4ef7-4ac8-89f6-d52c5050ba96}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Quests">
+      <UniqueIdentifier>{272d8e40-947e-4540-b7bf-18bd9d30eb34}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Spawnables\Chests">
+      <UniqueIdentifier>{9533b170-fa0f-498f-99dc-c8fcdd80588f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\UI\MenuUI">
+      <UniqueIdentifier>{6d8ce385-c3b2-4584-a11d-ce9bb5e15c69}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\NPCs">
+      <UniqueIdentifier>{6b38935d-556a-4fa7-a8e1-df6149fd0892}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Hub">
+      <UniqueIdentifier>{bcf615bb-12b9-44d9-aaed-4d20469ed564}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -237,17 +258,20 @@
     <ClCompile Include="PlayerHUD.cpp">
       <Filter>Header Files\UI\HUD</Filter>
     </ClCompile>
-    <ClCompile Include="Chest.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="Quest.cpp">
+      <Filter>Header Files\Quests</Filter>
     </ClCompile>
     <ClCompile Include="MenuUI.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Header Files\UI\MenuUI</Filter>
+    </ClCompile>
+    <ClCompile Include="Chest.cpp">
+      <Filter>Header Files\Spawnables\Chests</Filter>
     </ClCompile>
     <ClCompile Include="Pickup.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Header Files\Spawnables\Pickups</Filter>
     </ClCompile>
-    <ClCompile Include="Quest.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="NPC.cpp">
+      <Filter>Header Files\NPCs</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -353,17 +377,23 @@
     <ClInclude Include="PlayerHUD.h">
       <Filter>Header Files\UI\HUD</Filter>
     </ClInclude>
-    <ClInclude Include="Chest.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="Quest.h">
+      <Filter>Header Files\Quests</Filter>
     </ClInclude>
     <ClInclude Include="MenuUI.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\UI\MenuUI</Filter>
+    </ClInclude>
+    <ClInclude Include="Chest.h">
+      <Filter>Header Files\Spawnables\Chests</Filter>
     </ClInclude>
     <ClInclude Include="Pickup.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\Spawnables\Pickups</Filter>
     </ClInclude>
-    <ClInclude Include="Quest.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="NPC.h">
+      <Filter>Header Files\NPCs</Filter>
+    </ClInclude>
+    <ClInclude Include="HubShop.h">
+      <Filter>Header Files\Hub</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

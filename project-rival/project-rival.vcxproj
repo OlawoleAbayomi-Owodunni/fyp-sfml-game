@@ -30,6 +30,7 @@
     <ClCompile Include="LLMService.cpp" />
     <ClCompile Include="MenuUI.cpp" />
     <ClCompile Include="NormalBulletProjectile.cpp" />
+    <ClCompile Include="NPC.cpp" />
     <ClCompile Include="Pickup.cpp" />
     <ClCompile Include="PlayerHUD.cpp" />
     <ClCompile Include="PlayerWeapons.cpp" />
@@ -62,9 +63,11 @@
     <ClInclude Include="FloorBlueprint.h" />
     <ClInclude Include="FloorGenerator.h" />
     <ClInclude Include="FloorLayout.h" />
+    <ClInclude Include="HubShop.h" />
     <ClInclude Include="LLMService.h" />
     <ClInclude Include="MenuUI.h" />
     <ClInclude Include="NormalBulletProjectile.h" />
+    <ClInclude Include="NPC.h" />
     <ClInclude Include="Pickup.h" />
     <ClInclude Include="PlayerHUD.h" />
     <ClInclude Include="PlayerWeapons.h" />

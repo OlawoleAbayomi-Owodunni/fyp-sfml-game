@@ -56,6 +56,12 @@ x_drawFPS.setCharacterSize(24);
 	#pragma endregion
 	m_activeShop = HubShopType::NONE_SHOP;
 	m_isAtJobBoard = false;
+
+	m_activeNPCId = -1;
+	m_isNPCDialogueOpen = false;
+	m_selectedResponse = -1;
+	m_currentDialogueOptions.clear();
+
 	enterHubWorld();
 }
 
@@ -211,10 +217,6 @@ void Game::update(float dt)
 	}
 #pragma endregion
 	
-	if (m_gameMode == GameMode::HUB)
-	{
-		updateHubShops();
-	}
 
 	if( m_gameMode == GameMode::DUNGEON && m_player.isDead())
 	{
@@ -321,6 +323,11 @@ void Game::update(float dt)
 		std::cout << "LLM Response: " << *response << "\n";
 	}
 
+	if (m_gameMode == GameMode::HUB)
+	{
+		updateHubShops();
+	}
+
 	m_hud.update(m_player.getHealth(), m_player.getMaxHealth(), m_player.getAmmo(), m_player.getMaxAmmo(), m_coins, m_questManager.getActiveQuest());
 }
 
@@ -373,6 +380,10 @@ void Game::render()
 		m_window.draw(m_playerShop);
 		m_window.draw(m_jobBoard);
 		renderHubShopPrompt();
+
+		for (auto& npc : m_hubNPCs) {
+			npc.render(m_window);
+		}
 	}
 
 	m_window.setView(m_window.getDefaultView());
@@ -429,6 +440,12 @@ void Game::resetGame()
 	m_activeShop = HubShopType::NONE_SHOP;
 	m_isAtJobBoard = false;
 	m_blockJobBoardInteract = false;
+	
+	m_hubNPCs.clear();
+	m_activeNPCId = -1;
+	m_isNPCDialogueOpen = false;
+	m_selectedResponse = 0;
+	m_currentDialogueOptions.clear();
 
 	m_enemies.clear();
 
@@ -532,329 +549,6 @@ void Game::applyMenuAction(MenuAction action)
 	}
 }
 #pragma endregion
-
-void Game::buildHubWorld()
-{   
-	// Set Room PLan for Hub Room
-	RoomPlan hubRoom;
-	hubRoom.id = 0;
-	hubRoom.type = RoomType::SPAWN;
-	hubRoom.seed = 0;
-	hubRoom.width = 30;
-	hubRoom.height = 20;
-	hubRoom.tileSize = 64.f;
-	hubRoom.tileMap.assign(hubRoom.width * hubRoom.height, Tile::FLOOR);
-
-	// Build outer walls
-	for (int col = 0; col < hubRoom.width; col++) {
-		hubRoom.setTile(0, col, Tile::WALL);
-		hubRoom.setTile(hubRoom.height - 1, col, Tile::WALL);
-	}
-	for (int row = 0; row < hubRoom.height; row++) {
-		hubRoom.setTile(row, 0, Tile::WALL);
-		hubRoom.setTile(row, hubRoom.width - 1, Tile::WALL);
-	}
-
-	// Spawn point and Portal placement
-	const sf::Vector2i playerSpawnTile(hubRoom.width / 2, hubRoom.height / 2);
-	const sf::Vector2i portalTile(hubRoom.width / 2, hubRoom.height / 4);
-
-	const sf::Vector2i gunShopTile(hubRoom.width / 4, hubRoom.height / 2);
-	const sf::Vector2i armoryShopTile(hubRoom.width / 4, 3 * hubRoom.height / 4);
-	const sf::Vector2i cosmeticShopTile(3 * hubRoom.width / 4, hubRoom.height / 2);
-	const sf::Vector2i playerShopTile(3 * hubRoom.width / 4, 3 * hubRoom.height / 4);
-	const sf::Vector2i jobBoardTile(hubRoom.width / 2, 3 * hubRoom.height / 4);
-
-	hubRoom.spawners.push_back({ SpawnerType::PlayerSpawner, playerSpawnTile });
-	hubRoom.spawners.push_back({ SpawnerType::PortalSpawner, portalTile });
-	hubRoom.triggers.push_back({ TriggerType::PortalTrigger, portalTile });
-
-	m_roomPlans.clear();
-	m_roomInstances.clear();
-	m_roomWorldPositions.clear();
-
-	m_roomPlans.push_back(hubRoom);
-	m_roomInstances.resize(m_roomPlans.size());
-	m_roomWorldPositions.resize(m_roomPlans.size());
-
-	// For the hub world, we can just place the single room at the origin
-	m_roomWorldPositions[0] = sf::Vector2f(0.f, 0.f);
-	generateRoom(0);
-	spawnPlayer(0);
-
-	// Set active room to hub
-	m_activeRoomId = 0;
-	m_isInRoom = true;
-	m_isInCombat = false;
-	m_waveCounter = 0;
-
-	m_playerCamera.setCenter(m_player.getPosition());
-	m_floorCamera.setCenter(m_player.getPosition());
-
-	const float tileSize = hubRoom.tileSize;
-	const sf::Vector2f worldOrigin = m_roomWorldPositions[0];
-	const sf::Vector2f gunShopCenter = worldOrigin + sf::Vector2f(gunShopTile.x * tileSize + tileSize / 2, gunShopTile.y * tileSize + tileSize / 2);
-	const sf::Vector2f cosmeticShopCenter = worldOrigin + sf::Vector2f(cosmeticShopTile.x * tileSize + tileSize / 2, cosmeticShopTile.y * tileSize + tileSize / 2);
-	const sf::Vector2f armoryShopCenter = worldOrigin + sf::Vector2f(armoryShopTile.x * tileSize + tileSize / 2, armoryShopTile.y * tileSize + tileSize / 2);
-	const sf::Vector2f playerShopCenter = worldOrigin + sf::Vector2f(playerShopTile.x * tileSize + tileSize / 2, playerShopTile.y * tileSize + tileSize / 2);
-
-	// Initialize shops
-	m_weaponShop.setSize(sf::Vector2f(tileSize * 3, tileSize * 3));
-	m_weaponShop.setOrigin(m_weaponShop.getSize() / 2.f);
-	m_weaponShop.setPosition(gunShopCenter);
-	m_weaponShop.setFillColor(sf::Color(0, 255, 255, 180)); // Cyan color
-
-	m_cosmeticShop.setSize(sf::Vector2f(tileSize * 3, tileSize * 3));
-	m_cosmeticShop.setOrigin(m_cosmeticShop.getSize() / 2.f);
-	m_cosmeticShop.setPosition(cosmeticShopCenter);
-	m_cosmeticShop.setFillColor(sf::Color(255, 0, 255, 180)); // Magenta color
-
-	m_armoryShop.setSize(sf::Vector2f(tileSize * 3, tileSize * 3));
-	m_armoryShop.setOrigin(m_armoryShop.getSize() / 2.f);
-	m_armoryShop.setPosition(armoryShopCenter);
-	m_armoryShop.setFillColor(sf::Color(255, 255, 255, 180)); // White color
-
-	m_playerShop.setSize(sf::Vector2f(tileSize * 3, tileSize * 3));
-	m_playerShop.setOrigin(m_playerShop.getSize() / 2.f);
-	m_playerShop.setPosition(playerShopCenter);
-	m_playerShop.setFillColor(sf::Color(255, 165, 0, 180)); // Orange color
-
-	m_jobBoard.setSize(sf::Vector2f(tileSize * 4.f, tileSize * 2.f));
-	m_jobBoard.setOrigin(m_jobBoard.getSize() / 2.f);
-	m_jobBoard.setPosition(worldOrigin + sf::Vector2f(jobBoardTile.x * tileSize + tileSize / 2.f, jobBoardTile.y * tileSize + tileSize / 2.f));
-	m_jobBoard.setFillColor(sf::Color(120, 84, 54, 200)); // Brown color
-}
-
-void Game::updateHubShops()
-{
-	m_activeShop = HubShopType::NONE_SHOP;
-	m_isAtJobBoard = false;
-
-	const sf::FloatRect playerBounds = m_player.getCollisionBounds();
-
-	const sf::FloatRect weaponShopBounds = m_weaponShop.getGlobalBounds();
-	const sf::FloatRect cosmeticShopBounds = m_cosmeticShop.getGlobalBounds();
-	const sf::FloatRect armoryShopBounds = m_armoryShop.getGlobalBounds();
-	const sf::FloatRect playerShopBounds = m_playerShop.getGlobalBounds();
-	const sf::FloatRect jobBoardBounds = m_jobBoard.getGlobalBounds();
-
-	if (jobBoardBounds.findIntersection(playerBounds))
-		m_isAtJobBoard = true;
-	else if (weaponShopBounds.findIntersection(playerBounds))
-		m_activeShop = HubShopType::WEAPON_SHOP;
-	else if (cosmeticShopBounds.findIntersection(playerBounds))
-		m_activeShop = HubShopType::COSMETIC_SHOP;
-	else if (armoryShopBounds.findIntersection(playerBounds))
-		m_activeShop = HubShopType::ARMORY_SHOP;
-	else if (playerShopBounds.findIntersection(playerBounds))
-		m_activeShop = HubShopType::PLAYER_SHOP;
-
-	if (m_isAtJobBoard)
-	{
-		const bool interactPressed = InputManager::pad().pressed(GamepadButton::A) || Keyboard::isKeyPressed(Keyboard::Key::Space);
-		if (!interactPressed || m_blockJobBoardInteract)
-			return;
-
-			m_menuUI.setQuestBoardQuests(m_questManager.getBoardQuests());
-			m_menuUI.setScreen(MenuScreen::QUEST_BOARD_SCREEN);
-		m_blockJobBoardInteract = true; // Prevent multiple openings of the quest board while in range
-	}
-
-	switch (m_activeShop)
-	{
-	case HubShopType::WEAPON_SHOP: {
-		const bool WeaponUpgradeInput = InputManager::pad().pressed(GamepadButton::A) || Keyboard::isKeyPressed(Keyboard::Key::Space);
-		const bool AmmoUpgradeInput = InputManager::pad().pressed(GamepadButton::B) || Keyboard::isKeyPressed(Keyboard::Key::Enter);
-
-		if (!WeaponUpgradeInput && !AmmoUpgradeInput)
-			return;
-
-		const int upgradeCost = 100;
-
-		// Weapon Upgrades
-		if (WeaponUpgradeInput && m_coins >= upgradeCost)
-		{
-			const auto& loadout = m_player.getWeaponLoadout();
-			const int currentSlot = m_player.getCurrentWeaponID();
-
-			const WeaponType selectedType = loadout[currentSlot].type;
-			int* selectedUpgradeLevel = nullptr;
-			std::string weaponName = "";
-
-			if (selectedType >= WeaponType::KNIFE)
-				break;
-
-			switch (selectedType)
-			{
-			case WeaponType::PISTOL:
-				selectedUpgradeLevel = &m_pistolUpgradeLevel;
-				weaponName = "Pistol";
-				break;
-
-			case WeaponType::ASSAULT_RIFLE:
-				selectedUpgradeLevel = &m_arUpgradeLevel;
-				weaponName = "Assault Rifle";
-				break;
-
-			case WeaponType::SHOTGUN:
-				selectedUpgradeLevel = &m_shotgunUpgradeLevel;
-				weaponName = "Shotgun";
-				break;
-			}
-
-			m_coins -= upgradeCost;
-			(*selectedUpgradeLevel)++;
-			WeaponInLoadout droppedWeapon;
-			m_player.swapCurrentWeapon(selectedType, *selectedUpgradeLevel, droppedWeapon);
-			std::cout << weaponName << " upgraded to level " << *selectedUpgradeLevel << "!\n"
-				<< "Coins remaining: " << m_coins << "\n";
-		}
-		
-		// Ammo Upgrades
-		else if (AmmoUpgradeInput && m_coins >= upgradeCost)
-		{
-			m_coins -= upgradeCost;
-			m_playerAmmoUpgradeLevel++;
-			m_player.applyUpgrade(m_playerHealthUpgradeLevel, m_playerSpeedUpgradeLevel, m_playerAmmoUpgradeLevel);
-			std::cout << "Player ammo capacity upgraded to level " << m_playerAmmoUpgradeLevel << "!\n"
-				<< "Coins remaining: " << m_coins << "\n";
-		}
-		
-		// Not enough coins
-		else
-		{
-			std::cout << "Not enough coins to upgrade weapon or ammo! Coins: " << m_coins << "\n";
-		}
-
-		break;
-	}
-
-	case HubShopType::COSMETIC_SHOP: {
-		const bool interactPressed = InputManager::pad().pressed(GamepadButton::A) || Keyboard::isKeyPressed(Keyboard::Key::Space);
-		if (!interactPressed)
-			return;
-
-		m_playerColorIndex = (m_playerColorIndex + 1) % m_playerColorOptions.size();
-		m_player.setBodyColor(m_playerColorOptions[m_playerColorIndex]);
-		std::cout << "Player color changed to " << m_playerColorIndex << "!\n";
-		break;
-	}
-
-	case HubShopType::ARMORY_SHOP: {
-		const bool interactPressed = InputManager::pad().pressed(GamepadButton::A) || Keyboard::isKeyPressed(Keyboard::Key::Space);
-		if (!interactPressed)
-			return;
-
-		const WeaponType weaponToEquip = m_armoryCatalog[m_armoryCatalogIndex];
-
-		int equipLevel = 1;
-		switch (weaponToEquip)
-		{
-		case WeaponType::PISTOL:
-			equipLevel = m_pistolUpgradeLevel;
-			break;
-		case WeaponType::ASSAULT_RIFLE:
-			equipLevel = m_arUpgradeLevel;
-			break;
-		case WeaponType::SHOTGUN:
-			equipLevel = m_shotgunUpgradeLevel;
-			break;
-		}
-
-		WeaponInLoadout droppedWeapon;
-		if (m_player.swapCurrentWeapon(weaponToEquip, equipLevel, droppedWeapon))
-		{
-			std::cout << "Equipped " << weaponToEquip << " at level " << equipLevel << "!\n";
-			if (droppedWeapon.type != WeaponType::COUNT)
-				std::cout << "Dropped " << droppedWeapon.type << " at level " << droppedWeapon.level << ".\n";
-		}
-		else
-		{
-			std::cout << "Failed to equip weapon. Loadout may be full.\n";
-		}
-
-		m_armoryCatalogIndex++;
-		if (m_armoryCatalogIndex >= m_armoryCatalog.size())
-			m_armoryCatalogIndex = 0;
-
-		break;
-	}
-
-	case HubShopType::PLAYER_SHOP: {
-		const bool healthUpgradeInput = InputManager::pad().pressed(GamepadButton::A) || Keyboard::isKeyPressed(Keyboard::Key::Space);
-		const bool speedUpgradeInput = InputManager::pad().pressed(GamepadButton::B) || Keyboard::isKeyPressed(Keyboard::Key::Enter);
-
-		if (!healthUpgradeInput && !speedUpgradeInput)
-			return;
-
-		const int upgradeCost = 100;
-
-		if (healthUpgradeInput && m_coins >= upgradeCost)
-		{
-			m_coins -= upgradeCost;
-			m_playerHealthUpgradeLevel++;
-			m_player.applyUpgrade(m_playerHealthUpgradeLevel, m_playerSpeedUpgradeLevel, m_playerAmmoUpgradeLevel);
-			std::cout << "Player health upgraded! Coins remaining: " << m_coins << "\n";
-		}
-		else if (speedUpgradeInput && m_coins >= upgradeCost)
-		{
-			m_coins -= upgradeCost;
-			m_playerSpeedUpgradeLevel++;
-			m_player.applyUpgrade(m_playerHealthUpgradeLevel, m_playerSpeedUpgradeLevel, m_playerAmmoUpgradeLevel);
-			std::cout << "Player speed upgraded! Coins remaining: " << m_coins << "\n";
-		}
-		else
-		{
-			std::cout << "Not enough coins to upgrade player! Coins: " << m_coins << "\n";
-		}
-
-		break;
-	}
-	}
-}
-
-void Game::renderHubShopPrompt()
-{
-	if (!m_isAtJobBoard && m_activeShop == HubShopType::NONE_SHOP)
-		return;
-
-	sf::Text promptText(m_arialFont);
-	promptText.setCharacterSize(12);
-	promptText.setOutlineThickness(1.f);
-	promptText.setOutlineColor(sf::Color::Black);
-	promptText.setFillColor(sf::Color::White);
-
-	if (m_isAtJobBoard)
-	{
-		promptText.setString("Press A / Space to open the Job Board");
-	}
-	else
-	{
-		switch (m_activeShop)
-		{
-		case HubShopType::WEAPON_SHOP:
-			promptText.setString("Press A / Space to upgrade equipped weapon for 100 coins!\n Press B / Enter to Upgrade Ammo capacity for 100 coins");
-			break;
-
-		case HubShopType::COSMETIC_SHOP:
-			promptText.setString("Press A / Space to change player color!");
-			break;
-
-		case HubShopType::ARMORY_SHOP:
-			promptText.setString("Press A / Space to swap current weapon with one from the armory!");
-			break;
-
-		case HubShopType::PLAYER_SHOP:
-			promptText.setString("Press A / Space to Upgrade Player Health for 100 coins\n Press B / Enter to Upgrade Player Speed for 100 coins");
-			break;
-		}
-	}
-
-	promptText.setOrigin(promptText.getGlobalBounds().getCenter());
-	promptText.setPosition({ m_player.getPosition().x, m_player.getPosition().y - 50 });
-
-	m_window.draw(promptText);
-}
 
 /// <summary>
 /// Manages wave-based combat by checking if all enemies are defeated and either starting a new wave or ending combat.
@@ -960,6 +654,7 @@ void Game::CollisionChecks()
 		if (pickup->shouldDestroy())
 			continue;
 
+		// Pickup -> Player
 		if (CollisionCheck::areColliding(*pickup, m_player))
 		{
 			switch (pickup->getType())
@@ -1000,6 +695,7 @@ void Game::CollisionChecks()
 		if (chest->isOpened())
 			continue;
 
+		// Chest -> Player
 		if (CollisionCheck::areColliding(*chest, m_player))
 		{
 			chest->open();
@@ -1007,6 +703,18 @@ void Game::CollisionChecks()
 			const sf::FloatRect bounds = chest->getCollisionBounds();
 			const sf::Vector2f chestCenter = sf::Vector2f(bounds.position.x + bounds.size.x / 2, bounds.position.y + bounds.size.y / 2);
 			spawnRandomPickup(chestCenter, 64, true);
+			break;
+		}
+	}
+
+	// ------------------- NPC INTERACTION CHECKS -------------------
+	for (int i = 0; i < m_hubNPCs.size(); i++) {
+		
+		// NPC -> Player
+		m_activeNPCId = -1; // reset active NPC ID before checks
+		if (CollisionCheck::areColliding(m_player, m_hubNPCs[i]))
+		{
+			m_activeNPCId = i;
 			break;
 		}
 	}
@@ -1627,3 +1335,496 @@ void Game::LLM_GenerateRoomInfo()
 		}
 	}
 }
+
+////////////////////////////////////////////////////////////////
+#pragma region HUB WORLD MANAGEMENT
+void Game::buildHubWorld()
+{
+	// Set Room PLan for Hub Room
+	RoomPlan hubRoom;
+	hubRoom.id = 0;
+	hubRoom.type = RoomType::SPAWN;
+	hubRoom.seed = 0;
+	hubRoom.width = 30;
+	hubRoom.height = 20;
+	hubRoom.tileSize = 64.f;
+	hubRoom.tileMap.assign(hubRoom.width * hubRoom.height, Tile::FLOOR);
+
+	// Build outer walls
+	for (int col = 0; col < hubRoom.width; col++) {
+		hubRoom.setTile(0, col, Tile::WALL);
+		hubRoom.setTile(hubRoom.height - 1, col, Tile::WALL);
+	}
+	for (int row = 0; row < hubRoom.height; row++) {
+		hubRoom.setTile(row, 0, Tile::WALL);
+		hubRoom.setTile(row, hubRoom.width - 1, Tile::WALL);
+	}
+
+	// Spawn point and Portal placement
+	const sf::Vector2i playerSpawnTile(hubRoom.width / 2, hubRoom.height / 2);
+	const sf::Vector2i portalTile(hubRoom.width / 2, hubRoom.height / 4);
+
+	const sf::Vector2i gunShopTile(hubRoom.width / 4, hubRoom.height / 2);
+	const sf::Vector2i armoryShopTile(hubRoom.width / 4, 3 * hubRoom.height / 4);
+	const sf::Vector2i cosmeticShopTile(3 * hubRoom.width / 4, hubRoom.height / 2);
+	const sf::Vector2i playerShopTile(3 * hubRoom.width / 4, 3 * hubRoom.height / 4);
+	const sf::Vector2i jobBoardTile(hubRoom.width / 2, 3 * hubRoom.height / 4);
+
+	hubRoom.spawners.push_back({ SpawnerType::PlayerSpawner, playerSpawnTile });
+	hubRoom.spawners.push_back({ SpawnerType::PortalSpawner, portalTile });
+	hubRoom.triggers.push_back({ TriggerType::PortalTrigger, portalTile });
+
+	m_roomPlans.clear();
+	m_roomInstances.clear();
+	m_roomWorldPositions.clear();
+
+	m_roomPlans.push_back(hubRoom);
+	m_roomInstances.resize(m_roomPlans.size());
+	m_roomWorldPositions.resize(m_roomPlans.size());
+
+	// For the hub world, we can just place the single room at the origin
+	m_roomWorldPositions[0] = sf::Vector2f(0.f, 0.f);
+	generateRoom(0);
+	spawnPlayer(0);
+
+	// Set active room to hub
+	m_activeRoomId = 0;
+	m_isInRoom = true;
+	m_isInCombat = false;
+	m_waveCounter = 0;
+
+	m_playerCamera.setCenter(m_player.getPosition());
+	m_floorCamera.setCenter(m_player.getPosition());
+
+	const float tileSize = hubRoom.tileSize;
+	const sf::Vector2f worldOrigin = m_roomWorldPositions[0];
+	const sf::Vector2f gunShopCenter = worldOrigin + sf::Vector2f(gunShopTile.x * tileSize + tileSize / 2, gunShopTile.y * tileSize + tileSize / 2);
+	const sf::Vector2f cosmeticShopCenter = worldOrigin + sf::Vector2f(cosmeticShopTile.x * tileSize + tileSize / 2, cosmeticShopTile.y * tileSize + tileSize / 2);
+	const sf::Vector2f armoryShopCenter = worldOrigin + sf::Vector2f(armoryShopTile.x * tileSize + tileSize / 2, armoryShopTile.y * tileSize + tileSize / 2);
+	const sf::Vector2f playerShopCenter = worldOrigin + sf::Vector2f(playerShopTile.x * tileSize + tileSize / 2, playerShopTile.y * tileSize + tileSize / 2);
+
+	// Initialize shops
+	m_weaponShop.setSize(sf::Vector2f(tileSize * 3, tileSize * 3));
+	m_weaponShop.setOrigin(m_weaponShop.getSize() / 2.f);
+	m_weaponShop.setPosition(gunShopCenter);
+	m_weaponShop.setFillColor(sf::Color(0, 255, 255, 180)); // Cyan color
+
+	m_cosmeticShop.setSize(sf::Vector2f(tileSize * 3, tileSize * 3));
+	m_cosmeticShop.setOrigin(m_cosmeticShop.getSize() / 2.f);
+	m_cosmeticShop.setPosition(cosmeticShopCenter);
+	m_cosmeticShop.setFillColor(sf::Color(255, 0, 255, 180)); // Magenta color
+
+	m_armoryShop.setSize(sf::Vector2f(tileSize * 3, tileSize * 3));
+	m_armoryShop.setOrigin(m_armoryShop.getSize() / 2.f);
+	m_armoryShop.setPosition(armoryShopCenter);
+	m_armoryShop.setFillColor(sf::Color(255, 255, 255, 180)); // White color
+
+	m_playerShop.setSize(sf::Vector2f(tileSize * 3, tileSize * 3));
+	m_playerShop.setOrigin(m_playerShop.getSize() / 2.f);
+	m_playerShop.setPosition(playerShopCenter);
+	m_playerShop.setFillColor(sf::Color(255, 165, 0, 180)); // Orange color
+
+	m_jobBoard.setSize(sf::Vector2f(tileSize * 4.f, tileSize * 2.f));
+	m_jobBoard.setOrigin(m_jobBoard.getSize() / 2.f);
+	m_jobBoard.setPosition(worldOrigin + sf::Vector2f(jobBoardTile.x * tileSize + tileSize / 2.f, jobBoardTile.y * tileSize + tileSize / 2.f));
+	m_jobBoard.setFillColor(sf::Color(120, 84, 54, 200)); // Brown color
+
+	// Initialize hub NPCs
+	m_hubNPCs.clear();
+	const float shopHalfWidth = m_weaponShop.getSize().x / 2.f;
+	const float npcHalfWidth = 25.f;
+	const float sideOffset = shopHalfWidth + npcHalfWidth + 16.f;
+
+	const sf::Vector2f rightSideTriggerOffset(-70.f, 0.f);
+	const sf::Vector2f leftSideTriggerOffset(70.f, 0.f);
+
+	// Weapon Shop NPC
+
+	for (int i = 0; i < 4; i++) {
+		HubNPCInfo npcInfo;
+		if (i == 0) {
+			npcInfo.name = "Gunther";
+			npcInfo.shopType = HubShopType::WEAPON_SHOP;
+			npcInfo.personality = NPCPersonality::GREEDY;
+			npcInfo.background = "Black Market Dealer";
+
+			m_hubNPCs.push_back(NPC(npcInfo,
+				gunShopCenter + sf::Vector2f(sideOffset, 0.f),
+				sf::Color(220, 60, 60), // Crimson color
+				leftSideTriggerOffset));
+		}
+		else if (i == 1) {
+			npcInfo.name = "Cassandra";
+			npcInfo.shopType = HubShopType::COSMETIC_SHOP;
+			npcInfo.personality = NPCPersonality::PASSIONATE;
+			npcInfo.background = "Former adventurer turned Fashion Guru";
+
+			m_hubNPCs.push_back(NPC(npcInfo,
+				cosmeticShopCenter + sf::Vector2f(-sideOffset, 0.f),
+				sf::Color(255, 105, 180), // Hot pink color
+				rightSideTriggerOffset));
+		}
+		else if (i == 2) {
+			npcInfo.name = "Arnold";
+			npcInfo.shopType = HubShopType::ARMORY_SHOP;
+			npcInfo.personality = NPCPersonality::PROFESSIONAL;
+			npcInfo.background = "Master blacksmith; Highly Intelligent";
+
+			m_hubNPCs.push_back(NPC(npcInfo,
+				armoryShopCenter + sf::Vector2f(sideOffset, 0.f),
+				sf::Color(192, 192, 192), // Silver color
+				leftSideTriggerOffset));
+		}
+		else if (i == 3) {
+			npcInfo.name = "Petra the Doctor";
+			npcInfo.shopType = HubShopType::PLAYER_SHOP;
+			npcInfo.personality = NPCPersonality::FRIENDLY;
+			npcInfo.background = "Skilled medic; Shady";
+
+			m_hubNPCs.push_back(NPC(npcInfo,
+				playerShopCenter + sf::Vector2f(-sideOffset, 0.f),
+				sf::Color(255, 165, 0), // Orange color
+				rightSideTriggerOffset));
+		}
+	}
+}
+
+void Game::updateHubShops()
+{
+	m_activeShop = HubShopType::NONE_SHOP;
+	m_isAtJobBoard = false;
+
+	const sf::FloatRect playerBounds = m_player.getCollisionBounds();
+
+	// NPC Interactions
+	const bool interactPressed = InputManager::pad().pressed(GamepadButton::A) || Keyboard::isKeyPressed(Keyboard::Key::Space);
+	const bool upPressed = InputManager::pad().pressed(GamepadButton::DPadUp) || Keyboard::isKeyPressed(Keyboard::Key::W);
+	const bool downPressed = InputManager::pad().pressed(GamepadButton::DPadDown) || Keyboard::isKeyPressed(Keyboard::Key::S);
+	const bool cancelPressed = InputManager::pad().pressed(GamepadButton::B) || Keyboard::isKeyPressed(Keyboard::Key::Escape);
+	
+	if (!m_isNPCDialogueOpen && m_activeNPCId >= 0)
+	{
+		if (interactPressed) {
+			m_isNPCDialogueOpen = true;
+			m_currentDialogueOptions = { "Show me what you've got.", "Maybe later." };
+			m_selectedResponse = 0;
+		}
+		return;
+	}
+
+	if (m_isNPCDialogueOpen)
+	{
+		if (upPressed || downPressed)
+			m_selectedResponse = (m_selectedResponse == 0) ? 1 : 0;
+
+		if (interactPressed) {
+			if (m_activeNPCId >= 0 && m_activeNPCId < m_hubNPCs.size() &&
+				m_selectedResponse >= 0 && m_selectedResponse < m_currentDialogueOptions.size())
+			{
+				std::cout << m_hubNPCs[m_activeNPCId].getInfo().name
+					<< " | Player response: " << m_currentDialogueOptions[m_selectedResponse] << "\n";
+			}
+
+			m_isNPCDialogueOpen = false;
+			m_selectedResponse = -1;
+			m_currentDialogueOptions.clear();
+		}
+
+		if (cancelPressed) {
+			m_isNPCDialogueOpen = false;
+			m_currentDialogueOptions.clear();
+			m_selectedResponse = -1;
+		}
+
+		return;
+	}
+
+	// Shop Interactions
+	const sf::FloatRect weaponShopBounds = m_weaponShop.getGlobalBounds();
+	const sf::FloatRect cosmeticShopBounds = m_cosmeticShop.getGlobalBounds();
+	const sf::FloatRect armoryShopBounds = m_armoryShop.getGlobalBounds();
+	const sf::FloatRect playerShopBounds = m_playerShop.getGlobalBounds();
+	const sf::FloatRect jobBoardBounds = m_jobBoard.getGlobalBounds();
+
+	if (jobBoardBounds.findIntersection(playerBounds))
+		m_isAtJobBoard = true;
+	else if (weaponShopBounds.findIntersection(playerBounds))
+		m_activeShop = HubShopType::WEAPON_SHOP;
+	else if (cosmeticShopBounds.findIntersection(playerBounds))
+		m_activeShop = HubShopType::COSMETIC_SHOP;
+	else if (armoryShopBounds.findIntersection(playerBounds))
+		m_activeShop = HubShopType::ARMORY_SHOP;
+	else if (playerShopBounds.findIntersection(playerBounds))
+		m_activeShop = HubShopType::PLAYER_SHOP;
+
+	if (m_isAtJobBoard)
+	{
+		const bool interactPressed = InputManager::pad().pressed(GamepadButton::A) || Keyboard::isKeyPressed(Keyboard::Key::Space);
+		if (!interactPressed || m_blockJobBoardInteract)
+			return;
+
+		m_menuUI.setQuestBoardQuests(m_questManager.getBoardQuests());
+		m_menuUI.setScreen(MenuScreen::QUEST_BOARD_SCREEN);
+		m_blockJobBoardInteract = true; // Prevent multiple openings of the quest board while in range
+	}
+
+	switch (m_activeShop)
+	{
+	case HubShopType::WEAPON_SHOP: {
+		const bool WeaponUpgradeInput = InputManager::pad().pressed(GamepadButton::A) || Keyboard::isKeyPressed(Keyboard::Key::Space);
+		const bool AmmoUpgradeInput = InputManager::pad().pressed(GamepadButton::B) || Keyboard::isKeyPressed(Keyboard::Key::Enter);
+
+		if (!WeaponUpgradeInput && !AmmoUpgradeInput)
+			return;
+
+		const int upgradeCost = 100;
+
+		// Weapon Upgrades
+		if (WeaponUpgradeInput && m_coins >= upgradeCost)
+		{
+			const auto& loadout = m_player.getWeaponLoadout();
+			const int currentSlot = m_player.getCurrentWeaponID();
+
+			const WeaponType selectedType = loadout[currentSlot].type;
+			int* selectedUpgradeLevel = nullptr;
+			std::string weaponName = "";
+
+			if (selectedType >= WeaponType::KNIFE)
+				break;
+
+			switch (selectedType)
+			{
+			case WeaponType::PISTOL:
+				selectedUpgradeLevel = &m_pistolUpgradeLevel;
+				weaponName = "Pistol";
+				break;
+
+			case WeaponType::ASSAULT_RIFLE:
+				selectedUpgradeLevel = &m_arUpgradeLevel;
+				weaponName = "Assault Rifle";
+				break;
+
+			case WeaponType::SHOTGUN:
+				selectedUpgradeLevel = &m_shotgunUpgradeLevel;
+				weaponName = "Shotgun";
+				break;
+			}
+
+			m_coins -= upgradeCost;
+			(*selectedUpgradeLevel)++;
+			WeaponInLoadout droppedWeapon;
+			m_player.swapCurrentWeapon(selectedType, *selectedUpgradeLevel, droppedWeapon);
+			std::cout << weaponName << " upgraded to level " << *selectedUpgradeLevel << "!\n"
+				<< "Coins remaining: " << m_coins << "\n";
+		}
+
+		// Ammo Upgrades
+		else if (AmmoUpgradeInput && m_coins >= upgradeCost)
+		{
+			m_coins -= upgradeCost;
+			m_playerAmmoUpgradeLevel++;
+			m_player.applyUpgrade(m_playerHealthUpgradeLevel, m_playerSpeedUpgradeLevel, m_playerAmmoUpgradeLevel);
+			std::cout << "Player ammo capacity upgraded to level " << m_playerAmmoUpgradeLevel << "!\n"
+				<< "Coins remaining: " << m_coins << "\n";
+		}
+
+		// Not enough coins
+		else
+		{
+			std::cout << "Not enough coins to upgrade weapon or ammo! Coins: " << m_coins << "\n";
+		}
+
+		break;
+	}
+
+	case HubShopType::COSMETIC_SHOP: {
+		const bool interactPressed = InputManager::pad().pressed(GamepadButton::A) || Keyboard::isKeyPressed(Keyboard::Key::Space);
+		if (!interactPressed)
+			return;
+
+		m_playerColorIndex = (m_playerColorIndex + 1) % m_playerColorOptions.size();
+		m_player.setBodyColor(m_playerColorOptions[m_playerColorIndex]);
+		std::cout << "Player color changed to " << m_playerColorIndex << "!\n";
+		break;
+	}
+
+	case HubShopType::ARMORY_SHOP: {
+		const bool interactPressed = InputManager::pad().pressed(GamepadButton::A) || Keyboard::isKeyPressed(Keyboard::Key::Space);
+		if (!interactPressed)
+			return;
+
+		const WeaponType weaponToEquip = m_armoryCatalog[m_armoryCatalogIndex];
+
+		int equipLevel = 1;
+		switch (weaponToEquip)
+		{
+		case WeaponType::PISTOL:
+			equipLevel = m_pistolUpgradeLevel;
+			break;
+		case WeaponType::ASSAULT_RIFLE:
+			equipLevel = m_arUpgradeLevel;
+			break;
+		case WeaponType::SHOTGUN:
+			equipLevel = m_shotgunUpgradeLevel;
+			break;
+		}
+
+		WeaponInLoadout droppedWeapon;
+		if (m_player.swapCurrentWeapon(weaponToEquip, equipLevel, droppedWeapon))
+		{
+			std::cout << "Equipped " << weaponToEquip << " at level " << equipLevel << "!\n";
+			if (droppedWeapon.type != WeaponType::COUNT)
+				std::cout << "Dropped " << droppedWeapon.type << " at level " << droppedWeapon.level << ".\n";
+		}
+		else
+		{
+			std::cout << "Failed to equip weapon. Loadout may be full.\n";
+		}
+
+		m_armoryCatalogIndex++;
+		if (m_armoryCatalogIndex >= m_armoryCatalog.size())
+			m_armoryCatalogIndex = 0;
+
+		break;
+	}
+
+	case HubShopType::PLAYER_SHOP: {
+		const bool healthUpgradeInput = InputManager::pad().pressed(GamepadButton::A) || Keyboard::isKeyPressed(Keyboard::Key::Space);
+		const bool speedUpgradeInput = InputManager::pad().pressed(GamepadButton::B) || Keyboard::isKeyPressed(Keyboard::Key::Enter);
+
+		if (!healthUpgradeInput && !speedUpgradeInput)
+			return;
+
+		const int upgradeCost = 100;
+
+		if (healthUpgradeInput && m_coins >= upgradeCost)
+		{
+			m_coins -= upgradeCost;
+			m_playerHealthUpgradeLevel++;
+			m_player.applyUpgrade(m_playerHealthUpgradeLevel, m_playerSpeedUpgradeLevel, m_playerAmmoUpgradeLevel);
+			std::cout << "Player health upgraded! Coins remaining: " << m_coins << "\n";
+		}
+		else if (speedUpgradeInput && m_coins >= upgradeCost)
+		{
+			m_coins -= upgradeCost;
+			m_playerSpeedUpgradeLevel++;
+			m_player.applyUpgrade(m_playerHealthUpgradeLevel, m_playerSpeedUpgradeLevel, m_playerAmmoUpgradeLevel);
+			std::cout << "Player speed upgraded! Coins remaining: " << m_coins << "\n";
+		}
+		else
+		{
+			std::cout << "Not enough coins to upgrade player! Coins: " << m_coins << "\n";
+		}
+
+		break;
+	}
+	}
+}
+
+void Game::renderHubShopPrompt()
+{
+	if (!m_isAtJobBoard &&
+		m_activeShop == HubShopType::NONE_SHOP &&
+		!m_isNPCDialogueOpen &&
+		m_activeNPCId < 0)
+		return;
+
+	sf::Text promptText(m_arialFont);
+	promptText.setCharacterSize(12);
+	promptText.setOutlineThickness(1.f);
+	promptText.setOutlineColor(sf::Color::Black);
+	promptText.setFillColor(sf::Color::White);
+
+	// NPC Dialogue
+	auto shopTypeToString = [](HubShopType type) -> std::string
+		{
+			switch (type)
+			{
+			case HubShopType::WEAPON_SHOP: return "Weapon Shop";
+			case HubShopType::COSMETIC_SHOP: return "Cosmetic Shop";
+			case HubShopType::ARMORY_SHOP: return "Armory Shop";
+			case HubShopType::PLAYER_SHOP: return "Player Shop";
+			default: return "Unknown Shop";
+			}
+		};
+
+	// Active dialogue box
+	if (m_isNPCDialogueOpen && m_activeNPCId >= 0 && m_activeNPCId < m_hubNPCs.size())
+	{
+		const NPC& npc = m_hubNPCs[m_activeNPCId];
+		const std::string option0Prefix = (m_selectedResponse == 0) ? "> " : "  ";
+		const std::string option1Prefix = (m_selectedResponse == 1) ? "> " : "  ";
+
+		std::string dialogue =
+			npc.getInfo().name + " - " + shopTypeToString(npc.getInfo().shopType) + "\n" +
+			npc.getDialogue() + "\n\n" +
+			option0Prefix + m_currentDialogueOptions[0] + "\n" +
+			option1Prefix + m_currentDialogueOptions[1] + "\n\n" +
+			"Confirm: A/Space   Cancel: B/Esc";
+
+		const sf::View previousView = m_window.getView();
+		m_window.setView(m_window.getDefaultView());
+
+		const sf::Vector2u windowSize = m_window.getSize();
+		sf::RectangleShape dialogueBox;
+		dialogueBox.setSize(sf::Vector2f(static_cast<float>(windowSize.x) - 40.f, 170.f));
+		dialogueBox.setPosition(sf::Vector2f(20.f, static_cast<float>(windowSize.y) - 190.f));
+		dialogueBox.setFillColor(sf::Color(0, 0, 0, 210));
+		dialogueBox.setOutlineThickness(2.f);
+		dialogueBox.setOutlineColor(sf::Color::White);
+		m_window.draw(dialogueBox);
+
+		promptText.setString(dialogue);
+		promptText.setCharacterSize(16);
+		promptText.setPosition(dialogueBox.getPosition() + sf::Vector2f(14.f, 12.f));
+		m_window.draw(promptText);
+
+		m_window.setView(previousView);
+		return;
+	}
+
+	// Talk prompt
+	if (m_activeNPCId >= 0 && m_activeNPCId < m_hubNPCs.size())
+	{
+		promptText.setString("Press A / Space to talk to " + m_hubNPCs[m_activeNPCId].getInfo().name);
+		promptText.setOrigin(promptText.getGlobalBounds().getCenter());
+		promptText.setPosition({ m_player.getPosition().x, m_player.getPosition().y - 50.f });
+		m_window.draw(promptText);
+		return;
+	}
+
+
+	// Job board and Shop
+	if (m_isAtJobBoard)
+	{
+		promptText.setString("Press A / Space to open the Job Board");
+	}
+	else
+	{
+		switch (m_activeShop)
+		{
+		case HubShopType::WEAPON_SHOP:
+			promptText.setString("Press A / Space to upgrade equipped weapon for 100 coins!\n Press B / Enter to Upgrade Ammo capacity for 100 coins");
+			break;
+
+		case HubShopType::COSMETIC_SHOP:
+			promptText.setString("Press A / Space to change player color!");
+			break;
+
+		case HubShopType::ARMORY_SHOP:
+			promptText.setString("Press A / Space to swap current weapon with one from the armory!");
+			break;
+
+		case HubShopType::PLAYER_SHOP:
+			promptText.setString("Press A / Space to Upgrade Player Health for 100 coins\n Press B / Enter to Upgrade Player Speed for 100 coins");
+			break;
+		}
+	}
+
+	promptText.setOrigin(promptText.getGlobalBounds().getCenter());
+	promptText.setPosition({ m_player.getPosition().x, m_player.getPosition().y - 50 });
+
+	m_window.draw(promptText);
+}
+
+#pragma endregion
