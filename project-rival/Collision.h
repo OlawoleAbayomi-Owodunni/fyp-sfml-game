@@ -21,6 +21,10 @@ enum CollisionLayer : uint32_t
 	PORTAL_TRIGGER_LAYER = 1 << 6,
 	DOOR_TRIGGER_LAYER = 1 << 7,
 	DAMAGE_TRIGGER_LAYER = 1 << 8,
+	CHEST_TRIGGER_LAYER = 1 << 9,
+
+	// Game Object Layers
+	PICKUP_OBJECT_LAYER = 1 << 10,
 
 	ALL = 0xFFFFFFFF
 };
