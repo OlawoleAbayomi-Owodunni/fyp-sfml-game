@@ -550,5 +550,8 @@
     <Text Include="automation\scripts\output\upgrades-merge-changes.txt">
       <Filter>Resource Files\DOCUMENTATION\Git Summaries</Filter>
     </Text>
+    <Text Include="automation\scripts\output\npc-merge-changes.txt">
+      <Filter>Resource Files\DOCUMENTATION\Git Summaries</Filter>
+    </Text>
   </ItemGroup>
 </Project>

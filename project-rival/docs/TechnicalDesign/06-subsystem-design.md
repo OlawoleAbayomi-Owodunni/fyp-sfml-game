@@ -172,6 +172,26 @@ Current behaviour:
 - Active quest progress can be recorded from enemy kills and pickup collection.
 - Run finalization/commit flow currently controls quest reward payout and board replacement for completed quests.
 
+## Enemies / AI (steering)
+
+Core files:
+
+- `project-rival/Enemy.h/.cpp`
+- `project-rival/GruntEnemy.h/.cpp`
+- `project-rival/TurretEnemy.h/.cpp`
+- `project-rival/SeekBehaviour.*`, `project-rival/ArriveBehaviour.*`
+
+Current behaviour:
+
+- `GruntEnemy` uses steering movement (`Seek`/`Arrive`) and melee attacks via `EnemyWeapon`.
+- `TurretEnemy` aims at player target and fires projectiles on a randomized timer.
+- Enemies use shared base health/death handling.
+
+Extension points:
+
+- Add navigation/path constraints.
+- Add more enemy archetypes and attack patterns.
+
 ## UI / HUD + menus (prototype)
 
 Core files:

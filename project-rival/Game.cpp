@@ -49,6 +49,13 @@ x_drawFPS.setCharacterSize(24);
 #endif
 
 	m_hud.init(m_arialFont);
+	
+	m_roomDescriptionText.setFont(m_arialFont);
+	m_roomDescriptionText.setCharacterSize(18);
+	m_roomDescriptionText.setFillColor(sf::Color::White);
+	m_roomDescriptionText.setOutlineThickness(1.f);
+	m_roomDescriptionText.setOutlineColor(sf::Color::Black);
+	m_roomDescriptionText.setPosition(sf::Vector2f(20, 400));
 
 	#pragma region Menu UI
     m_menuUI.init(m_arialFont, m_window.getDefaultView());
@@ -190,7 +197,6 @@ void Game::processGameEvents(const sf::Event& event)
 }
 
 
-
 ////////////////////////////////////////////////////////////
 void Game::update(float dt)
 {
@@ -318,11 +324,17 @@ void Game::update(float dt)
 		}
 	}
 
+	processLLMQueue();
+
 	if (auto response = m_llmManager.tryConsumeLatestResponse())
 	{
-		std::cout << "LLM Response: " << *response << "\n";
+		handleLLMResponse(*response);
 	}
 
+	if (m_roomDescriptionTtl > 0)
+		m_roomDescriptionTtl -= dt;
+
+	// Hub management
 	if (m_gameMode == GameMode::HUB)
 	{
 		updateHubShops();
@@ -394,6 +406,24 @@ void Game::render()
 	else
        m_menuUI.render(m_window);
 #pragma endregion
+
+	// Room description rendering
+	if (m_menuUI.isGameplayScreen() && m_roomDescriptionTtl > 0.f && !m_latestRoomDescription.empty())
+	{
+		sf::RectangleShape panel;
+		panel.setSize(sf::Vector2f(static_cast<float>(m_window.getSize().x) - 40.f, 80.f));
+		panel.setOrigin(panel.getSize() / 2.f);
+		panel.setPosition(sf::Vector2f(m_window.getSize().x / 2.f, m_window.getSize().y - 60.f));
+		panel.setFillColor(sf::Color(0, 0, 0, 170));
+		panel.setOutlineThickness(1.f);
+		panel.setOutlineColor(sf::Color::White);
+		m_window.draw(panel);
+
+		m_roomDescriptionText.setString("Room Insight: " + m_latestRoomDescription);
+		m_roomDescriptionText.setOrigin(sf::Vector2f(m_roomDescriptionText.getLocalBounds().size.x / 2.f, m_roomDescriptionText.getLocalBounds().size.y / 2.f));
+		m_roomDescriptionText.setPosition({panel.getPosition().x, panel.getPosition().y - 10.f});
+		m_window.draw(m_roomDescriptionText);
+	}
 
 #ifdef TEST_FPS
 	m_window.draw(x_updateFPS); //ups is 60 and dps is 61
@@ -1282,59 +1312,92 @@ void Game::loadNewFloor()
 
 
 /////////////////////////////////////////////////////////////////
-
+#pragma region LLM INTERACTION
 void Game::LLM_GenerateRoomInfo()
 {
 	if (!m_llmManager.isReady()) {
 		std::cout << "LLM model is not ready.\n";
+		return;
 	}
+
+	RoomPlan currRoom = m_roomPlans[m_activeRoomId];
+
+	std::string roomTypeStr;
+	switch (currRoom.type) {
+	case RoomType::CORRIDOR: roomTypeStr = "Corridor"; break;
+	case RoomType::SPAWN: roomTypeStr = "Spawn Room"; break;
+	case RoomType::PORTAL: roomTypeStr = "Portal Room"; break;
+	case RoomType::COMBAT: roomTypeStr = "Combat Room"; break;
+	}
+
+	std::string clearedStr = currRoom.isCleared ? "Yes" : "No";
+
+	const std::string prompt = "Generate a 2 sentence description of the room the player is in currently based on the following properties: Room Type: " + roomTypeStr
+		+ ", Does room have enemies? " + clearedStr
+		+ ", Room Height (min is 4 max is 15): " + to_string(currRoom.height)
+		+ ", Room Width (min is 4 max is 15): " + to_string(currRoom.width)
+		+ ", Dungeon Floor (with a max of 3 floors): " + to_string(m_dungeonPlan.currentFloorId) + "\n";
+
+	enqueLLMJob(LLMJobType::ROOM_DESCRIPTION, -1, -1, prompt);
+	std::cout << "Enqueued LLM job for room description.\n";
+}
+
+void Game::enqueLLMJob(LLMJobType jobType, int npcId, int questIndex, const std::string& prompt)
+{
+	LLMJobContext job;
+	job.jobType = jobType;
+	job.npcId = npcId;
+	job.questIndex = questIndex;
+	job.prompt = prompt;
+
+	m_llmJobQueue.push(job);
+}
+
+void Game::processLLMQueue()
+{
+	if (!m_llmManager.isReady() || m_llmManager.isBusy() || m_llmJobQueue.empty())
+		return;
+
+	m_currentLLMJob = m_llmJobQueue.front();
+	m_llmJobQueue.pop();
+
+	if(m_llmManager.requestGenerate(m_currentLLMJob.prompt))
+		m_hasActiveLLMJob = true;
 	else {
-		// LLM Prompt/Response test
-		// Request generation of p
-		if (!m_llmManager.isBusy())
-		{
-			// Generate Prompt
-			RoomPlan currRoom = m_roomPlans[m_activeRoomId];
-
-			std::string roomTypeStr;
-			switch (currRoom.type) {
-			case RoomType::CORRIDOR:
-				roomTypeStr = "Corridor";
-				break;
-			case RoomType::SPAWN:
-				roomTypeStr = "Spawn Room";
-				break;
-			case RoomType::PORTAL:
-				roomTypeStr = "Portal Room";
-				break;
-			case RoomType::COMBAT:
-				roomTypeStr = "Combat Room";
-				break;
-			}
-
-			std::string clearedStr = currRoom.isCleared ? "Yes" : "No";
-
-			std::cout << "Generating response...\n";
-			const std::string prompt = "Generate a 2 sentence description of the room the player is in currently based on the following properties: Room Type: " + roomTypeStr
-				+ ", Is Room Cleared: " + clearedStr
-				+ ", Room Height: " + to_string(currRoom.height)
-				+ ", Room Width: " + to_string(currRoom.width)
-				+ ", Dungeon Floor: " + to_string(m_dungeonPlan.currentFloorId) + "\n";
-
-			std::cout << "Prompt: " << prompt << "\n";
-
-			const bool queued = m_llmManager.requestGenerate(prompt);
-			if (queued)
-				std::cout << "Generation request queued successfully.\n";
-			else
-				std::cout << "Failed to queue generation request.\n";
-		}
-		else
-		{
-			std::cout << "Generation in progress, please wait...\n";
-		}
+		std::cout << "Failed to queue LLM job.\n";
+		m_hasActiveLLMJob = false;
 	}
 }
+
+void Game::handleLLMResponse(const std::string & response)
+{
+	if(!m_hasActiveLLMJob) {
+		std::cout << "No active LLM job to handle response for.\n";
+		return;
+	}
+
+	switch (m_currentLLMJob.jobType)
+	{
+	case LLMJobType::ROOM_DESCRIPTION:
+		m_latestRoomDescription = response;
+		m_roomDescriptionTtl = 10.f; // display room description for 10 seconds
+		std::cout << "LLM Room Description: " << response << "\n";
+		break;
+
+	case LLMJobType::NPC_REPLY:
+		std::cout << "NPC Reply (npcId: " << m_currentLLMJob.npcId << "): " << response << "\n";
+		break;
+
+	case LLMJobType::QUEST_METADATA:
+		std::cout << "Quest Metadata (questIndex=" << m_currentLLMJob.questIndex << "): " << response << "\n";
+		break;
+	}
+
+	m_hasActiveLLMJob = false;
+}
+
+#pragma endregion
+
 
 ////////////////////////////////////////////////////////////////
 #pragma region HUB WORLD MANAGEMENT
@@ -1828,3 +1891,6 @@ void Game::renderHubShopPrompt()
 }
 
 #pragma endregion
+
+
+#pragma region UI

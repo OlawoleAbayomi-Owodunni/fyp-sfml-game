@@ -150,6 +150,7 @@
     <Text Include="automation\scripts\output\hub-merge-changes.txt" />
     <Text Include="automation\scripts\output\llm-integration-merge-changes.txt" />
     <Text Include="automation\scripts\output\menu-merge-changes.txt" />
+    <Text Include="automation\scripts\output\npc-merge-changes.txt" />
     <Text Include="automation\scripts\output\pickups-merge-changes.txt" />
     <Text Include="automation\scripts\output\quest-system-merge-changes.txt" />
     <Text Include="automation\scripts\output\upgrades-merge-changes.txt" />
@@ -266,6 +267,20 @@
       <AdditionalLibraryDirectories>$(SFML_SDK_x64)\lib;$(SolutionDir)build\llm_x64_release\Release;$(SolutionDir)build\llm_x64_release\external\fyp-llm-lib\Release;$(SolutionDir)build\llm_x64_release\external\fyp-llm-lib\external\llama.cpp\src\Release;$(SolutionDir)build\llm_x64_release\external\fyp-llm-lib\external\llama.cpp\ggml\src\Release</AdditionalLibraryDirectories>
       <AdditionalDependencies>xinput.lib;LLMLib.lib;llama.lib;ggml.lib;ggml-base.lib;ggml-cpu.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PostBuildEvent>
+      <Command>if /I "$(Configuration)|$(Platform)"=="Release|x64" (
+  echo Copying runtime DLLs to $(OutDir)...
+
+  if exist "$(SolutionDir)build\llm_x64_release\Release\LLMLib.dll" copy /Y "$(SolutionDir)build\llm_x64_release\Release\LLMLib.dll" "$(OutDir)"
+  if exist "$(SolutionDir)build\llm_x64_release\external\fyp-llm-lib\external\llama.cpp\src\Release\llama.dll" copy /Y "$(SolutionDir)build\llm_x64_release\external\fyp-llm-lib\external\llama.cpp\src\Release\llama.dll" "$(OutDir)"
+  if exist "$(SolutionDir)build\llm_x64_release\external\fyp-llm-lib\external\llama.cpp\ggml\src\Release\ggml.dll" copy /Y "$(SolutionDir)build\llm_x64_release\external\fyp-llm-lib\external\llama.cpp\ggml\src\Release\ggml.dll" "$(OutDir)"
+  if exist "$(SolutionDir)build\llm_x64_release\external\fyp-llm-lib\external\llama.cpp\ggml\src\Release\ggml-base.dll" copy /Y "$(SolutionDir)build\llm_x64_release\external\fyp-llm-lib\external\llama.cpp\ggml\src\Release\ggml-base.dll" "$(OutDir)"
+  if exist "$(SolutionDir)build\llm_x64_release\external\fyp-llm-lib\external\llama.cpp\ggml\src\Release\ggml-cpu.dll" copy /Y "$(SolutionDir)build\llm_x64_release\external\fyp-llm-lib\external\llama.cpp\ggml\src\Release\ggml-cpu.dll" "$(OutDir)"
+
+  if exist "$(SFML_SDK_x64)\bin\sfml-*.dll" xcopy /Y /D "$(SFML_SDK_x64)\bin\sfml-*.dll" "$(OutDir)" &gt;nul
+  if exist "$(SFML_SDK_x64)\bin\openal32.dll" copy /Y "$(SFML_SDK_x64)\bin\openal32.dll" "$(OutDir)"
+)</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
