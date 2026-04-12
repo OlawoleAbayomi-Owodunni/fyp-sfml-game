@@ -38,75 +38,6 @@ namespace
 
 		return value;
 	}
-
-	std::string trimCopy(const std::string& text)
-	{
-		std::size_t start = 0;
-		while (start < text.size() && (text[start] == ' ' || text[start] == '\t' || text[start] == '\n' || text[start] == '\r'))
-			++start;
-
-		std::size_t end = text.size();
-		while (end > start && (text[end - 1] == ' ' || text[end - 1] == '\t' || text[end - 1] == '\n' || text[end - 1] == '\r'))
-			--end;
-
-		return text.substr(start, end - start);
-	}
-
-	std::string normalizeWhitespace(const std::string& text)
-	{
-		std::string out;
-		out.reserve(text.size());
-		bool lastWasSpace = false;
-
-		for (char ch : text)
-		{
-			const bool isWs = (ch == ' ' || ch == '\t' || ch == '\n' || ch == '\r');
-			if (isWs)
-			{
-				if (!lastWasSpace)
-				{
-					out.push_back(' ');
-					lastWasSpace = true;
-				}
-			}
-			else
-			{
-				out.push_back(ch);
-				lastWasSpace = false;
-			}
-		}
-
-		return trimCopy(out);
-	}
-
-	std::string limitSentenceCount(const std::string& text, int maxSentences)
-	{
-		if (maxSentences <= 0)
-			return "";
-
-		const std::string normalized = normalizeWhitespace(text);
-		int sentenceCount = 0;
-		std::size_t cutPos = std::string::npos;
-
-		for (std::size_t i = 0; i < normalized.size(); ++i)
-		{
-			const char ch = normalized[i];
-			if (ch == '.' || ch == '!' || ch == '?')
-			{
-				++sentenceCount;
-				if (sentenceCount >= maxSentences)
-				{
-					cutPos = i + 1;
-					break;
-				}
-			}
-		}
-
-		if (cutPos == std::string::npos)
-			return normalized;
-
-		return trimCopy(normalized.substr(0, cutPos));
-	}
 }
 
 ////////////////////////////////////////////////////////////
@@ -252,7 +183,7 @@ void Game::processGameEvents(const sf::Event& event)
           if (keyPressed->scancode == sf::Keyboard::Scancode::Enter && !m_npcInputBuffer.empty())
 			{
 				const HubNPCInfo& npcInfo = m_hubNPCs[m_activeNPCId].getInfo();
-              const std::string prompt = "You are roleplaying this NPC in a game hub.\n"
+				const std::string prompt = "You are roleplaying this NPC in a game hub.\n"
 					"STRICT OUTPUT RULES (must follow):\n"
 					"1) Return ONLY the NPC reply text.\n"
 					"2) Maximum 2 sentences total. Never exceed 2 sentences.\n"
@@ -574,7 +505,6 @@ void Game::startNewGame()
 {
 	m_coins = 1000;
 	m_questManager.resetBoard();
-	queueQuestMetadataJobs();
 
 	m_pistolUpgradeLevel = 1;
 	m_arUpgradeLevel = 1;
@@ -1485,13 +1415,28 @@ std::string Game::buildQuestMetadataPrompt(int questIndex) const
 			: "Petra from the Player Shop needs medical resources for wounded adventurers.";
 	}
 	
-	std::string prompt = "Create quest metadata for a roguelike hub job board. Return exactly two lines:\n"
-		"TITLE: <short quest title under 5 words>\n"
-		"LORE: <one immersive sentence tied to NPC context>\n"
+	std::string prompt =
+		"Generate a quest TITLE and 2-sentence LORE for a bulletin board.\n"
+		"\n"
+		"FORMAT:\n"
+		"TITLE: <2 to 5 words>\n"
+		"LORE: <exactly 2 short sentences, max 44 words total>\n"
+		"\n"
+		"RULES:\n"
+		"- Output exactly 2 lines.\n"
+		"- TITLE must be 2 to 5 words.\n"
+		"- LORE must be exactly 2 short sentences.\n"
+		"- Preserve the exact quest type, target type, target count, reward, and NPC context.\n"
+		"- No extra text.\n"
+		"\n"
+		"INPUT:\n"
 		"Quest Type: " + questTypeStr + "\n"
 		"Target: " + std::to_string(quest->targetCount) + " " + targetStr + "\n"
 		"Reward: " + std::to_string(quest->rewardCoins) + " coins\n"
-		"NPC Context: " + npcContext;
+		"NPC Context: " + npcContext + "\n"
+		"\n"
+		"OUTPUT:\n"
+		"TITLE: ";
 
 	return prompt;
 }
@@ -1513,18 +1458,29 @@ void Game::LLM_GenerateRoomInfo()
 	case RoomType::COMBAT: roomTypeStr = "Combat Room"; break;
 	}
 
-	std::string clearedStr = currRoom.isCleared ? "Yes" : "No";
+	std::string sizeStr;
+	int area = currRoom.width * currRoom.height;
 
-  const std::string prompt = "You describe rooms for a dungeon crawler.\n"
-		+ std::string("STRICT OUTPUT RULES (must follow):\n")
-		+ "1) Return plain text only.\n"
-		+ "2) Return exactly 2 sentences.\n"
-		+ "3) No bullet points, no labels, no extra commentary.\n"
-		+ "Room details: Room Type: " + roomTypeStr
-		+ ", Does room have enemies? " + clearedStr
-		+ ", Room Height (min is 4 max is 15): " + to_string(currRoom.height)
-		+ ", Room Width (min is 4 max is 15): " + to_string(currRoom.width)
-		+ ", Dungeon Floor (with a max of 3 floors): " + to_string(m_dungeonPlan.currentFloorId) + "\n";
+	if (area <= 36) sizeStr = "small";
+	else if (area <= 100) sizeStr = "medium";
+	else sizeStr = "large";
+
+	const std::string prompt =
+		"Write exactly 1 short sentence for a " + roomTypeStr + ".\n"
+		"\n"
+		"RULES:\n"
+		"- Output exactly 1 sentence.\n"
+		"- Mention the Room Type.\n"
+		"- Mention the room size word exactly.\n"
+		"- Include one unique environmental object or feature.\n"
+		"- Max 18 words.\n"
+		"- No extra text.\n"
+		"\n"
+		"INPUT:\n"
+		"Room Type: " + roomTypeStr + "\n"
+		"Relative Size: " + sizeStr + "\n"
+		"\n"
+		"OUTPUT:";
 
 	enqueLLMJob(LLMJobType::ROOM_DESCRIPTION, -1, -1, prompt);
 	std::cout << "Enqueued LLM job for room description.\n";
@@ -1567,18 +1523,19 @@ void Game::handleLLMResponse(const std::string& response)
 	switch (m_currentLLMJob.jobType)
 	{
 	case LLMJobType::ROOM_DESCRIPTION:
-     m_latestRoomDescription = limitSentenceCount(response, 2);
+		m_latestRoomDescription = response;
 		m_roomDescriptionTtl = 10.f; // display room description for 10 seconds
-      std::cout << "LLM Room Description: " << m_latestRoomDescription << "\n";
+		std::cout << "LLM Room Description: " << response << "\n";
 		break;
 
 	case LLMJobType::NPC_REPLY:
-       m_npcLastResponse = limitSentenceCount(response, 2);
-		std::cout << "NPC Reply (npcId: " << m_currentLLMJob.npcId << "): " << m_npcLastResponse << "\n";
+		m_npcLastResponse = response;
+		std::cout << "NPC Reply (npcId: " << m_currentLLMJob.npcId << "): " << response << "\n";
 		break;
 
 	case LLMJobType::QUEST_METADATA:
 	{
+		std::cout << "Raw LLM Quest Metadata Response for questIndex " << m_currentLLMJob.questIndex << ": " << response << "\n";
 		const std::string title = extractTaggedLineValue(response, "TITLE:");
 		const std::string lore = extractTaggedLineValue(response, "LORE:");
 		if (m_questManager.updateBoardQuestText(m_currentLLMJob.questIndex, title, lore))
