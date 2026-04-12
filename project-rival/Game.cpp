@@ -156,7 +156,7 @@ void Game::processGameEvents(const sf::Event& event)
 		if (const auto* keyPressed = event.getIf<sf::Event::KeyPressed>())
 		{
 			// Submit input
-			if (keyPressed->scancode == sf::Keyboard::Scancode::Enter)
+          if (keyPressed->scancode == sf::Keyboard::Scancode::Enter && !m_npcInputBuffer.empty())
 			{
 				const HubNPCInfo& npcInfo = m_hubNPCs[m_activeNPCId].getInfo();
 				const std::string prompt = "You are roleplaying this NPC in a game hub.\n"
@@ -169,6 +169,8 @@ void Game::processGameEvents(const sf::Event& event)
 				m_npcInputBuffer.clear();
 			}
 		}
+
+		return;
 	}
 
 	if (const auto* keyPressed = event.getIf<sf::Event::KeyPressed>())
@@ -268,8 +270,9 @@ void Game::update(float dt)
 	}
 	updateActiveRoom();
 
-	// Update player
-	m_player.update(dt, mousePosF, mousePos, m_gameProjectiles, m_activeDamageTriggers);
+    // Update player
+	if (!(m_gameMode == GameMode::HUB && m_isNPCDialogueOpen))
+		m_player.update(dt, mousePosF, mousePos, m_gameProjectiles, m_activeDamageTriggers);
 
 	// Enemy Management
 	for (auto enemy_it = m_enemies.begin(); enemy_it != m_enemies.end();)
@@ -1604,6 +1607,8 @@ void Game::updateHubShops()
 	if (!m_isNPCDialogueOpen && m_activeNPCId >= 0)
 	{
 		if (interactPressed) {
+			m_npcInputBuffer.clear();
+			m_npcLastResponse.clear();
 			m_isNPCDialogueOpen = true;
 			m_currentDialogueOptions = { "Show me what you've got.", "Maybe later." };
 			m_selectedResponse = 0;
@@ -1611,27 +1616,9 @@ void Game::updateHubShops()
 		return;
 	}
 
+
 	if (m_isNPCDialogueOpen)
 	{
-		m_npcInputBuffer.clear();
-		m_npcLastResponse.clear();
-
-		if (upPressed || downPressed)
-			m_selectedResponse = (m_selectedResponse == 0) ? 1 : 0;
-
-		if (interactPressed) {
-			if (m_activeNPCId >= 0 && m_activeNPCId < m_hubNPCs.size() &&
-				m_selectedResponse >= 0 && m_selectedResponse < m_currentDialogueOptions.size())
-			{
-				std::cout << m_hubNPCs[m_activeNPCId].getInfo().name
-					<< " | Player response: " << m_currentDialogueOptions[m_selectedResponse] << "\n";
-			}
-
-			m_isNPCDialogueOpen = false;
-			m_selectedResponse = -1;
-			m_currentDialogueOptions.clear();
-		}
-
 		if (cancelPressed) {
 			m_isNPCDialogueOpen = false;
 			m_currentDialogueOptions.clear();
