@@ -21,6 +21,7 @@ This chapter describes what state exists, who owns it, and what might need savin
   - hub shop interaction state (`m_activeShop`) and shop zone shapes
   - economy/upgrade state (coins, weapon/player upgrade levels, catalog indices, cosmetic index)
   - LLM service state
+  - HUD state container (`PlayerHUD`)
 - `Player` owns:
   - transform/velocity/previous position
   - aim state + reticle state

@@ -14,7 +14,7 @@ Typical usage:
 - call `InputManager::update()` once per frame
 - then read input through `InputManager::pad()`
 
-In `Game::update(dt)`, the current mouse position is also read from the window and passed into `Player::update(...)` for aiming.
+In `Game::update(dt)`, mouse input is converted using the currently active gameplay view (`player` camera or `floor` camera), then passed into `Player::update(...)` as both world and pixel coordinates.
 
 ## `Gamepad`
 

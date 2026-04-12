@@ -12,7 +12,7 @@ The long-term vision includes:
 - A seeded, procedurally generated dungeon: `Dungeon → Floors → Rooms`.
   - The *dungeon/floor layout* should be **deterministic** for a given seed.
   - Individual room “dressing” (obstacles/spawns/props) can be **non-deterministic** (random each run).
-- Interactable NPCs with a dialogue system powered by a **locally running LLM**, integrated via a separate custom C++ wrapper repo.
+- Interactable NPCs with a dialogue system powered by a **locally running LLM**, integrated via a vendored custom C++ wrapper.
 - Procedurally generated bosses (modular parts + attacks) optionally enhanced by LLM-generated lore.
 
 ## Current status (prototype snapshot)
@@ -38,6 +38,7 @@ As of the current prototype, the project has:
 - Early combat wave logic for combat rooms (door trigger starts combat, waves spawn enemies, doors lock/unlock).
 - Multi-floor progression (prototype): portal interaction can advance to the next floor; when the dungeon is complete, flow currently returns to hub.
 - Prototype LLM async integration with debug prompt triggers and polled console output.
+- On-screen `PlayerHUD` overlay for health, ammo, and coin display.
 
 ## Core / key terminology
 

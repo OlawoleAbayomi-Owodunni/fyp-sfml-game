@@ -104,6 +104,7 @@ Current behaviour:
 - Player keeps a loadout (`WeaponInLoadout`) with max 3 slots.
 - Runtime weapon objects are rebuilt from loadout entries.
 - Upgrade application currently adjusts health, speed, and ammo capacity.
+- Ranged attacks consume ammo capacity.
 - Weapon level currently scales gun damage/fire tuning.
 
 ## Combat / projectiles / melee triggers
@@ -148,6 +149,17 @@ Extension points:
 
 - Add navigation/path constraints.
 - Add more enemy archetypes and attack patterns.
+
+## UI / HUD (prototype)
+
+Core files:
+
+- `project-rival/PlayerHUD.h/.cpp`
+
+Current behaviour:
+
+- HUD currently displays health, ammo, and coin totals.
+- `Game` updates HUD values per frame and renders HUD in screen-space.
 
 ## LLM integration (prototype)
 

@@ -1,0 +1,4123 @@
+===== LOCAL COMMITS (origin/main..HEAD) =====
+
+
+===== FEATURE COMMITS (main..upgrades) (what will be squashed) =====
+
+2026-04-11 927269f Updated upgrade logic
+
+
+2026-04-12 c5a716c Player Hud added
+
+
+2026-04-12 fe72021 Mouse position bug fixed
+
+
+===== FEATURE PATCH (per commit; main..upgrades) =====
+
+commit 927269f8892f43715a185ce4e9f0de1a7fd8d966
+Author: WollyTech <ayolawole@gmail.com>
+Date:   Sat Apr 11 23:28:54 2026 +0100
+
+    Updated upgrade logic
+
+diff --git a/project-rival/Game.cpp b/project-rival/Game.cpp
+index f921d28..3023be4 100644
+--- a/project-rival/Game.cpp
++++ b/project-rival/Game.cpp
+@@ -312,7 +312,7 @@ void Game::resetGame()
+ 	m_isPlayerCamera = true;
+ 
+ 	m_player.init();
+-	m_player.applyUpgrade(m_pistolUpgradeLevel, m_arUpgradeLevel, m_shotgunUpgradeLevel);
++	m_player.applyUpgrade(m_playerHealthUpgradeLevel, m_playerSpeedUpgradeLevel, m_playerAmmoUpgradeLevel);
+ 	m_isInCombat = false;
+ 	m_isInRoom = true;
+ 
+diff --git a/project-rival/Weapon.cpp b/project-rival/Weapon.cpp
+index c6ce330..489a03c 100644
+--- a/project-rival/Weapon.cpp
++++ b/project-rival/Weapon.cpp
+@@ -8,6 +8,7 @@ Weapon::Weapon(WeaponType type, int level) : w_weaponLevel(level)
+ 
+ void Weapon::init(WeaponType type)
+ {
++	const int level = w_weaponLevel;
+ 	WeaponType weaponType = type;
+ 	switch(weaponType)
+ 	{
+@@ -16,27 +17,27 @@ void Weapon::init(WeaponType type)
+ 			w_shape.setSize(sf::Vector2f(80.f, 20.f));
+ 			w_shape.setFillColor(sf::Color::Blue);
+ 			w_fireMode = FireMode::AUTOMATIC;
+-			w_fireRate = 0.5f + ((w_weaponLevel) / 25);
++			w_fireRate = 0.5f + (0.05f * (level - 1));
+ 			w_rumbleIntensity = Intensity::LOW;
+-			w_damage = 10 * (w_weaponLevel);
++			w_damage = 10 + ((level - 1) * 4);
+ 			break;
+ 
+ 		case ASSAULT_RIFLE:
+ 			w_shape.setSize(sf::Vector2f(120.f, 20.f));
+ 			w_shape.setFillColor(sf::Color::Red);
+ 			w_fireMode = FireMode::AUTOMATIC;
+-			w_fireRate = 0.1f + ((w_weaponLevel) / 25);
++			w_fireRate = 0.1f + (0.02f * (level - 1));
+ 			w_rumbleIntensity = Intensity::MEDIUM;
+-			w_damage = 8 * (w_weaponLevel);
++			w_damage = 6 + ((level - 1) * 2);
+ 			break;
+ 
+ 		case SHOTGUN:
+ 			w_shape.setSize(sf::Vector2f(100.f, 25.f));
+ 			w_shape.setFillColor(sf::Color::Yellow);
+ 			w_fireMode = FireMode::AUTOMATIC;
+-			w_fireRate = 1.f + ((w_weaponLevel) / 25);
++			w_fireRate = 1.f + (0.04f * (level - 1));
+ 			w_rumbleIntensity = Intensity::HIGH;
+-			w_damage = 20 * (w_weaponLevel);
++			w_damage = 15 + ((level - 1) * 5);
+ 			break;
+ 
+ 		// Melee
+diff --git a/project-rival/player.cpp b/project-rival/player.cpp
+index 1ad10f0..443fb5b 100644
+--- a/project-rival/player.cpp
++++ b/project-rival/player.cpp
+@@ -22,9 +22,10 @@ Player::~Player()
+ 
+ void Player::init()
+ {
+-	// stats
++	// Base stats
+ 	p_maxHealth = 100;
+-	p_isDead = false;
++	p_moveSpeed = 200.f;
++	p_playerAmmo = 50;
+ 
+ 	// Weapons
+ 	p_currentWeaponID = 0;
+@@ -71,10 +72,10 @@ void Player::hitWall()
+ 
+ void Player::applyUpgrade(int healthLevel, int speedLevel, int ammoLevel)
+ {
+-	p_maxHealth += healthLevel * 25;
++	p_maxHealth = 100 + (healthLevel-1) * 25;
+ 	p_health = p_maxHealth;
+-	p_moveSpeed += speedLevel * 20.f;
+-	p_playerAmmo += ammoLevel * 10;
++	p_moveSpeed = 200.f + (speedLevel-1) * 20.f;
++	p_playerAmmo = 50 + (ammoLevel-1) * 10;
+ }
+ 
+ bool Player::addWeaponToLoadout(WeaponType type, int level)
+@@ -224,7 +225,7 @@ void Player::ManageWeapons(std::vector<std::unique_ptr<DamageTrigger>>& instanti
+ 			p_currentWeaponID = p_weapons.size() - 1;
+ 	}
+ 
+-	//--------- shooting logic ---------//
++	//--------- attacking logic ---------//
+ 	bool isAttacking = false;
+ 	if (InputManager::pad().rightTrigger() || sf::Mouse::isButtonPressed(sf::Mouse::Button::Left))
+ 	{
+@@ -240,9 +241,19 @@ void Player::ManageWeapons(std::vector<std::unique_ptr<DamageTrigger>>& instanti
+ 		}
+ 		else
+ 		{
+-			auto const bulletsBefore = gameProjectiles.size();
+-			p_weapons[p_currentWeaponID]->fire(fireInfo, gameProjectiles);
+-			isAttacking = (gameProjectiles.size() > bulletsBefore);
++			if (p_playerAmmo > 0)
++			{
++				auto const bulletsBefore = gameProjectiles.size();
++				p_weapons[p_currentWeaponID]->fire(fireInfo, gameProjectiles);
++				isAttacking = (gameProjectiles.size() > bulletsBefore);
++
++				if (isAttacking) {
++					if (WeaponType::SHOTGUN == p_weaponLoadout[p_currentWeaponID].type)
++						p_playerAmmo -= 5; // Shotgun consumes 5 ammo per shot
++					else
++						p_playerAmmo -= 1; // Other guns consume 1 ammo per shot
++				}
++			}
+ 		}
+ 	}
+ 
+
+commit c5a716cebb5d593adcf01d4cbc9be9f073850806
+Author: WollyTech <ayolawole@gmail.com>
+Date:   Sun Apr 12 01:11:18 2026 +0100
+
+    Player Hud added
+
+diff --git a/project-rival/Game.cpp b/project-rival/Game.cpp
+index 3023be4..10cd2f4 100644
+--- a/project-rival/Game.cpp
++++ b/project-rival/Game.cpp
+@@ -48,6 +48,7 @@ void Game::init()
+ 	x_drawFPS.setFillColor(sf::Color::White);
+ #endif
+ 
++	m_hud.init(m_arialFont);
+ 	enterHubWorld();
+ }
+ 
+@@ -247,6 +248,8 @@ void Game::update(float dt)
+ 	{
+ 		cout << "LLM Response: " << *response << "\n";
+ 	}
++
++	m_hud.update(m_player.getHealth(), m_player.getMaxHealth(), m_player.getAmmo(), m_player.getMaxAmmo(), m_coins);
+ }
+ 
+ ////////////////////////////////////////////////////////////
+@@ -291,6 +294,9 @@ void Game::render()
+ 		renderHubShopPrompt();
+ 	}
+ 
++	m_window.setView(m_window.getDefaultView());
++	m_hud.render(m_window);
++
+ #ifdef TEST_FPS
+ 	m_window.draw(x_updateFPS); //ups is 60 and dps is 61
+ 	m_window.draw(x_drawFPS);
+diff --git a/project-rival/Game.h b/project-rival/Game.h
+index 691ce92..bae0e53 100644
+--- a/project-rival/Game.h
++++ b/project-rival/Game.h
+@@ -22,6 +22,8 @@
+ 
+ #include "LLMService.h"
+ 
++#include "PlayerHUD.h"
++
+ using namespace std;
+ using namespace sf;
+ 
+@@ -199,4 +201,7 @@ private:
+ 		sf::Color::Yellow
+ 	};
+ 	int m_playerColorIndex;
++
++	// UI management
++	PlayerHUD m_hud{ m_arialFont };
+ };
+diff --git a/project-rival/PlayerHUD.cpp b/project-rival/PlayerHUD.cpp
+new file mode 100644
+index 0000000..ca046f1
+--- /dev/null
++++ b/project-rival/PlayerHUD.cpp
+@@ -0,0 +1,96 @@
++#include "PlayerHUD.h"
++
++PlayerHUD::PlayerHUD(const sf::Font& font)
++	: m_healthText(font), m_ammoText(font), m_coinsText(font)
++{
++	init(font);
++}
++
++void PlayerHUD::init(const sf::Font& font)
++{
++	// Health Bar
++	m_healthBarBg.setSize({ phud_barWidth, phud_barHeight });
++	m_healthBarBg.setPosition({ phud_marginLeft, phud_marginTop });
++	m_healthBarBg.setFillColor(sf::Color(40, 40, 40)); // Dark gray background
++	m_healthBarBg.setOutlineThickness(2.f);
++	m_healthBarBg.setOutlineColor(sf::Color::White);
++
++	m_healthBar.setSize({ phud_barWidth, phud_barHeight });
++	m_healthBar.setPosition(m_healthBarBg.getPosition());
++	m_healthBar.setFillColor(sf::Color(200, 40, 40)); // Red health bar
++
++	m_healthText.setFont(font);
++	m_healthText.setCharacterSize(14);
++	m_healthText.setFillColor(sf::Color::White);
++
++	// Ammo Bar
++	m_ammoBarBg.setSize({ phud_barWidth, phud_barHeight });
++	m_ammoBarBg.setPosition({ phud_marginLeft, phud_marginTop + phud_barHeight + phud_spacing });
++	m_ammoBarBg.setFillColor(sf::Color(40, 40, 40)); // Dark gray background
++	m_ammoBarBg.setOutlineThickness(2.f);
++	m_ammoBarBg.setOutlineColor(sf::Color::White);
++
++	m_ammoBar.setSize({ phud_barWidth, phud_barHeight });
++	m_ammoBar.setPosition(m_ammoBarBg.getPosition());
++	m_ammoBar.setFillColor(sf::Color(40, 200, 40)); // Green ammo bar
++
++	m_ammoText.setFont(font);
++	m_ammoText.setCharacterSize(14);
++	m_ammoText.setFillColor(sf::Color::White);
++
++	// Coins Text
++	m_coinsText.setFont(font);
++	m_coinsText.setCharacterSize(14);
++	m_coinsText.setFillColor(sf::Color::Yellow);
++	// place coin on the right side of the screen
++}
++
++void PlayerHUD::update(int currentHealth, int maxHealth, int currentAmmo, int maxAmmo, int coins)
++{
++	// Update health bar
++	const float healthPercent = static_cast<float>(currentHealth) / maxHealth;
++	m_healthBar.setSize({ phud_barWidth * healthPercent, phud_barHeight });
++	m_healthText.setString("Health: " + std::to_string(currentHealth) + " / " + std::to_string(maxHealth));
++	centerText(m_healthText, m_healthBarBg);
++
++	// Update ammo bar
++	const float ammoPercent = static_cast<float>(currentAmmo) / maxAmmo;
++	m_ammoBar.setSize({ phud_barWidth * ammoPercent, phud_barHeight });
++	m_ammoText.setString("Ammo: " + std::to_string(currentAmmo) + " / " + std::to_string(maxAmmo));
++	centerText(m_ammoText, m_ammoBarBg);
++
++	// Update coins text
++	m_coinsText.setString("Coins: " + std::to_string(coins));
++	m_coinsText.setPosition({ phud_marginLeft, phud_marginTop + 2 * (phud_barHeight + phud_spacing) });
++}
++
++void PlayerHUD::render(sf::RenderWindow & window)
++{
++	window.draw(m_healthBarBg);
++	window.draw(m_healthBar);
++	window.draw(m_healthText);
++
++	window.draw(m_ammoBarBg);
++	window.draw(m_ammoBar);
++	window.draw(m_ammoText);
++	
++	window.draw(m_coinsText);
++}
++
++void PlayerHUD::centerText(sf::Text & text, const sf::RectangleShape & rect)
++{
++	const sf::FloatRect textBounds = text.getLocalBounds();
++
++	text.setOrigin({
++		textBounds.position.x + textBounds.size.x / 2.f,
++				textBounds.position.y + textBounds.size.y / 2.f
++		});
++
++	const sf::Vector2f rectPos = rect.getPosition();
++	const sf::Vector2f rectSize = rect.getSize();
++
++	text.setPosition({
++		rectPos.x + rectSize.x / 2.f,
++		rectPos.y + rectSize.y / 2.f
++		});
++}
+diff --git a/project-rival/PlayerHUD.h b/project-rival/PlayerHUD.h
+new file mode 100644
+index 0000000..39b73e4
+--- /dev/null
++++ b/project-rival/PlayerHUD.h
+@@ -0,0 +1,31 @@
++#pragma once
++#include <SFML/Graphics.hpp>
++
++class PlayerHUD
++{
++public:
++	PlayerHUD(const sf::Font& font);
++	void init(const sf::Font& font);
++	void update(int currentHealth, int maxHealth, int currentAmmo, int maxAmmo, int coins);
++	void render(sf::RenderWindow& window);
++
++private:
++	void centerText(sf::Text& text, const sf::RectangleShape& rect);
++
++	sf::RectangleShape m_healthBarBg;
++	sf::RectangleShape m_healthBar;
++	sf::Text m_healthText;
++
++	sf::RectangleShape m_ammoBarBg;
++	sf::RectangleShape m_ammoBar;
++	sf::Text m_ammoText;
++
++	sf::Text m_coinsText;
++
++	float phud_barWidth{ 200.f };
++	float phud_barHeight{ 20.f };
++	float phud_marginLeft{ 20.f };
++	float phud_marginTop{ 20.f };
++	float phud_spacing{ 10.f };
++};
++
+diff --git a/project-rival/player.cpp b/project-rival/player.cpp
+index 443fb5b..0c57e70 100644
+--- a/project-rival/player.cpp
++++ b/project-rival/player.cpp
+@@ -25,7 +25,9 @@ void Player::init()
+ 	// Base stats
+ 	p_maxHealth = 100;
+ 	p_moveSpeed = 200.f;
+-	p_playerAmmo = 50;
++	p_maxAmmo = 50;
++	p_playerAmmo = p_maxAmmo;
++
+ 
+ 	// Weapons
+ 	p_currentWeaponID = 0;
+@@ -75,7 +77,8 @@ void Player::applyUpgrade(int healthLevel, int speedLevel, int ammoLevel)
+ 	p_maxHealth = 100 + (healthLevel-1) * 25;
+ 	p_health = p_maxHealth;
+ 	p_moveSpeed = 200.f + (speedLevel-1) * 20.f;
+-	p_playerAmmo = 50 + (ammoLevel-1) * 10;
++	p_maxAmmo = 50 + (ammoLevel-1) * 10;
++	p_playerAmmo = p_maxAmmo;
+ }
+ 
+ bool Player::addWeaponToLoadout(WeaponType type, int level)
+@@ -241,18 +244,20 @@ void Player::ManageWeapons(std::vector<std::unique_ptr<DamageTrigger>>& instanti
+ 		}
+ 		else
+ 		{
+-			if (p_playerAmmo > 0)
++			int ammoCost;
++			if (WeaponType::SHOTGUN == p_weaponLoadout[p_currentWeaponID].type)
++				ammoCost = 5; // Shotgun consumes 5 ammo per shot
++			else
++				ammoCost = 1; // Other guns consume 1 ammo per shot
++
++			if (p_playerAmmo >= ammoCost)
+ 			{
+ 				auto const bulletsBefore = gameProjectiles.size();
+ 				p_weapons[p_currentWeaponID]->fire(fireInfo, gameProjectiles);
+ 				isAttacking = (gameProjectiles.size() > bulletsBefore);
+ 
+-				if (isAttacking) {
+-					if (WeaponType::SHOTGUN == p_weaponLoadout[p_currentWeaponID].type)
+-						p_playerAmmo -= 5; // Shotgun consumes 5 ammo per shot
+-					else
+-						p_playerAmmo -= 1; // Other guns consume 1 ammo per shot
+-				}
++				if (isAttacking)
++					p_playerAmmo -= ammoCost;
+ 			}
+ 		}
+ 	}
+diff --git a/project-rival/player.h b/project-rival/player.h
+index 85df27b..fb1827b 100644
+--- a/project-rival/player.h
++++ b/project-rival/player.h
+@@ -25,7 +25,10 @@ public:
+ 	CollisionProfile getCollisionProfile() const override { return p_collisionProfile; }
+ 	const std::vector<WeaponInLoadout>& getWeaponLoadout() const { return p_weaponLoadout; }
+ 	int getCurrentWeaponID() const { return p_currentWeaponID; }
++	int getHealth() const { return p_health; }
++	int getMaxHealth() const { return p_maxHealth; }
+ 	int getAmmo() const { return p_playerAmmo; }
++	int getMaxAmmo() const { return p_maxAmmo; }
+ 
+ 	void setSpawnPosition(const sf::Vector2f& spawnPos) { p_body.setPosition(spawnPos); }
+ 	void setBodyColor(const sf::Color& color) { p_body.setFillColor(color); }
+@@ -78,6 +81,7 @@ private:
+ 	int p_maxHealth;
+ 	int p_health;
+ 	bool p_isDead;
++	int p_maxAmmo;
+ 	int p_playerAmmo;
+ 	float p_moveSpeed{ 200.f };
+ 
+diff --git a/project-rival/project-rival.vcxproj b/project-rival/project-rival.vcxproj
+index 006a158..e3fd53b 100644
+--- a/project-rival/project-rival.vcxproj
++++ b/project-rival/project-rival.vcxproj
+@@ -28,6 +28,7 @@
+     <ClCompile Include="FloorLayout.cpp" />
+     <ClCompile Include="LLMService.cpp" />
+     <ClCompile Include="NormalBulletProjectile.cpp" />
++    <ClCompile Include="PlayerHUD.cpp" />
+     <ClCompile Include="PlayerWeapons.cpp" />
+     <ClCompile Include="PortalRoom.cpp" />
+     <ClCompile Include="Projectile.cpp" />
+@@ -58,6 +59,7 @@
+     <ClInclude Include="FloorLayout.h" />
+     <ClInclude Include="LLMService.h" />
+     <ClInclude Include="NormalBulletProjectile.h" />
++    <ClInclude Include="PlayerHUD.h" />
+     <ClInclude Include="PlayerWeapons.h" />
+     <ClInclude Include="PortalRoom.h" />
+     <ClInclude Include="Projectile.h" />
+diff --git a/project-rival/project-rival.vcxproj.filters b/project-rival/project-rival.vcxproj.filters
+index d569577..facfbc0 100644
+--- a/project-rival/project-rival.vcxproj.filters
++++ b/project-rival/project-rival.vcxproj.filters
+@@ -139,6 +139,12 @@
+     <Filter Include="Header Files\Weapons\DamageTrigger">
+       <UniqueIdentifier>{ee532bbc-f880-4db6-afc6-41a060c4bf8c}</UniqueIdentifier>
+     </Filter>
++    <Filter Include="Header Files\UI">
++      <UniqueIdentifier>{886284c3-c66a-45d7-9687-30a3fc07881d}</UniqueIdentifier>
++    </Filter>
++    <Filter Include="Header Files\UI\HUD">
++      <UniqueIdentifier>{6c66099b-197f-457f-960e-fc128c1d85f7}</UniqueIdentifier>
++    </Filter>
+   </ItemGroup>
+   <ItemGroup>
+     <ClCompile Include="main.cpp">
+@@ -228,6 +234,9 @@
+     <ClCompile Include="DamageTrigger.cpp">
+       <Filter>Header Files\Weapons\DamageTrigger</Filter>
+     </ClCompile>
++    <ClCompile Include="PlayerHUD.cpp">
++      <Filter>Header Files\UI\HUD</Filter>
++    </ClCompile>
+   </ItemGroup>
+   <ItemGroup>
+     <ClInclude Include="Game.h">
+@@ -329,6 +338,9 @@
+     <ClInclude Include="DamageTrigger.h">
+       <Filter>Header Files\Weapons\DamageTrigger</Filter>
+     </ClInclude>
++    <ClInclude Include="PlayerHUD.h">
++      <Filter>Header Files\UI\HUD</Filter>
++    </ClInclude>
+   </ItemGroup>
+   <ItemGroup>
+     <Image Include="ASSETS\IMAGES\SFML-LOGO.png">
+
+commit fe7202170c7687809a2bbbb85d83aae28f965732
+Author: WollyTech <ayolawole@gmail.com>
+Date:   Sun Apr 12 01:49:52 2026 +0100
+
+    Mouse position bug fixed
+
+diff --git a/project-rival/Game.cpp b/project-rival/Game.cpp
+index 10cd2f4..b49b97f 100644
+--- a/project-rival/Game.cpp
++++ b/project-rival/Game.cpp
+@@ -147,7 +147,15 @@ void Game::processGameEvents(const sf::Event& event)
+ void Game::update(float dt)
+ {
+ 	const Vector2i mousePos = Mouse::getPosition(m_window);
+-	const Vector2f mousePosF = m_window.mapPixelToCoords(mousePos);
++	sf::View inputView;
++	if (m_isPlayerCamera) {
++		inputView = m_playerCamera;
++		inputView.setCenter(m_player.getPosition());
++	}
++	else {
++		inputView = m_floorCamera;
++	}
++	const sf::Vector2f mousePosF = static_cast<sf::Vector2f>(m_window.mapPixelToCoords(mousePos, inputView));
+ 
+ 	InputManager::update();
+ 	
+@@ -168,7 +176,7 @@ void Game::update(float dt)
+ 	updateActiveRoom();
+ 
+ 	// Update player and enemies
+-	m_player.update(dt, mousePosF, m_gameProjectiles, m_activeDamageTriggers);
++	m_player.update(dt, mousePosF, mousePos, m_gameProjectiles, m_activeDamageTriggers);
+ 
+ 	for (auto enemy_it = m_enemies.begin(); enemy_it != m_enemies.end();)
+ 	{
+diff --git a/project-rival/player.cpp b/project-rival/player.cpp
+index 0c57e70..a9c6937 100644
+--- a/project-rival/player.cpp
++++ b/project-rival/player.cpp
+@@ -36,14 +36,14 @@ void Player::init()
+ 	reset();
+ }
+ 
+-void Player::update(float dt, const sf::Vector2f& mousePos, 
++void Player::update(float dt, const sf::Vector2f& mousePos, const sf::Vector2i& mousePixelPos,
+ 	std::vector<std::unique_ptr<Projectile>>& gameProjectiles, 
+ 	std::vector<std::unique_ptr<DamageTrigger>>& instantiableTriggers)
+ {
+ 	p_prevPos = p_body.getPosition();
+ 
+ 	handleMovement(dt);
+-	handleAiming(mousePos);
++	handleAiming(mousePos, mousePixelPos);
+ 
+ 	ManageWeapons(instantiableTriggers, gameProjectiles, dt);
+ }
+@@ -183,7 +183,7 @@ void Player::handleMovement(float dt)
+ 	p_body.move(p_velocity * dt);
+ }
+ 
+-void Player::handleAiming(const sf::Vector2f mousePos)
++void Player::handleAiming(const sf::Vector2f& mouseWorldPos, const sf::Vector2i& mousePixelPos)
+ {
+ 	//--------- aiming logic ---------//
+ 	
+@@ -191,8 +191,9 @@ void Player::handleAiming(const sf::Vector2f mousePos)
+ 	const sf::Vector2f rs = InputManager::pad().rightStick();
+ 	const bool isRSMoved = (rs.x != 0.f || rs.y != 0.f);
+ 
+-	const sf::Vector2f mouseDelta = mousePos - p_prevMousePos;
+-	const bool isMouseMoved = (length(mouseDelta) > 0.5f);
++	const sf::Vector2f mouseDelta = mouseWorldPos - p_prevMousePos;
++	const sf::Vector2i mousePixelDelta = mousePixelPos - p_prevMousePixelPos;
++	const bool isMouseMoved = (mousePixelDelta.x != 0 || mousePixelDelta.y != 0);
+ 
+ 	if (isRSMoved) p_isController = true;
+ 	else if (isMouseMoved) p_isController = false;
+@@ -200,7 +201,7 @@ void Player::handleAiming(const sf::Vector2f mousePos)
+ 	// Calculate and normalise aim direction
+ 	sf::Vector2f aimVector;
+ 	if (p_isController) aimVector = rs;
+-	else aimVector = mousePos - p_body.getPosition();
++	else aimVector = mouseWorldPos - p_body.getPosition();
+ 
+ 	if (aimVector != sf::Vector2f(0.f, 0.f))	// avoid crash out on controller since we can't normalise a zero vector
+ 		p_aimDir = aimVector.normalized();
+@@ -208,8 +209,8 @@ void Player::handleAiming(const sf::Vector2f mousePos)
+ 
+ 	p_reticle.setPosition(p_body.getPosition() + p_aimDir * p_reticleDistance);
+ 
+-	p_prevMousePos = mousePos;
+-
++	p_prevMousePos = mouseWorldPos;
++	p_prevMousePixelPos = mousePixelPos;
+ }
+ 
+ void Player::ManageWeapons(std::vector<std::unique_ptr<DamageTrigger>>& instantiableTriggers, std::vector<std::unique_ptr<Projectile>>& gameProjectiles, float dt)
+diff --git a/project-rival/player.h b/project-rival/player.h
+index fb1827b..69422cf 100644
+--- a/project-rival/player.h
++++ b/project-rival/player.h
+@@ -17,7 +17,11 @@ public:
+ 	~Player();
+ 
+ 	void init();
+-	void update(float dt, const sf::Vector2f& mousePos, std::vector<std::unique_ptr<Projectile>>& gameProjectiles, std::vector<std::unique_ptr<DamageTrigger>>& instantiableTriggers);
++	void update(float dt, 
++		const sf::Vector2f& mouseWorldPos,
++		const sf::Vector2i& mousePixelPos,
++		std::vector<std::unique_ptr<Projectile>>& gameProjectiles, 
++		std::vector<std::unique_ptr<DamageTrigger>>& instantiableTriggers);
+ 	void render(sf::RenderWindow& window);
+ 
+ 	const sf::Vector2f getPosition() const { return p_body.getPosition(); }
+@@ -52,7 +56,7 @@ private:
+ 	void startUp();
+ 	void reset();
+ 	void handleMovement(float dt);
+-	void handleAiming(const sf::Vector2f mousePos);
++	void handleAiming(const sf::Vector2f& mouseWorldPos, const sf::Vector2i& mousePixelPos);
+ 	void ManageWeapons(std::vector<std::unique_ptr<DamageTrigger>>& instantiableTriggers, std::vector<std::unique_ptr<Projectile>>& gameProjectiles, float dt);
+ 
+ 
+@@ -73,6 +77,7 @@ private:
+ 	sf::Vector2f p_aimDir{ 0.f,0.f };
+ 	float p_reticleDistance;
+ 	sf::Vector2f p_prevMousePos;
++	sf::Vector2i p_prevMousePixelPos;
+ 
+ 	// collsion
+ 	CollisionProfile p_collisionProfile;
+
+===== STAGED DIFF SUMMARY (git diff --cached --name-status) =====
+
+M	project-rival/Game.cpp
+M	project-rival/Game.h
+A	project-rival/PlayerHUD.cpp
+A	project-rival/PlayerHUD.h
+M	project-rival/Weapon.cpp
+M	project-rival/player.cpp
+M	project-rival/player.h
+M	project-rival/project-rival.vcxproj
+M	project-rival/project-rival.vcxproj.filters
+
+===== STAGED PATCH (git diff --cached; what will be committed on main) =====
+
+diff --git a/project-rival/Game.cpp b/project-rival/Game.cpp
+index f921d28..b49b97f 100644
+--- a/project-rival/Game.cpp
++++ b/project-rival/Game.cpp
+@@ -48,6 +48,7 @@ void Game::init()
+ 	x_drawFPS.setFillColor(sf::Color::White);
+ #endif
+ 
++	m_hud.init(m_arialFont);
+ 	enterHubWorld();
+ }
+ 
+@@ -146,7 +147,15 @@ void Game::processGameEvents(const sf::Event& event)
+ void Game::update(float dt)
+ {
+ 	const Vector2i mousePos = Mouse::getPosition(m_window);
+-	const Vector2f mousePosF = m_window.mapPixelToCoords(mousePos);
++	sf::View inputView;
++	if (m_isPlayerCamera) {
++		inputView = m_playerCamera;
++		inputView.setCenter(m_player.getPosition());
++	}
++	else {
++		inputView = m_floorCamera;
++	}
++	const sf::Vector2f mousePosF = static_cast<sf::Vector2f>(m_window.mapPixelToCoords(mousePos, inputView));
+ 
+ 	InputManager::update();
+ 	
+@@ -167,7 +176,7 @@ void Game::update(float dt)
+ 	updateActiveRoom();
+ 
+ 	// Update player and enemies
+-	m_player.update(dt, mousePosF, m_gameProjectiles, m_activeDamageTriggers);
++	m_player.update(dt, mousePosF, mousePos, m_gameProjectiles, m_activeDamageTriggers);
+ 
+ 	for (auto enemy_it = m_enemies.begin(); enemy_it != m_enemies.end();)
+ 	{
+@@ -247,6 +256,8 @@ void Game::update(float dt)
+ 	{
+ 		cout << "LLM Response: " << *response << "\n";
+ 	}
++
++	m_hud.update(m_player.getHealth(), m_player.getMaxHealth(), m_player.getAmmo(), m_player.getMaxAmmo(), m_coins);
+ }
+ 
+ ////////////////////////////////////////////////////////////
+@@ -291,6 +302,9 @@ void Game::render()
+ 		renderHubShopPrompt();
+ 	}
+ 
++	m_window.setView(m_window.getDefaultView());
++	m_hud.render(m_window);
++
+ #ifdef TEST_FPS
+ 	m_window.draw(x_updateFPS); //ups is 60 and dps is 61
+ 	m_window.draw(x_drawFPS);
+@@ -312,7 +326,7 @@ void Game::resetGame()
+ 	m_isPlayerCamera = true;
+ 
+ 	m_player.init();
+-	m_player.applyUpgrade(m_pistolUpgradeLevel, m_arUpgradeLevel, m_shotgunUpgradeLevel);
++	m_player.applyUpgrade(m_playerHealthUpgradeLevel, m_playerSpeedUpgradeLevel, m_playerAmmoUpgradeLevel);
+ 	m_isInCombat = false;
+ 	m_isInRoom = true;
+ 
+diff --git a/project-rival/Game.h b/project-rival/Game.h
+index 691ce92..bae0e53 100644
+--- a/project-rival/Game.h
++++ b/project-rival/Game.h
+@@ -22,6 +22,8 @@
+ 
+ #include "LLMService.h"
+ 
++#include "PlayerHUD.h"
++
+ using namespace std;
+ using namespace sf;
+ 
+@@ -199,4 +201,7 @@ private:
+ 		sf::Color::Yellow
+ 	};
+ 	int m_playerColorIndex;
++
++	// UI management
++	PlayerHUD m_hud{ m_arialFont };
+ };
+diff --git a/project-rival/PlayerHUD.cpp b/project-rival/PlayerHUD.cpp
+new file mode 100644
+index 0000000..ca046f1
+--- /dev/null
++++ b/project-rival/PlayerHUD.cpp
+@@ -0,0 +1,96 @@
++#include "PlayerHUD.h"
++
++PlayerHUD::PlayerHUD(const sf::Font& font)
++	: m_healthText(font), m_ammoText(font), m_coinsText(font)
++{
++	init(font);
++}
++
++void PlayerHUD::init(const sf::Font& font)
++{
++	// Health Bar
++	m_healthBarBg.setSize({ phud_barWidth, phud_barHeight });
++	m_healthBarBg.setPosition({ phud_marginLeft, phud_marginTop });
++	m_healthBarBg.setFillColor(sf::Color(40, 40, 40)); // Dark gray background
++	m_healthBarBg.setOutlineThickness(2.f);
++	m_healthBarBg.setOutlineColor(sf::Color::White);
++
++	m_healthBar.setSize({ phud_barWidth, phud_barHeight });
++	m_healthBar.setPosition(m_healthBarBg.getPosition());
++	m_healthBar.setFillColor(sf::Color(200, 40, 40)); // Red health bar
++
++	m_healthText.setFont(font);
++	m_healthText.setCharacterSize(14);
++	m_healthText.setFillColor(sf::Color::White);
++
++	// Ammo Bar
++	m_ammoBarBg.setSize({ phud_barWidth, phud_barHeight });
++	m_ammoBarBg.setPosition({ phud_marginLeft, phud_marginTop + phud_barHeight + phud_spacing });
++	m_ammoBarBg.setFillColor(sf::Color(40, 40, 40)); // Dark gray background
++	m_ammoBarBg.setOutlineThickness(2.f);
++	m_ammoBarBg.setOutlineColor(sf::Color::White);
++
++	m_ammoBar.setSize({ phud_barWidth, phud_barHeight });
++	m_ammoBar.setPosition(m_ammoBarBg.getPosition());
++	m_ammoBar.setFillColor(sf::Color(40, 200, 40)); // Green ammo bar
++
++	m_ammoText.setFont(font);
++	m_ammoText.setCharacterSize(14);
++	m_ammoText.setFillColor(sf::Color::White);
++
++	// Coins Text
++	m_coinsText.setFont(font);
++	m_coinsText.setCharacterSize(14);
++	m_coinsText.setFillColor(sf::Color::Yellow);
++	// place coin on the right side of the screen
++}
++
++void PlayerHUD::update(int currentHealth, int maxHealth, int currentAmmo, int maxAmmo, int coins)
++{
++	// Update health bar
++	const float healthPercent = static_cast<float>(currentHealth) / maxHealth;
++	m_healthBar.setSize({ phud_barWidth * healthPercent, phud_barHeight });
++	m_healthText.setString("Health: " + std::to_string(currentHealth) + " / " + std::to_string(maxHealth));
++	centerText(m_healthText, m_healthBarBg);
++
++	// Update ammo bar
++	const float ammoPercent = static_cast<float>(currentAmmo) / maxAmmo;
++	m_ammoBar.setSize({ phud_barWidth * ammoPercent, phud_barHeight });
++	m_ammoText.setString("Ammo: " + std::to_string(currentAmmo) + " / " + std::to_string(maxAmmo));
++	centerText(m_ammoText, m_ammoBarBg);
++
++	// Update coins text
++	m_coinsText.setString("Coins: " + std::to_string(coins));
++	m_coinsText.setPosition({ phud_marginLeft, phud_marginTop + 2 * (phud_barHeight + phud_spacing) });
++}
++
++void PlayerHUD::render(sf::RenderWindow & window)
++{
++	window.draw(m_healthBarBg);
++	window.draw(m_healthBar);
++	window.draw(m_healthText);
++
++	window.draw(m_ammoBarBg);
++	window.draw(m_ammoBar);
++	window.draw(m_ammoText);
++	
++	window.draw(m_coinsText);
++}
++
++void PlayerHUD::centerText(sf::Text & text, const sf::RectangleShape & rect)
++{
++	const sf::FloatRect textBounds = text.getLocalBounds();
++
++	text.setOrigin({
++		textBounds.position.x + textBounds.size.x / 2.f,
++				textBounds.position.y + textBounds.size.y / 2.f
++		});
++
++	const sf::Vector2f rectPos = rect.getPosition();
++	const sf::Vector2f rectSize = rect.getSize();
++
++	text.setPosition({
++		rectPos.x + rectSize.x / 2.f,
++		rectPos.y + rectSize.y / 2.f
++		});
++}
+diff --git a/project-rival/PlayerHUD.h b/project-rival/PlayerHUD.h
+new file mode 100644
+index 0000000..39b73e4
+--- /dev/null
++++ b/project-rival/PlayerHUD.h
+@@ -0,0 +1,31 @@
++#pragma once
++#include <SFML/Graphics.hpp>
++
++class PlayerHUD
++{
++public:
++	PlayerHUD(const sf::Font& font);
++	void init(const sf::Font& font);
++	void update(int currentHealth, int maxHealth, int currentAmmo, int maxAmmo, int coins);
++	void render(sf::RenderWindow& window);
++
++private:
++	void centerText(sf::Text& text, const sf::RectangleShape& rect);
++
++	sf::RectangleShape m_healthBarBg;
++	sf::RectangleShape m_healthBar;
++	sf::Text m_healthText;
++
++	sf::RectangleShape m_ammoBarBg;
++	sf::RectangleShape m_ammoBar;
++	sf::Text m_ammoText;
++
++	sf::Text m_coinsText;
++
++	float phud_barWidth{ 200.f };
++	float phud_barHeight{ 20.f };
++	float phud_marginLeft{ 20.f };
++	float phud_marginTop{ 20.f };
++	float phud_spacing{ 10.f };
++};
++
+diff --git a/project-rival/Weapon.cpp b/project-rival/Weapon.cpp
+index c6ce330..489a03c 100644
+--- a/project-rival/Weapon.cpp
++++ b/project-rival/Weapon.cpp
+@@ -8,6 +8,7 @@ Weapon::Weapon(WeaponType type, int level) : w_weaponLevel(level)
+ 
+ void Weapon::init(WeaponType type)
+ {
++	const int level = w_weaponLevel;
+ 	WeaponType weaponType = type;
+ 	switch(weaponType)
+ 	{
+@@ -16,27 +17,27 @@ void Weapon::init(WeaponType type)
+ 			w_shape.setSize(sf::Vector2f(80.f, 20.f));
+ 			w_shape.setFillColor(sf::Color::Blue);
+ 			w_fireMode = FireMode::AUTOMATIC;
+-			w_fireRate = 0.5f + ((w_weaponLevel) / 25);
++			w_fireRate = 0.5f + (0.05f * (level - 1));
+ 			w_rumbleIntensity = Intensity::LOW;
+-			w_damage = 10 * (w_weaponLevel);
++			w_damage = 10 + ((level - 1) * 4);
+ 			break;
+ 
+ 		case ASSAULT_RIFLE:
+ 			w_shape.setSize(sf::Vector2f(120.f, 20.f));
+ 			w_shape.setFillColor(sf::Color::Red);
+ 			w_fireMode = FireMode::AUTOMATIC;
+-			w_fireRate = 0.1f + ((w_weaponLevel) / 25);
++			w_fireRate = 0.1f + (0.02f * (level - 1));
+ 			w_rumbleIntensity = Intensity::MEDIUM;
+-			w_damage = 8 * (w_weaponLevel);
++			w_damage = 6 + ((level - 1) * 2);
+ 			break;
+ 
+ 		case SHOTGUN:
+ 			w_shape.setSize(sf::Vector2f(100.f, 25.f));
+ 			w_shape.setFillColor(sf::Color::Yellow);
+ 			w_fireMode = FireMode::AUTOMATIC;
+-			w_fireRate = 1.f + ((w_weaponLevel) / 25);
++			w_fireRate = 1.f + (0.04f * (level - 1));
+ 			w_rumbleIntensity = Intensity::HIGH;
+-			w_damage = 20 * (w_weaponLevel);
++			w_damage = 15 + ((level - 1) * 5);
+ 			break;
+ 
+ 		// Melee
+diff --git a/project-rival/player.cpp b/project-rival/player.cpp
+index 1ad10f0..a9c6937 100644
+--- a/project-rival/player.cpp
++++ b/project-rival/player.cpp
+@@ -22,9 +22,12 @@ Player::~Player()
+ 
+ void Player::init()
+ {
+-	// stats
++	// Base stats
+ 	p_maxHealth = 100;
+-	p_isDead = false;
++	p_moveSpeed = 200.f;
++	p_maxAmmo = 50;
++	p_playerAmmo = p_maxAmmo;
++
+ 
+ 	// Weapons
+ 	p_currentWeaponID = 0;
+@@ -33,14 +36,14 @@ void Player::init()
+ 	reset();
+ }
+ 
+-void Player::update(float dt, const sf::Vector2f& mousePos, 
++void Player::update(float dt, const sf::Vector2f& mousePos, const sf::Vector2i& mousePixelPos,
+ 	std::vector<std::unique_ptr<Projectile>>& gameProjectiles, 
+ 	std::vector<std::unique_ptr<DamageTrigger>>& instantiableTriggers)
+ {
+ 	p_prevPos = p_body.getPosition();
+ 
+ 	handleMovement(dt);
+-	handleAiming(mousePos);
++	handleAiming(mousePos, mousePixelPos);
+ 
+ 	ManageWeapons(instantiableTriggers, gameProjectiles, dt);
+ }
+@@ -71,10 +74,11 @@ void Player::hitWall()
+ 
+ void Player::applyUpgrade(int healthLevel, int speedLevel, int ammoLevel)
+ {
+-	p_maxHealth += healthLevel * 25;
++	p_maxHealth = 100 + (healthLevel-1) * 25;
+ 	p_health = p_maxHealth;
+-	p_moveSpeed += speedLevel * 20.f;
+-	p_playerAmmo += ammoLevel * 10;
++	p_moveSpeed = 200.f + (speedLevel-1) * 20.f;
++	p_maxAmmo = 50 + (ammoLevel-1) * 10;
++	p_playerAmmo = p_maxAmmo;
+ }
+ 
+ bool Player::addWeaponToLoadout(WeaponType type, int level)
+@@ -179,7 +183,7 @@ void Player::handleMovement(float dt)
+ 	p_body.move(p_velocity * dt);
+ }
+ 
+-void Player::handleAiming(const sf::Vector2f mousePos)
++void Player::handleAiming(const sf::Vector2f& mouseWorldPos, const sf::Vector2i& mousePixelPos)
+ {
+ 	//--------- aiming logic ---------//
+ 	
+@@ -187,8 +191,9 @@ void Player::handleAiming(const sf::Vector2f mousePos)
+ 	const sf::Vector2f rs = InputManager::pad().rightStick();
+ 	const bool isRSMoved = (rs.x != 0.f || rs.y != 0.f);
+ 
+-	const sf::Vector2f mouseDelta = mousePos - p_prevMousePos;
+-	const bool isMouseMoved = (length(mouseDelta) > 0.5f);
++	const sf::Vector2f mouseDelta = mouseWorldPos - p_prevMousePos;
++	const sf::Vector2i mousePixelDelta = mousePixelPos - p_prevMousePixelPos;
++	const bool isMouseMoved = (mousePixelDelta.x != 0 || mousePixelDelta.y != 0);
+ 
+ 	if (isRSMoved) p_isController = true;
+ 	else if (isMouseMoved) p_isController = false;
+@@ -196,7 +201,7 @@ void Player::handleAiming(const sf::Vector2f mousePos)
+ 	// Calculate and normalise aim direction
+ 	sf::Vector2f aimVector;
+ 	if (p_isController) aimVector = rs;
+-	else aimVector = mousePos - p_body.getPosition();
++	else aimVector = mouseWorldPos - p_body.getPosition();
+ 
+ 	if (aimVector != sf::Vector2f(0.f, 0.f))	// avoid crash out on controller since we can't normalise a zero vector
+ 		p_aimDir = aimVector.normalized();
+@@ -204,8 +209,8 @@ void Player::handleAiming(const sf::Vector2f mousePos)
+ 
+ 	p_reticle.setPosition(p_body.getPosition() + p_aimDir * p_reticleDistance);
+ 
+-	p_prevMousePos = mousePos;
+-
++	p_prevMousePos = mouseWorldPos;
++	p_prevMousePixelPos = mousePixelPos;
+ }
+ 
+ void Player::ManageWeapons(std::vector<std::unique_ptr<DamageTrigger>>& instantiableTriggers, std::vector<std::unique_ptr<Projectile>>& gameProjectiles, float dt)
+@@ -224,7 +229,7 @@ void Player::ManageWeapons(std::vector<std::unique_ptr<DamageTrigger>>& instanti
+ 			p_currentWeaponID = p_weapons.size() - 1;
+ 	}
+ 
+-	//--------- shooting logic ---------//
++	//--------- attacking logic ---------//
+ 	bool isAttacking = false;
+ 	if (InputManager::pad().rightTrigger() || sf::Mouse::isButtonPressed(sf::Mouse::Button::Left))
+ 	{
+@@ -240,9 +245,21 @@ void Player::ManageWeapons(std::vector<std::unique_ptr<DamageTrigger>>& instanti
+ 		}
+ 		else
+ 		{
+-			auto const bulletsBefore = gameProjectiles.size();
+-			p_weapons[p_currentWeaponID]->fire(fireInfo, gameProjectiles);
+-			isAttacking = (gameProjectiles.size() > bulletsBefore);
++			int ammoCost;
++			if (WeaponType::SHOTGUN == p_weaponLoadout[p_currentWeaponID].type)
++				ammoCost = 5; // Shotgun consumes 5 ammo per shot
++			else
++				ammoCost = 1; // Other guns consume 1 ammo per shot
++
++			if (p_playerAmmo >= ammoCost)
++			{
++				auto const bulletsBefore = gameProjectiles.size();
++				p_weapons[p_currentWeaponID]->fire(fireInfo, gameProjectiles);
++				isAttacking = (gameProjectiles.size() > bulletsBefore);
++
++				if (isAttacking)
++					p_playerAmmo -= ammoCost;
++			}
+ 		}
+ 	}
+ 
+diff --git a/project-rival/player.h b/project-rival/player.h
+index 85df27b..69422cf 100644
+--- a/project-rival/player.h
++++ b/project-rival/player.h
+@@ -17,7 +17,11 @@ public:
+ 	~Player();
+ 
+ 	void init();
+-	void update(float dt, const sf::Vector2f& mousePos, std::vector<std::unique_ptr<Projectile>>& gameProjectiles, std::vector<std::unique_ptr<DamageTrigger>>& instantiableTriggers);
++	void update(float dt, 
++		const sf::Vector2f& mouseWorldPos,
++		const sf::Vector2i& mousePixelPos,
++		std::vector<std::unique_ptr<Projectile>>& gameProjectiles, 
++		std::vector<std::unique_ptr<DamageTrigger>>& instantiableTriggers);
+ 	void render(sf::RenderWindow& window);
+ 
+ 	const sf::Vector2f getPosition() const { return p_body.getPosition(); }
+@@ -25,7 +29,10 @@ public:
+ 	CollisionProfile getCollisionProfile() const override { return p_collisionProfile; }
+ 	const std::vector<WeaponInLoadout>& getWeaponLoadout() const { return p_weaponLoadout; }
+ 	int getCurrentWeaponID() const { return p_currentWeaponID; }
++	int getHealth() const { return p_health; }
++	int getMaxHealth() const { return p_maxHealth; }
+ 	int getAmmo() const { return p_playerAmmo; }
++	int getMaxAmmo() const { return p_maxAmmo; }
+ 
+ 	void setSpawnPosition(const sf::Vector2f& spawnPos) { p_body.setPosition(spawnPos); }
+ 	void setBodyColor(const sf::Color& color) { p_body.setFillColor(color); }
+@@ -49,7 +56,7 @@ private:
+ 	void startUp();
+ 	void reset();
+ 	void handleMovement(float dt);
+-	void handleAiming(const sf::Vector2f mousePos);
++	void handleAiming(const sf::Vector2f& mouseWorldPos, const sf::Vector2i& mousePixelPos);
+ 	void ManageWeapons(std::vector<std::unique_ptr<DamageTrigger>>& instantiableTriggers, std::vector<std::unique_ptr<Projectile>>& gameProjectiles, float dt);
+ 
+ 
+@@ -70,6 +77,7 @@ private:
+ 	sf::Vector2f p_aimDir{ 0.f,0.f };
+ 	float p_reticleDistance;
+ 	sf::Vector2f p_prevMousePos;
++	sf::Vector2i p_prevMousePixelPos;
+ 
+ 	// collsion
+ 	CollisionProfile p_collisionProfile;
+@@ -78,6 +86,7 @@ private:
+ 	int p_maxHealth;
+ 	int p_health;
+ 	bool p_isDead;
++	int p_maxAmmo;
+ 	int p_playerAmmo;
+ 	float p_moveSpeed{ 200.f };
+ 
+diff --git a/project-rival/project-rival.vcxproj b/project-rival/project-rival.vcxproj
+index 006a158..e3fd53b 100644
+--- a/project-rival/project-rival.vcxproj
++++ b/project-rival/project-rival.vcxproj
+@@ -28,6 +28,7 @@
+     <ClCompile Include="FloorLayout.cpp" />
+     <ClCompile Include="LLMService.cpp" />
+     <ClCompile Include="NormalBulletProjectile.cpp" />
++    <ClCompile Include="PlayerHUD.cpp" />
+     <ClCompile Include="PlayerWeapons.cpp" />
+     <ClCompile Include="PortalRoom.cpp" />
+     <ClCompile Include="Projectile.cpp" />
+@@ -58,6 +59,7 @@
+     <ClInclude Include="FloorLayout.h" />
+     <ClInclude Include="LLMService.h" />
+     <ClInclude Include="NormalBulletProjectile.h" />
++    <ClInclude Include="PlayerHUD.h" />
+     <ClInclude Include="PlayerWeapons.h" />
+     <ClInclude Include="PortalRoom.h" />
+     <ClInclude Include="Projectile.h" />
+diff --git a/project-rival/project-rival.vcxproj.filters b/project-rival/project-rival.vcxproj.filters
+index d569577..facfbc0 100644
+--- a/project-rival/project-rival.vcxproj.filters
++++ b/project-rival/project-rival.vcxproj.filters
+@@ -139,6 +139,12 @@
+     <Filter Include="Header Files\Weapons\DamageTrigger">
+       <UniqueIdentifier>{ee532bbc-f880-4db6-afc6-41a060c4bf8c}</UniqueIdentifier>
+     </Filter>
++    <Filter Include="Header Files\UI">
++      <UniqueIdentifier>{886284c3-c66a-45d7-9687-30a3fc07881d}</UniqueIdentifier>
++    </Filter>
++    <Filter Include="Header Files\UI\HUD">
++      <UniqueIdentifier>{6c66099b-197f-457f-960e-fc128c1d85f7}</UniqueIdentifier>
++    </Filter>
+   </ItemGroup>
+   <ItemGroup>
+     <ClCompile Include="main.cpp">
+@@ -228,6 +234,9 @@
+     <ClCompile Include="DamageTrigger.cpp">
+       <Filter>Header Files\Weapons\DamageTrigger</Filter>
+     </ClCompile>
++    <ClCompile Include="PlayerHUD.cpp">
++      <Filter>Header Files\UI\HUD</Filter>
++    </ClCompile>
+   </ItemGroup>
+   <ItemGroup>
+     <ClInclude Include="Game.h">
+@@ -329,6 +338,9 @@
+     <ClInclude Include="DamageTrigger.h">
+       <Filter>Header Files\Weapons\DamageTrigger</Filter>
+     </ClInclude>
++    <ClInclude Include="PlayerHUD.h">
++      <Filter>Header Files\UI\HUD</Filter>
++    </ClInclude>
+   </ItemGroup>
+   <ItemGroup>
+     <Image Include="ASSETS\IMAGES\SFML-LOGO.png">
+
+===== STAGED FILE CONTENTS (index blobs; skips deletions + binaries) =====
+
+===== FILE: project-rival/Game.cpp =====
+#include "Game.h"
+#include "InputManager.h"
+
+#include "GruntEnemy.h"
+#include "TurretEnemy.h"
+
+#include "CombatRoom.h"
+#include "PortalRoom.h"
+#include "SpawnRoom.h"
+
+#include "RoomDoorUtils.h"
+
+#include <iostream>
+#include <string>
+
+// Our target FPS
+static double const FPS{ 60.0f };
+
+////////////////////////////////////////////////////////////
+Game::Game()
+	: m_window(sf::VideoMode(sf::Vector2u(ScreenSize::s_width, ScreenSize::s_height), 32), "FYP: Dungeonish Crawler", sf::Style::Default)
+{
+	m_llmManager.initAsync("ASSETS/LLM/MODELS/Llama-3.2-1B-Instruct-Q4_K_M.gguf");
+
+	srand(time(NULL));
+	init();
+}
+
+////////////////////////////////////////////////////////////
+void Game::init()
+{
+	// Really only necessary is our target FPS is greater than 60.
+	m_window.setVerticalSyncEnabled(true);
+	
+	if (!m_arialFont.openFromFile("ASSETS/FONTS/ariblk.ttf"))
+	{
+		std::cout << "Error loading font file";
+	}
+
+#ifdef TEST_FPS
+	x_updateFPS.setFont(m_arialFont);
+	x_updateFPS.setPosition(sf::Vector2f(20, 300));
+	x_updateFPS.setCharacterSize(24);
+	x_updateFPS.setFillColor(sf::Color::White);
+	x_drawFPS.setFont(m_arialFont);
+	x_drawFPS.setPosition(sf::Vector2f(20, 350));
+	x_drawFPS.setCharacterSize(24);
+	x_drawFPS.setFillColor(sf::Color::White);
+#endif
+
+	m_hud.init(m_arialFont);
+	enterHubWorld();
+}
+
+////////////////////////////////////////////////////////////
+void Game::run()
+{
+	sf::Clock clock;
+	sf::Time timeSinceLastUpdate = sf::Time::Zero;
+	
+	sf::Time timePerFrame = sf::seconds(1.0f / FPS); // 60 fps
+	while (m_window.isOpen())
+	{
+		processEvents(); // as many as possible
+		timeSinceLastUpdate += clock.restart();
+		while (timeSinceLastUpdate > timePerFrame)
+		{
+			timeSinceLastUpdate -= timePerFrame;
+			processEvents(); // at least 60 fps
+			update(timePerFrame.asSeconds()); //60 fps
+#ifdef TEST_FPS
+			x_secondTime += timePerFrame;
+			x_updateFrameCount++;
+			if (x_secondTime.asSeconds() > 1)
+			{
+				std::string updatesPS = "UPS " + std::to_string(x_updateFrameCount - 1);
+				x_updateFPS.setString(updatesPS);
+				std::string drawsPS = "DPS " + std::to_string(x_drawFrameCount);
+				x_drawFPS.setString(drawsPS);
+				x_updateFrameCount = 0;
+				x_drawFrameCount = 0;
+				x_secondTime = sf::Time::Zero;
+			}
+#endif
+		}
+		render(); // as many as possible
+#ifdef TEST_FPS
+		x_drawFrameCount++;
+#endif
+	}
+}
+
+////////////////////////////////////////////////////////////
+void Game::processEvents()
+{
+    while (const std::optional event = m_window.pollEvent())
+    {
+        if (event->is<sf::Event::Closed>())
+        {
+            m_window.close();
+        }
+        processGameEvents(*event);
+    }
+}
+
+
+////////////////////////////////////////////////////////////
+void Game::processGameEvents(const sf::Event& event)
+{
+	if (const auto* keyPressed = event.getIf<sf::Event::KeyPressed>())
+	{
+		switch (keyPressed->scancode)
+		{
+		case sf::Keyboard::Scancode::Escape:
+			m_window.close();
+			break;
+
+		case sf::Keyboard::Scancode::Num0:
+			if (m_gameMode != GameMode::DUNGEON || m_activeRoomId < 0 || m_activeRoomId >= static_cast<int>(m_roomPlans.size()))
+			{
+				cout << "No active dungeon room for LLM prompt.\n";
+				break;
+			}
+			LLM_GenerateRoomInfo();
+			break;
+
+		case sf::Keyboard::Scancode::R:
+			if (m_gameMode == GameMode::HUB)
+				startDungeonRun();
+			else
+				gameStart();
+			break;
+
+		case sf::Keyboard::Scancode::V:
+			m_isPlayerCamera = !m_isPlayerCamera;
+			break;
+
+		default:
+			break;
+		};
+	}
+}
+
+
+
+////////////////////////////////////////////////////////////
+void Game::update(float dt)
+{
+	const Vector2i mousePos = Mouse::getPosition(m_window);
+	sf::View inputView;
+	if (m_isPlayerCamera) {
+		inputView = m_playerCamera;
+		inputView.setCenter(m_player.getPosition());
+	}
+	else {
+		inputView = m_floorCamera;
+	}
+	const sf::Vector2f mousePosF = static_cast<sf::Vector2f>(m_window.mapPixelToCoords(mousePos, inputView));
+
+	InputManager::update();
+	
+	if (m_gameMode == GameMode::HUB)
+	{
+		updateHubShops();
+	}
+
+	if( m_gameMode == GameMode::DUNGEON && m_player.isDead())
+	{
+		cout << "Player has died. Restarting game...\n";
+		enterHubWorld();
+		return;
+	}
+
+	// Game manager controls
+	ControllerInputHandler();
+	updateActiveRoom();
+
+	// Update player and enemies
+	m_player.update(dt, mousePosF, mousePos, m_gameProjectiles, m_activeDamageTriggers);
+
+	for (auto enemy_it = m_enemies.begin(); enemy_it != m_enemies.end();)
+	{
+		auto& enemy = *enemy_it;
+		enemy->setTarget(m_player.getPosition());
+		if (auto* turret = dynamic_cast<TurretEnemy*>(enemy.get()))
+			turret->update(dt, m_gameProjectiles);
+		else if (auto* grunt = dynamic_cast<GruntEnemy*>(enemy.get()))
+			grunt->update(dt, m_activeDamageTriggers);
+		else
+			enemy->update(dt);
+
+		// Check if enemy is dead and remove if so
+		if (enemy->isDead())
+		{
+			enemy_it = m_enemies.erase(enemy_it);
+		}
+		else
+			enemy_it++;
+	}
+
+	//Collision checks
+	CollisionChecks();
+
+	// Projectile Management
+	for (auto it = m_gameProjectiles.begin(); it != m_gameProjectiles.end();)
+	{
+		(*it)->update(dt);
+		if ((*it)->shouldDestroy())
+			it = m_gameProjectiles.erase(it);
+		else
+			++it;
+	}
+
+	// Instantiable trigger management
+	for (auto it = m_activeDamageTriggers.begin(); it != m_activeDamageTriggers.end();)
+	{
+		(*it)->update(dt);
+		if ((*it)->shouldDestroy())
+			it = m_activeDamageTriggers.erase(it);
+		else
+			++it;
+	}
+
+	// Wave management for combat rooms
+	if (m_isInRoom)
+	{
+		if (m_roomPlans[m_activeRoomId].type == RoomType::COMBAT && m_isInCombat)
+			ManageWave();
+	}
+
+	// Dungeon management for advancing floors
+	if (m_requestNextFloor)
+	{
+		m_requestNextFloor = false;
+		m_dungeonPlan.advanceFloor();
+
+		if (m_dungeonPlan.isDungeonComplete)
+			enterHubWorld();
+		else
+			loadNewFloor();
+	}
+
+	// LLM polling
+	if (auto initOk = m_llmManager.tryConsumeInitResult())
+	{
+		if (*initOk) {
+			cout << "LLM initialized successfully.\n";
+		}
+		else {
+			cout << "LLM failed to initialize.\n";
+			m_llmManager.initAsync("ASSETS/LLM/MODELS/Llama-3.2-1B-Instruct-Q4_K_M.gguf"); // Retry initialization
+		}
+	}
+
+	if (auto response = m_llmManager.tryConsumeLatestResponse())
+	{
+		cout << "LLM Response: " << *response << "\n";
+	}
+
+	m_hud.update(m_player.getHealth(), m_player.getMaxHealth(), m_player.getAmmo(), m_player.getMaxAmmo(), m_coins);
+}
+
+////////////////////////////////////////////////////////////
+void Game::render()
+{
+	m_window.clear(sf::Color(0, 0, 0, 0));
+
+	if (m_isPlayerCamera)
+	{
+		m_playerCamera.setCenter(m_player.getPosition());
+		m_gameCamera = m_playerCamera;
+	}
+	else
+		m_gameCamera = m_floorCamera;
+
+	m_window.setView(m_gameCamera);
+	
+	for (auto& roomInstance : m_roomInstances) {
+		roomInstance.render(m_window);
+	}
+
+	m_player.render(m_window);
+
+	for (auto& enemy : m_enemies) {
+		enemy->render(m_window);
+	}
+
+	for (auto& bullet : m_gameProjectiles) {
+		bullet->render(m_window);
+	}
+
+	for(auto& trigger:m_activeDamageTriggers) {
+		trigger->render(m_window);
+	}
+
+	if (m_gameMode == GameMode::HUB)
+	{
+		m_window.draw(m_weaponShop);
+		m_window.draw(m_cosmeticShop);
+		m_window.draw(m_armoryShop);
+		m_window.draw(m_playerShop);
+		renderHubShopPrompt();
+	}
+
+	m_window.setView(m_window.getDefaultView());
+	m_hud.render(m_window);
+
+#ifdef TEST_FPS
+	m_window.draw(x_updateFPS); //ups is 60 and dps is 61
+	m_window.draw(x_drawFPS);
+#endif
+	m_window.display();
+}
+
+///////////////////////////////////////////////////////////
+#pragma region GAME MANAGEMENT
+/// <summary>
+/// Resets the game to its initial state, clearing all progress and reinitializing game systems.
+/// </summary>
+void Game::resetGame()
+{
+	m_playerCamera = m_window.getDefaultView();
+	m_floorCamera = m_window.getDefaultView();
+	m_floorCamera.zoom(12.f);
+	m_gameCamera = m_playerCamera;
+	m_isPlayerCamera = true;
+
+	m_player.init();
+	m_player.applyUpgrade(m_playerHealthUpgradeLevel, m_playerSpeedUpgradeLevel, m_playerAmmoUpgradeLevel);
+	m_isInCombat = false;
+	m_isInRoom = true;
+
+	m_enemies.clear();
+
+	m_roomPlans.clear();
+	m_roomInstances.clear();
+	m_roomWorldPositions.clear();
+	m_activeRoomId = -1;
+
+	m_floorPlan = FloorPlan();
+	m_floorGenerator = FloorGenerator();
+	m_floorLayout = FloorLayout();
+	m_floorInstanceGenerator = FloorLayoutGenerator();
+
+	m_dungeonPlan = DungeonPlan();
+	m_requestNextFloor = false;
+
+	m_waveCounter = 0;
+}
+
+/// <summary>
+/// Initializes and starts a new game by generating a dungeon floor with rooms and their connections.
+/// </summary>
+void Game::gameStart()
+{
+	resetGame();
+	m_gameMode = GameMode::DUNGEON;
+
+	m_dungeonPlan.start(/*rand() % 50000*/12344); // using a fixed seed for testing purposes, can be randomized for more variety
+
+	loadNewFloor();
+}
+
+void Game::enterHubWorld()
+{
+	resetGame();
+	m_gameMode = GameMode::HUB;
+	buildHubWorld();
+	m_requestNextFloor = false;
+}
+
+void Game::startDungeonRun()
+{
+	gameStart();
+}
+
+void Game::buildHubWorld()
+{	
+	// Set Room PLan for Hub Room
+	RoomPlan hubRoom;
+	hubRoom.id = 0;
+	hubRoom.type = RoomType::SPAWN;
+	hubRoom.seed = 0;
+	hubRoom.width = 30;
+	hubRoom.height = 20;
+	hubRoom.tileSize = 64.f;
+	hubRoom.tileMap.assign(hubRoom.width * hubRoom.height, Tile::FLOOR);
+
+	// Build outer walls
+	for (int col = 0; col < hubRoom.width; col++) {
+		hubRoom.setTile(0, col, Tile::WALL);
+		hubRoom.setTile(hubRoom.height - 1, col, Tile::WALL);
+	}
+	for (int row = 0; row < hubRoom.height; row++) {
+		hubRoom.setTile(row, 0, Tile::WALL);
+		hubRoom.setTile(row, hubRoom.width - 1, Tile::WALL);
+	}
+
+	// Spawn point and Portal placement
+	const sf::Vector2i playerSpawnTile(hubRoom.width / 2, hubRoom.height / 2);
+	const sf::Vector2i portalTile(hubRoom.width / 2, hubRoom.height / 4);
+
+	const sf::Vector2i gunShopTile(hubRoom.width / 4, hubRoom.height / 2);
+	const sf::Vector2i armoryShopTile(hubRoom.width / 4, 3 * hubRoom.height / 4);
+	const sf::Vector2i cosmeticShopTile(3 * hubRoom.width / 4, hubRoom.height / 2);
+	const sf::Vector2i playerShopTile(3 * hubRoom.width / 4, 3 * hubRoom.height / 4);
+
+	hubRoom.spawners.push_back({ SpawnerType::PlayerSpawner, playerSpawnTile });
+	hubRoom.spawners.push_back({ SpawnerType::PortalSpawner, portalTile });
+	hubRoom.triggers.push_back({ TriggerType::PortalTrigger, portalTile });
+
+	m_roomPlans.clear();
+	m_roomInstances.clear();
+	m_roomWorldPositions.clear();
+
+	m_roomPlans.push_back(hubRoom);
+	m_roomInstances.resize(m_roomPlans.size());
+	m_roomWorldPositions.resize(m_roomPlans.size());
+
+	// For the hub world, we can just place the single room at the origin
+	m_roomWorldPositions[0] = sf::Vector2f(0.f, 0.f);
+	generateRoom(0);
+	spawnPlayer(0);
+
+	// Set active room to hub
+	m_activeRoomId = 0;
+	m_isInRoom = true;
+	m_isInCombat = false;
+	m_waveCounter = 0;
+
+	m_playerCamera.setCenter(m_player.getPosition());
+	m_floorCamera.setCenter(m_player.getPosition());
+
+	const float tileSize = hubRoom.tileSize;
+	const sf::Vector2f worldOrigin = m_roomWorldPositions[0];
+	const sf::Vector2f gunShopCenter = worldOrigin + sf::Vector2f(gunShopTile.x * tileSize + tileSize / 2, gunShopTile.y * tileSize + tileSize / 2);
+	const sf::Vector2f cosmeticShopCenter = worldOrigin + sf::Vector2f(cosmeticShopTile.x * tileSize + tileSize / 2, cosmeticShopTile.y * tileSize + tileSize / 2);
+	const sf::Vector2f armoryShopCenter = worldOrigin + sf::Vector2f(armoryShopTile.x * tileSize + tileSize / 2, armoryShopTile.y * tileSize + tileSize / 2);
+	const sf::Vector2f playerShopCenter = worldOrigin + sf::Vector2f(playerShopTile.x * tileSize + tileSize / 2, playerShopTile.y * tileSize + tileSize / 2);
+
+	// Initialize shops
+	m_weaponShop.setSize(sf::Vector2f(tileSize * 3, tileSize * 3));
+	m_weaponShop.setOrigin(m_weaponShop.getSize() / 2.f);
+	m_weaponShop.setPosition(gunShopCenter);
+	m_weaponShop.setFillColor(sf::Color::Cyan);
+
+	m_cosmeticShop.setSize(sf::Vector2f(tileSize * 3, tileSize * 3));
+	m_cosmeticShop.setOrigin(m_cosmeticShop.getSize() / 2.f);
+	m_cosmeticShop.setPosition(cosmeticShopCenter);
+	m_cosmeticShop.setFillColor(sf::Color::Magenta);
+
+	m_armoryShop.setSize(sf::Vector2f(tileSize * 3, tileSize * 3));
+	m_armoryShop.setOrigin(m_armoryShop.getSize() / 2.f);
+	m_armoryShop.setPosition(armoryShopCenter);
+	m_armoryShop.setFillColor(sf::Color::White);
+
+	m_playerShop.setSize(sf::Vector2f(tileSize * 3, tileSize * 3));
+	m_playerShop.setOrigin(m_playerShop.getSize() / 2.f);
+	m_playerShop.setPosition(playerShopCenter);
+	m_playerShop.setFillColor(sf::Color(255, 165, 0)); // Orange color
+}
+
+void Game::updateHubShops()
+{
+	m_activeShop = HubShopType::NONE_SHOP;
+
+	const sf::FloatRect playerBounds = m_player.getCollisionBounds();
+
+	const sf::FloatRect weaponShopBounds = m_weaponShop.getGlobalBounds();
+	const sf::FloatRect cosmeticShopBounds = m_cosmeticShop.getGlobalBounds();
+	const sf::FloatRect armoryShopBounds = m_armoryShop.getGlobalBounds();
+	const sf::FloatRect playerShopBounds = m_playerShop.getGlobalBounds();
+
+	if (weaponShopBounds.findIntersection(playerBounds))
+		m_activeShop = HubShopType::WEAPON_SHOP;
+	else if (cosmeticShopBounds.findIntersection(playerBounds))
+		m_activeShop = HubShopType::COSMETIC_SHOP;
+	else if (armoryShopBounds.findIntersection(playerBounds))
+		m_activeShop = HubShopType::ARMORY_SHOP;
+	else if (playerShopBounds.findIntersection(playerBounds))
+		m_activeShop = HubShopType::PLAYER_SHOP;
+
+	switch (m_activeShop)
+	{
+	case HubShopType::WEAPON_SHOP: {
+		const bool WeaponUpgradeInput = InputManager::pad().pressed(GamepadButton::A) || Keyboard::isKeyPressed(Keyboard::Key::Space);
+		const bool AmmoUpgradeInput = InputManager::pad().pressed(GamepadButton::B) || Keyboard::isKeyPressed(Keyboard::Key::Enter);
+
+		if (!WeaponUpgradeInput && !AmmoUpgradeInput)
+			return;
+
+		const int upgradeCost = 100;
+
+		// Weapon Upgrades
+		if (WeaponUpgradeInput && m_coins >= upgradeCost)
+		{
+			const auto& loadout = m_player.getWeaponLoadout();
+			const int currentSlot = m_player.getCurrentWeaponID();
+
+			const WeaponType selectedType = loadout[currentSlot].type;
+			int* selectedUpgradeLevel = nullptr;
+			std::string weaponName = "";
+
+			if (selectedType >= WeaponType::KNIFE)
+				break;
+
+			switch (selectedType)
+			{
+			case WeaponType::PISTOL:
+				selectedUpgradeLevel = &m_pistolUpgradeLevel;
+				weaponName = "Pistol";
+				break;
+
+			case WeaponType::ASSAULT_RIFLE:
+				selectedUpgradeLevel = &m_arUpgradeLevel;
+				weaponName = "Assault Rifle";
+				break;
+
+			case WeaponType::SHOTGUN:
+				selectedUpgradeLevel = &m_shotgunUpgradeLevel;
+				weaponName = "Shotgun";
+				break;
+			}
+
+			m_coins -= upgradeCost;
+			(*selectedUpgradeLevel)++;
+			WeaponInLoadout droppedWeapon;
+			m_player.swapCurrentWeapon(selectedType, *selectedUpgradeLevel, droppedWeapon);
+			cout << weaponName << " upgraded to level " << *selectedUpgradeLevel << "!\n"
+				<< "Coins remaining: " << m_coins << "\n";
+		}
+		
+		// Ammo Upgrades
+		else if (AmmoUpgradeInput && m_coins >= upgradeCost)
+		{
+			m_coins -= upgradeCost;
+			m_playerAmmoUpgradeLevel++;
+			m_player.applyUpgrade(m_playerHealthUpgradeLevel, m_playerSpeedUpgradeLevel, m_playerAmmoUpgradeLevel);
+			cout << "Player ammo capacity upgraded to level " << m_playerAmmoUpgradeLevel << "!\n"
+				<< "Coins remaining: " << m_coins << "\n";
+		}
+		
+		// Not enough coins
+		else
+		{
+			cout << "Not enough coins to upgrade weapon or ammo! Coins: " << m_coins << "\n";
+		}
+
+		break;
+	}
+
+	case HubShopType::COSMETIC_SHOP: {
+		const bool interactPressed = InputManager::pad().pressed(GamepadButton::A) || Keyboard::isKeyPressed(Keyboard::Key::Space);
+		if (!interactPressed)
+			return;
+
+		m_playerColorIndex = (m_playerColorIndex + 1) % m_playerColorOptions.size();
+		m_player.setBodyColor(m_playerColorOptions[m_playerColorIndex]);
+		cout << "Player color changed to " << m_playerColorIndex << "!\n";
+		break;
+	}
+
+	case HubShopType::ARMORY_SHOP: {
+		const bool interactPressed = InputManager::pad().pressed(GamepadButton::A) || Keyboard::isKeyPressed(Keyboard::Key::Space);
+		if (!interactPressed)
+			return;
+
+		const WeaponType weaponToEquip = m_armoryCatalog[m_armoryCatalogIndex];
+
+		int equipLevel = 1;
+		switch (weaponToEquip)
+		{
+		case WeaponType::PISTOL:
+			equipLevel = m_pistolUpgradeLevel;
+			break;
+		case WeaponType::ASSAULT_RIFLE:
+			equipLevel = m_arUpgradeLevel;
+			break;
+		case WeaponType::SHOTGUN:
+			equipLevel = m_shotgunUpgradeLevel;
+			break;
+		}
+
+		WeaponInLoadout droppedWeapon;
+		if (m_player.swapCurrentWeapon(weaponToEquip, equipLevel, droppedWeapon))
+		{
+			cout << "Equipped " << weaponToEquip << " at level " << equipLevel << "!\n";
+			if (droppedWeapon.type != WeaponType::COUNT)
+				cout << "Dropped " << droppedWeapon.type << " at level " << droppedWeapon.level << ".\n";
+		}
+		else
+		{
+			cout << "Failed to equip weapon. Loadout may be full.\n";
+		}
+
+		m_armoryCatalogIndex++;
+		if (m_armoryCatalogIndex >= m_armoryCatalog.size())
+			m_armoryCatalogIndex = 0;
+
+		break;
+	}
+
+	case HubShopType::PLAYER_SHOP: {
+		const bool healthUpgradeInput = InputManager::pad().pressed(GamepadButton::A) || Keyboard::isKeyPressed(Keyboard::Key::Space);
+		const bool speedUpgradeInput = InputManager::pad().pressed(GamepadButton::B) || Keyboard::isKeyPressed(Keyboard::Key::Enter);
+
+		if (!healthUpgradeInput && !speedUpgradeInput)
+			return;
+
+		const int upgradeCost = 100;
+
+		if (healthUpgradeInput && m_coins >= upgradeCost)
+		{
+			m_coins -= upgradeCost;
+			m_playerHealthUpgradeLevel++;
+			m_player.applyUpgrade(m_playerHealthUpgradeLevel, m_playerSpeedUpgradeLevel, m_playerAmmoUpgradeLevel);
+			cout << "Player health upgraded! Coins remaining: " << m_coins << "\n";
+		}
+		else if (speedUpgradeInput && m_coins >= upgradeCost)
+		{
+			m_coins -= upgradeCost;
+			m_playerSpeedUpgradeLevel++;
+			m_player.applyUpgrade(m_playerHealthUpgradeLevel, m_playerSpeedUpgradeLevel, m_playerAmmoUpgradeLevel);
+			cout << "Player speed upgraded! Coins remaining: " << m_coins << "\n";
+		}
+		else
+		{
+			cout << "Not enough coins to upgrade player! Coins: " << m_coins << "\n";
+		}
+
+		break;
+	}
+	}
+}
+
+void Game::renderHubShopPrompt()
+{
+	if (m_activeShop == HubShopType::NONE_SHOP)
+		return;
+
+	sf::Text promptText(m_arialFont);
+	promptText.setCharacterSize(12);
+	promptText.setFillColor(sf::Color::White);
+
+	switch (m_activeShop)
+	{
+	case HubShopType::WEAPON_SHOP:
+		promptText.setString("Press A / Space to upgrade equipped weapon for 100 coins!\n Press B / Enter to Upgrade Ammo capacity for 100 coins");
+		break;
+
+	case HubShopType::COSMETIC_SHOP:
+		promptText.setString("Press A / Space to change player color!");
+		break;
+
+	case HubShopType::ARMORY_SHOP:
+		promptText.setString("Press A / Space to swap current weapon with one from the armory!");
+		break;
+
+	case HubShopType::PLAYER_SHOP:
+		promptText.setString("Press A / Space to Upgrade Player Health for 100 coins\n Press B / Enter to Upgrade Player Speed for 100 coins");
+	}
+
+	promptText.setOrigin(promptText.getGlobalBounds().getCenter());
+	promptText.setPosition({ m_player.getPosition().x, m_player.getPosition().y - 50 });
+
+	m_window.draw(promptText);
+}
+
+/// <summary>
+/// Manages wave-based combat by checking if all enemies are defeated and either starting a new wave or ending combat.
+/// </summary>
+void Game::ManageWave()
+{
+	// check if all enemies are dead
+	if (m_enemies.empty()) {
+		m_waveCounter--;
+		if (m_waveCounter > 0) {	// start new wave
+			cout << "New Wave Starting! Remaining Waves: " << m_waveCounter << endl;
+			m_roomPlans[m_activeRoomId] = CombatRoom().generateNewWave(m_roomPlans[m_activeRoomId]);
+			spawnEnemies(m_activeRoomId);
+			generateRoom(m_activeRoomId);
+		}
+		else {	// end combat
+			cout << "Combat Room Cleared at ID " << m_activeRoomId << "!\n";
+			m_roomPlans[m_activeRoomId] = CombatRoom().setRoomCleared(m_roomPlans[m_activeRoomId]);
+			generateRoom(m_activeRoomId);
+			m_isInCombat = false;
+		}
+	}
+}
+
+#pragma endregion
+
+
+////////////////////////////////////////////////////////////
+#pragma region UPDATE SUBFUNCTIONS
+/// <summary>
+/// Performs collision detection and response for all game entities including enemies, projectiles, the player, and environment objects.
+/// </summary>
+void Game::CollisionChecks()
+{	
+	// ------------------- ENEMY CHECKS --------------------
+	for (auto& enemy : m_enemies)
+	{
+		// Enemy -> Player
+		if (CollisionCheck::areColliding(m_player, *enemy)) {
+			cout << "Player collided with enemy!\n";
+			
+			break;
+		}
+	}
+
+	// ------------------- BULLET CHECKS -------------------
+	for (auto& bullet : m_gameProjectiles)
+	{
+		if (bullet->shouldDestroy())
+			continue;
+
+		// Bullet -> Enemy (Player Projectiles)
+		for (auto& enemy : m_enemies) {
+			if (enemy->isDead())
+				continue;
+
+			if (CollisionCheck::areColliding(*bullet, *enemy))
+			{
+				enemy->takeDamage(bullet->applyDamage());
+				bullet->destroy();
+				break;
+			}
+		}
+
+		// Bullet -> Player (Enemy Projectiles)
+		if (CollisionCheck::areColliding(m_player, *bullet))
+		{
+			m_player.takeDamage(bullet->applyDamage());
+			bullet->destroy();
+			break;
+		}
+	}
+
+	// ------------------- DAMAGE TRIGGER CHECKS -------------------
+	for (auto& trigger : m_activeDamageTriggers)
+	{
+		if (trigger->shouldDestroy())
+			continue;
+
+		// Trigger -> Player
+		if (CollisionCheck::areColliding(*trigger, m_player))
+		{
+			m_player.takeDamage(trigger->damage());
+			break;
+		}
+
+		// Trigger -> Enemy
+		for (auto& enemy : m_enemies) {
+			if (enemy->isDead())
+				continue;
+
+			if (CollisionCheck::areColliding(*trigger, *enemy))
+			{
+				enemy->takeDamage(trigger->damage());
+				break;
+			}
+		}
+	}
+
+	// -------------------- ENVIRONMENT CHECKS -------------------
+	for (auto& roomInstance : m_roomInstances)
+	{
+		for (auto& collisionObject : roomInstance.getStaticRoomColliders())
+		{
+			// ____________________________ SHAPE COLLISION CHECKS ____________________________ //
+			// Wall or Door collision checks
+			if (collisionObject.getCollisionProfile().layer == CollisionLayer::WALL_LAYER ||
+				collisionObject.getCollisionProfile().layer == CollisionLayer::DOOR_LAYER)
+			{
+				// Wall/Door -> Player
+				if (CollisionCheck::areColliding(m_player, collisionObject))
+				{
+					m_player.hitWall();
+					break;
+				}
+
+				// Wall/Door -> Projectiles
+				for (auto& bullet : m_gameProjectiles)
+				{
+					if (bullet->shouldDestroy())
+						continue;
+
+					if (CollisionCheck::areColliding(*bullet, collisionObject)) {
+						bullet->destroy();
+						break;
+					}
+				}
+
+				// Wall/Door -> Enemy
+				for (auto& enemy : m_enemies) {
+					if (enemy->isDead())
+						continue;
+
+					if (CollisionCheck::areColliding(*enemy, collisionObject)) {
+						enemy->hitWall();
+						break;
+					}
+				}
+			}
+
+			// ____________________________ TRIGGER COLLISION CHECKS ____________________________ //
+			// Portal trigger checks
+			if (collisionObject.getCollisionProfile().layer == CollisionLayer::PORTAL_TRIGGER_LAYER)
+			{
+				// Portal Trigger -> Player
+				if (CollisionCheck::areColliding(collisionObject, m_player))
+				{
+					if (InputManager::pad().pressed(GamepadButton::A) || Keyboard::isKeyPressed(Keyboard::Key::Space))
+					{
+						if (m_gameMode == GameMode::HUB)
+							startDungeonRun();
+						else
+							m_requestNextFloor = true;
+					}
+					break;
+				}
+			}
+
+			// Door trigger checks
+			if (collisionObject.getCollisionProfile().layer == CollisionLayer::DOOR_TRIGGER_LAYER)
+			{
+				// Door Trigger -> Player
+				if (CollisionCheck::areColliding(collisionObject, m_player))
+				{
+					// Combat Door Trigger
+					if (m_roomPlans[m_activeRoomId].type == RoomType::COMBAT) {
+						if (!m_roomPlans[m_activeRoomId].isCleared && !m_isInCombat)
+						{
+							m_roomPlans[m_activeRoomId] = CombatRoom().generateNewWave(m_roomPlans[m_activeRoomId]);
+							spawnEnemies(m_activeRoomId);
+							m_isInCombat = true;
+							m_waveCounter = rand() % 3 + 1;
+							cout << "Starting combat room wave!\nWaves Remaining: " << m_waveCounter << "\n";
+							generateRoom(m_activeRoomId);
+						}
+					}
+					break;
+				}
+			}
+
+		}
+	}
+}
+
+/// <summary>
+/// Updates the active room ID based on the player's current position by checking which room bounds contain the player's center point.
+/// </summary>
+void Game::updateActiveRoom()
+{
+	for (RoomPlan room : m_roomPlans)
+	{
+		Vector2f roomWorldPos = m_roomWorldPositions[room.id];
+		float ts = room.tileSize;
+
+		FloatRect roomBounds(roomWorldPos - Vector2f(ts / 2, ts / 2), Vector2f(room.width * ts, room.height * ts));
+		if (roomBounds.contains(m_player.getPosition()))
+		{
+			m_activeRoomId = room.id;
+			m_isInRoom = true;
+			break;
+		}
+		else
+		{
+			m_isInRoom = false;
+			m_activeRoomId = -1;
+		}
+	}
+}
+
+/// <summary>
+/// Handles game input for controlling game state, including closing the window and restarting the game.
+/// </summary>
+void Game::ControllerInputHandler()
+{
+	if (InputManager::pad().pressed(GamepadButton::Start))
+	{
+		m_window.close();
+	}
+	if (InputManager::pad().pressed(GamepadButton::Select))
+	{
+		if (m_gameMode == GameMode::HUB)
+			startDungeonRun();
+		else
+			gameStart();
+	}
+	if (InputManager::pad().pressed(GamepadButton::DPadDown))
+	{
+		m_isPlayerCamera = !m_isPlayerCamera;
+	}
+	if (InputManager::pad().pressed(GamepadButton::DPadUp))
+	{
+		if (m_gameMode != GameMode::DUNGEON || m_activeRoomId < 0 || m_activeRoomId >= static_cast<int>(m_roomPlans.size()))
+		{
+			cout << "No active dungeon room for LLM prompt.\n";
+			return;
+		}
+		LLM_GenerateRoomInfo();
+	}
+}
+
+#pragma endregion
+
+
+///////////////////////////////////////////////////////////
+#pragma region ROOM MANAGEMENT
+/// <summary>
+/// Generates a room instance from a room plan at a specific world position.
+/// </summary>
+/// <param name="roomId">The identifier of the room to generate.</param>
+void Game::generateRoom(int roomId)
+{
+	RoomPlan& roomPlan = m_roomPlans[roomId];
+	Vector2f roomWorldPos = m_roomWorldPositions[roomId];
+	m_roomInstances[roomId].buildFromPlan(roomPlan, roomWorldPos);
+}
+
+/// <summary>
+/// Spawns the player at the designated player spawn point within the specified room.
+/// </summary>
+/// <param name="roomId">The identifier of the room where the player should be spawned.</param>
+void Game::spawnPlayer(const int roomId)
+{
+	RoomPlan& roomPlan = m_roomPlans[roomId];
+	Vector2f roomWorldPos = m_roomWorldPositions[roomId];
+
+	// Spawn room Spawner
+	if (roomPlan.type == RoomType::SPAWN)
+	{
+		for (auto& spawnPoint : roomPlan.spawners)
+		{
+			if (spawnPoint.type == SpawnerType::PlayerSpawner) {
+				Vector2f spawnPos = roomWorldPos + static_cast<Vector2f>(spawnPoint.tilePos) * roomPlan.tileSize;
+				m_player.setSpawnPosition(spawnPos);
+				m_activeRoomId = roomId;
+				m_isInRoom = true;
+			}
+		}
+	}
+}
+
+/// <summary>
+/// Spawns enemies in a combat room at designated spawn points.
+/// </summary>
+/// <param name="roomId">The ID of the room in which to spawn enemies.</param>
+void Game::spawnEnemies(const int roomId)
+{
+	// Combat room Spawner
+	m_enemies.clear();
+	RoomPlan& roomPlan = m_roomPlans[roomId];
+	Vector2f roomWorldPos = m_roomWorldPositions[roomId];
+
+	if (roomPlan.type == RoomType::COMBAT)
+	{
+		int totalEnemyTypes = EnemyType::ENEMY_COUNT;
+		for (auto& spawnPoint : roomPlan.spawners)
+		{
+			if (spawnPoint.type == SpawnerType::EnemySpawner) {
+				Vector2f spawnPos = roomWorldPos + static_cast<Vector2f>(spawnPoint.tilePos) * roomPlan.tileSize;
+
+				int enemyToSpawn = rand() % totalEnemyTypes;
+				if (enemyToSpawn == 0)
+					m_enemies.push_back(std::make_unique<GruntEnemy>(spawnPos, 50));
+				else if (enemyToSpawn == 1)
+					m_enemies.push_back(std::make_unique<TurretEnemy>(spawnPos, 75));
+			}
+		}
+	}
+}
+
+#pragma endregion
+
+
+///////////////////////////////////////////////
+#pragma	region FLOOR MANAGEMENT
+/// <summary>
+/// Builds the floor instance by calculating room positions in world space and instantiating all rooms from their plans.
+/// </summary>
+void Game::buildFloorInstance()
+{
+	const int roomCount = m_floorPlan.rooms.size();
+	if (roomCount <= 0) return;
+
+	// Calculate the world size of each cell in the grid layout based on the largest room dimensions and a fixed gap between rooms
+	const float tileSize = m_roomPlans[0].tileSize;
+	const int gapTiles = 5;
+
+	int maxWidth = 0;
+	int maxHeight = 0;
+	for (auto& roomPlan : m_roomPlans)
+	{
+		maxWidth = std::max(maxWidth, roomPlan.width);
+		maxHeight = std::max(maxHeight, roomPlan.height);
+	}
+
+	const float cellWorldW = (maxWidth + gapTiles) * tileSize;
+	const float cellWorldH = (maxHeight + gapTiles) * tileSize;
+
+	m_roomInstances.clear();
+	m_roomWorldPositions.clear();
+
+	m_roomInstances.resize(roomCount);
+	m_roomWorldPositions.resize(roomCount);
+
+	// Calculate world positions for each room based on their grid positions and the calculated cell world size, then build room instances from their plans
+	for (int roomId = 0; roomId < roomCount; roomId++)
+	{
+		Vector2i gridPos = m_floorLayout.roomGridPositions[roomId];
+		Vector2f cellCenter = Vector2f(gridPos.x * cellWorldW, gridPos.y * cellWorldH);
+
+		const RoomPlan& roomPlan = m_roomPlans[roomId];
+		Vector2f halfRoomSize = Vector2f((roomPlan.width - 1) * tileSize, (roomPlan.height - 1) * tileSize) * .5f;
+
+		Vector2f worldPos = cellCenter - halfRoomSize;
+
+		m_roomWorldPositions[roomId] = worldPos;
+		generateRoom(roomId);
+
+		// Spawn player in spawn room
+		if (m_roomPlans[roomId].type == RoomType::SPAWN)
+			spawnPlayer(roomId);
+	}
+
+	buildCorridors();
+}
+
+/// <summary>
+/// Builds corridor room instances connecting adjacent rooms based on the floor plan edges and room door positions.
+/// </summary>
+void Game::buildCorridors()
+{
+	if (m_roomPlans.empty()) return;
+
+	const float tileSize = m_roomPlans[0].tileSize;
+
+#pragma region Corridor Helper Lambdas
+	auto getDoor = [&](const RoomPlan& roomPlan, DoorDirection dir)
+		{
+			for (auto& door : roomPlan.doors)
+				if (door.direction == dir)
+					return &door;
+		};
+
+	// Returns the opposite direction of the given door direction (e.g. NORTH -> SOUTH, EAST -> WEST)
+	auto opposite = [&](DoorDirection dir)
+		{
+			return RoomDoorUtils::opposite(dir);
+		};
+
+	// Determines the direction of the door between two rooms based on their grid positions in the floor layout
+	auto directionBetweenRooms = [&](int fromId, int toId)
+		{
+			// Determine the direction of the door based on the grid positions of the two rooms in the floor layout
+			Vector2i a = m_floorLayout.roomGridPositions[fromId];
+			Vector2i b = m_floorLayout.roomGridPositions[toId];
+			Vector2i diff = b - a;
+			// The difference in grid positions should indicate the direction of the door
+			if (diff.x != 0 && (std::abs(diff.x) >= std::abs(diff.y) || diff.y == 0))
+			{
+				if (diff.x > 0) return DoorDirection::EAST;
+				else return DoorDirection::WEST;
+			}
+			else
+			{
+				if (diff.y > 0) return DoorDirection::SOUTH;
+				else return DoorDirection::NORTH;
+			}
+		};
+
+#pragma endregion
+
+	int corridorIdCounter = 0;
+
+	
+	for (const auto& edge : m_floorPlan.edges)
+	{
+		// 1) Declare variables for the two rooms connected by this edge and the directions of the doors between them
+		const int aId = edge.id_a;
+		const int bId = edge.id_b;
+
+		const DoorDirection dirFromAtoB = directionBetweenRooms(aId, bId);
+		const DoorDirection dirFromBtoA = opposite(dirFromAtoB);
+
+		const RoomPlan& roomA = m_roomPlans[aId];
+		const RoomPlan& roomB = m_roomPlans[bId];
+		const DoorPlan* doorA = getDoor(roomA, dirFromAtoB);
+		const DoorPlan* doorB = getDoor(roomB, dirFromBtoA);
+		if (!doorA || !doorB) continue;	// if either room doesn't have the expected door, skip this edge (invalid edge)
+
+		const bool isHorizontal = (dirFromAtoB == DoorDirection::EAST || dirFromAtoB == DoorDirection::WEST);
+
+		const int walkableThickness = std::min(doorA->spanTiles, doorB->spanTiles);
+		const int corridorThickness = walkableThickness + 2;
+
+		Vector2f start;
+		Vector2f end;
+
+		Vector2f corridorWorldPos;
+
+		RoomPlan corridor;
+		corridor.id = corridorIdCounter++;
+		corridor.type = RoomType::CORRIDOR;
+		corridor.seed = 0;
+		corridor.tileSize = tileSize;
+
+		// 3) Calculate the world positions of the two doors and use them to determine the start and end points of the corridor
+		if (isHorizontal)
+		{
+			// For horizontal corridors, the Y position of the corridor will be centered on the doors, and the X positions will be at the walls of the rooms (door position + half tile size)
+			const float doorA_WallX = m_roomWorldPositions[aId].x + (doorA->tileStartPos.x * tileSize);
+			const float doorB_WallX = m_roomWorldPositions[bId].x + (doorB->tileStartPos.x * tileSize);
+
+			// To center the corridor on the doors, we need to calculate the center Y position of the corridor based on the door positions and their span
+			const float doorA_CenterY = m_roomWorldPositions[aId].y + ((doorA->tileStartPos.y + (doorA->spanTiles - 1) * .5f) * tileSize);
+			const float doorB_CenterY = m_roomWorldPositions[bId].y + ((doorB->tileStartPos.y + (doorB->spanTiles - 1) * .5f) * tileSize);
+			// The center Y position of the corridor should be the average of the two door center Y positions to ensure it is centered between them
+			const float centerY = (doorA_CenterY + doorB_CenterY) * .5f;
+			// The start and end points of the corridor will be at the wall X positions of the rooms and the center Y position calculated above
+			start = Vector2f(doorA_WallX, centerY);
+			end = Vector2f(doorB_WallX, centerY);
+
+			if (end.x < start.x) std::swap(start, end);	// ensure start is always left of end for horizontal corridors
+			const int lengthTiles = static_cast<int>((end.x - start.x) / tileSize) + 1;
+
+			corridor.width = lengthTiles;
+			corridor.height = corridorThickness;
+
+			// 2) Create a corridor plan with the appropriate dimensions and layout based on the positions of the two doors and the direction of the corridor (horizontal or vertical)
+			corridor.tileMap.assign(corridor.width * corridor.height, Tile::WALL);
+
+			for (int row = 1; row <= walkableThickness; row++)
+				for (int col = 0; col < corridor.width; col++)
+					corridor.setTile(row, col, Tile::FLOOR);
+
+			// Place corridor that (0,0) center is at (start.x, centerY - halfHeightSpan) so that the corridor is centered on the doors
+			const float halfHeightSpan = ((corridor.height - 1) * 0.5f) * tileSize;
+			corridorWorldPos = Vector2f(start.x, centerY - halfHeightSpan);
+		}
+		else
+		{
+			// For vertical corridors, the X position of the corridor will be centered on the doors, and the Y positions will be at the walls of the rooms (door position + half tile size)
+			const float doorA_WallY = m_roomWorldPositions[aId].y + (doorA->tileStartPos.y * tileSize);
+			const float doorB_WallY = m_roomWorldPositions[bId].y + (doorB->tileStartPos.y * tileSize);
+			// To center the corridor on the doors, we need to calculate the center X position of the corridor based on the door positions and their span
+			const float doorA_CenterX = m_roomWorldPositions[aId].x + ((doorA->tileStartPos.x + (doorA->spanTiles - 1) * .5f) * tileSize);
+			const float doorB_CenterX = m_roomWorldPositions[bId].x + ((doorB->tileStartPos.x + (doorB->spanTiles - 1) * .5f) * tileSize);
+			// The center X position of the corridor should be the average of the two door center X positions to ensure it is centered between them
+			const float centerX = (doorA_CenterX + doorB_CenterX) * .5f;
+			// The start and end points of the corridor will be at the wall Y positions of the rooms and the center X position calculated above
+			start = Vector2f(centerX, doorA_WallY);
+			end = Vector2f(centerX, doorB_WallY);
+
+			if (end.y < start.y) std::swap(start, end);	// ensure start is always above end for vertical corridors
+			const int lengthTiles = static_cast<int>((end.y - start.y) / tileSize) + 1;
+
+			corridor.width = corridorThickness;
+			corridor.height = lengthTiles;
+
+			// 2) Create a corridor plan with the appropriate dimensions and layout based on the positions of the two doors and the direction of the corridor (horizontal or vertical)
+			corridor.tileMap.assign(corridor.width* corridor.height, Tile::WALL);
+
+			for (int col = 1; col <= walkableThickness; col++)
+				for (int row = 0; row < corridor.height; row++)
+					corridor.setTile(row, col, Tile::FLOOR);
+
+			// Place corridor that (0,0) center is at (centerX - halfWidthSpan, start.y) so that the corridor is centered on the doors
+			const float halfWidthSpan = ((corridor.width - 1) * 0.5f) * tileSize;
+			corridorWorldPos = Vector2f(centerX - halfWidthSpan, start.y);
+		}
+
+		// 4) Store the corridor plan and its world position, then build a room instance from the corridor plan and add it to the list of room instances
+		RoomInstance corridorInst;
+		corridorInst.buildFromPlan(corridor, corridorWorldPos);
+		m_roomInstances.push_back(corridorInst);
+	}
+
+}
+
+/// <summary>
+/// Loads and initializes a new dungeon floor, generating its layout, rooms, and connections.
+/// </summary>
+void Game::loadNewFloor()
+{
+	m_enemies.clear();
+	m_isInCombat = false;
+	m_isInRoom = true;
+	m_activeRoomId = -1;
+	m_waveCounter = 0;
+
+	int dungeonSeed = m_dungeonPlan.seed;
+	int floorId = m_dungeonPlan.currentFloorId;
+	m_floorPlan = m_floorGenerator.generateFloorPlan(floorId, dungeonSeed, m_dungeonPlan.isFinalFloor());
+
+	m_roomPlans.clear();
+	m_roomPlans.resize(m_floorPlan.rooms.size());
+
+	for (const auto& room : m_floorPlan.rooms)
+	{
+		switch (room.roomType) {
+		case RoomType::SPAWN:
+			m_roomPlans[room.id] = SpawnRoom().generateRoomPlan(room.id, room.roomType, dungeonSeed + floorId);
+			break;
+		case RoomType::PORTAL:
+			m_roomPlans[room.id] = PortalRoom().generateRoomPlan(room.id, room.roomType, dungeonSeed + floorId);
+			break;
+		case RoomType::COMBAT:
+			m_roomPlans[room.id] = CombatRoom().generateRoomPlan(room.id, room.roomType, dungeonSeed + floorId);
+			break;
+		}
+	}
+
+	m_floorLayout = m_floorInstanceGenerator.generateFloorLayout(m_floorPlan);
+
+	for (auto& roomPlan : m_roomPlans)
+	{
+		RoomDoorUtils::clearAllDoors(roomPlan);
+	}
+
+	auto directionBetweenRooms = [&](int fromId, int toId)
+		{
+			// Determine the direction of the door based on the grid positions of the two rooms in the floor layout
+			Vector2i a = m_floorLayout.roomGridPositions[fromId];
+			Vector2i b = m_floorLayout.roomGridPositions[toId];
+			Vector2i diff = b - a;
+
+			// The difference in grid positions should indicate the direction of the door
+			if (diff.x != 0 && (std::abs(diff.x) >= std::abs(diff.y) || diff.y == 0))
+			{
+				if (diff.x > 0) return DoorDirection::EAST;
+				else return DoorDirection::WEST;
+			}
+			else
+			{
+				if (diff.y > 0) return DoorDirection::SOUTH;
+				else return DoorDirection::NORTH;
+			}
+		};
+
+	for (auto& edge : m_floorPlan.edges)
+	{
+		int aId = edge.id_a;
+		int bId = edge.id_b;
+
+		DoorDirection dirFromAtoB = directionBetweenRooms(aId, bId);
+		DoorDirection dirFromBtoA = RoomDoorUtils::opposite(dirFromAtoB);
+
+		RoomDoorUtils::addDoor(m_roomPlans[aId], dirFromAtoB);
+		RoomDoorUtils::addDoor(m_roomPlans[bId], dirFromBtoA);
+	}
+
+	buildFloorInstance();
+
+	m_floorCamera.setCenter(m_roomWorldPositions[0]);
+}
+
+#pragma endregion
+
+
+/////////////////////////////////////////////////////////////////
+
+void Game::LLM_GenerateRoomInfo()
+{
+	if (!m_llmManager.isReady()) {
+		cout << "LLM model is not ready.\n";
+	}
+	else {
+		// LLM Prompt/Response test
+		// Request generation of p
+		if (!m_llmManager.isBusy())
+		{
+			// Generate Prompt
+			RoomPlan currRoom = m_roomPlans[m_activeRoomId];
+
+			std::string roomTypeStr;
+			switch (currRoom.type) {
+			case RoomType::CORRIDOR:
+				roomTypeStr = "Corridor";
+				break;
+			case RoomType::SPAWN:
+				roomTypeStr = "Spawn Room";
+				break;
+			case RoomType::PORTAL:
+				roomTypeStr = "Portal Room";
+				break;
+			case RoomType::COMBAT:
+				roomTypeStr = "Combat Room";
+				break;
+			}
+
+			std::string clearedStr = currRoom.isCleared ? "Yes" : "No";
+
+			cout << "Generating response...\n";
+			const std::string prompt = "Generate a 2 sentence description of the room the player is in currently based on the following properties: Room Type: " + roomTypeStr
+				+ ", Is Room Cleared: " + clearedStr
+				+ ", Room Height: " + to_string(currRoom.height)
+				+ ", Room Width: " + to_string(currRoom.width)
+				+ ", Dungeon Floor: " + to_string(m_dungeonPlan.currentFloorId) + "\n";
+
+			cout << "Prompt: " << prompt << "\n";
+
+			const bool queued = m_llmManager.requestGenerate(prompt);
+			if (queued)
+				cout << "Generation request queued successfully.\n";
+			else
+				cout << "Failed to queue generation request.\n";
+		}
+		else
+		{
+			cout << "Generation in progress, please wait...\n";
+		}
+	}
+}
+
+===== FILE: project-rival/Game.h =====
+#pragma once
+
+// If VS Debug build is enabled, then any block of code enclosed within 
+//  the preprocessor directive #ifdef TEST_FPS is compiled and executed.
+#ifdef _DEBUG
+#define TEST_FPS
+#endif // _DEBUG
+
+#include <SFML/Graphics.hpp>
+#include <string>
+
+#include "player.h"
+#include "Enemy.h"
+
+#include "Projectile.h"
+#include "DamageTrigger.h"
+
+#include "RoomInstance.h"
+#include "FloorGenerator.h"
+#include "FloorLayout.h"
+#include "DungeonPlan.h"
+
+#include "LLMService.h"
+
+#include "PlayerHUD.h"
+
+using namespace std;
+using namespace sf;
+
+/// <summary>
+/// @author OA-O
+/// @date November 2025
+/// @version 1.0
+/// 
+/// </summary>
+
+enum GameMode
+{
+	HUB,
+	DUNGEON,
+
+	MODE_COUNT
+};
+
+enum HubShopType
+{
+	NONE_SHOP,
+	WEAPON_SHOP,
+	COSMETIC_SHOP,
+	ARMORY_SHOP,
+	PLAYER_SHOP,
+
+	SHOP_COUNT
+};
+
+struct ScreenSize
+{
+public:
+	static const int s_width{ 1440 };
+
+	static const int s_height{ 900 };
+};
+
+class Game
+{
+public:
+	Game();
+	void run();
+
+protected:
+	void init();
+	void update(float dt);
+
+	void ManageWave();
+
+	void updateActiveRoom();
+
+	void render();
+
+	void processEvents();
+	void processGameEvents(const sf::Event&);
+
+	void LLM_GenerateRoomInfo();
+
+	sf::Font m_arialFont{ "ASSETS/FONTS/ariblk.ttf" };
+	sf::RenderWindow m_window;
+
+#ifdef TEST_FPS
+	sf::Text x_updateFPS{ m_arialFont };	// text used to display updates per second.
+	sf::Text x_drawFPS{ m_arialFont };	// text used to display draw calls per second.
+	sf::Time x_secondTime{ sf::Time::Zero };			// counter used to establish when a second has passed.
+	int x_updateFrameCount{ 0 };						// updates per second counter.
+	int x_drawFrameCount{ 0 };							// draws per second counter.
+#endif // TEST_FPS
+
+private:
+	// ----------------------------------> FUNCTIONS <---------------------------------- //
+	// Update subfunctions
+	void CollisionChecks();
+	void ControllerInputHandler();
+
+	// Game management
+	void resetGame();
+	void gameStart();
+	void enterHubWorld();
+	void startDungeonRun();
+
+	// Hub management
+	void buildHubWorld();
+	void updateHubShops();
+	void renderHubShopPrompt();
+
+	// Room management
+	void spawnPlayer(const int roomId);
+	void spawnEnemies(const int roomId);
+	void generateRoom(int roomId);
+
+	// Floor Management
+	void buildFloorInstance();
+	void buildCorridors();
+	void loadNewFloor();
+
+
+	// ----------------------------------> VARIABLES <---------------------------------- //	
+	// Game Management
+	sf::View m_gameCamera;
+	bool m_isPlayerCamera;
+	GameMode m_gameMode;
+
+	// Player management
+	Player m_player;
+	bool m_isInCombat;
+	sf::View m_playerCamera;
+	bool m_isInRoom;
+
+	// Enemy management
+	std::vector<std::unique_ptr<Enemy>> m_enemies;
+
+	// Bullet management
+	std::vector<std::unique_ptr<Projectile>> m_gameProjectiles;
+
+	// Instantiable trigger management
+	std::vector<std::unique_ptr<DamageTrigger>> m_activeDamageTriggers;
+
+	// Hub management
+	sf::RectangleShape m_weaponShop;
+	sf::RectangleShape m_cosmeticShop;
+	sf::RectangleShape m_armoryShop;
+	sf::RectangleShape m_playerShop;
+	HubShopType m_activeShop;
+
+	// Room management
+	vector<RoomPlan> m_roomPlans;
+	vector<RoomInstance> m_roomInstances;
+	vector<Vector2f> m_roomWorldPositions;
+	int m_activeRoomId;
+
+	// Floor management
+	sf::View m_floorCamera;
+	FloorPlan m_floorPlan;
+	FloorGenerator m_floorGenerator;
+
+	FloorLayout m_floorLayout;
+	FloorLayoutGenerator m_floorInstanceGenerator;
+
+	// Dungeon management
+	DungeonPlan m_dungeonPlan;
+	bool m_requestNextFloor;
+
+	// Wave management
+	int m_waveCounter;
+
+	// LLM management
+	LLMService m_llmManager;
+
+	// Economy, Upgrades & Progression
+	int m_coins = 500;
+
+	int m_pistolUpgradeLevel = 1;
+	int m_arUpgradeLevel = 1;
+	int m_shotgunUpgradeLevel = 1;
+
+	std::vector<WeaponType> m_armoryCatalog{
+		WeaponType::PISTOL,
+		WeaponType::ASSAULT_RIFLE,
+		WeaponType::SHOTGUN,
+		WeaponType::KNIFE,
+		WeaponType::SWORD,
+		WeaponType::AXE
+	};
+	int m_armoryCatalogIndex;
+
+	int m_playerHealthUpgradeLevel = 1;
+	int m_playerSpeedUpgradeLevel = 1;
+	int m_playerAmmoUpgradeLevel = 1;
+
+	std::vector<sf::Color> m_playerColorOptions{
+		sf::Color::Green,
+		sf::Color::Cyan,
+		sf::Color::Magenta,
+		sf::Color::Yellow
+	};
+	int m_playerColorIndex;
+
+	// UI management
+	PlayerHUD m_hud{ m_arialFont };
+};
+
+===== FILE: project-rival/PlayerHUD.cpp =====
+#include "PlayerHUD.h"
+
+PlayerHUD::PlayerHUD(const sf::Font& font)
+	: m_healthText(font), m_ammoText(font), m_coinsText(font)
+{
+	init(font);
+}
+
+void PlayerHUD::init(const sf::Font& font)
+{
+	// Health Bar
+	m_healthBarBg.setSize({ phud_barWidth, phud_barHeight });
+	m_healthBarBg.setPosition({ phud_marginLeft, phud_marginTop });
+	m_healthBarBg.setFillColor(sf::Color(40, 40, 40)); // Dark gray background
+	m_healthBarBg.setOutlineThickness(2.f);
+	m_healthBarBg.setOutlineColor(sf::Color::White);
+
+	m_healthBar.setSize({ phud_barWidth, phud_barHeight });
+	m_healthBar.setPosition(m_healthBarBg.getPosition());
+	m_healthBar.setFillColor(sf::Color(200, 40, 40)); // Red health bar
+
+	m_healthText.setFont(font);
+	m_healthText.setCharacterSize(14);
+	m_healthText.setFillColor(sf::Color::White);
+
+	// Ammo Bar
+	m_ammoBarBg.setSize({ phud_barWidth, phud_barHeight });
+	m_ammoBarBg.setPosition({ phud_marginLeft, phud_marginTop + phud_barHeight + phud_spacing });
+	m_ammoBarBg.setFillColor(sf::Color(40, 40, 40)); // Dark gray background
+	m_ammoBarBg.setOutlineThickness(2.f);
+	m_ammoBarBg.setOutlineColor(sf::Color::White);
+
+	m_ammoBar.setSize({ phud_barWidth, phud_barHeight });
+	m_ammoBar.setPosition(m_ammoBarBg.getPosition());
+	m_ammoBar.setFillColor(sf::Color(40, 200, 40)); // Green ammo bar
+
+	m_ammoText.setFont(font);
+	m_ammoText.setCharacterSize(14);
+	m_ammoText.setFillColor(sf::Color::White);
+
+	// Coins Text
+	m_coinsText.setFont(font);
+	m_coinsText.setCharacterSize(14);
+	m_coinsText.setFillColor(sf::Color::Yellow);
+	// place coin on the right side of the screen
+}
+
+void PlayerHUD::update(int currentHealth, int maxHealth, int currentAmmo, int maxAmmo, int coins)
+{
+	// Update health bar
+	const float healthPercent = static_cast<float>(currentHealth) / maxHealth;
+	m_healthBar.setSize({ phud_barWidth * healthPercent, phud_barHeight });
+	m_healthText.setString("Health: " + std::to_string(currentHealth) + " / " + std::to_string(maxHealth));
+	centerText(m_healthText, m_healthBarBg);
+
+	// Update ammo bar
+	const float ammoPercent = static_cast<float>(currentAmmo) / maxAmmo;
+	m_ammoBar.setSize({ phud_barWidth * ammoPercent, phud_barHeight });
+	m_ammoText.setString("Ammo: " + std::to_string(currentAmmo) + " / " + std::to_string(maxAmmo));
+	centerText(m_ammoText, m_ammoBarBg);
+
+	// Update coins text
+	m_coinsText.setString("Coins: " + std::to_string(coins));
+	m_coinsText.setPosition({ phud_marginLeft, phud_marginTop + 2 * (phud_barHeight + phud_spacing) });
+}
+
+void PlayerHUD::render(sf::RenderWindow & window)
+{
+	window.draw(m_healthBarBg);
+	window.draw(m_healthBar);
+	window.draw(m_healthText);
+
+	window.draw(m_ammoBarBg);
+	window.draw(m_ammoBar);
+	window.draw(m_ammoText);
+	
+	window.draw(m_coinsText);
+}
+
+void PlayerHUD::centerText(sf::Text & text, const sf::RectangleShape & rect)
+{
+	const sf::FloatRect textBounds = text.getLocalBounds();
+
+	text.setOrigin({
+		textBounds.position.x + textBounds.size.x / 2.f,
+				textBounds.position.y + textBounds.size.y / 2.f
+		});
+
+	const sf::Vector2f rectPos = rect.getPosition();
+	const sf::Vector2f rectSize = rect.getSize();
+
+	text.setPosition({
+		rectPos.x + rectSize.x / 2.f,
+		rectPos.y + rectSize.y / 2.f
+		});
+}
+
+===== FILE: project-rival/PlayerHUD.h =====
+#pragma once
+#include <SFML/Graphics.hpp>
+
+class PlayerHUD
+{
+public:
+	PlayerHUD(const sf::Font& font);
+	void init(const sf::Font& font);
+	void update(int currentHealth, int maxHealth, int currentAmmo, int maxAmmo, int coins);
+	void render(sf::RenderWindow& window);
+
+private:
+	void centerText(sf::Text& text, const sf::RectangleShape& rect);
+
+	sf::RectangleShape m_healthBarBg;
+	sf::RectangleShape m_healthBar;
+	sf::Text m_healthText;
+
+	sf::RectangleShape m_ammoBarBg;
+	sf::RectangleShape m_ammoBar;
+	sf::Text m_ammoText;
+
+	sf::Text m_coinsText;
+
+	float phud_barWidth{ 200.f };
+	float phud_barHeight{ 20.f };
+	float phud_marginLeft{ 20.f };
+	float phud_marginTop{ 20.f };
+	float phud_spacing{ 10.f };
+};
+
+
+===== FILE: project-rival/Weapon.cpp =====
+#include "Weapon.h"
+#include <cmath>
+
+Weapon::Weapon(WeaponType type, int level) : w_weaponLevel(level)
+{
+	init(type);
+}
+
+void Weapon::init(WeaponType type)
+{
+	const int level = w_weaponLevel;
+	WeaponType weaponType = type;
+	switch(weaponType)
+	{
+		// Guns
+		case PISTOL:
+			w_shape.setSize(sf::Vector2f(80.f, 20.f));
+			w_shape.setFillColor(sf::Color::Blue);
+			w_fireMode = FireMode::AUTOMATIC;
+			w_fireRate = 0.5f + (0.05f * (level - 1));
+			w_rumbleIntensity = Intensity::LOW;
+			w_damage = 10 + ((level - 1) * 4);
+			break;
+
+		case ASSAULT_RIFLE:
+			w_shape.setSize(sf::Vector2f(120.f, 20.f));
+			w_shape.setFillColor(sf::Color::Red);
+			w_fireMode = FireMode::AUTOMATIC;
+			w_fireRate = 0.1f + (0.02f * (level - 1));
+			w_rumbleIntensity = Intensity::MEDIUM;
+			w_damage = 6 + ((level - 1) * 2);
+			break;
+
+		case SHOTGUN:
+			w_shape.setSize(sf::Vector2f(100.f, 25.f));
+			w_shape.setFillColor(sf::Color::Yellow);
+			w_fireMode = FireMode::AUTOMATIC;
+			w_fireRate = 1.f + (0.04f * (level - 1));
+			w_rumbleIntensity = Intensity::HIGH;
+			w_damage = 15 + ((level - 1) * 5);
+			break;
+
+		// Melee
+		case KNIFE:
+			w_shape.setSize(sf::Vector2f(50.f, 50.f));
+			w_shape.setFillColor(sf::Color::Blue);
+			w_fireMode = FireMode::AUTOMATIC;
+			w_fireRate = 0.25f;
+			w_rumbleIntensity = Intensity::LOW;
+			break;
+
+		case SWORD:
+			w_shape.setSize(sf::Vector2f(50.f, 50.f));
+			w_shape.setFillColor(sf::Color::Green);
+			w_fireMode = FireMode::AUTOMATIC;
+			w_fireRate = 0.4f;
+			w_rumbleIntensity = Intensity::MEDIUM;
+			break;
+
+		case AXE:
+			w_shape.setSize(sf::Vector2f(50.f, 50.f));
+			w_shape.setFillColor(sf::Color::Red);
+			w_fireMode = FireMode::AUTOMATIC;
+			w_fireRate = 0.6f;
+			w_rumbleIntensity = Intensity::HIGH;
+			break;
+	}
+
+	w_shape.setOrigin({ w_shape.getSize().x / 4.f, w_shape.getSize().y / 2.f });
+
+	w_cooldownRemaining = 0.f;
+
+	if (type < WeaponType::KNIFE)
+		w_isMelee = false;
+	else
+		w_isMelee = true;
+}
+
+void Weapon::update(float dt, const sf::Vector2f playerPos, const sf::Vector2f aimDir)
+{
+	handlePositioning(playerPos, aimDir);
+
+	if (w_cooldownRemaining > 0.0f)
+		w_cooldownRemaining -= dt;
+}
+
+void Weapon::render(sf::RenderWindow& window)
+{
+	window.draw(w_shape);
+}
+
+
+void Weapon::handlePositioning(const sf::Vector2f playerPos, const sf::Vector2f aimDir)
+{
+	sf::Vector2f position = playerPos;
+	w_shape.setPosition(position);
+
+	float angle = std::atan2(aimDir.y, aimDir.x);
+	w_shape.setRotation(sf::radians(angle));
+}
+
+void Weapon::fire(const FireReq& req, std::vector<std::unique_ptr<Projectile>>&projectileList)
+{
+	if (w_cooldownRemaining > 0.0f || req.aimDir == sf::Vector2f(0.f, 0.f))
+		return;
+
+	sf::Vector2f muzzleLocalPos = sf::Vector2f(w_shape.getSize().x, w_shape.getSize().y / 2.f);
+	w_spawnPos = w_shape.getTransform().transformPoint(muzzleLocalPos);
+	
+	switch (w_fireMode) 
+	{
+	case FireMode::AUTOMATIC:
+		spawnProjectile(req, projectileList);
+		w_cooldownRemaining = w_fireRate;
+		break;
+
+	case FireMode::BURST:
+		break;
+	}
+}
+
+void Weapon::fire(const FireReq& req, std::vector<std::unique_ptr<DamageTrigger>>& damageTriggerList)
+{
+	if (w_cooldownRemaining > 0.0f || req.aimDir == sf::Vector2f(0.f, 0.f))
+		return;
+
+	sf::Vector2f attackLocalPos = sf::Vector2f(w_shape.getSize().x, w_shape.getSize().y / 2.f);
+	w_spawnPos = w_shape.getTransform().transformPoint(attackLocalPos);
+
+	switch (w_fireMode)
+	{
+		case FireMode::AUTOMATIC:
+			spawnMeleeHit(req, damageTriggerList);
+			w_cooldownRemaining = w_fireRate;
+			break;
+		case FireMode::BURST:
+			break;
+	}
+}
+
+===== FILE: project-rival/player.cpp =====
+#include <iostream>
+
+#include "player.h"
+#include "InputManager.h"
+#include "PlayerWeapons.h"
+
+namespace {
+	float length(const sf::Vector2f& v) {
+		return std::sqrt(v.x * v.x + v.y * v.y);
+	}
+}
+
+Player::Player()
+{
+	startUp();
+	init();
+}
+
+Player::~Player()
+{
+}
+
+void Player::init()
+{
+	// Base stats
+	p_maxHealth = 100;
+	p_moveSpeed = 200.f;
+	p_maxAmmo = 50;
+	p_playerAmmo = p_maxAmmo;
+
+
+	// Weapons
+	p_currentWeaponID = 0;
+	p_rumbleTimer = 0.f;
+
+	reset();
+}
+
+void Player::update(float dt, const sf::Vector2f& mousePos, const sf::Vector2i& mousePixelPos,
+	std::vector<std::unique_ptr<Projectile>>& gameProjectiles, 
+	std::vector<std::unique_ptr<DamageTrigger>>& instantiableTriggers)
+{
+	p_prevPos = p_body.getPosition();
+
+	handleMovement(dt);
+	handleAiming(mousePos, mousePixelPos);
+
+	ManageWeapons(instantiableTriggers, gameProjectiles, dt);
+}
+
+void Player::render(sf::RenderWindow& window)
+{
+	window.draw(p_body);
+	window.draw(p_reticle);
+
+	p_weapons[p_currentWeaponID]->render(window);
+}
+
+
+void Player::takeDamage(int damage)
+{
+	p_health -= damage;
+	std::cout << "Health: " << p_health << "\n";
+	if (p_health <= 0)
+	{
+		p_isDead = true;
+	}
+}
+
+void Player::hitWall()
+{
+	p_body.setPosition(p_prevPos);
+}
+
+void Player::applyUpgrade(int healthLevel, int speedLevel, int ammoLevel)
+{
+	p_maxHealth = 100 + (healthLevel-1) * 25;
+	p_health = p_maxHealth;
+	p_moveSpeed = 200.f + (speedLevel-1) * 20.f;
+	p_maxAmmo = 50 + (ammoLevel-1) * 10;
+	p_playerAmmo = p_maxAmmo;
+}
+
+bool Player::addWeaponToLoadout(WeaponType type, int level)
+{
+	if (p_weaponLoadout.size() >= MAX_WEAPONS)
+		return false;
+
+	p_weaponLoadout.push_back({ type, level });
+	buildWeaponsFromLoadout();
+	return true;
+}
+
+bool Player::dropWeaponFromLoadout(int slotIndex)
+{
+	if (slotIndex < 0 || slotIndex >= p_weaponLoadout.size() || p_weaponLoadout.size() <= 1)
+		return false;
+
+	p_weaponLoadout.erase(p_weaponLoadout.begin() + slotIndex);
+
+	if (p_currentWeaponID >= p_weaponLoadout.size())
+		p_currentWeaponID = p_weaponLoadout.size() - 1;
+
+	buildWeaponsFromLoadout();
+	return true;
+}
+
+bool Player::swapCurrentWeapon(WeaponType newType, int newLevel, WeaponInLoadout& weaponToDrop)
+{
+	if (p_weaponLoadout.empty() || p_currentWeaponID < 0 || p_currentWeaponID >= p_weaponLoadout.size())
+		return false;
+
+	weaponToDrop = p_weaponLoadout[p_currentWeaponID];
+	p_weaponLoadout[p_currentWeaponID] = { newType, newLevel };
+
+	buildWeaponsFromLoadout();
+	return true;
+}
+
+
+void Player::startUp()
+{
+	//body
+	p_body.setSize(sf::Vector2f(50.f, 75.f));
+	sf::Vector2f size = p_body.getSize();
+	p_body.setOrigin(size / 2.f);
+	p_body.setFillColor(sf::Color::Green);
+
+	//physics
+	p_velocity = sf::Vector2f(0.f, 0.f);
+
+	//reticle
+	p_reticle.setSize(sf::Vector2f(20.f, 20.f));
+	p_reticle.setOrigin(p_reticle.getSize() / 2.f);
+	p_reticle.setFillColor(sf::Color::Transparent);
+	p_reticle.setOutlineColor(sf::Color::Yellow);
+	p_reticle.setOutlineThickness(2.f);
+	p_reticle.setPosition(p_body.getPosition() + p_reticleDistance * p_aimDir);
+	p_reticleDistance = 150.f;
+
+	//collision
+	p_collisionProfile.layer = CollisionLayer::PLAYER_LAYER;
+	p_collisionProfile.mask = CollisionLayer::ENEMY_LAYER | CollisionLayer::ENEMY_BULLET_LAYER | CollisionLayer::WALL_LAYER | CollisionLayer::DOOR_LAYER | CollisionLayer::PORTAL_TRIGGER_LAYER | CollisionLayer::DOOR_TRIGGER_LAYER | CollisionLayer::DAMAGE_TRIGGER_LAYER;
+
+	addWeaponToLoadout(WeaponType::PISTOL, 1);
+	addWeaponToLoadout(WeaponType::KNIFE, 1);
+}
+
+void Player::reset()
+{
+	p_body.setPosition(sf::Vector2f(1400, 500));
+	p_health = p_maxHealth;
+	p_isDead = false;
+	p_rumbleTimer = 0.f;
+	p_lowRumble = 0.f;
+	p_highRumble = 0.f;
+}
+
+void Player::handleMovement(float dt)
+{
+	//--------- movement logic ---------//
+	sf::Vector2f direction{ 0.f, 0.f };
+
+	const sf::Vector2f ls = InputManager::pad().leftStick();
+	const bool isControllerActive = (ls.x != 0.f || ls.y != 0.f);
+
+	if (isControllerActive) // Gamepad input
+	{
+		direction += ls.normalized();
+	}
+	else // Keyboard input
+	{
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::W)) { direction.y -= 1.f; }
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::S)) { direction.y += 1.f; }
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::A)) { direction.x -= 1.f; }
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::D)) { direction.x += 1.f; }
+
+		if (direction.x != 0.f || direction.y != 0.f)
+			direction = direction.normalized();
+	}
+
+	p_velocity = direction * p_moveSpeed;
+	p_body.move(p_velocity * dt);
+}
+
+void Player::handleAiming(const sf::Vector2f& mouseWorldPos, const sf::Vector2i& mousePixelPos)
+{
+	//--------- aiming logic ---------//
+	
+	// Are we on Controller or Mouse
+	const sf::Vector2f rs = InputManager::pad().rightStick();
+	const bool isRSMoved = (rs.x != 0.f || rs.y != 0.f);
+
+	const sf::Vector2f mouseDelta = mouseWorldPos - p_prevMousePos;
+	const sf::Vector2i mousePixelDelta = mousePixelPos - p_prevMousePixelPos;
+	const bool isMouseMoved = (mousePixelDelta.x != 0 || mousePixelDelta.y != 0);
+
+	if (isRSMoved) p_isController = true;
+	else if (isMouseMoved) p_isController = false;
+
+	// Calculate and normalise aim direction
+	sf::Vector2f aimVector;
+	if (p_isController) aimVector = rs;
+	else aimVector = mouseWorldPos - p_body.getPosition();
+
+	if (aimVector != sf::Vector2f(0.f, 0.f))	// avoid crash out on controller since we can't normalise a zero vector
+		p_aimDir = aimVector.normalized();
+	else p_aimDir = sf::Vector2f(0.f, 0.f);
+
+	p_reticle.setPosition(p_body.getPosition() + p_aimDir * p_reticleDistance);
+
+	p_prevMousePos = mouseWorldPos;
+	p_prevMousePixelPos = mousePixelPos;
+}
+
+void Player::ManageWeapons(std::vector<std::unique_ptr<DamageTrigger>>& instantiableTriggers, std::vector<std::unique_ptr<Projectile>>& gameProjectiles, float dt)
+{
+	// Update Weapon (for positioning and firing cooldowns)
+	if (InputManager::pad().pressed(GamepadButton::RightBumper))
+	{
+		p_currentWeaponID++;
+		if (p_currentWeaponID >= p_weapons.size())
+			p_currentWeaponID = 0;
+	}
+	if (InputManager::pad().pressed(GamepadButton::LeftBumper))
+	{
+		p_currentWeaponID--;
+		if (p_currentWeaponID < 0)
+			p_currentWeaponID = p_weapons.size() - 1;
+	}
+
+	//--------- attacking logic ---------//
+	bool isAttacking = false;
+	if (InputManager::pad().rightTrigger() || sf::Mouse::isButtonPressed(sf::Mouse::Button::Left))
+	{
+		FireReq fireInfo;
+		fireInfo.aimDir = p_aimDir;
+		fireInfo.isFromPlayer = true;
+
+		if (p_weapons[p_currentWeaponID]->isMelee())
+		{
+			auto const triggersBefore = instantiableTriggers.size();
+			p_weapons[p_currentWeaponID]->fire(fireInfo, instantiableTriggers);
+			isAttacking = (instantiableTriggers.size() > triggersBefore);
+		}
+		else
+		{
+			int ammoCost;
+			if (WeaponType::SHOTGUN == p_weaponLoadout[p_currentWeaponID].type)
+				ammoCost = 5; // Shotgun consumes 5 ammo per shot
+			else
+				ammoCost = 1; // Other guns consume 1 ammo per shot
+
+			if (p_playerAmmo >= ammoCost)
+			{
+				auto const bulletsBefore = gameProjectiles.size();
+				p_weapons[p_currentWeaponID]->fire(fireInfo, gameProjectiles);
+				isAttacking = (gameProjectiles.size() > bulletsBefore);
+
+				if (isAttacking)
+					p_playerAmmo -= ammoCost;
+			}
+		}
+	}
+
+	// Rumble logic
+	if (isAttacking)
+	{
+		switch (p_weapons[p_currentWeaponID]->rumbleIntensity())
+		{
+		case Intensity::LOW:
+			p_rumbleTimer = 0.05f;
+			p_lowRumble = 0.2f;
+			p_highRumble = 0.2f;
+			break;
+		case Intensity::MEDIUM:
+			p_rumbleTimer = 0.05f;
+			p_lowRumble = 0.2f;
+			p_highRumble = 0.5f;
+			break;
+		case Intensity::HIGH:
+			p_rumbleTimer = 0.1f;
+			p_lowRumble = 0.8f;
+			p_highRumble = 0.8f;
+			break;
+		}
+	}
+
+	if (p_rumbleTimer > 0.f) {
+		p_rumbleTimer -= dt;
+		InputManager::pad().setRumble(p_lowRumble, p_highRumble);
+	}
+	else
+		InputManager::pad().setRumble(0.0f, 0.0f);
+
+
+	p_weapons[p_currentWeaponID]->update(dt, p_body.getPosition(), p_aimDir);
+}
+
+
+
+void Player::buildWeaponsFromLoadout()
+{
+	p_weapons.clear();
+	for (const auto& entry : p_weaponLoadout)
+	{
+		auto weapon = createWeapon(entry.type, entry.level);
+		p_weapons.push_back(std::move(weapon));
+	}
+
+	if (p_weapons.empty()) 
+		p_currentWeaponID = 0;
+	else if (p_currentWeaponID >= p_weapons.size()) 
+		p_currentWeaponID = p_weapons.size() - 1;
+}
+
+std::unique_ptr<Weapon> Player::createWeapon(WeaponType type, int level)
+{
+	switch (type)
+	{
+	case WeaponType::PISTOL: return std::make_unique<PistolWeapon>(level);
+	case WeaponType::ASSAULT_RIFLE:	return std::make_unique<ARWeapon>(level);
+	case WeaponType::SHOTGUN: return std::make_unique<ShotgunWeapon>(level);
+	case WeaponType::KNIFE:	return std::make_unique<KnifeWeapon>();
+	case WeaponType::SWORD:	return std::make_unique<SwordWeapon>();
+	case WeaponType::AXE: return std::make_unique<AxeWeapon>();
+	default:
+		std::cerr << "Invalid weapon type requested: " << type << "\n";
+		return nullptr;
+	}
+}
+
+===== FILE: project-rival/player.h =====
+#pragma once
+#include <SFML/Graphics.hpp>
+
+#include "Collision.h"
+#include "Weapon.h"
+
+struct WeaponInLoadout
+{
+	WeaponType type;
+	int level;
+};
+
+class Player : public ICollidable
+{
+public:
+	Player();
+	~Player();
+
+	void init();
+	void update(float dt, 
+		const sf::Vector2f& mouseWorldPos,
+		const sf::Vector2i& mousePixelPos,
+		std::vector<std::unique_ptr<Projectile>>& gameProjectiles, 
+		std::vector<std::unique_ptr<DamageTrigger>>& instantiableTriggers);
+	void render(sf::RenderWindow& window);
+
+	const sf::Vector2f getPosition() const { return p_body.getPosition(); }
+	sf::FloatRect getCollisionBounds() const override { return p_body.getGlobalBounds(); }
+	CollisionProfile getCollisionProfile() const override { return p_collisionProfile; }
+	const std::vector<WeaponInLoadout>& getWeaponLoadout() const { return p_weaponLoadout; }
+	int getCurrentWeaponID() const { return p_currentWeaponID; }
+	int getHealth() const { return p_health; }
+	int getMaxHealth() const { return p_maxHealth; }
+	int getAmmo() const { return p_playerAmmo; }
+	int getMaxAmmo() const { return p_maxAmmo; }
+
+	void setSpawnPosition(const sf::Vector2f& spawnPos) { p_body.setPosition(spawnPos); }
+	void setBodyColor(const sf::Color& color) { p_body.setFillColor(color); }
+	void setCurrentWeaponID(int id) { if (id >= 0 && id < p_weapons.size()) p_currentWeaponID = id; }
+
+	void hitWall();
+
+	void takeDamage(int damage);
+	const bool isDead() const { return p_isDead; }
+
+	void applyUpgrade(int healthLevel, int speedLevel, int ammoLevel);
+
+	bool addWeaponToLoadout(WeaponType type, int level);
+	bool dropWeaponFromLoadout(int slotIndex);
+	bool swapCurrentWeapon(WeaponType type, int level, WeaponInLoadout& weaponToDrop);
+	void clearLoadout() { p_weapons.clear(); p_weaponLoadout.clear(); p_currentWeaponID = 0; }
+
+
+private:
+	// FUNCTIONS
+	void startUp();
+	void reset();
+	void handleMovement(float dt);
+	void handleAiming(const sf::Vector2f& mouseWorldPos, const sf::Vector2i& mousePixelPos);
+	void ManageWeapons(std::vector<std::unique_ptr<DamageTrigger>>& instantiableTriggers, std::vector<std::unique_ptr<Projectile>>& gameProjectiles, float dt);
+
+
+	void buildWeaponsFromLoadout();
+	std::unique_ptr<Weapon> createWeapon(WeaponType type, int level);
+
+	// VARIABLES
+	sf::RectangleShape p_body;
+
+	sf::Vector2f p_velocity{ 0.f, 0.f };
+
+	sf::Vector2f p_prevPos;
+
+	bool p_isController;
+
+	// reticle
+	sf:: RectangleShape p_reticle;
+	sf::Vector2f p_aimDir{ 0.f,0.f };
+	float p_reticleDistance;
+	sf::Vector2f p_prevMousePos;
+	sf::Vector2i p_prevMousePixelPos;
+
+	// collsion
+	CollisionProfile p_collisionProfile;
+
+	// entity stats
+	int p_maxHealth;
+	int p_health;
+	bool p_isDead;
+	int p_maxAmmo;
+	int p_playerAmmo;
+	float p_moveSpeed{ 200.f };
+
+	// weapons
+	static constexpr int MAX_WEAPONS = 3;
+	std::vector<WeaponInLoadout> p_weaponLoadout;
+	std::vector<std::unique_ptr<Weapon>> p_weapons;
+	int p_currentWeaponID; 
+	
+	float p_rumbleTimer;
+	float p_lowRumble;
+	float p_highRumble;
+
+};
+
+===== FILE: project-rival/project-rival.vcxproj =====
+∩╗┐<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="ArriveBehaviour.cpp" />
+    <ClCompile Include="Collision.cpp" />
+    <ClCompile Include="CombatRoom.cpp" />
+    <ClCompile Include="DamageTrigger.cpp" />
+    <ClCompile Include="EnemyWeapon.cpp" />
+    <ClCompile Include="FloorGenerator.cpp" />
+    <ClCompile Include="FloorLayout.cpp" />
+    <ClCompile Include="LLMService.cpp" />
+    <ClCompile Include="NormalBulletProjectile.cpp" />
+    <ClCompile Include="PlayerHUD.cpp" />
+    <ClCompile Include="PlayerWeapons.cpp" />
+    <ClCompile Include="PortalRoom.cpp" />
+    <ClCompile Include="Projectile.cpp" />
+    <ClCompile Include="Enemy.cpp" />
+    <ClCompile Include="Game.cpp" />
+    <ClCompile Include="Gamepad.cpp" />
+    <ClCompile Include="GruntEnemy.cpp" />
+    <ClCompile Include="InputManager.cpp" />
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="player.cpp" />
+    <ClCompile Include="RoomDoorUtils.cpp" />
+    <ClCompile Include="RoomInstance.cpp" />
+    <ClCompile Include="SeekBehaviour.cpp" />
+    <ClCompile Include="SpawnRoom.cpp" />
+    <ClCompile Include="StaticCollision.cpp" />
+    <ClCompile Include="TurretEnemy.cpp" />
+    <ClCompile Include="Weapon.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="ArriveBehaviour.h" />
+    <ClInclude Include="Collision.h" />
+    <ClInclude Include="CombatRoom.h" />
+    <ClInclude Include="DamageTrigger.h" />
+    <ClInclude Include="DungeonPlan.h" />
+    <ClInclude Include="EnemyWeapon.h" />
+    <ClInclude Include="FloorBlueprint.h" />
+    <ClInclude Include="FloorGenerator.h" />
+    <ClInclude Include="FloorLayout.h" />
+    <ClInclude Include="LLMService.h" />
+    <ClInclude Include="NormalBulletProjectile.h" />
+    <ClInclude Include="PlayerHUD.h" />
+    <ClInclude Include="PlayerWeapons.h" />
+    <ClInclude Include="PortalRoom.h" />
+    <ClInclude Include="Projectile.h" />
+    <ClInclude Include="Enemy.h" />
+    <ClInclude Include="Game.h" />
+    <ClInclude Include="Gamepad.h" />
+    <ClInclude Include="GruntEnemy.h" />
+    <ClInclude Include="InputManager.h" />
+    <ClInclude Include="player.h" />
+    <ClInclude Include="RoomBlueprint.h" />
+    <ClInclude Include="RoomDoorUtils.h" />
+    <ClInclude Include="RoomInstance.h" />
+    <ClInclude Include="SeekBehaviour.h" />
+    <ClInclude Include="SpawnRoom.h" />
+    <ClInclude Include="StaticCollision.h" />
+    <ClInclude Include="Steering.h" />
+    <ClInclude Include="TurretEnemy.h" />
+    <ClInclude Include="Weapon.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="ASSETS\IMAGES\SFML-LOGO.png">
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</DeploymentContent>
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</DeploymentContent>
+    </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <Font Include="ASSETS\FONTS\ariblk.ttf">
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</DeploymentContent>
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</DeploymentContent>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</ExcludedFromBuild>
+    </Font>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\automation\prompts\docs-architecture-development-log-context.md" />
+    <None Include="..\automation\prompts\git-staged-changes-to-commit-context.md" />
+    <None Include="..\automation\prompts\player-aiming-mouse-right-stick-reticle-context.md" />
+    <None Include="..\automation\prompts\steering-enemy-seek-step-by-step-context.md" />
+    <None Include="..\automation\scripts\devlog-dump.ps1" />
+    <None Include="..\CMakePresets.json" />
+    <None Include="..\docs\Architecture\01-project-structure.md" />
+    <None Include="..\docs\Architecture\02-player.md" />
+    <None Include="..\docs\Architecture\03-input.md" />
+    <None Include="..\docs\Architecture\04-enemy.md" />
+    <None Include="..\docs\Architecture\05-steering-oop.md" />
+    <None Include="..\docs\Architecture\06-coding-conventions.md" />
+    <None Include="..\docs\Architecture\07-projectiles.md" />
+    <None Include="..\docs\Architecture\08-collision-and-damage.md" />
+    <None Include="..\docs\Architecture\09-rooms-and-generation.md" />
+    <None Include="..\docs\Architecture\README.md" />
+    <None Include="..\docs\TechnicalDesign\01-overview.md" />
+    <None Include="..\docs\TechnicalDesign\02-goals.md" />
+    <None Include="..\docs\TechnicalDesign\03-technical-requirements.md" />
+    <None Include="..\docs\TechnicalDesign\04-scope-non-goals.md" />
+    <None Include="..\docs\TechnicalDesign\05-system-architecture.md" />
+    <None Include="..\docs\TechnicalDesign\06-subsystem-design.md" />
+    <None Include="..\docs\TechnicalDesign\07-runtime-flow.md" />
+    <None Include="..\docs\TechnicalDesign\08-data-and-state.md" />
+    <None Include="..\docs\TechnicalDesign\09-risks-limitations-ambiguity.md" />
+    <None Include="..\docs\TechnicalDesign\10-appendix.md" />
+    <None Include="..\docs\TechnicalDesign\README.md" />
+    <None Include="ASSETS\LLM\MODELS\Llama-3.2-1B-Instruct-Q4_K_M.gguf" />
+    <None Include="automation\prompts\level-architecture-roomplan-generator-builder-static-colliders-context.md" />
+    <None Include="automation\scripts\merge-summary-generator.ps1" />
+    <None Include="docs\Architecture\10-llm-integration.md" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="..\automation\scripts\output\aiming-merge-changes.txt" />
+    <Text Include="..\automation\scripts\output\collisions-merge-changes.txt" />
+    <Text Include="..\automation\scripts\output\combat-room-merge-changes.txt" />
+    <Text Include="..\automation\scripts\output\devlog-dump-20260325-151026.txt" />
+    <Text Include="..\automation\scripts\output\devlog-dump-20260325-151324.txt" />
+    <Text Include="..\automation\scripts\output\enemies-merge-changes.txt" />
+    <Text Include="..\automation\scripts\output\additional-rooms-merge-changes.txt" />
+    <Text Include="..\automation\scripts\output\floor+dungeon-merge-changes.txt" />
+    <Text Include="..\CMakeLists.txt" />
+    <Text Include="automation\scripts\output\hub-merge-changes.txt" />
+    <Text Include="automation\scripts\output\llm-integration-merge-changes.txt" />
+    <Text Include="automation\scripts\output\weapons-merge-changes.txt" />
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>15.0</VCProjectVersion>
+    <ProjectGuid>{72f74580-4c0c-4adc-be48-d33f3c5aa1ef}</ProjectGuid>
+    <RootNamespace>project_rival</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v145</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v145</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v145</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v145</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup />
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>$(SFML_SDK)\include;$(SolutionDir)external\$(SFML_SDK)\include;$(SolutionDir)external\fyp-llm-lib\llm;$(SolutionDir)external\fyp-llm-lib\external\llama.cpp\include;$(SolutionDir)external\fyp-llm-lib\external\llama.cpp\ggml\include</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <AdditionalLibraryDirectories>$(SFML_SDK)\lib;$(SolutionDir)build\llm_win32_debug\Debug;$(SolutionDir)build\llm_win32_debug\external\fyp-llm-lib\Debug;$(SolutionDir)build\llm_win32_debug\external\fyp-llm-lib\external\llama.cpp\src\Debug;$(SolutionDir)build\llm_win32_debug\external\fyp-llm-lib\external\llama.cpp\ggml\src\Debug</AdditionalLibraryDirectories>
+      <AdditionalDependencies>xinput.lib;LLMLib.lib;llama.lib;ggml.lib;ggml-base.lib;ggml-cpu.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>$(SFML_SDK_x64)\include;$(SolutionDir)external\$(SFML_SDK)\include;$(SolutionDir)external\fyp-llm-lib\llm;$(SolutionDir)external\fyp-llm-lib\external\llama.cpp\include;$(SolutionDir)external\fyp-llm-lib\external\llama.cpp\ggml\include</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <AdditionalLibraryDirectories>$(SFML_SDK_x64)\lib;$(SolutionDir)build\llm_x64_debug\Debug;$(SolutionDir)build\llm_x64_debug\external\fyp-llm-lib\Debug;$(SolutionDir)build\llm_x64_debug\external\fyp-llm-lib\external\llama.cpp\src\Debug;$(SolutionDir)build\llm_x64_debug\external\fyp-llm-lib\external\llama.cpp\ggml\src\Debug</AdditionalLibraryDirectories>
+      <AdditionalDependencies>xinput.lib;LLMLib.lib;llama.lib;ggml.lib;ggml-base.lib;ggml-cpu.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>$(SFML_SDK)\include;$(SolutionDir)external\$(SFML_SDK)\include;$(SolutionDir)external\fyp-llm-lib\llm;$(SolutionDir)external\fyp-llm-lib\external\llama.cpp\include;$(SolutionDir)external\fyp-llm-lib\external\llama.cpp\ggml\include</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalLibraryDirectories>$(SFML_SDK)\lib;$(SolutionDir)build\llm_win32_release\Release;$(SolutionDir)build\llm_win32_release\external\fyp-llm-lib\Release;$(SolutionDir)build\llm_win32_release\external\fyp-llm-lib\external\llama.cpp\src\Release;$(SolutionDir)build\llm_win32_release\external\fyp-llm-lib\external\llama.cpp\ggml\src\Release</AdditionalLibraryDirectories>
+      <AdditionalDependencies>xinput.lib;LLMLib.lib;llama.lib;ggml.lib;ggml-base.lib;ggml-cpu.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>$(SFML_SDK_x64)\include;$(SolutionDir)external\$(SFML_SDK)\include;$(SolutionDir)external\fyp-llm-lib\llm;$(SolutionDir)external\fyp-llm-lib\external\llama.cpp\include;$(SolutionDir)external\fyp-llm-lib\external\llama.cpp\ggml\include</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalLibraryDirectories>$(SFML_SDK_x64)\lib;$(SolutionDir)build\llm_x64_release\Release;$(SolutionDir)build\llm_x64_release\external\fyp-llm-lib\Release;$(SolutionDir)build\llm_x64_release\external\fyp-llm-lib\external\llama.cpp\src\Release;$(SolutionDir)build\llm_x64_release\external\fyp-llm-lib\external\llama.cpp\ggml\src\Release</AdditionalLibraryDirectories>
+      <AdditionalDependencies>xinput.lib;LLMLib.lib;llama.lib;ggml.lib;ggml-base.lib;ggml-cpu.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
+
+===== FILE: project-rival/project-rival.vcxproj.filters =====
+∩╗┐<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Resource Files\FONTS">
+      <UniqueIdentifier>{b5e82806-bf9b-4fdf-b17c-c35282c021a5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\IMAGES">
+      <UniqueIdentifier>{1d793ccc-0d22-4eea-8d0e-c5b5a5270a40}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Input">
+      <UniqueIdentifier>{492c6b32-40d8-4a9f-8d7b-f4959ad27b73}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Abs.Interfaces">
+      <UniqueIdentifier>{fc0fe863-09ef-468e-aaa5-2881e53dd4b7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Behaviours">
+      <UniqueIdentifier>{b532eab4-ae76-449b-9ec6-96913d08a763}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\DOCUMENTATION">
+      <UniqueIdentifier>{432d37c5-2336-4597-a4da-e09c882032eb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\AUTOMATIONS">
+      <UniqueIdentifier>{b8e2caa8-ed7f-45de-ace6-9451eb9edab4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Enemies">
+      <UniqueIdentifier>{641a97c9-ec20-499b-a847-eae07285cfdb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\AUTOMATIONS\Agent">
+      <UniqueIdentifier>{63056c86-90e2-4897-abae-e538dd6536ac}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\AUTOMATIONS\Scripts">
+      <UniqueIdentifier>{25290212-7808-4d9b-93d3-2c9d0ccc6259}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Levels">
+      <UniqueIdentifier>{127c1998-b90e-4d19-9042-548546c299e2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Levels\Rooms">
+      <UniqueIdentifier>{6315f94b-1a02-4312-8a70-232932c97a70}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Levels\Collision">
+      <UniqueIdentifier>{39c9ab2c-a81f-4afe-83a4-1376aef9f6c4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\DOCUMENTATION\Git Summaries">
+      <UniqueIdentifier>{d0a212c5-440c-41a1-8f2b-6fde83f55d70}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Levels\Rooms\Combat Room">
+      <UniqueIdentifier>{6c01b469-4db9-4697-a8dd-812e4bf169e4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Levels\Rooms\Portal Room">
+      <UniqueIdentifier>{d6d9eb36-80d4-49c2-8aca-b30bceee3189}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Levels\Rooms\Spawn Room">
+      <UniqueIdentifier>{83524f3d-2757-4bc8-bd75-f613d35270f0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Abs.Interfaces\Collision">
+      <UniqueIdentifier>{3d16047e-5381-44b1-acad-034b7d06a802}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Abs.Interfaces\Steering">
+      <UniqueIdentifier>{fb5c9f71-f0a5-4069-b4c4-44cd19d4858e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Behaviours\Arrive">
+      <UniqueIdentifier>{8a630ba1-5c05-493a-b269-da321a6359e3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Behaviours\Seek">
+      <UniqueIdentifier>{5e2eccba-5354-4112-84aa-d0e5fc88b169}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Enemies\Basic">
+      <UniqueIdentifier>{09da90ae-5e5d-4854-b02a-a78a5330dfff}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Enemies\Basic\Grunt">
+      <UniqueIdentifier>{86ff36fa-be83-400c-b8ee-b2e3af12c8d7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Enemies\Basic\Turret">
+      <UniqueIdentifier>{137ff5ed-1375-45ed-994c-a37a19e89b93}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Player">
+      <UniqueIdentifier>{dbad0cb9-07df-477f-8c63-4ca7a14b0f08}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\DOCUMENTATION\Git Summaries\Devlog Dumps">
+      <UniqueIdentifier>{dd92ece3-062f-4995-b441-b7cec4b92ad3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\DOCUMENTATION\TDD">
+      <UniqueIdentifier>{ab98f2b2-375f-4581-b89f-c300adecb773}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\DOCUMENTATION\Architecture">
+      <UniqueIdentifier>{f6122b01-7ad4-459c-ab01-774cd71eb0a7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Levels\Floors">
+      <UniqueIdentifier>{baac4118-c356-4ce9-ab7b-54e113e487fd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Levels\Dungeons">
+      <UniqueIdentifier>{368fecfe-ccc6-4a98-9c23-09b284ac1fdf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Levels\Floors\Floor Blueprint">
+      <UniqueIdentifier>{be3d9870-f5b6-48e9-b412-a0513c5dc1bb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\BUILD">
+      <UniqueIdentifier>{4ca282ac-c0df-4320-a865-d8a78b90be98}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\LLM">
+      <UniqueIdentifier>{94f1d2f2-1198-47a6-a717-b512538676a6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\LLM\Model">
+      <UniqueIdentifier>{c1aaa3ab-baca-40ba-b16d-7601f1b78d66}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\LLM">
+      <UniqueIdentifier>{dcefa0a9-0b7c-4107-8bf5-e9c46d69b31c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Weapons">
+      <UniqueIdentifier>{a3841909-2565-4b37-86a9-6a38af2db86c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Weapons\Projectiles">
+      <UniqueIdentifier>{b9295663-bd23-4a50-bb5f-6ae5e6710b01}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Weapons\Projectiles\NormalBullets">
+      <UniqueIdentifier>{ec3a1ba9-8f3b-49c9-a2af-ee53fd5af881}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Abs.Interfaces\Room Blueprint">
+      <UniqueIdentifier>{afd6ea71-deac-45ed-961c-6a703e03640c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Weapons\PlayerWeapons">
+      <UniqueIdentifier>{c99f9334-8a50-4371-b34e-9340b13f5e26}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Weapons\EnemyWeapon">
+      <UniqueIdentifier>{13469c44-582a-4d6d-a4b0-54eac05d26ab}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Weapons\DamageTrigger">
+      <UniqueIdentifier>{ee532bbc-f880-4db6-afc6-41a060c4bf8c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\UI">
+      <UniqueIdentifier>{886284c3-c66a-45d7-9687-30a3fc07881d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\UI\HUD">
+      <UniqueIdentifier>{6c66099b-197f-457f-960e-fc128c1d85f7}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Game.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="InputManager.cpp">
+      <Filter>Header Files\Input</Filter>
+    </ClCompile>
+    <ClCompile Include="Gamepad.cpp">
+      <Filter>Header Files\Input</Filter>
+    </ClCompile>
+    <ClCompile Include="StaticCollision.cpp">
+      <Filter>Header Files\Levels\Collision</Filter>
+    </ClCompile>
+    <ClCompile Include="CombatRoom.cpp">
+      <Filter>Header Files\Levels\Rooms\Combat Room</Filter>
+    </ClCompile>
+    <ClCompile Include="PortalRoom.cpp">
+      <Filter>Header Files\Levels\Rooms\Portal Room</Filter>
+    </ClCompile>
+    <ClCompile Include="SpawnRoom.cpp">
+      <Filter>Header Files\Levels\Rooms\Spawn Room</Filter>
+    </ClCompile>
+    <ClCompile Include="Collision.cpp">
+      <Filter>Header Files\Abs.Interfaces\Collision</Filter>
+    </ClCompile>
+    <ClCompile Include="ArriveBehaviour.cpp">
+      <Filter>Header Files\Behaviours\Arrive</Filter>
+    </ClCompile>
+    <ClCompile Include="SeekBehaviour.cpp">
+      <Filter>Header Files\Behaviours\Seek</Filter>
+    </ClCompile>
+    <ClCompile Include="GruntEnemy.cpp">
+      <Filter>Header Files\Enemies\Basic\Grunt</Filter>
+    </ClCompile>
+    <ClCompile Include="TurretEnemy.cpp">
+      <Filter>Header Files\Enemies\Basic\Turret</Filter>
+    </ClCompile>
+    <ClCompile Include="player.cpp">
+      <Filter>Header Files\Player</Filter>
+    </ClCompile>
+    <ClCompile Include="StaticCollision.cpp">
+      <Filter>Header Files\Levels\Collision</Filter>
+    </ClCompile>
+    <ClCompile Include="CombatRoom.cpp">
+      <Filter>Header Files\Levels\Rooms</Filter>
+    </ClCompile>
+    <ClCompile Include="NormalBulletProjectile.cpp">
+      <Filter>Header Files\Weapons\Projectiles\NormalBullets</Filter>
+    </ClCompile>
+    <ClCompile Include="Enemy.cpp">
+      <Filter>Header Files\Enemies</Filter>
+    </ClCompile>
+    <ClCompile Include="Projectile.cpp">
+      <Filter>Header Files\Weapons\Projectiles</Filter>
+    </ClCompile>
+    <ClCompile Include="RoomInstance.cpp">
+      <Filter>Header Files\Levels\Rooms</Filter>
+    </ClCompile>
+    <ClCompile Include="FloorGenerator.cpp">
+      <Filter>Header Files\Levels\Floors</Filter>
+    </ClCompile>
+    <ClCompile Include="RoomInstance.cpp">
+      <Filter>Header Files\Levels\Rooms</Filter>
+    </ClCompile>
+    <ClCompile Include="FloorLayout.cpp">
+      <Filter>Header Files\Levels\Floors</Filter>
+    </ClCompile>
+    <ClCompile Include="RoomDoorUtils.cpp">
+      <Filter>Header Files\Levels\Rooms</Filter>
+    </ClCompile>
+    <ClCompile Include="LLMService.cpp">
+      <Filter>Header Files\LLM</Filter>
+    </ClCompile>
+    <ClCompile Include="Weapon.cpp">
+      <Filter>Header Files\Weapons</Filter>
+    </ClCompile>
+    <ClCompile Include="PlayerWeapons.cpp">
+      <Filter>Header Files\Weapons\PlayerWeapons</Filter>
+    </ClCompile>
+    <ClCompile Include="EnemyWeapon.cpp">
+      <Filter>Header Files\Weapons\EnemyWeapon</Filter>
+    </ClCompile>
+    <ClCompile Include="DamageTrigger.cpp">
+      <Filter>Header Files\Weapons\DamageTrigger</Filter>
+    </ClCompile>
+    <ClCompile Include="PlayerHUD.cpp">
+      <Filter>Header Files\UI\HUD</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Game.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="InputManager.h">
+      <Filter>Header Files\Input</Filter>
+    </ClInclude>
+    <ClInclude Include="Gamepad.h">
+      <Filter>Header Files\Input</Filter>
+    </ClInclude>
+    <ClInclude Include="StaticCollision.h">
+      <Filter>Header Files\Levels\Collision</Filter>
+    </ClInclude>
+    <ClInclude Include="CombatRoom.h">
+      <Filter>Header Files\Levels\Rooms\Combat Room</Filter>
+    </ClInclude>
+    <ClInclude Include="PortalRoom.h">
+      <Filter>Header Files\Levels\Rooms\Portal Room</Filter>
+    </ClInclude>
+    <ClInclude Include="SpawnRoom.h">
+      <Filter>Header Files\Levels\Rooms\Spawn Room</Filter>
+    </ClInclude>
+    <ClInclude Include="Collision.h">
+      <Filter>Header Files\Abs.Interfaces\Collision</Filter>
+    </ClInclude>
+    <ClInclude Include="RoomBlueprint.h">
+      <Filter>Header Files\Abs.Interfaces\Room Blueprint</Filter>
+    </ClInclude>
+    <ClInclude Include="Steering.h">
+      <Filter>Header Files\Abs.Interfaces\Steering</Filter>
+    </ClInclude>
+    <ClInclude Include="ArriveBehaviour.h">
+      <Filter>Header Files\Behaviours\Arrive</Filter>
+    </ClInclude>
+    <ClInclude Include="SeekBehaviour.h">
+      <Filter>Header Files\Behaviours\Seek</Filter>
+    </ClInclude>
+    <ClInclude Include="GruntEnemy.h">
+      <Filter>Header Files\Enemies\Basic\Grunt</Filter>
+    </ClInclude>
+    <ClInclude Include="TurretEnemy.h">
+      <Filter>Header Files\Enemies\Basic\Turret</Filter>
+    </ClInclude>
+    <ClInclude Include="player.h">
+      <Filter>Header Files\Player</Filter>
+    </ClInclude>
+    <ClInclude Include="RoomBlueprint.h">
+      <Filter>Header Files\Abs.Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="StaticCollision.h">
+      <Filter>Header Files\Levels\Collision</Filter>
+    </ClInclude>
+    <ClInclude Include="CombatRoom.h">
+      <Filter>Header Files\Levels\Rooms</Filter>
+    </ClInclude>
+    <ClInclude Include="NormalBulletProjectile.h">
+      <Filter>Header Files\Weapons\Projectiles\NormalBullets</Filter>
+    </ClInclude>
+    <ClInclude Include="Enemy.h">
+      <Filter>Header Files\Enemies</Filter>
+    </ClInclude>
+    <ClInclude Include="Projectile.h">
+      <Filter>Header Files\Weapons\Projectiles</Filter>
+    </ClInclude>
+    <ClInclude Include="RoomInstance.h">
+      <Filter>Header Files\Levels\Rooms</Filter>
+    </ClInclude>
+    <ClInclude Include="FloorBlueprint.h">
+      <Filter>Header Files\Levels\Floors\Floor Blueprint</Filter>
+    </ClInclude>
+    <ClInclude Include="FloorGenerator.h">
+      <Filter>Header Files\Levels\Floors</Filter>
+    </ClInclude>
+    <ClInclude Include="RoomInstance.h">
+      <Filter>Header Files\Levels\Rooms</Filter>
+    </ClInclude>
+    <ClInclude Include="RoomDoorUtils.h">
+      <Filter>Header Files\Levels\Rooms</Filter>
+    </ClInclude>
+    <ClInclude Include="FloorLayout.h">
+      <Filter>Header Files\Levels\Floors</Filter>
+    </ClInclude>
+    <ClInclude Include="DungeonPlan.h">
+      <Filter>Header Files\Levels\Dungeons</Filter>
+    </ClInclude>
+    <ClInclude Include="LLMService.h">
+      <Filter>Header Files\LLM</Filter>
+    </ClInclude>
+    <ClInclude Include="Weapon.h">
+      <Filter>Header Files\Weapons</Filter>
+    </ClInclude>
+    <ClInclude Include="PlayerWeapons.h">
+      <Filter>Header Files\Weapons\PlayerWeapons</Filter>
+    </ClInclude>
+    <ClInclude Include="EnemyWeapon.h">
+      <Filter>Header Files\Weapons\EnemyWeapon</Filter>
+    </ClInclude>
+    <ClInclude Include="DamageTrigger.h">
+      <Filter>Header Files\Weapons\DamageTrigger</Filter>
+    </ClInclude>
+    <ClInclude Include="PlayerHUD.h">
+      <Filter>Header Files\UI\HUD</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="ASSETS\IMAGES\SFML-LOGO.png">
+      <Filter>Resource Files\IMAGES</Filter>
+    </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <Font Include="ASSETS\FONTS\ariblk.ttf">
+      <Filter>Resource Files\FONTS</Filter>
+    </Font>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\automation\prompts\docs-architecture-development-log-context.md">
+      <Filter>Resource Files\AUTOMATIONS\Agent</Filter>
+    </None>
+    <None Include="..\automation\prompts\git-staged-changes-to-commit-context.md">
+      <Filter>Resource Files\AUTOMATIONS\Agent</Filter>
+    </None>
+    <None Include="..\automation\prompts\player-aiming-mouse-right-stick-reticle-context.md">
+      <Filter>Resource Files\AUTOMATIONS\Agent</Filter>
+    </None>
+    <None Include="..\automation\prompts\steering-enemy-seek-step-by-step-context.md">
+      <Filter>Resource Files\AUTOMATIONS\Agent</Filter>
+    </None>
+    <None Include="automation\prompts\level-architecture-roomplan-generator-builder-static-colliders-context.md">
+      <Filter>Resource Files\AUTOMATIONS\Agent</Filter>
+    </None>
+    <None Include="..\automation\scripts\devlog-dump.ps1">
+      <Filter>Resource Files\AUTOMATIONS\Scripts</Filter>
+    </None>
+    <None Include="..\docs\Architecture\01-project-structure.md">
+      <Filter>Resource Files\DOCUMENTATION\Architecture</Filter>
+    </None>
+    <None Include="..\docs\Architecture\02-player.md">
+      <Filter>Resource Files\DOCUMENTATION\Architecture</Filter>
+    </None>
+    <None Include="..\docs\Architecture\03-input.md">
+      <Filter>Resource Files\DOCUMENTATION\Architecture</Filter>
+    </None>
+    <None Include="..\docs\Architecture\04-enemy.md">
+      <Filter>Resource Files\DOCUMENTATION\Architecture</Filter>
+    </None>
+    <None Include="..\docs\Architecture\05-steering-oop.md">
+      <Filter>Resource Files\DOCUMENTATION\Architecture</Filter>
+    </None>
+    <None Include="..\docs\Architecture\07-projectiles.md">
+      <Filter>Resource Files\DOCUMENTATION\Architecture</Filter>
+    </None>
+    <None Include="..\docs\Architecture\08-collision-and-damage.md">
+      <Filter>Resource Files\DOCUMENTATION\Architecture</Filter>
+    </None>
+    <None Include="..\docs\Architecture\09-rooms-and-generation.md">
+      <Filter>Resource Files\DOCUMENTATION\Architecture</Filter>
+    </None>
+    <None Include="..\docs\Architecture\06-coding-conventions.md">
+      <Filter>Resource Files\DOCUMENTATION\Architecture</Filter>
+    </None>
+    <None Include="..\docs\Architecture\README.md">
+      <Filter>Resource Files\DOCUMENTATION\Architecture</Filter>
+    </None>
+    <None Include="..\docs\TechnicalDesign\01-overview.md">
+      <Filter>Resource Files\DOCUMENTATION\TDD</Filter>
+    </None>
+    <None Include="..\docs\TechnicalDesign\02-goals.md">
+      <Filter>Resource Files\DOCUMENTATION\TDD</Filter>
+    </None>
+    <None Include="..\docs\TechnicalDesign\03-technical-requirements.md">
+      <Filter>Resource Files\DOCUMENTATION\TDD</Filter>
+    </None>
+    <None Include="..\docs\TechnicalDesign\04-scope-non-goals.md">
+      <Filter>Resource Files\DOCUMENTATION\TDD</Filter>
+    </None>
+    <None Include="..\docs\TechnicalDesign\05-system-architecture.md">
+      <Filter>Resource Files\DOCUMENTATION\TDD</Filter>
+    </None>
+    <None Include="..\docs\TechnicalDesign\06-subsystem-design.md">
+      <Filter>Resource Files\DOCUMENTATION\TDD</Filter>
+    </None>
+    <None Include="..\docs\TechnicalDesign\07-runtime-flow.md">
+      <Filter>Resource Files\DOCUMENTATION\TDD</Filter>
+    </None>
+    <None Include="..\docs\TechnicalDesign\08-data-and-state.md">
+      <Filter>Resource Files\DOCUMENTATION\TDD</Filter>
+    </None>
+    <None Include="..\docs\TechnicalDesign\09-risks-limitations-ambiguity.md">
+      <Filter>Resource Files\DOCUMENTATION\TDD</Filter>
+    </None>
+    <None Include="..\docs\TechnicalDesign\10-appendix.md">
+      <Filter>Resource Files\DOCUMENTATION\TDD</Filter>
+    </None>
+    <None Include="..\docs\TechnicalDesign\README.md">
+      <Filter>Resource Files\DOCUMENTATION\TDD</Filter>
+    </None>
+    <None Include="..\CMakePresets.json">
+      <Filter>Resource Files\BUILD</Filter>
+    </None>
+    <None Include="ASSETS\LLM\MODELS\Llama-3.2-1B-Instruct-Q4_K_M.gguf">
+      <Filter>Resource Files\LLM\Model</Filter>
+    </None>
+    <None Include="docs\Architecture\10-llm-integration.md">
+      <Filter>Resource Files\DOCUMENTATION\Architecture</Filter>
+    </None>
+    <None Include="automation\scripts\merge-summary-generator.ps1">
+      <Filter>Resource Files\AUTOMATIONS\Scripts</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="..\automation\scripts\output\aiming-merge-changes.txt">
+      <Filter>Resource Files\DOCUMENTATION\Git Summaries</Filter>
+    </Text>
+    <Text Include="..\automation\scripts\output\collisions-merge-changes.txt">
+      <Filter>Resource Files\DOCUMENTATION\Git Summaries</Filter>
+    </Text>
+    <Text Include="..\automation\scripts\output\enemies-merge-changes.txt">
+      <Filter>Resource Files\DOCUMENTATION\Git Summaries</Filter>
+    </Text>
+    <Text Include="..\automation\scripts\output\devlog-dump-20260325-151026.txt">
+      <Filter>Resource Files\DOCUMENTATION\Git Summaries\Devlog Dumps</Filter>
+    </Text>
+    <Text Include="..\automation\scripts\output\devlog-dump-20260325-151324.txt">
+      <Filter>Resource Files\DOCUMENTATION\Git Summaries\Devlog Dumps</Filter>
+    </Text>
+    <Text Include="..\automation\scripts\output\combat-room-merge-changes.txt">
+      <Filter>Resource Files\DOCUMENTATION\Git Summaries</Filter>
+    </Text>
+    <Text Include="..\automation\scripts\output\additional-rooms-merge-changes.txt">
+      <Filter>Resource Files\DOCUMENTATION\Git Summaries</Filter>
+    </Text>
+    <Text Include="..\automation\scripts\output\floor+dungeon-merge-changes.txt">
+      <Filter>Resource Files\DOCUMENTATION\Git Summaries</Filter>
+    </Text>
+    <Text Include="..\CMakeLists.txt">
+      <Filter>Resource Files\BUILD</Filter>
+    </Text>
+    <Text Include="automation\scripts\output\llm-integration-merge-changes.txt">
+      <Filter>Resource Files\DOCUMENTATION\Git Summaries</Filter>
+    </Text>
+    <Text Include="automation\scripts\output\weapons-merge-changes.txt">
+      <Filter>Resource Files\DOCUMENTATION\Git Summaries</Filter>
+    </Text>
+    <Text Include="automation\scripts\output\hub-merge-changes.txt">
+      <Filter>Resource Files\DOCUMENTATION\Git Summaries</Filter>
+    </Text>
+  </ItemGroup>
+</Project>
+

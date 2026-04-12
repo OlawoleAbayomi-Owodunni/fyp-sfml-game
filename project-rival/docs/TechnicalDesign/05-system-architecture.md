@@ -30,6 +30,11 @@ This chapter summarizes the major subsystems, who owns what, and how data flows.
 - `Player` uses a loadout model and exposes loadout/upgrade hooks.
 - `Player` emits projectile/melee trigger requests into game-owned runtime containers.
 
+### UI / HUD
+
+- `PlayerHUD` renders health, ammo, and coin information.
+- `Game` updates HUD values each frame and renders HUD in default-view screen space.
+
 ### Enemies / AI
 
 - `Enemy` base class + concrete types (`GruntEnemy`, `TurretEnemy`).
@@ -83,6 +88,7 @@ Corridors are generated in `Game` from floor edges and appended as extra `RoomIn
 
 - `Game` owns:
   - `Player`
+  - `PlayerHUD`
   - enemies list (`std::vector<std::unique_ptr<Enemy>>`)
   - projectile list (`std::vector<std::unique_ptr<Projectile>>`)
   - active melee trigger list (`std::vector<std::unique_ptr<DamageTrigger>>`)
@@ -97,6 +103,7 @@ Data flow example:
 - `Game` updates player/enemies and lifecycle-manages projectiles/triggers.
 - `Game` checks collisions (entity hits, bullets, melee triggers, environment, portal/door triggers).
 - `Game` processes hub interactions, combat waves, floor transitions, and LLM polling.
+- `Game` updates HUD values from player/economy state.
 - `Game` renders rooms → player → enemies → projectiles → triggers.
 
 Current camera behavior supports both player-follow and floor-overview modes.

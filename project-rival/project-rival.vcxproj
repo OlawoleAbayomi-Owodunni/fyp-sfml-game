@@ -138,6 +138,7 @@
     <Text Include="..\CMakeLists.txt" />
     <Text Include="automation\scripts\output\hub-merge-changes.txt" />
     <Text Include="automation\scripts\output\llm-integration-merge-changes.txt" />
+    <Text Include="automation\scripts\output\upgrades-merge-changes.txt" />
     <Text Include="automation\scripts\output\weapons-merge-changes.txt" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

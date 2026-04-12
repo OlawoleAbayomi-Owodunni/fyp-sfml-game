@@ -59,6 +59,10 @@ Corridors are currently generated inside `Game.cpp` (as temporary `RoomPlan`s co
 - `Projectile.h` / `Projectile.cpp` (base class)
 - `NormalBulletProjectile.h` / `NormalBulletProjectile.cpp` (simple bullet)
 
+### UI
+
+- `PlayerHUD.h` / `PlayerHUD.cpp` (health/ammo/coins HUD overlay)
+
 ### AI / Movement
 
 - `Steering.h`
