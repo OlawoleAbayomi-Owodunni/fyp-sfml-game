@@ -65,6 +65,8 @@ public:
 
 	void setQuestBoardQuests(const std::vector<QuestData>& quests);
 
+	void setGameOverStats(int kills, float timeSeconds, int coins, int healthPacks, int ammoPacks, float highscore);
+
 	void processEvent(const sf::Event& event, sf::RenderWindow& window);
 	void processControllerNavigation(bool upPressed, bool downPressed, bool activatePressed, bool backPressed);
 
@@ -117,4 +119,11 @@ private:
 	#pragma endregion
 
 	sf::RectangleShape m_menuCursor;
+
+	sf::Text m_gameOverKills{ m_font };
+	sf::Text m_gameOverTime{ m_font };
+	sf::Text m_gameOverCoins{ m_font };
+	sf::Text m_gameOverHealth{ m_font };
+	sf::Text m_gameOverAmmo{ m_font };
+	sf::Text m_gameOverHighscore{ m_font };
 };

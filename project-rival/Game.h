@@ -285,6 +285,21 @@ private:
 	// UI management
 	PlayerHUD m_hud{ m_arialFont };
 
+	struct RunStats
+	{
+		int kills{ 0 };
+		int coinsCollected{ 0 };
+		int healthPacksCollected{ 0 };
+		int ammoPacksCollected{ 0 };
+		float timeSeconds{ 0.f };
+		float highscore{ 0.f };
+	};
+
+	RunStats m_currentRunStats{};
+	RunStats m_lastRunStats{};
+	bool m_hasLastRunStats{ false };
+	int m_runStartCoins{ 0 };
+
 	#pragma region Quest System
 	// Quest management
 	QuestManager m_questManager;

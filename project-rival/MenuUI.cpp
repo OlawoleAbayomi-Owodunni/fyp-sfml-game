@@ -1,5 +1,7 @@
 #include "MenuUI.h"
 
+#include <sstream>
+
 /**
  * @file MenuUI.cpp
  * @brief Implements menu rendering, navigation, and quest board UI.
@@ -156,6 +158,16 @@ void MenuUI::render(sf::RenderWindow& window)
     title.setPosition(sf::Vector2f(viewCenter.x, viewCenter.y - 260.f));
 	window.draw(title);
 
+	if (m_screen == MenuScreen::GAME_OVER_SCREEN)
+	{
+		window.draw(m_gameOverKills);
+		window.draw(m_gameOverTime);
+		window.draw(m_gameOverCoins);
+		window.draw(m_gameOverHealth);
+		window.draw(m_gameOverAmmo);
+		window.draw(m_gameOverHighscore);
+	}
+
 	for (int i = 0; i < static_cast<int>(buttons->size()); i++)
 	{
 		auto& button = (*buttons)[i];
@@ -168,6 +180,70 @@ void MenuUI::render(sf::RenderWindow& window)
 
 	updateMenuCursorPosition();
 	window.draw(m_menuCursor);
+}
+
+void MenuUI::setGameOverStats(int kills, float timeSeconds, int coins, int healthPacks, int ammoPacks, float highscore)
+{
+	const sf::Vector2f viewCenter = m_defaultView.getCenter();
+	const float startY = viewCenter.y - 130.f;
+	const float lineSpacing = 36.f;
+	const float x = viewCenter.x;
+
+	auto initLine = [&](sf::Text& text)
+		{
+			text.setFont(m_font);
+			text.setCharacterSize(24);
+			text.setFillColor(sf::Color::White);
+			text.setOutlineThickness(1.f);
+			text.setOutlineColor(sf::Color::Black);
+		};
+
+	initLine(m_gameOverKills);
+	initLine(m_gameOverTime);
+	initLine(m_gameOverCoins);
+	initLine(m_gameOverHealth);
+	initLine(m_gameOverAmmo);
+	initLine(m_gameOverHighscore);
+
+	{
+		m_gameOverKills.setString("Kills: " + std::to_string(kills));
+		m_gameOverKills.setOrigin(m_gameOverKills.getGlobalBounds().getCenter());
+		m_gameOverKills.setPosition({ x, startY });
+	}
+	{
+		std::ostringstream ss;
+		ss.setf(std::ios::fixed);
+		ss.precision(1);
+		ss << "Time: " << timeSeconds << "s";
+		m_gameOverTime.setString(ss.str());
+		m_gameOverTime.setOrigin(m_gameOverTime.getGlobalBounds().getCenter());
+		m_gameOverTime.setPosition({ x, startY + lineSpacing });
+	}
+	{
+		m_gameOverCoins.setString("Coins collected: " + std::to_string(coins));
+		m_gameOverCoins.setOrigin(m_gameOverCoins.getGlobalBounds().getCenter());
+		m_gameOverCoins.setPosition({ x, startY + lineSpacing * 2 });
+	}
+	{
+		m_gameOverHealth.setString("Health packs: " + std::to_string(healthPacks));
+		m_gameOverHealth.setOrigin(m_gameOverHealth.getGlobalBounds().getCenter());
+		m_gameOverHealth.setPosition({ x, startY + lineSpacing * 3 });
+	}
+	{
+		m_gameOverAmmo.setString("Ammo packs: " + std::to_string(ammoPacks));
+		m_gameOverAmmo.setOrigin(m_gameOverAmmo.getGlobalBounds().getCenter());
+		m_gameOverAmmo.setPosition({ x, startY + lineSpacing * 4 });
+	}
+	{
+		std::ostringstream ss;
+		ss.setf(std::ios::fixed);
+		ss.precision(1);
+		ss << "Highscore: " << highscore;
+		m_gameOverHighscore.setString(ss.str());
+		m_gameOverHighscore.setFillColor(sf::Color::Yellow);
+		m_gameOverHighscore.setOrigin(m_gameOverHighscore.getGlobalBounds().getCenter());
+		m_gameOverHighscore.setPosition({ x, startY + lineSpacing * 5 });
+	}
 }
 
 /**

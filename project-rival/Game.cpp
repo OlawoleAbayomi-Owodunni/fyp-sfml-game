@@ -468,6 +468,9 @@ void Game::processGameEvents(const sf::Event& event)
  */
 void Game::update(float dt)
 {
+ if (m_menuUI.isGameplayScreen())
+		m_currentRunStats.timeSeconds += dt;
+
 	const Vector2i mousePos = Mouse::getPosition(m_window);
 	sf::View inputView;
 	if (m_isPlayerCamera) {
@@ -492,6 +495,12 @@ void Game::update(float dt)
 	if( m_gameMode == GameMode::DUNGEON && m_player.isDead())
 	{
 		std::cout << "Player has died. Showing game over screen...\n";
+       m_currentRunStats.coinsCollected = std::max(0, m_coins - m_runStartCoins);
+		const float denom = std::max(1.f, m_currentRunStats.timeSeconds);
+		m_currentRunStats.highscore = (m_currentRunStats.kills * (m_currentRunStats.coinsCollected + m_currentRunStats.healthPacksCollected + m_currentRunStats.ammoPacksCollected)) / denom;
+		m_lastRunStats = m_currentRunStats;
+		m_hasLastRunStats = true;
+		m_menuUI.setGameOverStats(m_lastRunStats.kills, m_lastRunStats.timeSeconds, m_lastRunStats.coinsCollected, m_lastRunStats.healthPacksCollected, m_lastRunStats.ammoPacksCollected, m_lastRunStats.highscore);
 		m_questManager.finaliseRun();
         m_menuUI.setScreen(MenuScreen::GAME_OVER_SCREEN);
 		return;
@@ -518,6 +527,7 @@ void Game::update(float dt)
 		if (enemy->isDead())
 		{
 			m_questManager.recordEnemyKill(enemy->getEnemyType());
+         m_currentRunStats.kills++;
 			trySpawnPickup(enemy->getPosition(), 64.f, 40);
 			enemy_it = m_enemies.erase(enemy_it);
 		}
@@ -907,6 +917,7 @@ void Game::CollisionChecks()
 			{
 			case PickupType::HEALTH: {
 				m_questManager.recordPickup(PickupType::HEALTH);
+               m_currentRunStats.healthPacksCollected++;
 				m_player.heal(pickup->getEffectAmount());
 				std::cout << "Player picked up health! Current health: " << m_player.getHealth() << endl;
 				pickup->destroy();
@@ -914,6 +925,7 @@ void Game::CollisionChecks()
 			}
 			case PickupType::AMMO: {
 				m_questManager.recordPickup(PickupType::AMMO);
+                m_currentRunStats.ammoPacksCollected++;
 				m_player.addAmmo(pickup->getEffectAmount());
 				std::cout << "Player picked up ammo! Current ammo: " << m_player.getAmmo() << endl;
 				pickup->destroy();
