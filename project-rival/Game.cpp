@@ -11,10 +11,140 @@
 #include "RoomDoorUtils.h"
 
 #include <iostream>
+#include <sstream>
 #include <string>
 
 // Our target FPS
 static double const FPS{ 60.0f };
+
+namespace
+{
+	std::string extractTaggedLineValue(const std::string& text, const std::string& tag)
+	{
+		const std::size_t tagPos = text.find(tag);
+		if (tagPos == std::string::npos)
+			return "";
+
+		const std::size_t valueStart = tagPos + tag.size();
+		std::size_t valueEnd = text.find('\n', valueStart);
+		if (valueEnd == std::string::npos)
+			valueEnd = text.size();
+
+		std::string value = text.substr(valueStart, valueEnd - valueStart);
+		while (!value.empty() && (value.front() == ' ' || value.front() == '\t'))
+			value.erase(value.begin());
+		while (!value.empty() && (value.back() == ' ' || value.back() == '\t' || value.back() == '\r'))
+			value.pop_back();
+
+		return value;
+	}
+
+	std::string trimWhitespace(std::string text)
+	{
+		while (!text.empty() && (text.front() == ' ' || text.front() == '\t' || text.front() == '\n' || text.front() == '\r'))
+			text.erase(text.begin());
+		while (!text.empty() && (text.back() == ' ' || text.back() == '\t' || text.back() == '\n' || text.back() == '\r'))
+			text.pop_back();
+		return text;
+	}
+
+	std::string extractFirstLine(const std::string& text)
+	{
+		std::size_t end = text.find('\n');
+		if (end == std::string::npos)
+			end = text.size();
+		return trimWhitespace(text.substr(0, end));
+	}
+
+	std::string stripTaggedPrefix(const std::string& text, const std::string& tag)
+	{
+		std::string value = trimWhitespace(text);
+		if (value.rfind(tag, 0) == 0)
+			value = trimWhitespace(value.substr(tag.size()));
+		return value;
+	}
+
+	std::string extractLorePayload(const std::string& text)
+	{
+		const std::size_t tagPos = text.find("LORE:");
+		if (tagPos != std::string::npos)
+			return trimWhitespace(text.substr(tagPos + 5));
+
+		return trimWhitespace(text);
+	}
+
+	std::string formatLoreTwoLines(const std::string& rawLore)
+	{
+		std::string lore = trimWhitespace(rawLore);
+		if (lore.empty())
+			return lore;
+
+		std::vector<std::string> lines;
+		std::stringstream ss(lore);
+		std::string line;
+		while (std::getline(ss, line))
+		{
+			line = trimWhitespace(line);
+			if (!line.empty())
+				lines.push_back(line);
+		}
+
+		if (lines.size() >= 2)
+			return lines[0] + "\n" + lines[1];
+
+		std::vector<std::string> sentences;
+		std::string current;
+		for (char c : lore)
+		{
+			current.push_back(c);
+			if (c == '.' || c == '!' || c == '?')
+			{
+				std::string sentence = trimWhitespace(current);
+				if (!sentence.empty())
+					sentences.push_back(sentence);
+				current.clear();
+			}
+		}
+
+		if (!trimWhitespace(current).empty())
+			sentences.push_back(trimWhitespace(current));
+
+		if (sentences.size() >= 2)
+			return sentences[0] + "\n" + sentences[1];
+
+		return lore;
+	}
+
+	std::string getRandomQuestNpcContext(const QuestData& quest)
+	{
+		if (quest.type == QuestType::KILL)
+		{
+			static const std::vector<std::string> guntherContexts{
+				"Gunther needs the tunnels cleared so black market shipments can move safely again.",
+				"Gunther put a bounty out after armed stragglers started extorting his suppliers.",
+				"Gunther wants local hostiles reduced before a high-value weapons convoy arrives."
+			};
+			return guntherContexts[rand() % guntherContexts.size()];
+		}
+
+		if (quest.pickupType == PickupType::AMMO)
+		{
+			static const std::vector<std::string> arnoldContexts{
+				"Arnold is reinforcing defenses and needs fresh ammunition caches before nightfall.",
+				"Arnold's forge guards are rationing rounds, so he is paying for every recovered ammo pack.",
+				"Arnold expects a siege and needs emergency stockpiles delivered from the lower floors."
+			};
+			return arnoldContexts[rand() % arnoldContexts.size()];
+		}
+
+		static const std::vector<std::string> petraContexts{
+			"Petra is treating wounded hunters and needs medical packs before the clinic runs dry.",
+			"Petra promised sanctuary to injured adventurers and is desperate for more supplies.",
+			"Petra's triage station is overloaded, so she is paying for urgent recovery packs."
+		};
+		return petraContexts[rand() % petraContexts.size()];
+	}
+}
 
 ////////////////////////////////////////////////////////////
 Game::Game()
@@ -49,6 +179,13 @@ x_drawFPS.setCharacterSize(24);
 #endif
 
 	m_hud.init(m_arialFont);
+	
+	m_roomDescriptionText.setFont(m_arialFont);
+	m_roomDescriptionText.setCharacterSize(18);
+	m_roomDescriptionText.setFillColor(sf::Color::White);
+	m_roomDescriptionText.setOutlineThickness(1.f);
+	m_roomDescriptionText.setOutlineColor(sf::Color::Black);
+	m_roomDescriptionText.setPosition(sf::Vector2f(20, 400));
 
 	#pragma region Menu UI
     m_menuUI.init(m_arialFont, m_window.getDefaultView());
@@ -129,6 +266,48 @@ void Game::processGameEvents(const sf::Event& event)
 	}
 #pragma endregion
 
+	// NPC Typed Input
+	if (m_isNPCDialogueOpen && m_activeNPCId >= 0 && m_activeNPCId < m_hubNPCs.size())
+	{
+		if (const auto* textEntered = event.getIf<sf::Event::TextEntered>())
+		{
+			const char32_t unicode = textEntered->unicode;
+			//Backspace
+			if (unicode == 8) {
+				if (!m_npcInputBuffer.empty())
+					m_npcInputBuffer.pop_back();
+			}
+			// Printable charachters
+			else if (unicode >= 32 && unicode <= 126) {
+				m_npcInputBuffer.push_back(static_cast<char>(unicode));
+			}
+		}
+
+		if (const auto* keyPressed = event.getIf<sf::Event::KeyPressed>())
+		{
+			// Submit input
+          if (keyPressed->scancode == sf::Keyboard::Scancode::Enter && !m_npcInputBuffer.empty())
+			{
+				const HubNPCInfo& npcInfo = m_hubNPCs[m_activeNPCId].getInfo();
+				const std::string prompt = "You are roleplaying this NPC in a game hub.\n"
+					"STRICT OUTPUT RULES (must follow):\n"
+					"1) Return ONLY the NPC reply text.\n"
+					"2) Maximum 2 sentences total. Never exceed 2 sentences.\n"
+					"3) No speaker labels, names, prefixes, or transcript text.\n"
+					"4) Do not repeat the player message.\n"
+					"Name: " + npcInfo.name + "\n" +
+					"Background: " + npcInfo.background + "\n" +
+					"Player said: " + m_npcInputBuffer + "\n"
+                    "Now reply as this NPC in at most 2 immersive sentences.";
+
+				enqueLLMJob(LLMJobType::NPC_REPLY, m_activeNPCId, -1, prompt);
+				m_npcInputBuffer.clear();
+			}
+		}
+
+		return;
+	}
+
 	if (const auto* keyPressed = event.getIf<sf::Event::KeyPressed>())
 	{
 		switch (keyPressed->scancode)
@@ -190,7 +369,6 @@ void Game::processGameEvents(const sf::Event& event)
 }
 
 
-
 ////////////////////////////////////////////////////////////
 void Game::update(float dt)
 {
@@ -227,8 +405,9 @@ void Game::update(float dt)
 	}
 	updateActiveRoom();
 
-	// Update player
-	m_player.update(dt, mousePosF, mousePos, m_gameProjectiles, m_activeDamageTriggers);
+    // Update player
+	if (!(m_gameMode == GameMode::HUB && m_isNPCDialogueOpen))
+		m_player.update(dt, mousePosF, mousePos, m_gameProjectiles, m_activeDamageTriggers);
 
 	// Enemy Management
 	for (auto enemy_it = m_enemies.begin(); enemy_it != m_enemies.end();)
@@ -318,11 +497,17 @@ void Game::update(float dt)
 		}
 	}
 
+	processLLMQueue();
+
 	if (auto response = m_llmManager.tryConsumeLatestResponse())
 	{
-		std::cout << "LLM Response: " << *response << "\n";
+		handleLLMResponse(*response);
 	}
 
+	if (m_roomDescriptionTtl > 0)
+		m_roomDescriptionTtl -= dt;
+
+	// Hub management
 	if (m_gameMode == GameMode::HUB)
 	{
 		updateHubShops();
@@ -394,6 +579,24 @@ void Game::render()
 	else
        m_menuUI.render(m_window);
 #pragma endregion
+
+	// Room description rendering
+	if (m_menuUI.isGameplayScreen() && m_roomDescriptionTtl > 0.f && !m_latestRoomDescription.empty())
+	{
+		sf::RectangleShape panel;
+		panel.setSize(sf::Vector2f(static_cast<float>(m_window.getSize().x) - 40.f, 80.f));
+		panel.setOrigin(panel.getSize() / 2.f);
+		panel.setPosition(sf::Vector2f(m_window.getSize().x / 2.f, m_window.getSize().y - 60.f));
+		panel.setFillColor(sf::Color(0, 0, 0, 170));
+		panel.setOutlineThickness(1.f);
+		panel.setOutlineColor(sf::Color::White);
+		m_window.draw(panel);
+
+		m_roomDescriptionText.setString("Room Insight: " + m_latestRoomDescription);
+		m_roomDescriptionText.setOrigin(sf::Vector2f(m_roomDescriptionText.getLocalBounds().size.x / 2.f, m_roomDescriptionText.getLocalBounds().size.y / 2.f));
+		m_roomDescriptionText.setPosition({panel.getPosition().x, panel.getPosition().y - 10.f});
+		m_window.draw(m_roomDescriptionText);
+	}
 
 #ifdef TEST_FPS
 	m_window.draw(x_updateFPS); //ups is 60 and dps is 61
@@ -491,6 +694,7 @@ void Game::enterHubWorld()
 	resetGame();
 	m_questManager.finaliseRun();
 	m_coins += m_questManager.commitRunResult();
+	queueQuestMetadataJobs();
 	m_gameMode = GameMode::HUB;
 	buildHubWorld();
 	m_requestNextFloor = false;
@@ -1282,59 +1486,266 @@ void Game::loadNewFloor()
 
 
 /////////////////////////////////////////////////////////////////
+#pragma region LLM INTERACTION
+void Game::queueQuestMetadataJobs()
+{
+	m_pendingQuestTitles.clear();
+	m_pendingQuestTitles.resize(m_questManager.getBoardQuests().size());
+	m_pendingQuestContexts.clear();
+	m_pendingQuestContexts.resize(m_questManager.getBoardQuests().size());
+
+	const auto& boardQuests = m_questManager.getBoardQuests();
+  if (!boardQuests.empty())
+	{
+        const QuestData* firstQuest = m_questManager.getBoardQuest(0);
+		const std::string context = firstQuest ? getRandomQuestNpcContext(*firstQuest) : "";
+		m_pendingQuestContexts[0] = context;
+		const std::string prompt = buildQuestTitlePrompt(0, context);
+		if (!prompt.empty())
+            enqueLLMJob(LLMJobType::QUEST_TITLE, -1, 0, prompt);
+	}
+}
+
+std::string Game::buildQuestTitlePrompt(int questIndex, const std::string& npcContext) const
+{
+	const QuestData* quest = m_questManager.getBoardQuest(questIndex);
+	if (!quest)
+		return "";
+
+	std::string questTypeStr = (quest->type == QuestType::KILL) ? "Kill" : "Fetch";
+	std::string targetStr;
+
+	if (quest->type == QuestType::KILL)
+	{
+		targetStr = QuestData::getEnemyName(quest->enemyType) + " enemies";
+	}
+	else
+	{
+		targetStr = QuestData::getPickupName(quest->pickupType) + " packs";
+	}
+
+	std::string prompt =
+		"Generate only the quest title for a bulletin board.\n"
+		"\n"
+		"FORMAT:\n"
+		"TITLE: <2 to 5 words>\n"
+		"\n"
+		"RULES:\n"
+		"- Output exactly 1 line.\n"
+		"- Begin with 'TITLE: '.\n"
+		"- TITLE must be 2 to 5 words.\n"
+		"- Preserve the exact quest type, target type, target count, reward, and NPC context.\n"
+		"- No extra text.\n"
+		"\n"
+		"INPUT:\n"
+		"Quest Type: " + questTypeStr + "\n"
+		"Target: " + std::to_string(quest->targetCount) + " " + targetStr + "\n"
+		"Reward: " + std::to_string(quest->rewardCoins) + " coins\n"
+		"NPC Context: " + npcContext + "\n"
+		"\n"
+		"OUTPUT:\n"
+		"TITLE: ";
+
+	return prompt;
+}
+
+std::string Game::buildQuestLorePrompt(int questIndex, const std::string& title, const std::string& npcContext) const
+{
+	const QuestData* quest = m_questManager.getBoardQuest(questIndex);
+	if (!quest)
+		return "";
+
+	std::string questTypeStr = (quest->type == QuestType::KILL) ? "Kill" : "Fetch";
+	std::string targetStr;
+
+	if (quest->type == QuestType::KILL)
+	{
+		targetStr = QuestData::getEnemyName(quest->enemyType) + " enemies";
+	}
+	else
+	{
+		targetStr = QuestData::getPickupName(quest->pickupType) + " packs";
+	}
+
+	std::string prompt =
+		"Generate only the quest lore for a bulletin board using the provided title.\n"
+		"\n"
+		"FORMAT:\n"
+       "LORE: <sentence 1>\n"
+		"<sentence 2>\n"
+		"\n"
+		"RULES:\n"
+        "- Output exactly 2 lines.\n"
+		"- Begin with 'LORE: '.\n"
+		"- Use the provided title naturally as context.\n"
+		"- LORE must be exactly 2 short sentences.\n"
+		"- Preserve the exact quest type, target type, target count, reward, and NPC context.\n"
+		"- No extra text.\n"
+		"\n"
+		"INPUT:\n"
+		"Title: " + title + "\n"
+		"Quest Type: " + questTypeStr + "\n"
+		"Target: " + std::to_string(quest->targetCount) + " " + targetStr + "\n"
+		"Reward: " + std::to_string(quest->rewardCoins) + " coins\n"
+		"NPC Context: " + npcContext + "\n"
+		"\n"
+		"OUTPUT:\n"
+		"LORE: ";
+
+	return prompt;
+}
 
 void Game::LLM_GenerateRoomInfo()
 {
 	if (!m_llmManager.isReady()) {
 		std::cout << "LLM model is not ready.\n";
+		return;
 	}
+
+	RoomPlan currRoom = m_roomPlans[m_activeRoomId];
+
+	std::string roomTypeStr;
+	switch (currRoom.type) {
+	case RoomType::CORRIDOR: roomTypeStr = "Corridor"; break;
+	case RoomType::SPAWN: roomTypeStr = "Spawn Room"; break;
+	case RoomType::PORTAL: roomTypeStr = "Portal Room"; break;
+	case RoomType::COMBAT: roomTypeStr = "Combat Room"; break;
+	}
+
+	std::string sizeStr;
+	int area = currRoom.width * currRoom.height;
+
+	if (area <= 36) sizeStr = "small";
+	else if (area <= 100) sizeStr = "medium";
+	else sizeStr = "large";
+
+	const std::string prompt =
+		"Write exactly 1 short sentence for a " + roomTypeStr + ".\n"
+		"\n"
+		"RULES:\n"
+		"- Output exactly 1 sentence.\n"
+		"- Mention the Room Type.\n"
+		"- Mention the room size word exactly.\n"
+		"- Include one unique environmental object or feature.\n"
+		"- Max 18 words.\n"
+		"- No extra text.\n"
+		"\n"
+		"INPUT:\n"
+		"Room Type: " + roomTypeStr + "\n"
+		"Relative Size: " + sizeStr + "\n"
+		"\n"
+		"OUTPUT:";
+
+	enqueLLMJob(LLMJobType::ROOM_DESCRIPTION, -1, -1, prompt);
+	std::cout << "Enqueued LLM job for room description.\n";
+}
+
+void Game::enqueLLMJob(LLMJobType jobType, int npcId, int questIndex, const std::string& prompt)
+{
+	LLMJobContext job;
+	job.jobType = jobType;
+	job.npcId = npcId;
+	job.questIndex = questIndex;
+	job.prompt = prompt;
+
+	m_llmJobQueue.push(job);
+}
+
+void Game::processLLMQueue()
+{
+	if (!m_llmManager.isReady() || m_llmManager.isBusy() || m_llmJobQueue.empty())
+		return;
+
+	m_currentLLMJob = m_llmJobQueue.front();
+	m_llmJobQueue.pop();
+
+	if(m_llmManager.requestGenerate(m_currentLLMJob.prompt))
+		m_hasActiveLLMJob = true;
 	else {
-		// LLM Prompt/Response test
-		// Request generation of p
-		if (!m_llmManager.isBusy())
-		{
-			// Generate Prompt
-			RoomPlan currRoom = m_roomPlans[m_activeRoomId];
-
-			std::string roomTypeStr;
-			switch (currRoom.type) {
-			case RoomType::CORRIDOR:
-				roomTypeStr = "Corridor";
-				break;
-			case RoomType::SPAWN:
-				roomTypeStr = "Spawn Room";
-				break;
-			case RoomType::PORTAL:
-				roomTypeStr = "Portal Room";
-				break;
-			case RoomType::COMBAT:
-				roomTypeStr = "Combat Room";
-				break;
-			}
-
-			std::string clearedStr = currRoom.isCleared ? "Yes" : "No";
-
-			std::cout << "Generating response...\n";
-			const std::string prompt = "Generate a 2 sentence description of the room the player is in currently based on the following properties: Room Type: " + roomTypeStr
-				+ ", Is Room Cleared: " + clearedStr
-				+ ", Room Height: " + to_string(currRoom.height)
-				+ ", Room Width: " + to_string(currRoom.width)
-				+ ", Dungeon Floor: " + to_string(m_dungeonPlan.currentFloorId) + "\n";
-
-			std::cout << "Prompt: " << prompt << "\n";
-
-			const bool queued = m_llmManager.requestGenerate(prompt);
-			if (queued)
-				std::cout << "Generation request queued successfully.\n";
-			else
-				std::cout << "Failed to queue generation request.\n";
-		}
-		else
-		{
-			std::cout << "Generation in progress, please wait...\n";
-		}
+		std::cout << "Failed to queue LLM job.\n";
+		m_hasActiveLLMJob = false;
 	}
 }
+
+void Game::handleLLMResponse(const std::string& response)
+{
+	if (!m_hasActiveLLMJob) {
+		std::cout << "No active LLM job to handle response for.\n";
+		return;
+	}
+
+	switch (m_currentLLMJob.jobType)
+	{
+	case LLMJobType::ROOM_DESCRIPTION:
+		m_latestRoomDescription = response;
+		m_roomDescriptionTtl = 10.f; // display room description for 10 seconds
+		std::cout << "LLM Room Description: " << response << "\n";
+		break;
+
+	case LLMJobType::NPC_REPLY:
+		m_npcLastResponse = response;
+		std::cout << "NPC Reply (npcId: " << m_currentLLMJob.npcId << "): " << response << "\n";
+		break;
+
+    case LLMJobType::QUEST_TITLE:
+	{
+       const int questIndex = m_currentLLMJob.questIndex;
+		std::string title = extractTaggedLineValue(response, "TITLE:");
+		if (title.empty())
+			title = stripTaggedPrefix(extractFirstLine(response), "TITLE:");
+
+		if (questIndex >= 0 && questIndex < static_cast<int>(m_pendingQuestTitles.size()))
+			m_pendingQuestTitles[questIndex] = title;
+
+		std::string context;
+		if (questIndex >= 0 && questIndex < static_cast<int>(m_pendingQuestContexts.size()))
+			context = m_pendingQuestContexts[questIndex];
+
+     const std::string lorePrompt = buildQuestLorePrompt(questIndex, title, context);
+		if (!lorePrompt.empty())
+			enqueLLMJob(LLMJobType::QUEST_LORE, -1, questIndex, lorePrompt);
+
+		std::cout << "Quest Title (questIndex=" << questIndex << "): " << title << "\n";
+		break;
+	}
+
+	case LLMJobType::QUEST_LORE:
+	{
+		const int questIndex = m_currentLLMJob.questIndex;
+       std::string lore = formatLoreTwoLines(extractLorePayload(response));
+
+		std::string title;
+		if (questIndex >= 0 && questIndex < static_cast<int>(m_pendingQuestTitles.size()))
+			title = m_pendingQuestTitles[questIndex];
+
+		if (m_questManager.updateBoardQuestText(questIndex, title, lore))
+		{
+			m_menuUI.setQuestBoardQuests(m_questManager.getBoardQuests());
+		}
+
+		const int nextQuestIndex = questIndex + 1;
+		if (nextQuestIndex < static_cast<int>(m_questManager.getBoardQuests().size()))
+		{
+          const QuestData* nextQuest = m_questManager.getBoardQuest(nextQuestIndex);
+			const std::string nextContext = nextQuest ? getRandomQuestNpcContext(*nextQuest) : "";
+			if (nextQuestIndex >= 0 && nextQuestIndex < static_cast<int>(m_pendingQuestContexts.size()))
+				m_pendingQuestContexts[nextQuestIndex] = nextContext;
+
+			const std::string nextTitlePrompt = buildQuestTitlePrompt(nextQuestIndex, nextContext);
+			if (!nextTitlePrompt.empty())
+				enqueLLMJob(LLMJobType::QUEST_TITLE, -1, nextQuestIndex, nextTitlePrompt);
+		}
+
+      std::cout << "Quest Lore (questIndex=" << questIndex << "): " << lore << "\n";
+		break;
+	}
+	}
+
+	m_hasActiveLLMJob = false;
+}
+
+#pragma endregion
+
 
 ////////////////////////////////////////////////////////////////
 #pragma region HUB WORLD MANAGEMENT
@@ -1505,6 +1916,8 @@ void Game::updateHubShops()
 	if (!m_isNPCDialogueOpen && m_activeNPCId >= 0)
 	{
 		if (interactPressed) {
+			m_npcInputBuffer.clear();
+			m_npcLastResponse.clear();
 			m_isNPCDialogueOpen = true;
 			m_currentDialogueOptions = { "Show me what you've got.", "Maybe later." };
 			m_selectedResponse = 0;
@@ -1512,28 +1925,15 @@ void Game::updateHubShops()
 		return;
 	}
 
+
 	if (m_isNPCDialogueOpen)
 	{
-		if (upPressed || downPressed)
-			m_selectedResponse = (m_selectedResponse == 0) ? 1 : 0;
-
-		if (interactPressed) {
-			if (m_activeNPCId >= 0 && m_activeNPCId < m_hubNPCs.size() &&
-				m_selectedResponse >= 0 && m_selectedResponse < m_currentDialogueOptions.size())
-			{
-				std::cout << m_hubNPCs[m_activeNPCId].getInfo().name
-					<< " | Player response: " << m_currentDialogueOptions[m_selectedResponse] << "\n";
-			}
-
-			m_isNPCDialogueOpen = false;
-			m_selectedResponse = -1;
-			m_currentDialogueOptions.clear();
-		}
-
 		if (cancelPressed) {
 			m_isNPCDialogueOpen = false;
 			m_currentDialogueOptions.clear();
 			m_selectedResponse = -1;
+
+			m_npcInputBuffer.clear();
 		}
 
 		return;
@@ -1756,11 +2156,10 @@ void Game::renderHubShopPrompt()
 		const std::string option1Prefix = (m_selectedResponse == 1) ? "> " : "  ";
 
 		std::string dialogue =
-			npc.getInfo().name + " - " + shopTypeToString(npc.getInfo().shopType) + "\n" +
-			npc.getDialogue() + "\n\n" +
-			option0Prefix + m_currentDialogueOptions[0] + "\n" +
-			option1Prefix + m_currentDialogueOptions[1] + "\n\n" +
-			"Confirm: A/Space   Cancel: B/Esc";
+			npc.getInfo().name + " - " + shopTypeToString(npc.getInfo().shopType) + "\n\n" +
+			"NPC: " + (m_npcLastResponse.empty() ? npc.getDialogue() : m_npcLastResponse) + "\n\n" +
+			"You: " + (m_npcInputBuffer.empty() ? "_" : m_npcInputBuffer) + "\n\n" +
+			"Type to chat | Enter = Send | B/Esc = Close";
 
 		const sf::View previousView = m_window.getView();
 		m_window.setView(m_window.getDefaultView());
@@ -1828,3 +2227,6 @@ void Game::renderHubShopPrompt()
 }
 
 #pragma endregion
+
+
+#pragma region UI

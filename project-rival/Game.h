@@ -8,6 +8,7 @@
 
 #include <SFML/Graphics.hpp>
 #include <string>
+#include <queue>
 
 #include "player.h"
 #include "Enemy.h"
@@ -50,6 +51,24 @@ enum GameMode
 	MODE_COUNT
 };
 
+enum LLMJobType
+{
+	ROOM_DESCRIPTION,
+	NPC_REPLY,
+ QUEST_TITLE,
+	QUEST_LORE,
+
+	LLM_JOB_TYPE_COUNT
+};
+
+struct LLMJobContext
+{
+	LLMJobType jobType;
+	int npcId;
+	int questIndex;
+	std::string prompt;
+};
+
 struct ScreenSize
 {
 public:
@@ -76,8 +95,6 @@ protected:
 
 	void processEvents();
 	void processGameEvents(const sf::Event&);
-
-	void LLM_GenerateRoomInfo();
 
 	sf::Font m_arialFont{ "ASSETS/FONTS/ariblk.ttf" };
 	sf::RenderWindow m_window;
@@ -126,6 +143,15 @@ private:
 	// Spawnable Management
 	void spawnRandomPickup(const sf::Vector2f& worldPos, float tilesize, bool isFromChest);
 	void trySpawnPickup(const sf::Vector2f& worldPos, float tilesize, int spawnChance);
+
+	// LLM management
+	void LLM_GenerateRoomInfo();
+	void enqueLLMJob(LLMJobType jobType, int npcId, int questIndex, const std::string& prompt);
+	void processLLMQueue();
+	void handleLLMResponse(const std::string& response);
+	void queueQuestMetadataJobs();
+   std::string buildQuestTitlePrompt(int questIndex, const std::string& npcContext) const;
+	std::string buildQuestLorePrompt(int questIndex, const std::string& title, const std::string& npcContext) const;
 
 	// ----------------------------------> VARIABLES <---------------------------------- //	
 	// Game Management
@@ -196,7 +222,19 @@ private:
 	int m_waveCounter;
 
 	// LLM management
+	bool m_hasActiveLLMJob;
 	LLMService m_llmManager;
+	std::queue <LLMJobContext> m_llmJobQueue;
+	LLMJobContext m_currentLLMJob;
+
+	std::string m_latestRoomDescription;
+	float m_roomDescriptionTtl = 0.f;
+	sf::Text m_roomDescriptionText{ m_arialFont };
+
+	std::string m_npcInputBuffer;
+	std::string m_npcLastResponse;
+	std::vector<std::string> m_pendingQuestTitles;
+	std::vector<std::string> m_pendingQuestContexts;
 
 	// Economy, Upgrades & Progression
 	int m_coins = 500;
