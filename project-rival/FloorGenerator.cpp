@@ -1,26 +1,6 @@
 #include "FloorGenerator.h"
 #include <random>
 
-/**
- * @file FloorGenerator.cpp
- * @brief Implements deterministic floor plan generation (rooms + graph connections).
- */
-
-/**
- * @brief Generates a floor plan describing room types and their connectivity graph.
- *
- * The plan is generated deterministically from @p dungeonSeed and @p floorId.
- * The resulting graph ensures:
- * - Room 0 is always the spawn room.
- * - The last room is always the portal room (boss room placeholder on final floor).
- * - The spawn and portal rooms are not directly connected by an edge.
- * - Each room is connected to at least one earlier room (connected graph).
- *
- * @param floorId Dungeon floor index.
- * @param dungeonSeed Base seed for the dungeon run.
- * @param isBossFloor True when generating the final floor.
- * @return Generated floor plan containing rooms and edges.
- */
 FloorPlan FloorGenerator::generateFloorPlan(int floorId, int dungeonSeed, bool isBossFloor)
 {
 	FloorPlan plan;

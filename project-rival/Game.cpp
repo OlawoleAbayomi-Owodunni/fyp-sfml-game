@@ -781,7 +781,7 @@ void Game::gameStart()
 	resetGame();
 	m_gameMode = GameMode::DUNGEON;
 
-	m_dungeonPlan.start(/*rand() % 50000*/12344); // using a fixed seed for testing purposes, can be randomized for more variety
+	m_dungeonPlan.start(rand() % 50000);
 
 	loadNewFloor();
 }

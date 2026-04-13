@@ -153,7 +153,7 @@ void MenuUI::render(sf::RenderWindow& window)
 		title.setString("Game Over");
 
 	title.setOrigin(title.getGlobalBounds().getCenter());
-	title.setPosition(sf::Vector2f(viewCenter.x, viewCenter.y - 210.f));
+    title.setPosition(sf::Vector2f(viewCenter.x, viewCenter.y - 260.f));
 	window.draw(title);
 
 	for (int i = 0; i < static_cast<int>(buttons->size()); i++)

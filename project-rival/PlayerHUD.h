@@ -33,5 +33,6 @@ private:
 	float phud_marginLeft{ 20.f };
 	float phud_marginTop{ 20.f };
 	float phud_spacing{ 10.f };
+  float phud_scale{ 2.f };
 };
 

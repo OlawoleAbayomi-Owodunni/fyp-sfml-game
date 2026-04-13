@@ -22,45 +22,52 @@ PlayerHUD::PlayerHUD(const sf::Font& font)
  */
 void PlayerHUD::init(const sf::Font& font)
 {
+   const float s = phud_scale;
+	const float barWidth = phud_barWidth * s;
+	const float barHeight = phud_barHeight * s;
+	const float marginLeft = phud_marginLeft * s;
+	const float marginTop = phud_marginTop * s;
+	const float spacing = phud_spacing * s;
+
 	// Health Bar
-	m_healthBarBg.setSize({ phud_barWidth, phud_barHeight });
-	m_healthBarBg.setPosition({ phud_marginLeft, phud_marginTop });
+   m_healthBarBg.setSize({ barWidth, barHeight });
+	m_healthBarBg.setPosition({ marginLeft, marginTop });
 	m_healthBarBg.setFillColor(sf::Color(40, 40, 40)); // Dark gray background
 	m_healthBarBg.setOutlineThickness(2.f);
 	m_healthBarBg.setOutlineColor(sf::Color::White);
 
-	m_healthBar.setSize({ phud_barWidth, phud_barHeight });
+ m_healthBar.setSize({ barWidth, barHeight });
 	m_healthBar.setPosition(m_healthBarBg.getPosition());
 	m_healthBar.setFillColor(sf::Color(200, 40, 40)); // Red health bar
 
 	m_healthText.setFont(font);
-	m_healthText.setCharacterSize(14);
+  m_healthText.setCharacterSize(static_cast<unsigned int>(14 * s));
 	m_healthText.setFillColor(sf::Color::White);
 
 	// Ammo Bar
-	m_ammoBarBg.setSize({ phud_barWidth, phud_barHeight });
-	m_ammoBarBg.setPosition({ phud_marginLeft, phud_marginTop + phud_barHeight + phud_spacing });
+ m_ammoBarBg.setSize({ barWidth, barHeight });
+	m_ammoBarBg.setPosition({ marginLeft, marginTop + barHeight + spacing });
 	m_ammoBarBg.setFillColor(sf::Color(40, 40, 40)); // Dark gray background
 	m_ammoBarBg.setOutlineThickness(2.f);
 	m_ammoBarBg.setOutlineColor(sf::Color::White);
 
-	m_ammoBar.setSize({ phud_barWidth, phud_barHeight });
+   m_ammoBar.setSize({ barWidth, barHeight });
 	m_ammoBar.setPosition(m_ammoBarBg.getPosition());
 	m_ammoBar.setFillColor(sf::Color(40, 200, 40)); // Green ammo bar
 
 	m_ammoText.setFont(font);
-	m_ammoText.setCharacterSize(14);
+    m_ammoText.setCharacterSize(static_cast<unsigned int>(14 * s));
 	m_ammoText.setFillColor(sf::Color::White);
 
 	// Coins Text
 	m_coinsText.setFont(font);
-	m_coinsText.setCharacterSize(14);
+   m_coinsText.setCharacterSize(static_cast<unsigned int>(14 * s));
 	m_coinsText.setFillColor(sf::Color::Yellow);
 	// place coin on the right side of the screen
 
 	// Quest tracker text
 	m_questText.setFont(font);
-	m_questText.setCharacterSize(14);
+   m_questText.setCharacterSize(static_cast<unsigned int>(14 * s));
 	m_questText.setFillColor(sf::Color::White);
 	m_questText.setOutlineThickness(1.f);
 	m_questText.setOutlineColor(sf::Color::Black);
@@ -77,28 +84,35 @@ void PlayerHUD::init(const sf::Font& font)
  */
 void PlayerHUD::update(int currentHealth, int maxHealth, int currentAmmo, int maxAmmo, int coins, const QuestData* activeQuest)
 {
+    const float s = phud_scale;
+	const float barWidth = phud_barWidth * s;
+	const float barHeight = phud_barHeight * s;
+	const float marginLeft = phud_marginLeft * s;
+	const float marginTop = phud_marginTop * s;
+	const float spacing = phud_spacing * s;
+
 	// Update health bar
 	const float healthPercent = static_cast<float>(currentHealth) / maxHealth;
-	m_healthBar.setSize({ phud_barWidth * healthPercent, phud_barHeight });
+ m_healthBar.setSize({ barWidth * healthPercent, barHeight });
 	m_healthText.setString("Health: " + std::to_string(currentHealth) + " / " + std::to_string(maxHealth));
 	centerText(m_healthText, m_healthBarBg);
 
 	// Update ammo bar
 	const float ammoPercent = static_cast<float>(currentAmmo) / maxAmmo;
-	m_ammoBar.setSize({ phud_barWidth * ammoPercent, phud_barHeight });
+ m_ammoBar.setSize({ barWidth * ammoPercent, barHeight });
 	m_ammoText.setString("Ammo: " + std::to_string(currentAmmo) + " / " + std::to_string(maxAmmo));
 	centerText(m_ammoText, m_ammoBarBg);
 
 	// Update coins text
 	m_coinsText.setString("Coins: " + std::to_string(coins));
-	m_coinsText.setPosition({ phud_marginLeft, phud_marginTop + 2 * (phud_barHeight + phud_spacing) });
+ m_coinsText.setPosition({ marginLeft, marginTop + 2 * (barHeight + spacing) });
 
 	// Update quest tracker
 	if (activeQuest)
 	{
 		const std::string progressText = std::to_string(activeQuest->progress) + " / " + std::to_string(activeQuest->targetCount);
 		m_questText.setString("Quest: " + activeQuest->title + " (" + progressText + ")");
-		m_questText.setPosition({ phud_marginLeft, phud_marginTop + 3 * (phud_barHeight + phud_spacing) });
+     m_questText.setPosition({ marginLeft, marginTop + 3 * (barHeight + spacing) });
 	}
 	else
 	{
