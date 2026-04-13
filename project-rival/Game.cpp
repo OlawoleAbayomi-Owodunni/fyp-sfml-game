@@ -1972,8 +1972,7 @@ void Game::buildHubWorld()
 	const sf::Vector2f rightSideTriggerOffset(-70.f, 0.f);
 	const sf::Vector2f leftSideTriggerOffset(70.f, 0.f);
 
-	// Weapon Shop NPC
-
+	// NPCs
 	for (int i = 0; i < 4; i++) {
 		HubNPCInfo npcInfo;
 		if (i == 0) {
