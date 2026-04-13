@@ -1,5 +1,22 @@
 #include "DamageTrigger.h"
 
+/**
+ * @file DamageTrigger.cpp
+ * @brief Implements a timed hitbox that applies damage on overlap.
+ */
+
+/**
+ * @brief Constructs a timed damage trigger.
+ *
+ * The trigger uses `CollisionLayer::DAMAGE_TRIGGER_LAYER` and a caller-provided
+ * mask to control which entities can be affected.
+ *
+ * @param center World-space center of the trigger.
+ * @param size World-space size of the trigger.
+ * @param lifetime Lifetime in seconds before auto-destruction.
+ * @param damage Damage dealt when overlapping.
+ * @param targetMask Collision mask describing valid damage targets.
+ */
 DamageTrigger::DamageTrigger(const sf::Vector2f& center, const sf::Vector2f& size, float lifetime, int damage, uint32_t targetMask)
 	:dt_lifetime(lifetime), dt_shouldDestroy(false), dt_damage(damage)
 {
@@ -8,6 +25,10 @@ DamageTrigger::DamageTrigger(const sf::Vector2f& center, const sf::Vector2f& siz
 	dt_collisionProfile.mask = targetMask;
 }
 
+/**
+ * @brief Updates lifetime countdown and marks the trigger for destruction when expired.
+ * @param dt Delta time in seconds.
+ */
 void DamageTrigger::update(float dt)
 {
 	dt_lifetime -= dt;
@@ -17,11 +38,20 @@ void DamageTrigger::update(float dt)
 	}
 }
 
+/**
+ * @brief Renders the trigger debug shape.
+ * @param window Render target.
+ */
 void DamageTrigger::render(sf::RenderWindow& window)
 {
 	window.draw(dt_shape);
 }
 
+/**
+ * @brief Initializes the underlying SFML shape and cached bounds.
+ * @param center World-space center.
+ * @param size World-space size.
+ */
 void DamageTrigger::initShape(const sf::Vector2f& center, const sf::Vector2f& size)
 {
 	dt_shape.setSize(size);

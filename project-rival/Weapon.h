@@ -6,6 +6,14 @@
 #include "Projectile.h"
 #include "DamageTrigger.h"
 
+/**
+ * @file Weapon.h
+ * @brief Declares weapon base class and shared weapon data types.
+ */
+
+/**
+ * @brief Weapon archetypes supported by the player and enemies.
+ */
 enum WeaponType
 {
 	// Guns
@@ -21,12 +29,18 @@ enum WeaponType
 	COUNT
 };
 
+/**
+ * @brief Firing behaviour for weapons that support different cadence.
+ */
 enum FireMode
 {
 	AUTOMATIC,
 	BURST
 };
 
+/**
+ * @brief Controller rumble intensity used by weapons.
+ */
 enum Intensity
 {
 	LOW,
@@ -34,6 +48,9 @@ enum Intensity
 	HIGH
 };
 
+/**
+ * @brief Data passed to a weapon when attempting to fire.
+ */
 struct FireReq
 {
 	sf::Vector2f aimDir;

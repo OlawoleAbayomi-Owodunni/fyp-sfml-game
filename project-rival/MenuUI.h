@@ -6,6 +6,14 @@
 
 #include "Quest.h"
 
+/**
+ * @file MenuUI.h
+ * @brief Declares menu UI types for screens, actions, and button data.
+ */
+
+/**
+ * @brief High-level menu screens.
+ */
 enum MenuScreen
 {
 	MAIN_MENU_SCREEN,
@@ -17,6 +25,9 @@ enum MenuScreen
 	SCREEN_COUNT
 };
 
+/**
+ * @brief Actions produced by the menu UI.
+ */
 enum MenuAction
 {
 	ACTION_NONE,
@@ -31,6 +42,9 @@ enum MenuAction
 	ACTION_QUEST_2
 };
 
+/**
+ * @brief Renderable button representation and its associated action.
+ */
 struct MenuButton
 {
 	sf::RectangleShape shape;

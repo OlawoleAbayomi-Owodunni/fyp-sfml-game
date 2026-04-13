@@ -3,9 +3,14 @@
 #include <vector>
 #include <algorithm>
 
-/// <summary>
-/// Different types of Rooms.
-/// </summary>
+/**
+ * @file RoomBlueprint.h
+ * @brief Declares room/tile/door/spawner/trigger blueprint data used by procedural generation.
+ */
+
+/**
+ * @brief High-level room types used by the dungeon generator.
+ */
 enum RoomType {
 	CORRIDOR,
 	SPAWN,
@@ -19,9 +24,9 @@ enum RoomType {
 	ROOM_COUNT
 };
 
-/// <summary>
-/// Different types of Tiles
-/// </summary>
+/**
+ * @brief Tile types used by room tile maps.
+ */
 enum Tile {
 	Empty,
 
@@ -30,9 +35,9 @@ enum Tile {
 	DOOR
 };
 
-/// <summary>
-/// Specifies the direction of a door.
-/// </summary>
+/**
+ * @brief Cardinal direction a door faces.
+ */
 enum DoorDirection {
 	NORTH,
 	SOUTH,
@@ -40,9 +45,9 @@ enum DoorDirection {
 	WEST
 };
 
-/// <summary>
-/// Represents the configuration and properties of a door in the game world.
-/// </summary>
+/**
+ * @brief Door placement and properties within a room plan.
+ */
 struct DoorPlan {
 	sf::Vector2i tileStartPos;
 	DoorDirection direction;
@@ -51,43 +56,43 @@ struct DoorPlan {
 	int spanTiles;
 };
 
-/// <summary>
-/// Defines the types of spawners available in the game.
-/// </summary>
+/**
+ * @brief Types of spawners that can be placed in a room plan.
+ */
 enum SpawnerType {
 	PlayerSpawner,
 	EnemySpawner,
 	PortalSpawner
 };
 
-/// <summary>
-/// Represents a plan for spawning an entity, containing its type and tile position.
-/// </summary>
+/**
+ * @brief Spawner location and type.
+ */
 struct SpawnerPlan {
 	SpawnerType type;
 	sf::Vector2i tilePos;
 };
 
-/// <summary>
-/// Defines the types of triggers that can be used in the system.
-/// </summary>
+/**
+ * @brief Types of triggers that can be placed in a room plan.
+ */
 enum TriggerType {
 	None,
 	DoorTrigger,
 	PortalTrigger
 };
 
-/// <summary>
-/// Represents a plan for triggering an event at a specific tile location.
-/// </summary>
+/**
+ * @brief Trigger location and type.
+ */
 struct TriggerPlan {
 	TriggerType type;
 	sf::Vector2i tilePos;
 };
 
-/// <summary>
-/// Represents the blueprint and state of a room in the game, including its layout, dimensions, and contents.
-/// </summary>
+/**
+ * @brief Blueprint and runtime state for a room.
+ */
 struct RoomPlan {
 	// Room metadata
 	int id;
@@ -108,10 +113,10 @@ struct RoomPlan {
 	// Room state
 	bool isCleared = false;
 	
-	/// <summary>
-	/// Checks whether the object is in a valid state.
-	/// </summary>
-	/// <returns>True if the width and height are positive and the tile map size matches the dimensions; otherwise, false.</returns>
+   /**
+	 * @brief Checks whether the plan is in a valid state.
+	 * @return True when dimensions are positive and the tile map size matches @c width*@c height.
+	 */
 	bool isValid() const {
 		if (width > 0 && height > 0 && (tileMap.size() == width * height))
 			return true;
@@ -119,16 +124,22 @@ struct RoomPlan {
 			return false;
 	}
 
-	/// <summary>
-	/// Retrieves the tile at the specified row and column position.
-	/// </summary>
-	/// <param name="row">The row index of the tile.</param>
-	/// <param name="column">The column index of the tile.</param>
-	/// <returns>The tile at the specified position.</returns>
+   /**
+	 * @brief Retrieves the tile at a row/column.
+	 * @param row Row index.
+	 * @param column Column index.
+	 * @return Tile at the given position.
+	 */
 	Tile getTile(int row, int column) const {
 		return tileMap[row * width + column];
 	}
 
+  /**
+	 * @brief Sets a tile at a row/column.
+	 * @param row Row index.
+	 * @param column Column index.
+	 * @param type New tile type.
+	 */
 	void setTile(int row, int column, Tile type) {
 		tileMap[row * width + column] = type;
 	}

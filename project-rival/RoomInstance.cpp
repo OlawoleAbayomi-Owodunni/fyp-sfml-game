@@ -1,5 +1,19 @@
 #include "RoomInstance.h"
 
+/**
+ * @file RoomInstance.cpp
+ * @brief Builds and renders a concrete room instance from a `RoomPlan`.
+ */
+
+/**
+ * @brief Builds render shapes and static colliders from a `RoomPlan`.
+ *
+ * Converts the plan tilemap into a set of SFML `RectangleShape`s (floors/walls/doors)
+ * and a set of `StaticCollision` objects used for collision queries.
+ *
+ * @param plan Source plan to build from.
+ * @param worldPos World-space origin for the room tilemap.
+ */
 void RoomInstance::buildFromPlan(const RoomPlan& plan, const sf::Vector2f& worldPos)
 {
 	ri_staticRoomColliders.clear();
@@ -164,11 +178,19 @@ void RoomInstance::buildFromPlan(const RoomPlan& plan, const sf::Vector2f& world
 	}
 }
 
+/**
+ * @brief Returns the static colliders built for this room instance.
+ * @return Reference to the collider list.
+ */
 const std::vector<StaticCollision>& RoomInstance::getStaticRoomColliders()
 {
 	return ri_staticRoomColliders;
 }
 
+/**
+ * @brief Renders all prebuilt static room shapes.
+ * @param window Target render window.
+ */
 void RoomInstance::render(sf::RenderWindow& window)
 {
 	for (auto& shape : ri_staticRoomShapes)
@@ -177,6 +199,9 @@ void RoomInstance::render(sf::RenderWindow& window)
 	}
 }
 
+/**
+ * @brief Clears all built shapes and colliders.
+ */
 void RoomInstance::reset()
 {
 	ri_staticRoomColliders.clear();

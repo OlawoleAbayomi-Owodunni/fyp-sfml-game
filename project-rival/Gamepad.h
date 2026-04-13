@@ -2,6 +2,14 @@
 #include <SFML/System/Vector2.hpp>
 #include <cstdint>
 
+/**
+ * @file Gamepad.h
+ * @brief Declares a lightweight gamepad wrapper and button identifiers.
+ */
+
+/**
+ * @brief Logical buttons supported by the gamepad wrapper.
+ */
 enum class GamepadButton : uint16_t
 {
 	A,

@@ -1,5 +1,16 @@
 #include "Pickup.h"
 
+/**
+ * @file Pickup.cpp
+ * @brief Implements pickup visuals and effect amounts.
+ */
+
+/**
+ * @brief Constructs a pickup at a world position.
+ * @param type Pickup type.
+ * @param worldPos World position for this pickup.
+ * @param tileSize Base tile size for scaling.
+ */
 Pickup::Pickup(PickupType type, const sf::Vector2f& worldPos, float tileSize)
 	:p_type(type)
 {
@@ -7,12 +18,20 @@ Pickup::Pickup(PickupType type, const sf::Vector2f& worldPos, float tileSize)
 	p_shape.setPosition(worldPos);
 }
 
+/**
+ * @brief Renders the pickup if it has not been collected/destroyed.
+ * @param window Render target.
+ */
 void Pickup::render(sf::RenderWindow & window) const
 {
 	if (!p_shouldDestroy)
 		window.draw(p_shape);
 }
 
+/**
+ * @brief Initializes the pickup shape and effect amounts based on type.
+ * @param tileSize Base tile size for scaling.
+ */
 void Pickup::initVisual(float tileSize)
 {
 	float size = tileSize;

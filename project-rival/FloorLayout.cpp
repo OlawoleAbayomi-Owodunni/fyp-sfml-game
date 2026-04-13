@@ -1,6 +1,22 @@
 #include "FloorLayout.h"
 #include <queue>
 
+/**
+ * @file FloorLayout.cpp
+ * @brief Implements layout generation that assigns rooms to grid positions.
+ */
+
+/**
+ * @brief Generates a simple grid layout for a floor plan.
+ *
+ * Places room 0 at the origin, then uses a BFS traversal over the floor plan
+ * adjacency list to place neighbours on adjacent grid cells when possible.
+ * If adjacent cells are occupied, it falls back to placing the room farther
+ * away along a direction derived from the floor seed.
+ *
+ * @param floorPlan Floor plan containing rooms and an adjacency list.
+ * @return Layout containing a grid position for each room id.
+ */
 FloorLayout FloorLayoutGenerator::generateFloorLayout(const FloorPlan& floorPlan)
 {
 	FloorLayout layout;

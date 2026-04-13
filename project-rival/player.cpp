@@ -4,22 +4,41 @@
 #include "InputManager.h"
 #include "PlayerWeapons.h"
 
+/**
+ * @file player.cpp
+ * @brief Implements player movement, aiming, damage/upgrade handling, and weapon usage.
+ */
+
 namespace {
+   /**
+	 * @brief Returns the Euclidean length of a 2D vector.
+	 * @param v Input vector.
+	 * @return Vector magnitude.
+	 */
 	float length(const sf::Vector2f& v) {
 		return std::sqrt(v.x * v.x + v.y * v.y);
 	}
 }
 
+/**
+ * @brief Constructs the player and initializes its state.
+ */
 Player::Player()
 {
 	startUp();
 	init();
 }
 
+/**
+ * @brief Destructor.
+ */
 Player::~Player()
 {
 }
 
+/**
+ * @brief Initializes base stats and resets the player.
+ */
 void Player::init()
 {
 	// Base stats
@@ -36,6 +55,14 @@ void Player::init()
 	reset();
 }
 
+/**
+ * @brief Updates movement, aiming, and weapon handling.
+ * @param dt Delta time in seconds.
+ * @param mousePos Mouse position in world coordinates.
+ * @param mousePixelPos Mouse position in pixel coordinates.
+ * @param gameProjectiles Output list for spawned projectiles.
+ * @param instantiableTriggers Output list for spawned damage triggers.
+ */
 void Player::update(float dt, const sf::Vector2f& mousePos, const sf::Vector2i& mousePixelPos,
 	std::vector<std::unique_ptr<Projectile>>& gameProjectiles, 
 	std::vector<std::unique_ptr<DamageTrigger>>& instantiableTriggers)
@@ -48,6 +75,10 @@ void Player::update(float dt, const sf::Vector2f& mousePos, const sf::Vector2i& 
 	ManageWeapons(instantiableTriggers, gameProjectiles, dt);
 }
 
+/**
+ * @brief Renders the player body, reticle, and currently equipped weapon.
+ * @param window Render target.
+ */
 void Player::render(sf::RenderWindow& window)
 {
 	window.draw(p_body);
@@ -57,6 +88,10 @@ void Player::render(sf::RenderWindow& window)
 }
 
 
+/**
+ * @brief Applies damage to the player and marks it dead at zero health.
+ * @param damage Damage amount.
+ */
 void Player::takeDamage(int damage)
 {
 	p_health -= damage;
@@ -67,11 +102,18 @@ void Player::takeDamage(int damage)
 	}
 }
 
+/**
+ * @brief Reverts the player's position to the previous frame.
+ */
 void Player::hitWall()
 {
 	p_body.setPosition(p_prevPos);
 }
 
+/**
+ * @brief Restores player health up to the max.
+ * @param amount Health to add.
+ */
 void Player::heal(int amount)
 {
 	p_health += amount;
@@ -79,6 +121,10 @@ void Player::heal(int amount)
 		p_health = p_maxHealth;
 }
 
+/**
+ * @brief Adds ammo up to the max ammo capacity.
+ * @param amount Ammo to add.
+ */
 void Player::addAmmo(int amount)
 {
 	p_playerAmmo += amount;
@@ -86,6 +132,12 @@ void Player::addAmmo(int amount)
 		p_playerAmmo = p_maxAmmo;
 }
 
+/**
+ * @brief Applies upgrade levels and recalculates derived player stats.
+ * @param healthLevel Health upgrade level.
+ * @param speedLevel Movement speed upgrade level.
+ * @param ammoLevel Ammo capacity upgrade level.
+ */
 void Player::applyUpgrade(int healthLevel, int speedLevel, int ammoLevel)
 {
 	p_maxHealth = 100 + (healthLevel-1) * 25;
@@ -95,6 +147,15 @@ void Player::applyUpgrade(int healthLevel, int speedLevel, int ammoLevel)
 	p_playerAmmo = p_maxAmmo;
 }
 
+/**
+ * @brief Adds a weapon to the loadout when capacity allows.
+ *
+ * Rebuilds the instantiated weapons list when the loadout changes.
+ *
+ * @param type Weapon type.
+ * @param level Weapon level.
+ * @return True if the weapon was added.
+ */
 bool Player::addWeaponToLoadout(WeaponType type, int level)
 {
 	if (p_weaponLoadout.size() >= MAX_WEAPONS)
@@ -105,6 +166,11 @@ bool Player::addWeaponToLoadout(WeaponType type, int level)
 	return true;
 }
 
+/**
+ * @brief Removes a weapon from the loadout if at least one remains equipped.
+ * @param slotIndex Loadout index to remove.
+ * @return True if the weapon was removed.
+ */
 bool Player::dropWeaponFromLoadout(int slotIndex)
 {
 	if (slotIndex < 0 || slotIndex >= p_weaponLoadout.size() || p_weaponLoadout.size() <= 1)
@@ -119,6 +185,13 @@ bool Player::dropWeaponFromLoadout(int slotIndex)
 	return true;
 }
 
+/**
+ * @brief Replaces the currently equipped weapon and returns the dropped weapon.
+ * @param newType New weapon type.
+ * @param newLevel New weapon level.
+ * @param weaponToDrop Output dropped weapon information.
+ * @return True if the swap succeeded.
+ */
 bool Player::swapCurrentWeapon(WeaponType newType, int newLevel, WeaponInLoadout& weaponToDrop)
 {
 	if (p_weaponLoadout.empty() || p_currentWeaponID < 0 || p_currentWeaponID >= p_weaponLoadout.size())
@@ -132,6 +205,9 @@ bool Player::swapCurrentWeapon(WeaponType newType, int newLevel, WeaponInLoadout
 }
 
 
+/**
+ * @brief Sets up render shapes, collision filtering, and default starting weapons.
+ */
 void Player::startUp()
 {
 	//body
@@ -160,6 +236,9 @@ void Player::startUp()
 	addWeaponToLoadout(WeaponType::KNIFE, 1);
 }
 
+/**
+ * @brief Resets position, health, death state, and gamepad rumble.
+ */
 void Player::reset()
 {
 	p_body.setPosition(sf::Vector2f(1400, 500));
@@ -170,6 +249,10 @@ void Player::reset()
 	p_highRumble = 0.f;
 }
 
+/**
+ * @brief Handles player movement using controller left stick or WASD.
+ * @param dt Delta time in seconds.
+ */
 void Player::handleMovement(float dt)
 {
 	//--------- movement logic ---------//
@@ -197,6 +280,15 @@ void Player::handleMovement(float dt)
 	p_body.move(p_velocity * dt);
 }
 
+/**
+ * @brief Updates aim direction and reticle position.
+ *
+ * When the controller right stick moves, controller aiming is used; otherwise
+ * mouse movement enables mouse aiming.
+ *
+ * @param mouseWorldPos Mouse position in world coordinates.
+ * @param mousePixelPos Mouse position in pixel coordinates.
+ */
 void Player::handleAiming(const sf::Vector2f& mouseWorldPos, const sf::Vector2i& mousePixelPos)
 {
 	//--------- aiming logic ---------//
@@ -227,6 +319,12 @@ void Player::handleAiming(const sf::Vector2f& mouseWorldPos, const sf::Vector2i&
 	p_prevMousePixelPos = mousePixelPos;
 }
 
+/**
+ * @brief Updates weapon state, handles weapon switching, and fires when input is active.
+ * @param instantiableTriggers Output list for spawned damage triggers.
+ * @param gameProjectiles Output list for spawned projectiles.
+ * @param dt Delta time in seconds.
+ */
 void Player::ManageWeapons(std::vector<std::unique_ptr<DamageTrigger>>& instantiableTriggers, std::vector<std::unique_ptr<Projectile>>& gameProjectiles, float dt)
 {
 	// Update Weapon (for positioning and firing cooldowns)
@@ -313,6 +411,9 @@ void Player::ManageWeapons(std::vector<std::unique_ptr<DamageTrigger>>& instanti
 
 
 
+/**
+ * @brief Rebuilds instantiated weapon objects from the current loadout.
+ */
 void Player::buildWeaponsFromLoadout()
 {
 	p_weapons.clear();
@@ -328,6 +429,12 @@ void Player::buildWeaponsFromLoadout()
 		p_currentWeaponID = p_weapons.size() - 1;
 }
 
+/**
+ * @brief Factory for creating a weapon instance for the given type/level.
+ * @param type Weapon type.
+ * @param level Weapon level.
+ * @return Newly created weapon instance, or null on invalid type.
+ */
 std::unique_ptr<Weapon> Player::createWeapon(WeaponType type, int level)
 {
 	switch (type)

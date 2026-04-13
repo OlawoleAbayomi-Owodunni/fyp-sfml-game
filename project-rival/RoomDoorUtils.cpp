@@ -1,5 +1,14 @@
 #include "RoomDoorUtils.h"
 
+/**
+ * @file RoomDoorUtils.cpp
+ * @brief Utility helpers for placing and removing door tiles/triggers in `RoomPlan`.
+ */
+
+/**
+ * @brief Removes all door tiles, door plans, and door triggers from a room plan.
+ * @param roomPlan Room plan to mutate.
+ */
 void RoomDoorUtils::clearAllDoors(RoomPlan& roomPlan)
 {
 	for (auto& tile : roomPlan.tileMap)
@@ -16,6 +25,11 @@ void RoomDoorUtils::clearAllDoors(RoomPlan& roomPlan)
 		roomPlan.triggers.end());
 }
 
+/**
+ * @brief Returns the opposite door direction.
+ * @param dir Input direction.
+ * @return Opposite direction.
+ */
 DoorDirection RoomDoorUtils::opposite(DoorDirection dir)
 {
 	switch (dir)
@@ -25,8 +39,19 @@ DoorDirection RoomDoorUtils::opposite(DoorDirection dir)
 	case DoorDirection::EAST: return DoorDirection::WEST;
 	case DoorDirection::WEST: return DoorDirection::EAST;
 	}
+
+	return DoorDirection::NORTH;
 }
 
+/**
+ * @brief Adds a door of the requested direction to the room plan.
+ *
+ * Computes a centered 2-3 tile door span (depending on odd/even room dimensions),
+ * sets the plan's tilemap to `Tile::DOOR`, and adds matching `DoorTrigger` entries.
+ *
+ * @param roomPlan Room plan to mutate.
+ * @param dir Direction of the wall to place the door on.
+ */
 void RoomDoorUtils::addDoor(RoomPlan& roomPlan, DoorDirection dir)
 {
 	// Avoid duplicates per direction

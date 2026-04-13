@@ -1,5 +1,17 @@
 #include "PortalRoom.h"
 
+/**
+ * @file PortalRoom.cpp
+ * @brief Implements generation for the portal room plan.
+ */
+
+/**
+ * @brief Generates the portal room plan with fixed dimensions and a portal spawner/trigger.
+ * @param id Room identifier.
+ * @param type Requested room type (currently ignored; portal is enforced).
+ * @param seed Base dungeon seed.
+ * @return Generated room plan.
+ */
 RoomPlan PortalRoom::generateRoomPlan(int id, RoomType type, int seed)
 {
 	RoomPlan room;
@@ -36,6 +48,11 @@ RoomPlan PortalRoom::generateRoomPlan(int id, RoomType type, int seed)
 	return room;
 }
 
+/**
+ * @brief Adds a portal spawner and portal trigger at the room center.
+ * @param roomPlan Room plan to modify.
+ * @param interiorArea Interior tile area (currently unused).
+ */
 void PortalRoom::generateSpawnPoints(RoomPlan& roomPlan, int interiorArea)
 {
 	// Portal Spawner

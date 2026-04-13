@@ -4,6 +4,9 @@
 #include "Collision.h"
 #include "Weapon.h"
 
+/**
+ * @brief A weapon entry stored in the player's loadout.
+ */
 struct WeaponInLoadout
 {
 	WeaponType type;

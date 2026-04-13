@@ -7,6 +7,14 @@
 
 #include "Collision.h"
 
+/**
+ * @file Enemy.h
+ * @brief Declares the enemy base class and shared enemy types.
+ */
+
+/**
+ * @brief Concrete enemy archetypes.
+ */
 enum EnemyType
 {
 	GRUNT,

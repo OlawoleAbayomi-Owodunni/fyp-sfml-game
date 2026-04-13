@@ -2,6 +2,14 @@
 #include <SFML/Graphics.hpp>
 #include "Collision.h"
 
+/**
+ * @file Pickup.h
+ * @brief Declares pick-up items and their types.
+ */
+
+/**
+ * @brief Types of pickups that can be spawned in the world.
+ */
 enum class PickupType
 {
 	HEALTH,

@@ -3,6 +3,14 @@
 
 using namespace sf;
 
+/**
+ * @file Steering.h
+ * @brief Declares shared steering data structures and interfaces.
+ */
+
+/**
+ * @brief Output steering acceleration for a frame.
+ */
 struct SteerungOutput
 {
 	// "Acceleration" we want to apply this frame (units per second^2).
@@ -10,6 +18,9 @@ struct SteerungOutput
 	Vector2f linear{ 0.f,0.f };
 };
 
+/**
+ * @brief Lightweight state used by steering behaviours.
+ */
 struct SteeringAgent {
 	Vector2f position{ 0.f,0.f };
 	Vector2f velocity{ 0.f,0.f };
@@ -17,6 +28,9 @@ struct SteeringAgent {
 	float maxAcceleration{ 0.f };
 };
 
+/**
+ * @brief Interface for steering behaviours.
+ */
 class ISteeringBehaviour
 {
 public:

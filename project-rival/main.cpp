@@ -17,14 +17,19 @@
 
 #include "Game.h"
 
-/// <summary>
-/// @brief starting point for all C++ programs.
-/// 
-/// Create a game object and run it.
-/// </summary>
-/// <param name=""></param>
-/// <param name="argv"></param>
-/// <returns></returns>
+/**
+ * @file main.cpp
+ * @brief Program entry point.
+ */
+
+/**
+ * @brief Application entry point.
+ *
+ * Creates the main `Game` instance and runs the game loop.
+ *
+ * @param argv Command-line arguments.
+ * @return Process exit code.
+ */
 int main(int, char* argv[])
 {
 	Game game;

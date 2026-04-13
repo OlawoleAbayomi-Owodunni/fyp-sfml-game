@@ -1,5 +1,13 @@
 #pragma once
 
+/**
+ * @file HubShop.h
+ * @brief Declares hub shop categories.
+ */
+
+/**
+ * @brief Types of shops/NPC services available in the hub.
+ */
 enum HubShopType
 {
 	NONE_SHOP,

@@ -1,15 +1,23 @@
 #include "LLMService.h"
 
+/**
+ * @file LLMService.cpp
+ * @brief Implements async model initialization and prompt generation work.
+ */
+
+/**
+ * @brief Ensures background workers are joined and the model is unloaded.
+ */
 LLMService::~LLMService()
 {
     shutdown();
 }
 
-/// <summary>
-/// Initializes the LLM service by loading a model from the specified path.
-/// </summary>
-/// <param name="modelPath">The file path to the model to be loaded.</param>
-/// <returns>True if the model was loaded successfully and the service is ready; otherwise, false.</returns>
+/**
+ * @brief Initializes the service synchronously by loading a model.
+ * @param modelPath Model file path.
+ * @return True when the model was loaded successfully.
+ */
 bool LLMService::init(const std::string& modelPath)
 {
 	shutdown(); // Ensure any existing model is unloaded before initializing a new one.
@@ -17,6 +25,15 @@ bool LLMService::init(const std::string& modelPath)
 	return llm_isReady;
 }
 
+/**
+ * @brief Starts asynchronous model initialization.
+ *
+ * If initialization is already in progress or the service is already ready, the
+ * request is rejected.
+ *
+ * @param modelPath Model file path.
+ * @return True when the worker thread was started.
+ */
 bool LLMService::initAsync(const std::string& modelPath)
 {
 	// If the LLM is already ready or initialization is currently in progress, return false
@@ -38,26 +55,39 @@ bool LLMService::initAsync(const std::string& modelPath)
 }
 
 
-/// <summary>
-/// Checks whether the LLM service is ready.
-/// </summary>
-/// <returns>True if the LLM service is ready; otherwise, false.</returns>
+/**
+ * @brief Indicates whether the service has a loaded model and can accept work.
+ */
 bool LLMService::isReady() const
 {
     return llm_isReady.load();
 }
 
+/**
+ * @brief Indicates whether async initialization is currently running.
+ */
 bool LLMService::isInitInProgress() const
 {
 	return llm_initInProgress.load();
 }
 
+/**
+ * @brief Indicates whether a generation request is currently running.
+ */
 bool LLMService::isBusy() const
 {
     return llm_isBusy.load();
 }
 
 
+/**
+ * @brief Requests a single prompt generation on a background thread.
+ *
+ * Returns false when the service is not ready or already busy.
+ *
+ * @param prompt Prompt text to send to the model.
+ * @return True when the request was accepted.
+ */
 bool LLMService::requestGenerate(const std::string& prompt)
 {
 	// If the LLM is not ready or is currently busy processing another request, return false
@@ -80,6 +110,10 @@ bool LLMService::requestGenerate(const std::string& prompt)
 }
 
 
+/**
+ * @brief Consumes the result of async initialization if available.
+ * @return Optional bool containing the init result; empty when no result is available.
+ */
 std::optional<bool> LLMService::tryConsumeInitResult()
 {
 	std::lock_guard<std::mutex> lock(llm_initMutex);
@@ -91,6 +125,14 @@ std::optional<bool> LLMService::tryConsumeInitResult()
 	return result;
 }
 
+/**
+ * @brief Consumes the latest generated response if available.
+ *
+ * Consuming a response also clears the stored response and marks the service as
+ * no longer busy.
+ *
+ * @return Optional response string; empty when no response is available.
+ */
 std::optional<std::string> LLMService::tryConsumeLatestResponse()
 {
 	std::lock_guard<std::mutex> lock(llm_resultMutex);
@@ -107,6 +149,10 @@ std::optional<std::string> LLMService::tryConsumeLatestResponse()
 }
 
 
+/**
+ * @brief Background worker entrypoint for asynchronous initialization.
+ * @param modelPath Model file path.
+ */
 void LLMService::initWorkerMain(const std::string& modelPath)
 {	
 	llm_wrapper.UnloadModel(); // Ensure any existing model is unloaded before loading a new one
@@ -119,6 +165,10 @@ void LLMService::initWorkerMain(const std::string& modelPath)
 	llm_initInProgress = false; // Mark initialization as complete
 }
 
+/**
+ * @brief Background worker entrypoint for asynchronous generation.
+ * @param prompt Prompt text to generate from.
+ */
 void LLMService::generateWorkerMain(std::string prompt)
 {
 	// Generate the response using the LLM wrapper
@@ -132,6 +182,9 @@ void LLMService::generateWorkerMain(std::string prompt)
 }
 
 
+/**
+ * @brief Stops background workers, clears cached results, and unloads the model.
+ */
 void LLMService::shutdown()
 {
 	if (llm_initWorker.joinable())

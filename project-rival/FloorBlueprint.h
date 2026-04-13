@@ -3,15 +3,29 @@
 #include <algorithm>
 #include "RoomBlueprint.h"
 
+/**
+ * @file FloorBlueprint.h
+ * @brief Declares data structures used to represent a floor graph.
+ */
+
+/**
+ * @brief Node in a floor graph, representing a room.
+ */
 struct FloorNode {
 	int id;
 	RoomType roomType;
 };
 
+/**
+ * @brief Edge in a floor graph, connecting two rooms by id.
+ */
 struct FloorEdge {
 	int id_a, id_b;
 };
 
+/**
+ * @brief Floor layout metadata and connectivity.
+ */
 struct FloorPlan {
 	int dungeonSeed;
 	int floorId;

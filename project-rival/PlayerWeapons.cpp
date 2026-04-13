@@ -3,8 +3,18 @@
 #include "NormalBulletProjectile.h"
 #include "PlayerWeapons.h"
 
+/**
+ * @file PlayerWeapons.cpp
+ * @brief Implements player weapon-specific projectile and melee hit spawning.
+ */
+
 // ------------------------------- GUN WEAPONS -------------------------------
 #pragma region GUN_WEAPONS
+/**
+ * @brief Spawns a pistol bullet with fixed speed.
+ * @param info Fire request.
+ * @param projectileList Output list for spawned projectiles.
+ */
 void PistolWeapon::spawnProjectile(const FireReq& info, std::vector<std::unique_ptr<Projectile>>& projectileList)
 {
 	sf::Vector2f dir = info.aimDir.normalized();
@@ -13,6 +23,11 @@ void PistolWeapon::spawnProjectile(const FireReq& info, std::vector<std::unique_
 	projectileList.push_back(std::make_unique<NormalBulletProjectile>(w_spawnPos, dir, speed, damage, info.isFromPlayer));
 }
 
+/**
+ * @brief Spawns an assault rifle bullet with fixed speed.
+ * @param info Fire request.
+ * @param projectileList Output list for spawned projectiles.
+ */
 void ARWeapon::spawnProjectile(const FireReq& info, std::vector<std::unique_ptr<Projectile>>& projectileList)
 {
 	sf::Vector2f dir = info.aimDir.normalized();
@@ -21,6 +36,11 @@ void ARWeapon::spawnProjectile(const FireReq& info, std::vector<std::unique_ptr<
 	projectileList.push_back(std::make_unique<NormalBulletProjectile>(w_spawnPos, dir, speed, damage, info.isFromPlayer));
 }
 
+/**
+ * @brief Spawns multiple shotgun pellets with random spread.
+ * @param info Fire request.
+ * @param projectileList Output list for spawned projectiles.
+ */
 void ShotgunWeapon::spawnProjectile(const FireReq& info, std::vector<std::unique_ptr<Projectile>>& projectileList)
 {
 	sf::Vector2f dir = info.aimDir.normalized();
@@ -45,6 +65,11 @@ void ShotgunWeapon::spawnProjectile(const FireReq& info, std::vector<std::unique
 
 // ------------------------------- MELEE WEAPONS -------------------------------
 #pragma region MELEE_WEAPONS
+/**
+ * @brief Spawns a short-lived melee hit trigger for the knife.
+ * @param info Fire request.
+ * @param damageTriggerList Output list for spawned damage triggers.
+ */
 void KnifeWeapon::spawnMeleeHit(const FireReq& info, std::vector<std::unique_ptr<DamageTrigger>>& damageTriggerList)
 {
 	sf::Vector2f dir = info.aimDir.normalized();
@@ -62,6 +87,11 @@ void KnifeWeapon::spawnMeleeHit(const FireReq& info, std::vector<std::unique_ptr
 	));
 }
 
+/**
+ * @brief Spawns a short-lived melee hit trigger for the sword.
+ * @param info Fire request.
+ * @param damageTriggerList Output list for spawned damage triggers.
+ */
 void SwordWeapon::spawnMeleeHit(const FireReq& info, std::vector<std::unique_ptr<DamageTrigger>>& damageTriggerList)
 {
 	sf::Vector2f dir = info.aimDir.normalized();
@@ -78,6 +108,11 @@ void SwordWeapon::spawnMeleeHit(const FireReq& info, std::vector<std::unique_ptr
 	));
 }
 
+/**
+ * @brief Spawns a short-lived melee hit trigger for the axe.
+ * @param info Fire request.
+ * @param damageTriggerList Output list for spawned damage triggers.
+ */
 void AxeWeapon::spawnMeleeHit(const FireReq& info, std::vector<std::unique_ptr<DamageTrigger>>& damageTriggerList)
 {
 	sf::Vector2f dir = info.aimDir.normalized();

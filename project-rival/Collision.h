@@ -1,6 +1,14 @@
 #pragma once
 #include "Sfml/Graphics.hpp"
 
+/**
+ * @file Collision.h
+ * @brief Declares collision layers, collision profiles, and the collidable interface.
+ */
+
+/**
+ * @brief Bitmask layers used for collision filtering.
+ */
 enum CollisionLayer : uint32_t
 {
 	NONE = 0,
@@ -30,6 +38,9 @@ enum CollisionLayer : uint32_t
 	ALL = 0xFFFFFFFF
 };
 
+/**
+ * @brief Collision rules for an object (its layer and what layers it can collide with).
+ */
 struct CollisionProfile
 {
 	CollisionLayer layer;

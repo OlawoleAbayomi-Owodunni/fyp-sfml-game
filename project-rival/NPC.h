@@ -4,6 +4,14 @@
 #include "Collision.h"
 #include "HubShop.h"
 
+/**
+ * @file NPC.h
+ * @brief Declares the hub NPC type and related metadata.
+ */
+
+/**
+ * @brief Dialogue/behaviour personality of an NPC.
+ */
 enum NPCPersonality
 {
 	FRIENDLY,
@@ -15,6 +23,9 @@ enum NPCPersonality
 	PERSONALITY_COUNT
 };
 
+/**
+ * @brief Static metadata used to initialise a hub NPC.
+ */
 struct HubNPCInfo
 {
 	std::string name;

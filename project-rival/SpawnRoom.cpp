@@ -1,5 +1,17 @@
 #include "SpawnRoom.h"
 
+/**
+ * @file SpawnRoom.cpp
+ * @brief Implements generation for the spawn room plan.
+ */
+
+/**
+ * @brief Generates the spawn room plan with fixed dimensions and a player spawner.
+ * @param id Room identifier.
+ * @param type Requested room type (currently ignored; spawn is enforced).
+ * @param seed Base dungeon seed.
+ * @return Generated room plan.
+ */
 RoomPlan SpawnRoom::generateRoomPlan(int id, RoomType type, int seed)
 {
 	RoomPlan room;
@@ -36,6 +48,11 @@ RoomPlan SpawnRoom::generateRoomPlan(int id, RoomType type, int seed)
 	return room;
 }
 
+/**
+ * @brief Adds a centered player spawn point to the room plan.
+ * @param roomPlan Room plan to modify.
+ * @param interiorArea Interior tile area (currently unused).
+ */
 void SpawnRoom::generateSpawnPoints(RoomPlan& roomPlan, int interiorArea)
 {
 	// Player Spawner

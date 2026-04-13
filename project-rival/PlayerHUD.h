@@ -1,6 +1,9 @@
 #pragma once
 #include <SFML/Graphics.hpp>
 
+/**
+ * @brief Forward declaration for quest data used by the HUD.
+ */
 struct QuestData;
 
 class PlayerHUD

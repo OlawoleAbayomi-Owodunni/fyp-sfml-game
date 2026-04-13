@@ -14,11 +14,32 @@
 #include <sstream>
 #include <string>
 
-// Our target FPS
+/**
+ * @file Game.cpp
+ * @brief Implements the `Game` class runtime loop and supporting gameplay systems.
+ *
+ * This translation unit contains the main per-frame orchestration for gameplay,
+ * including input handling, simulation, rendering, and higher-level system
+ * coordination (hub world, dungeon floors, quests, and LLM jobs).
+ */
+
+/**
+ * @brief Target fixed update rate used by `Game::run()`.
+ */
 static double const FPS{ 60.0f };
 
 namespace
 {
+ /**
+	 * @brief Extracts a line value that follows a tag within a larger text blob.
+	 *
+	 * Searches for @p tag in @p text and returns the substring up to the next newline.
+	 * Leading/trailing whitespace is trimmed from the returned value.
+	 *
+	 * @param text Full response text.
+	 * @param tag Tag prefix to search for (e.g. `"TITLE:"`).
+	 * @return Extracted value or an empty string when the tag is not present.
+	 */
 	std::string extractTaggedLineValue(const std::string& text, const std::string& tag)
 	{
 		const std::size_t tagPos = text.find(tag);
@@ -39,6 +60,11 @@ namespace
 		return value;
 	}
 
+    /**
+	 * @brief Trims leading and trailing whitespace characters.
+	 * @param text Input string to trim.
+	 * @return Trimmed copy of the input string.
+	 */
 	std::string trimWhitespace(std::string text)
 	{
 		while (!text.empty() && (text.front() == ' ' || text.front() == '\t' || text.front() == '\n' || text.front() == '\r'))
@@ -48,6 +74,11 @@ namespace
 		return text;
 	}
 
+   /**
+	 * @brief Extracts the first line of text and trims it.
+	 * @param text Input string.
+	 * @return First line with surrounding whitespace removed.
+	 */
 	std::string extractFirstLine(const std::string& text)
 	{
 		std::size_t end = text.find('\n');
@@ -56,6 +87,12 @@ namespace
 		return trimWhitespace(text.substr(0, end));
 	}
 
+  /**
+	 * @brief Removes a leading tag prefix when present.
+	 * @param text Input string.
+	 * @param tag Prefix to strip when it appears at the start of the string.
+	 * @return Input string with the prefix removed if it was present.
+	 */
 	std::string stripTaggedPrefix(const std::string& text, const std::string& tag)
 	{
 		std::string value = trimWhitespace(text);
@@ -64,6 +101,15 @@ namespace
 		return value;
 	}
 
+ /**
+	 * @brief Extracts lore text payload from an LLM response.
+	 *
+	 * If a `LORE:` tag exists, returns everything after the tag, otherwise returns
+	 * the full input trimmed.
+	 *
+	 * @param text Full response text.
+	 * @return Lore payload suitable for further formatting.
+	 */
 	std::string extractLorePayload(const std::string& text)
 	{
 		const std::size_t tagPos = text.find("LORE:");
@@ -73,6 +119,15 @@ namespace
 		return trimWhitespace(text);
 	}
 
+  /**
+	 * @brief Formats lore text into exactly two lines when possible.
+	 *
+	 * The formatter prefers existing newline separation; otherwise it attempts to
+	 * split by sentence terminators.
+	 *
+	 * @param rawLore Raw lore payload extracted from the LLM.
+	 * @return A two-line string when possible; otherwise a trimmed single string.
+	 */
 	std::string formatLoreTwoLines(const std::string& rawLore)
 	{
 		std::string lore = trimWhitespace(rawLore);
@@ -115,6 +170,15 @@ namespace
 		return lore;
 	}
 
+    /**
+	 * @brief Chooses a short NPC context line used to condition quest metadata prompts.
+	 *
+	 * This is used to help produce more varied LLM quest titles/lore while keeping
+	 * the gameplay requirements (type/targets/reward) unchanged.
+	 *
+	 * @param quest Quest description the context should match.
+	 * @return A short context string tied to an implied hub NPC.
+	 */
 	std::string getRandomQuestNpcContext(const QuestData& quest)
 	{
 		if (quest.type == QuestType::KILL)
@@ -157,6 +221,12 @@ Game::Game()
 }
 
 ////////////////////////////////////////////////////////////
+/**
+ * @brief Initializes runtime state and enters the initial hub world.
+ *
+ * Sets up rendering/UI resources, debug overlays (when enabled), and initial
+ * gameplay state.
+ */
 void Game::init()
 {
 	// Really only necessary is our target FPS is greater than 60.
@@ -203,6 +273,13 @@ x_drawFPS.setCharacterSize(24);
 }
 
 ////////////////////////////////////////////////////////////
+/**
+ * @brief Runs the main fixed-timestep game loop.
+ *
+ * - Polls window events.
+ * - Updates simulation at a fixed timestep (`FPS`).
+ * - Renders as often as possible.
+ */
 void Game::run()
 {
 	sf::Clock clock;
@@ -241,6 +318,9 @@ void Game::run()
 }
 
 ////////////////////////////////////////////////////////////
+/**
+ * @brief Polls OS/window events and forwards them to `Game::processGameEvents()`.
+ */
 void Game::processEvents()
 {
     while (const std::optional event = m_window.pollEvent())
@@ -255,6 +335,14 @@ void Game::processEvents()
 
 
 ////////////////////////////////////////////////////////////
+/**
+ * @brief Handles gameplay and UI events.
+ *
+ * When a menu screen is active, events are routed to `MenuUI`. Otherwise the
+ * handler processes gameplay inputs such as room description requests and NPC chat.
+ *
+ * @param event Event from SFML.
+ */
 void Game::processGameEvents(const sf::Event& event)
 {
 #pragma region Menu UI
@@ -370,6 +458,14 @@ void Game::processGameEvents(const sf::Event& event)
 
 
 ////////////////////////////////////////////////////////////
+/**
+ * @brief Advances simulation by one frame.
+ *
+ * Updates input state, game mode logic, player/enemies/projectiles, collisions,
+ * hub interactions, and LLM job polling.
+ *
+ * @param dt Delta time in seconds.
+ */
 void Game::update(float dt)
 {
 	const Vector2i mousePos = Mouse::getPosition(m_window);
@@ -388,13 +484,10 @@ void Game::update(float dt)
 	// Game manager controls
 	ControllerInputHandler();
 
-#pragma region Menu UI
     if (!m_menuUI.isGameplayScreen())
 	{
 		return;
-	}
-#pragma endregion
-	
+	}	
 
 	if( m_gameMode == GameMode::DUNGEON && m_player.isDead())
 	{
@@ -517,6 +610,11 @@ void Game::update(float dt)
 }
 
 ////////////////////////////////////////////////////////////
+/**
+ * @brief Renders the current frame.
+ *
+ * Draws room instances, entities, hub overlays, and UI screens.
+ */
 void Game::render()
 {
 	m_window.clear(sf::Color(0, 0, 0, 0));
@@ -573,12 +671,11 @@ void Game::render()
 
 	m_window.setView(m_window.getDefaultView());
 
-#pragma region Menu UI
+	// UI rendering
     if (m_menuUI.isGameplayScreen())
 		m_hud.render(m_window);
 	else
        m_menuUI.render(m_window);
-#pragma endregion
 
 	// Room description rendering
 	if (m_menuUI.isGameplayScreen() && m_roomDescriptionTtl > 0.f && !m_latestRoomDescription.empty())
@@ -607,6 +704,9 @@ void Game::render()
 
 ///////////////////////////////////////////////////////////
 #pragma region GAME MANAGEMENT
+/**
+ * @brief Starts a new game from the menu and resets persistent progression.
+ */
 void Game::startNewGame()
 {
 	m_coins = 1000;
@@ -625,9 +725,11 @@ void Game::startNewGame()
 	enterHubWorld();
 }
 
-/// <summary>
-/// Resets the game to its initial state, clearing all progress and reinitializing game systems.
-/// </summary>
+/**
+ * @brief Resets runtime state for a fresh hub session or dungeon run.
+ *
+ * Clears spawned entities, resets cameras and flags, and reinitializes generators.
+ */
 void Game::resetGame()
 {
 	m_playerCamera = m_window.getDefaultView();
@@ -671,9 +773,9 @@ void Game::resetGame()
 	m_gameChests.clear();
 }
 
-/// <summary>
-/// Initializes and starts a new game by generating a dungeon floor with rooms and their connections.
-/// </summary>
+/**
+ * @brief Starts a dungeon session by resetting state and generating the first floor.
+ */
 void Game::gameStart()
 {
 	resetGame();
@@ -684,79 +786,19 @@ void Game::gameStart()
 	loadNewFloor();
 }
 
+/**
+ * @brief Convenience wrapper to start a new dungeon run.
+ */
 void Game::startDungeonRun()
 {
 	gameStart();
 }
 
-void Game::enterHubWorld()
-{
-	resetGame();
-	m_questManager.finaliseRun();
-	m_coins += m_questManager.commitRunResult();
-	queueQuestMetadataJobs();
-	m_gameMode = GameMode::HUB;
-	buildHubWorld();
-	m_requestNextFloor = false;
-}
-
-#pragma region Menu UI
-void Game::applyMenuAction(MenuAction action)
-{
-	switch (action)
-	{
-	case MenuAction::ACTION_NEW_GAME:
-		startNewGame();
-		m_menuUI.setScreen(MenuScreen::GAMEPLAY_SCREEN);
-		break;
-
-	case MenuAction::ACTION_CONTINUE:
-		m_gameMode = GameMode::HUB;
-		enterHubWorld();
-		m_menuUI.setScreen(MenuScreen::GAMEPLAY_SCREEN);
-		break;
-
-	case MenuAction::ACTION_EXIT:
-		m_window.close();
-		break;
-
-	case MenuAction::ACTION_RESUME:
-		m_menuUI.setScreen(MenuScreen::GAMEPLAY_SCREEN);
-		break;
-
-	case MenuAction::ACTION_HUB_WORLD:
-		enterHubWorld();
-		m_menuUI.setScreen(MenuScreen::GAMEPLAY_SCREEN);
-		break;
-
-	case MenuAction::ACTION_MAIN_MENU:
-		m_menuUI.setScreen(MenuScreen::MAIN_MENU_SCREEN);
-		break;
-	case MenuAction::ACTION_QUEST_0:
-		m_questManager.acceptQuest(0);
-		m_blockJobBoardInteract = true;
-		m_menuUI.setScreen(MenuScreen::GAMEPLAY_SCREEN);
-		break;
-	case MenuAction::ACTION_QUEST_1:
-		m_questManager.acceptQuest(1);
-		m_blockJobBoardInteract = true;
-		m_menuUI.setScreen(MenuScreen::GAMEPLAY_SCREEN);
-		break;
-	case MenuAction::ACTION_QUEST_2:
-		m_questManager.acceptQuest(2);
-		m_blockJobBoardInteract = true;
-		m_menuUI.setScreen(MenuScreen::GAMEPLAY_SCREEN);
-		break;
-
-	default:
-		break;
-	}
-}
-#pragma endregion
-
-/// <summary>
-/// Manages wave-based combat by checking if all enemies are defeated and either starting a new wave or ending combat.
-/// </summary>
+/**
+ * @brief Manages wave-based combat for combat rooms.
+ *
+ * When a wave is cleared, either spawns the next wave or marks the room cleared.
+ */
 void Game::ManageWave()
 {
 	// check if all enemies are dead
@@ -782,9 +824,9 @@ void Game::ManageWave()
 
 ////////////////////////////////////////////////////////////
 #pragma region UPDATE SUBFUNCTIONS
-/// <summary>
-/// Performs collision detection and response for all game entities including enemies, projectiles, the player, and environment objects.
-/// </summary>
+/**
+ * @brief Performs collision detection and collision-triggered gameplay interactions.
+ */
 void Game::CollisionChecks()
 {	
 	// ------------------- ENEMY CHECKS --------------------
@@ -1008,9 +1050,9 @@ void Game::CollisionChecks()
 	}
 }
 
-/// <summary>
-/// Updates the active room ID based on the player's current position by checking which room bounds contain the player's center point.
-/// </summary>
+/**
+ * @brief Updates `m_activeRoomId` based on the player's position.
+ */
 void Game::updateActiveRoom()
 {
 	for (RoomPlan room : m_roomPlans)
@@ -1033,9 +1075,9 @@ void Game::updateActiveRoom()
 	}
 }
 
-/// <summary>
-/// Handles game input for controlling game state, including closing the window and restarting the game.
-/// </summary>
+/**
+ * @brief Handles controller input affecting game state and UI.
+ */
 void Game::ControllerInputHandler()
 {
 	if (InputManager::pad().pressed(GamepadButton::Start))
@@ -1090,10 +1132,10 @@ void Game::ControllerInputHandler()
 
 ///////////////////////////////////////////////////////////
 #pragma region ROOM MANAGEMENT
-/// <summary>
-/// Generates a room instance from a room plan at a specific world position.
-/// </summary>
-/// <param name="roomId">The identifier of the room to generate.</param>
+/**
+ * @brief Builds a `RoomInstance` from its matching `RoomPlan`.
+ * @param roomId Identifier of the room to build.
+ */
 void Game::generateRoom(int roomId)
 {
 	RoomPlan& roomPlan = m_roomPlans[roomId];
@@ -1101,10 +1143,10 @@ void Game::generateRoom(int roomId)
 	m_roomInstances[roomId].buildFromPlan(roomPlan, roomWorldPos);
 }
 
-/// <summary>
-/// Spawns the player at the designated player spawn point within the specified room.
-/// </summary>
-/// <param name="roomId">The identifier of the room where the player should be spawned.</param>
+/**
+ * @brief Spawns the player using the room's player spawner.
+ * @param roomId Identifier of the room to spawn the player in.
+ */
 void Game::spawnPlayer(const int roomId)
 {
 	RoomPlan& roomPlan = m_roomPlans[roomId];
@@ -1125,10 +1167,10 @@ void Game::spawnPlayer(const int roomId)
 	}
 }
 
-/// <summary>
-/// Spawns enemies in a combat room at designated spawn points.
-/// </summary>
-/// <param name="roomId">The ID of the room in which to spawn enemies.</param>
+/**
+ * @brief Spawns enemies in a combat room using enemy spawners.
+ * @param roomId Identifier of the room to spawn enemies in.
+ */
 void Game::spawnEnemies(const int roomId)
 {
 	// Combat room Spawner
@@ -1154,6 +1196,12 @@ void Game::spawnEnemies(const int roomId)
 	}
 }
 
+/**
+ * @brief Spawns a random pickup at a world location.
+ * @param worldPos World position to spawn at.
+ * @param tilesize Tile size used for pickup sizing.
+ * @param isFromChest Whether the spawn originates from a chest (affects coin type).
+ */
 void Game::spawnRandomPickup(const sf::Vector2f& worldPos, float tilesize, bool isFromChest)
 {
 	PickupType type = PickupType::PICKUP_COUNT;
@@ -1172,6 +1220,12 @@ void Game::spawnRandomPickup(const sf::Vector2f& worldPos, float tilesize, bool 
 	m_gamePickups.push_back(std::make_unique<Pickup>(type, worldPos, tilesize));
 }
 
+/**
+ * @brief Rolls a chance to spawn a pickup at a world location.
+ * @param worldPos World position to spawn at.
+ * @param tilesize Tile size used for pickup sizing.
+ * @param spawnChance Chance percentage (0-100).
+ */
 void Game::trySpawnPickup(const sf::Vector2f& worldPos, float tilesize, int spawnChance)
 {
 	const int chance = rand() % 100;
@@ -1185,9 +1239,13 @@ void Game::trySpawnPickup(const sf::Vector2f& worldPos, float tilesize, int spaw
 
 ///////////////////////////////////////////////
 #pragma	region FLOOR MANAGEMENT
-/// <summary>
-/// Builds the floor instance by calculating room positions in world space and instantiating all rooms from their plans.
-/// </summary>
+/**
+ * @brief Builds `RoomInstance`s for all rooms in the current floor and positions them based on the floor layout.
+ *
+ * Calculates cell sizes for grid-based layout, determines world positions for each room, generates room instances,
+ * spawns the player in the spawn room, and builds corridors between rooms.
+
+*/
 void Game::buildFloorInstance()
 {
 	const int roomCount = m_floorPlan.rooms.size();
@@ -1236,9 +1294,9 @@ void Game::buildFloorInstance()
 	buildCorridors();
 }
 
-/// <summary>
-/// Builds corridor room instances connecting adjacent rooms based on the floor plan edges and room door positions.
-/// </summary>
+/**
+ * @brief Builds corridor instances connecting rooms described by the floor plan.
+ */
 void Game::buildCorridors()
 {
 	if (m_roomPlans.empty()) return;
@@ -1388,9 +1446,9 @@ void Game::buildCorridors()
 
 }
 
-/// <summary>
-/// Loads and initializes a new dungeon floor, generating its layout, rooms, and connections.
-/// </summary>
+/**
+ * @brief Generates and loads a new dungeon floor.
+ */
 void Game::loadNewFloor()
 {
 	m_enemies.clear();
@@ -1487,6 +1545,9 @@ void Game::loadNewFloor()
 
 /////////////////////////////////////////////////////////////////
 #pragma region LLM INTERACTION
+/**
+ * @brief Queues the first set of quest metadata LLM jobs.
+ */
 void Game::queueQuestMetadataJobs()
 {
 	m_pendingQuestTitles.clear();
@@ -1506,6 +1567,12 @@ void Game::queueQuestMetadataJobs()
 	}
 }
 
+/**
+ * @brief Builds an LLM prompt requesting a quest title.
+ * @param questIndex Board index of the quest.
+ * @param npcContext Short NPC context line.
+ * @return Prompt string, or empty when the quest index is invalid.
+ */
 std::string Game::buildQuestTitlePrompt(int questIndex, const std::string& npcContext) const
 {
 	const QuestData* quest = m_questManager.getBoardQuest(questIndex);
@@ -1549,6 +1616,13 @@ std::string Game::buildQuestTitlePrompt(int questIndex, const std::string& npcCo
 	return prompt;
 }
 
+/**
+ * @brief Builds an LLM prompt requesting quest lore.
+ * @param questIndex Board index of the quest.
+ * @param title Title to use as context.
+ * @param npcContext Short NPC context line.
+ * @return Prompt string, or empty when the quest index is invalid.
+ */
 std::string Game::buildQuestLorePrompt(int questIndex, const std::string& title, const std::string& npcContext) const
 {
 	const QuestData* quest = m_questManager.getBoardQuest(questIndex);
@@ -1595,6 +1669,9 @@ std::string Game::buildQuestLorePrompt(int questIndex, const std::string& title,
 	return prompt;
 }
 
+/**
+ * @brief Enqueues an LLM job that generates a short room description.
+ */
 void Game::LLM_GenerateRoomInfo()
 {
 	if (!m_llmManager.isReady()) {
@@ -1640,6 +1717,13 @@ void Game::LLM_GenerateRoomInfo()
 	std::cout << "Enqueued LLM job for room description.\n";
 }
 
+/**
+ * @brief Enqueues an LLM job into the local job queue.
+ * @param jobType Job type.
+ * @param npcId NPC identifier for NPC reply jobs.
+ * @param questIndex Quest board index for quest metadata jobs.
+ * @param prompt Prompt text to send to the model.
+ */
 void Game::enqueLLMJob(LLMJobType jobType, int npcId, int questIndex, const std::string& prompt)
 {
 	LLMJobContext job;
@@ -1651,6 +1735,9 @@ void Game::enqueLLMJob(LLMJobType jobType, int npcId, int questIndex, const std:
 	m_llmJobQueue.push(job);
 }
 
+/**
+ * @brief Starts the next queued LLM job if the model is ready.
+ */
 void Game::processLLMQueue()
 {
 	if (!m_llmManager.isReady() || m_llmManager.isBusy() || m_llmJobQueue.empty())
@@ -1667,6 +1754,10 @@ void Game::processLLMQueue()
 	}
 }
 
+/**
+ * @brief Applies the latest LLM response to game/UI state.
+ * @param response Raw model output.
+ */
 void Game::handleLLMResponse(const std::string& response)
 {
 	if (!m_hasActiveLLMJob) {
@@ -1749,6 +1840,26 @@ void Game::handleLLMResponse(const std::string& response)
 
 ////////////////////////////////////////////////////////////////
 #pragma region HUB WORLD MANAGEMENT
+/**
+ * @brief Transitions back to the hub world.
+ *
+ * Finalises and commits run results (quest rewards), queues quest metadata LLM jobs,
+ * and builds the hub room setup.
+ */
+void Game::enterHubWorld()
+{
+	resetGame();
+	m_questManager.finaliseRun();
+	m_coins += m_questManager.commitRunResult();
+	queueQuestMetadataJobs();
+	m_gameMode = GameMode::HUB;
+	buildHubWorld();
+	m_requestNextFloor = false;
+}
+
+/**
+ * @brief Creates the hub world room layout, shops, and NPC placements.
+ */
 void Game::buildHubWorld()
 {
 	// Set Room PLan for Hub Room
@@ -1900,6 +2011,9 @@ void Game::buildHubWorld()
 	}
 }
 
+/**
+ * @brief Updates hub interaction state for shops, NPC dialogue, and quest board.
+ */
 void Game::updateHubShops()
 {
 	m_activeShop = HubShopType::NONE_SHOP;
@@ -2121,6 +2235,9 @@ void Game::updateHubShops()
 	}
 }
 
+/**
+ * @brief Renders contextual prompts for hub interactions.
+ */
 void Game::renderHubShopPrompt()
 {
 	if (!m_isAtJobBoard &&
@@ -2229,4 +2346,60 @@ void Game::renderHubShopPrompt()
 #pragma endregion
 
 
-#pragma region UI
+#pragma region Menu UI
+/**
+ * @brief Applies a single menu action produced by `MenuUI`.
+ * @param action Action to apply.
+ */
+void Game::applyMenuAction(MenuAction action)
+{
+	switch (action)
+	{
+	case MenuAction::ACTION_NEW_GAME:
+		startNewGame();
+		m_menuUI.setScreen(MenuScreen::GAMEPLAY_SCREEN);
+		break;
+
+	case MenuAction::ACTION_CONTINUE:
+		m_gameMode = GameMode::HUB;
+		enterHubWorld();
+		m_menuUI.setScreen(MenuScreen::GAMEPLAY_SCREEN);
+		break;
+
+	case MenuAction::ACTION_EXIT:
+		m_window.close();
+		break;
+
+	case MenuAction::ACTION_RESUME:
+		m_menuUI.setScreen(MenuScreen::GAMEPLAY_SCREEN);
+		break;
+
+	case MenuAction::ACTION_HUB_WORLD:
+		enterHubWorld();
+		m_menuUI.setScreen(MenuScreen::GAMEPLAY_SCREEN);
+		break;
+
+	case MenuAction::ACTION_MAIN_MENU:
+		m_menuUI.setScreen(MenuScreen::MAIN_MENU_SCREEN);
+		break;
+	case MenuAction::ACTION_QUEST_0:
+		m_questManager.acceptQuest(0);
+		m_blockJobBoardInteract = true;
+		m_menuUI.setScreen(MenuScreen::GAMEPLAY_SCREEN);
+		break;
+	case MenuAction::ACTION_QUEST_1:
+		m_questManager.acceptQuest(1);
+		m_blockJobBoardInteract = true;
+		m_menuUI.setScreen(MenuScreen::GAMEPLAY_SCREEN);
+		break;
+	case MenuAction::ACTION_QUEST_2:
+		m_questManager.acceptQuest(2);
+		m_blockJobBoardInteract = true;
+		m_menuUI.setScreen(MenuScreen::GAMEPLAY_SCREEN);
+		break;
+
+	default:
+		break;
+	}
+}
+#pragma endregion

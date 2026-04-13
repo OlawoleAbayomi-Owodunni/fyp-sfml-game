@@ -1,5 +1,15 @@
 #include "MenuUI.h"
 
+/**
+ * @file MenuUI.cpp
+ * @brief Implements menu rendering, navigation, and quest board UI.
+ */
+
+/**
+ * @brief Constructs the menu UI and initializes its controls and layout.
+ * @param font Font used for menu labels.
+ * @param defaultView Default view used as a layout reference.
+ */
 MenuUI::MenuUI(const sf::Font& font, const sf::View& defaultView):
 	m_font(font),
 	m_defaultView(defaultView)
@@ -7,6 +17,11 @@ MenuUI::MenuUI(const sf::Font& font, const sf::View& defaultView):
 	init(font, defaultView);
 }
 
+/**
+ * @brief Initializes menu state, creates buttons, and lays out all screens.
+ * @param font Font used for menu labels.
+ * @param defaultView Default view used as a layout reference.
+ */
 void MenuUI::init(const sf::Font& font, const sf::View& defaultView)
 {
 	m_font = font;
@@ -93,6 +108,10 @@ void MenuUI::init(const sf::Font& font, const sf::View& defaultView)
 	updateMenuCursorPosition();
 }
 
+/**
+ * @brief Renders the active menu screen.
+ * @param window Render target.
+ */
 void MenuUI::render(sf::RenderWindow& window)
 {
 	auto* buttons = getActiveButtons();
@@ -151,6 +170,10 @@ void MenuUI::render(sf::RenderWindow& window)
 	window.draw(m_menuCursor);
 }
 
+/**
+ * @brief Changes the active screen and updates selection/layout as needed.
+ * @param screen New screen.
+ */
 void MenuUI::setScreen(MenuScreen screen)
 {
 	m_screen = screen;
@@ -164,6 +187,10 @@ void MenuUI::setScreen(MenuScreen screen)
 }
 
 #pragma region Quest System
+/**
+ * @brief Sets the list of quests displayed on the quest board.
+ * @param quests Quest list.
+ */
 void MenuUI::setQuestBoardQuests(const std::vector<QuestData>& quests)
 {
 	m_questBoardQuests = quests;
@@ -171,6 +198,11 @@ void MenuUI::setQuestBoardQuests(const std::vector<QuestData>& quests)
 }
 #pragma endregion
 
+/**
+ * @brief Processes keyboard and mouse events for menu navigation.
+ * @param event SFML event.
+ * @param window Window used for coordinate mapping.
+ */
 void MenuUI::processEvent(const sf::Event& event, sf::RenderWindow& window)
 {
 	if (const auto* keyPressed = event.getIf<sf::Event::KeyPressed>())
@@ -228,6 +260,13 @@ void MenuUI::processEvent(const sf::Event& event, sf::RenderWindow& window)
 	updateMenuCursorPosition();
 }
 
+/**
+ * @brief Processes controller navigation inputs for the active menu.
+ * @param upPressed Navigate up.
+ * @param downPressed Navigate down.
+ * @param activatePressed Activate current selection.
+ * @param backPressed Navigate back to gameplay when applicable.
+ */
 void MenuUI::processControllerNavigation(bool upPressed, bool downPressed, bool activatePressed, bool backPressed)
 {
 	if (upPressed)
@@ -241,6 +280,10 @@ void MenuUI::processControllerNavigation(bool upPressed, bool downPressed, bool 
 			m_screen = MenuScreen::GAMEPLAY_SCREEN;
 }
 
+/**
+ * @brief Returns and clears the pending menu action.
+ * @return Action selected by the user since the last call.
+ */
 MenuAction MenuUI::consumeAction()
 {
 	const MenuAction action = m_pendingAction;
@@ -249,6 +292,12 @@ MenuAction MenuUI::consumeAction()
 }
 
 
+/**
+ * @brief Lays out a vertical list of buttons centered in the view.
+ * @param buttons Buttons to position.
+ * @param defaultView View used for center/size reference.
+ * @param startY Starting y-coordinate for the first button.
+ */
 void MenuUI::layoutMenu(std::vector<MenuButton>& buttons, const sf::View& defaultView, float startY)
 {
 	const sf::Vector2f screenCenter = defaultView.getCenter();
@@ -264,6 +313,10 @@ void MenuUI::layoutMenu(std::vector<MenuButton>& buttons, const sf::View& defaul
 }
 
 #pragma region Quest System
+/**
+ * @brief Lays out the quest board panel and its buttons/text.
+ * @param defaultView View used for center/size reference.
+ */
 void MenuUI::layoutQuestBoard(const sf::View& defaultView)
 {
 	const sf::Vector2f viewCenter = defaultView.getCenter();
@@ -309,6 +362,9 @@ void MenuUI::layoutQuestBoard(const sf::View& defaultView)
 	m_questBoardReward.setPosition(sf::Vector2f(viewCenter.x - panelOrigin.x + leftWidth + 36.f, viewCenter.y + panelOrigin.y - 110.f));
 }
 
+/**
+ * @brief Updates quest board button labels from the current quest list.
+ */
 void MenuUI::updateQuestBoardButtons()
 {
 	for (int i = 0; i < m_questBoardButtons.size(); i++)
@@ -329,6 +385,10 @@ void MenuUI::updateQuestBoardButtons()
 	}
 }
 
+/**
+ * @brief Renders the quest board panel using the current selection.
+ * @param window Render target.
+ */
 void MenuUI::renderQuestBoard(sf::RenderWindow& window)
 {
 	if (m_questBoardQuests.empty())
@@ -367,6 +427,10 @@ void MenuUI::renderQuestBoard(sf::RenderWindow& window)
 	window.draw(m_questBoardReward);
 }
 
+/**
+ * @brief Applies a quest board selection index with clamping.
+ * @param index New selection index.
+ */
 void MenuUI::applyQuestBoardSelection(int index)
 {
 	#pragma region Quest System
@@ -380,6 +444,10 @@ void MenuUI::applyQuestBoardSelection(int index)
 }
 #pragma endregion
 
+/**
+ * @brief Gets the active button list based on the current screen.
+ * @return Pointer to button vector, or null when the screen has no buttons.
+ */
 std::vector<MenuButton>* MenuUI::getActiveButtons()
 {
 	switch (m_screen)
@@ -397,6 +465,10 @@ std::vector<MenuButton>* MenuUI::getActiveButtons()
 	}
 }
 
+/**
+ * @brief Gets the active selection index pointer for the current screen.
+ * @return Pointer to selection integer, or null when the screen has no selection.
+ */
 int* MenuUI::getActiveSelection()
 {
 	switch (m_screen)
@@ -414,6 +486,10 @@ int* MenuUI::getActiveSelection()
 	}
 }
 
+/**
+ * @brief Moves current selection by direction with wrap-around.
+ * @param direction Negative to move up, positive to move down.
+ */
 void MenuUI::moveSelection(int direction)
 {
 	auto* buttons = getActiveButtons();
@@ -426,6 +502,10 @@ void MenuUI::moveSelection(int direction)
 	updateMenuCursorPosition();
 }
 
+/**
+ * @brief Updates selection based on mouse hover position.
+ * @param worldPos Mouse position in world coordinates.
+ */
 void MenuUI::updateHover(const sf::Vector2f& worldPos)
 {
 	auto* buttons = getActiveButtons();
@@ -444,6 +524,9 @@ void MenuUI::updateHover(const sf::Vector2f& worldPos)
 	}
 }
 
+/**
+ * @brief Sets the pending action from the currently selected button.
+ */
 void MenuUI::activateSelectedButton()
 {
 	auto* buttons = getActiveButtons();
@@ -454,6 +537,9 @@ void MenuUI::activateSelectedButton()
 	m_pendingAction = (*buttons)[*selectedIndex].action;
 }
 
+/**
+ * @brief Repositions the menu cursor to align with the currently selected button.
+ */
 void MenuUI::updateMenuCursorPosition()
 {
 	auto* buttons = getActiveButtons();

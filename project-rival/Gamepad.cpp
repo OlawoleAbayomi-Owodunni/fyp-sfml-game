@@ -4,22 +4,50 @@
 #include <algorithm>
 #include <cmath>
 
+/**
+ * @file Gamepad.cpp
+ * @brief Implements an XInput-backed controller wrapper.
+ */
+
+/**
+ * @brief Constructs a gamepad wrapper for a specific XInput user index.
+ * @param index XInput controller index.
+ */
 Gamepad::Gamepad(unsigned int index)
 	: m_index(index)
 {
 }
 
+/**
+ * @brief Sets per-stick deadzone thresholds.
+ * @param leftStick Deadzone for the left stick in [0..1].
+ * @param rightStick Deadzone for the right stick in [0..1].
+ */
 void Gamepad::setDeadzone(float leftStick, float rightStick)
 {
 	m_leftDeadzone = std::clamp(leftStick, 0.f, 0.95f);
 	m_rightDeadzone = std::clamp(rightStick, 0.f, 0.95f);
 }
 
+/**
+ * @brief Indicates whether the controller is currently connected.
+ * @return True if XInput reports a connected device.
+ */
 bool Gamepad::connected() const
 {
 	return m_connected;
 }
 
+/**
+ * @brief Applies deadzone scaling to an axis value.
+ *
+ * Values within the deadzone map to 0. Values outside are rescaled so the
+ * output range remains [-1..1].
+ *
+ * @param value Raw axis in [-1..1].
+ * @param deadzone Deadzone threshold in [0..1].
+ * @return Deadzone-adjusted axis value.
+ */
 float Gamepad::applyDeadzone(float value, float deadzone)
 {
 	if (std::fabs(value) < deadzone)
@@ -30,6 +58,9 @@ float Gamepad::applyDeadzone(float value, float deadzone)
 	return sign * std::clamp(scaled, 0.f, 1.f);
 }
 
+/**
+ * @brief Polls XInput and updates all button/axis/trigger values.
+ */
 void Gamepad::update()
 {
 	m_buttonsPrev = m_buttonsNow;
@@ -65,26 +96,47 @@ void Gamepad::update()
 	m_rt = static_cast<float>(state.Gamepad.bRightTrigger) / 255.f;
 }
 
+/**
+ * @brief Returns the left stick (deadzone-adjusted).
+ * @return Vector in [-1..1] range per axis (SFML Y-up convention).
+ */
 sf::Vector2f Gamepad::leftStick() const
 {
 	return m_left;
 }
 
+/**
+ * @brief Returns the right stick (deadzone-adjusted).
+ * @return Vector in [-1..1] range per axis (SFML Y-up convention).
+ */
 sf::Vector2f Gamepad::rightStick() const
 {
 	return m_right;
 }
 
+/**
+ * @brief Returns the left trigger pressure.
+ * @return Value in [0..1].
+ */
 float Gamepad::leftTrigger() const
 {
 	return m_lt;
 }
 
+/**
+ * @brief Returns the right trigger pressure.
+ * @return Value in [0..1].
+ */
 float Gamepad::rightTrigger() const
 {
 	return m_rt;
 }
 
+/**
+ * @brief Converts an internal button enum to an XInput bitmask.
+ * @param button Button identifier.
+ * @return XInput mask bit for the given button.
+ */
 uint16_t Gamepad::toXInputMask(GamepadButton button)
 {
 	switch (button)
@@ -107,24 +159,44 @@ uint16_t Gamepad::toXInputMask(GamepadButton button)
 	}
 }
 
+/**
+ * @brief Returns whether a button is currently held.
+ * @param button Button identifier.
+ * @return True when the button is down this frame.
+ */
 bool Gamepad::down(GamepadButton button) const
 {
 	const uint16_t mask = toXInputMask(button);
 	return (m_buttonsNow & mask) != 0;
 }
 
+/**
+ * @brief Returns whether a button was pressed this frame.
+ * @param button Button identifier.
+ * @return True when the button transitioned up->down.
+ */
 bool Gamepad::pressed(GamepadButton button) const
 {
 	const uint16_t mask = toXInputMask(button);
 	return ((m_buttonsNow & mask) != 0) && ((m_buttonsPrev & mask) == 0);
 }
 
+/**
+ * @brief Returns whether a button was released this frame.
+ * @param button Button identifier.
+ * @return True when the button transitioned down->up.
+ */
 bool Gamepad::released(GamepadButton button) const
 {
 	const uint16_t mask = toXInputMask(button);
 	return ((m_buttonsNow & mask) == 0) && ((m_buttonsPrev & mask) != 0);
 }
 
+/**
+ * @brief Sets controller rumble motor strengths.
+ * @param lowFreq Low-frequency motor intensity in [0..1].
+ * @param highFreq High-frequency motor intensity in [0..1].
+ */
 void Gamepad::setRumble(float lowFreq, float highFreq)
 {
 	if (!m_connected)

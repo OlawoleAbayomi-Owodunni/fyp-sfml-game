@@ -1,5 +1,21 @@
 #include "CombatRoom.h"
 
+/**
+ * @file CombatRoom.cpp
+ * @brief Implements procedural generation for combat rooms and wave spawning metadata.
+ */
+
+/**
+ * @brief Generates a combat room plan with walls and random obstacles.
+ *
+ * Uses non-deterministic randomization (via `rand()`) for room dimensions and
+ * obstacle placement; the room seed is derived from @p seed and @p id.
+ *
+ * @param id Room identifier.
+ * @param type Requested room type (currently ignored; combat is enforced).
+ * @param seed Base dungeon seed.
+ * @return Generated room plan.
+ */
 RoomPlan CombatRoom::generateRoomPlan(int id, RoomType type, int seed)
 {
 	RoomPlan room;
@@ -40,6 +56,11 @@ RoomPlan CombatRoom::generateRoomPlan(int id, RoomType type, int seed)
 	return room;
 }
 
+/**
+ * @brief Generates spawn points for a new wave and locks room doors.
+ * @param room Room plan to update.
+ * @return Updated room plan.
+ */
 RoomPlan CombatRoom::generateNewWave(RoomPlan& room)
 {
 	const int interiorWidth = room.width - 2;
@@ -54,6 +75,11 @@ RoomPlan CombatRoom::generateNewWave(RoomPlan& room)
 	return room;
 }
 
+/**
+ * @brief Marks the room as cleared, removes spawners, and unlocks doors.
+ * @param room Room plan to update.
+ * @return Updated room plan.
+ */
 RoomPlan CombatRoom::setRoomCleared(RoomPlan& room)
 {
 	room.spawners.clear();
@@ -66,6 +92,11 @@ RoomPlan CombatRoom::setRoomCleared(RoomPlan& room)
 }
 
 
+/**
+ * @brief Places random pillar obstacles within the room interior.
+ * @param room Room plan to modify.
+ * @param interiorArea Interior tile area excluding the outer walls.
+ */
 void CombatRoom::generateObstacles(RoomPlan& room, int interiorArea)
 {
 	int maxPillars = interiorArea / (room.tileSize / 2);	// 1 pillar per half tile size of interior space, rounded down
@@ -115,6 +146,11 @@ void CombatRoom::generateObstacles(RoomPlan& room, int interiorArea)
 	}
 }
 
+/**
+ * @brief Generates enemy spawner positions within the room interior.
+ * @param room Room plan to modify.
+ * @param interiorArea Interior tile area excluding the outer walls.
+ */
 void CombatRoom::generateSpawnPoints(RoomPlan& room, int interiorArea)
 {
 	// Enemy Spawner

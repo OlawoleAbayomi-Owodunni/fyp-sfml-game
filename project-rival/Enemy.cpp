@@ -1,6 +1,19 @@
 #include "Enemy.h"
 using namespace sf;
 
+/**
+ * @file Enemy.cpp
+ * @brief Implements shared enemy state such as health, rendering, and collision profile.
+ */
+
+/**
+ * @brief Constructs an enemy with a start position and maximum health.
+ *
+ * Also initializes the collision profile for the base enemy.
+ *
+ * @param startPos World position used for initial placement and resets.
+ * @param totalHealth Maximum (and initial) health.
+ */
 Enemy::Enemy(const sf::Vector2f startPos, int totalHealth) :
 	e_startPos(startPos), e_maxHealth(totalHealth)
 {
@@ -11,6 +24,11 @@ Enemy::Enemy(const sf::Vector2f startPos, int totalHealth) :
 	e_collisionProfile.mask = CollisionLayer::PLAYER_LAYER | CollisionLayer::PLAYER_BULLET_LAYER | CollisionLayer::WALL_LAYER | CollisionLayer::DOOR_LAYER | CollisionLayer::DAMAGE_TRIGGER_LAYER;
 }
 
+/**
+ * @brief Initializes the visual body shape.
+ * @param size Rectangle size.
+ * @param colour Fill colour.
+ */
 void Enemy::initBody(const sf::Vector2f& size, const sf::Color& colour)
 {
 	//--------- body setup ---------//
@@ -20,11 +38,18 @@ void Enemy::initBody(const sf::Vector2f& size, const sf::Color& colour)
 	e_body.setPosition(e_startPos);
 }
 
+/**
+ * @brief Renders the enemy body.
+ * @param window Render target.
+ */
 void Enemy::render(sf::RenderWindow& window)
 {
 	window.draw(e_body);
 }
 
+/**
+ * @brief Resets runtime state back to the spawn position with full health.
+ */
 void Enemy::reset()
 {
 	e_body.setPosition(e_startPos);
@@ -32,16 +57,28 @@ void Enemy::reset()
 	e_isDead = false;
 }
 
+/**
+ * @brief Returns the collision bounds for this enemy.
+ * @return Global bounds of the enemy body shape.
+ */
 sf::FloatRect Enemy::getCollisionBounds() const
 {
 	return e_body.getGlobalBounds();
 }
 
+/**
+ * @brief Returns the collision profile used for collision filtering.
+ * @return Collision layer and mask.
+ */
 CollisionProfile Enemy::getCollisionProfile() const
 {
 	return e_collisionProfile;
 }
 
+/**
+ * @brief Applies damage and triggers death when health reaches zero.
+ * @param damage Damage amount to subtract.
+ */
 void Enemy::takeDamage(int damage)
 {
 	e_health -= damage;
@@ -49,11 +86,17 @@ void Enemy::takeDamage(int damage)
 		onDeath();
 }
 
+/**
+ * @brief Marks this enemy as dead.
+ */
 void Enemy::onDeath()
 {
 	e_isDead = true;
 }
 
+/**
+ * @brief Indicates whether this enemy has died.
+ */
 bool Enemy::isDead() const
 {
 	return e_isDead;

@@ -8,12 +8,23 @@
 
 #pragma region Quest System
 
+/**
+ * @file Quest.h
+ * @brief Declares quest data and the quest manager.
+ */
+
+/**
+ * @brief Categories of quests supported by the quest system.
+ */
 enum class QuestType
 {
 	KILL,
 	FETCH
 };
 
+/**
+ * @brief Serializable quest definition and runtime progress.
+ */
 struct QuestData
 {
 	QuestType type{ QuestType::KILL };

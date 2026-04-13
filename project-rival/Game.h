@@ -43,6 +43,14 @@ using namespace sf;
 /// 
 /// </summary>
 
+/**
+ * @file Game.h
+ * @brief Declares the `Game` class and core runtime data types.
+ */
+
+/**
+ * @brief High-level game mode/state.
+ */
 enum GameMode
 {
 	HUB,
@@ -51,6 +59,9 @@ enum GameMode
 	MODE_COUNT
 };
 
+/**
+ * @brief Types of LLM jobs that can be queued.
+ */
 enum LLMJobType
 {
 	ROOM_DESCRIPTION,
@@ -61,6 +72,9 @@ enum LLMJobType
 	LLM_JOB_TYPE_COUNT
 };
 
+/**
+ * @brief Context for a queued LLM job.
+ */
 struct LLMJobContext
 {
 	LLMJobType jobType;
@@ -69,6 +83,9 @@ struct LLMJobContext
 	std::string prompt;
 };
 
+/**
+ * @brief Compile-time screen resolution constants.
+ */
 struct ScreenSize
 {
 public:

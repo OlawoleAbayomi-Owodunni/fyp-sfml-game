@@ -1,11 +1,30 @@
 #include "NPC.h"
 
+/**
+ * @file NPC.cpp
+ * @brief Implements hub NPC initialization and debug rendering.
+ */
+
+/**
+ * @brief Constructs an NPC and initializes render/collision state.
+ * @param info Immutable NPC metadata (name, shop type, personality).
+ * @param worldPos Initial world position.
+ * @param bodyColor Visual color for the NPC body.
+ * @param triggerOffset Offset used to place the interaction bounds relative to the body.
+ */
 NPC::NPC(const HubNPCInfo& info, const sf::Vector2f worldPos, const sf::Color bodyColor, const sf::Vector2f& triggerOffset)
 	: npc_info(info)
 {
 	init(info, worldPos, bodyColor, triggerOffset);
 }
 
+/**
+ * @brief Initializes the NPC's body, interaction bounds, collision profile, and default dialogue.
+ * @param info Immutable NPC metadata (name, shop type, personality).
+ * @param worldPos Initial world position.
+ * @param bodyColor Visual color for the NPC body.
+ * @param triggerOffset Offset used to place the interaction bounds relative to the body.
+ */
 void NPC::init(const HubNPCInfo& info, const sf::Vector2f worldPos, const sf::Color bodyColor, const sf::Vector2f& triggerOffset)
 {
 	npc_body.setSize(sf::Vector2f(50.f, 75.f));
@@ -31,12 +50,20 @@ void NPC::init(const HubNPCInfo& info, const sf::Vector2f worldPos, const sf::Co
 	}
 }
 
+/**
+ * @brief Renders the NPC body and its interaction bounds (debug).
+ * @param window Target render window.
+ */
 void NPC::render(sf::RenderWindow & window)
 {
 	window.draw(npc_body);
 	renderInteractionBounds(window);
 }
 
+/**
+ * @brief Renders a debug rectangle for the NPC interaction bounds.
+ * @param window Target render window.
+ */
 void NPC::renderInteractionBounds(sf::RenderWindow & window)
 {
 	sf::RectangleShape debugRect(npc_interactionBounds.size);

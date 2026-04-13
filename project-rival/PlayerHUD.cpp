@@ -1,12 +1,25 @@
 #include "PlayerHUD.h"
 #include "Quest.h"
 
+/**
+ * @file PlayerHUD.cpp
+ * @brief Implements the on-screen HUD for player health, ammo, coins, and quest progress.
+ */
+
+/**
+ * @brief Constructs the HUD and initializes its visual elements.
+ * @param font Font used for HUD text.
+ */
 PlayerHUD::PlayerHUD(const sf::Font& font)
 	: m_healthText(font), m_ammoText(font), m_coinsText(font), m_questText(font)
 {
 	init(font);
 }
 
+/**
+ * @brief Initializes shapes and text properties.
+ * @param font Font used for HUD text.
+ */
 void PlayerHUD::init(const sf::Font& font)
 {
 	// Health Bar
@@ -53,6 +66,15 @@ void PlayerHUD::init(const sf::Font& font)
 	m_questText.setOutlineColor(sf::Color::Black);
 }
 
+/**
+ * @brief Updates HUD values and quest tracker display.
+ * @param currentHealth Current health.
+ * @param maxHealth Maximum health.
+ * @param currentAmmo Current ammo.
+ * @param maxAmmo Maximum ammo.
+ * @param coins Current coin count.
+ * @param activeQuest Active quest data or null when no quest is active.
+ */
 void PlayerHUD::update(int currentHealth, int maxHealth, int currentAmmo, int maxAmmo, int coins, const QuestData* activeQuest)
 {
 	// Update health bar
@@ -84,6 +106,10 @@ void PlayerHUD::update(int currentHealth, int maxHealth, int currentAmmo, int ma
 	}
 }
 
+/**
+ * @brief Draws the HUD to the window.
+ * @param window Render target.
+ */
 void PlayerHUD::render(sf::RenderWindow & window)
 {
 	window.draw(m_healthBarBg);
@@ -99,6 +125,11 @@ void PlayerHUD::render(sf::RenderWindow & window)
 		window.draw(m_questText);
 }
 
+/**
+ * @brief Centers text within a rectangle shape.
+ * @param text Text to center.
+ * @param rect Rectangle used as the reference bounds.
+ */
 void PlayerHUD::centerText(sf::Text & text, const sf::RectangleShape & rect)
 {
 	const sf::FloatRect textBounds = text.getLocalBounds();

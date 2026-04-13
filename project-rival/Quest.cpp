@@ -1,10 +1,21 @@
 #include "Quest.h"
 
+/**
+ * @file Quest.cpp
+ * @brief Implements quest board generation and run reward handling.
+ */
+
+/**
+ * @brief Constructs a new `QuestManager` and populates the initial quest board.
+ */
 QuestManager::QuestManager()
 {
 	resetBoard();
 }
 
+/**
+ * @brief Clears and regenerates the quest board, then clears any active quest state.
+ */
 void QuestManager::resetBoard()
 {
 	m_boardQuests.clear();
@@ -15,6 +26,13 @@ void QuestManager::resetBoard()
 	clearActiveQuestState();
 }
 
+/**
+ * @brief Accepts a quest from the board and marks it as the active quest.
+ *
+ * Has no effect when an active quest already exists or the index is out of range.
+ *
+ * @param index Quest index on the board.
+ */
 void QuestManager::acceptQuest(int index)
 {
 	if (index < 0 || index >= m_boardQuests.size())
@@ -32,6 +50,16 @@ void QuestManager::acceptQuest(int index)
 	m_pendingRewardCoins = 0;
 }
 
+/**
+ * @brief Updates quest title/lore strings on the quest board.
+ *
+ * Used by LLM metadata jobs to replace placeholder board text.
+ *
+ * @param index Quest index on the board.
+ * @param title New title; ignored when empty.
+ * @param loreDescription New lore string; ignored when empty.
+ * @return True when the quest index is valid.
+ */
 bool QuestManager::updateBoardQuestText(int index, const std::string& title, const std::string& loreDescription)
 {
 	if (index < 0 || index >= static_cast<int>(m_boardQuests.size()))
@@ -46,6 +74,14 @@ bool QuestManager::updateBoardQuestText(int index, const std::string& title, con
 	return true;
 }
 
+/**
+ * @brief Records progress for kill quests.
+ *
+ * Increments progress only when there is an active quest, the run is not finalised,
+ * the quest is of type `KILL`, and the killed enemy type matches.
+ *
+ * @param enemyType Enemy type that was killed.
+ */
 void QuestManager::recordEnemyKill(EnemyType enemyType)
 {
 	if (!m_hasActiveQuest || m_runFinalised)
@@ -60,6 +96,14 @@ void QuestManager::recordEnemyKill(EnemyType enemyType)
 	m_activeQuest.progress += 1;
 }
 
+/**
+ * @brief Records progress for fetch quests.
+ *
+ * Increments progress only when there is an active quest, the run is not finalised,
+ * the quest is of type `FETCH`, and the picked-up item type matches.
+ *
+ * @param pickupType Pickup type that was collected.
+ */
 void QuestManager::recordPickup(PickupType pickupType)
 {
 	if (!m_hasActiveQuest || m_runFinalised)
@@ -74,6 +118,12 @@ void QuestManager::recordPickup(PickupType pickupType)
 	m_activeQuest.progress += 1;
 }
 
+/**
+ * @brief Finalises the current run result.
+ *
+ * Determines whether the active quest was completed and caches the pending reward.
+ * Call `commitRunResult()` to apply the outcome and reset active quest state.
+ */
 void QuestManager::finaliseRun()
 {
 	m_runFinalised = true;
@@ -84,6 +134,14 @@ void QuestManager::finaliseRun()
 		m_pendingRewardCoins = 0;
 }
 
+/**
+ * @brief Commits a finalised run result and returns the reward payout.
+ *
+ * If the quest was completed, awards coins and replaces the completed quest on the
+ * board with a newly generated quest.
+ *
+ * @return Reward coins paid out for the run.
+ */
 int QuestManager::commitRunResult()
 {
 	int reward = 0;
@@ -102,12 +160,20 @@ int QuestManager::commitRunResult()
 }
 
 
+/**
+ * @brief Generates a random quest (kill or fetch).
+ * @return Newly generated quest data.
+ */
 QuestData QuestManager::generateQuest()
 {
 	const QuestType type = (std::rand() % 2 == 0) ? QuestType::KILL : QuestType::FETCH;
 	return (type == QuestType::KILL) ? generateKillQuest() : generateFetchQuest();
 }
 
+/**
+ * @brief Generates a kill quest with placeholder text.
+ * @return Newly generated kill quest.
+ */
 QuestData QuestManager::generateKillQuest()	// we would plug in LLM Generation in here
 {
 	static const std::vector<std::string> titles{
@@ -134,6 +200,10 @@ QuestData QuestManager::generateKillQuest()	// we would plug in LLM Generation i
 	return quest;
 }
 
+/**
+ * @brief Generates a fetch quest with placeholder text.
+ * @return Newly generated fetch quest.
+ */
 QuestData QuestManager::generateFetchQuest()
 {
 	static const std::vector<std::string> titles{
@@ -160,6 +230,9 @@ QuestData QuestManager::generateFetchQuest()
 	return quest;
 }
 
+/**
+ * @brief Clears all state related to an active quest.
+ */
 void QuestManager::clearActiveQuestState()
 {
 	m_activeQuestIndex = -1;
