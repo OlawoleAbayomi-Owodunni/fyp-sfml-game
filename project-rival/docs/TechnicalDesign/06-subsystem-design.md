@@ -211,18 +211,23 @@ Core files:
 
 - `project-rival/LLMService.h/.cpp`
 - `external/fyp-llm-lib/llm/LLMWrapper.h` (vendored dependency)
+- `project-rival/Game.h/.cpp` (LLM job queue/orchestration layer)
 
 Current behaviour:
 
 - LLM is initialized asynchronously from `Game` via `LLMService::initAsync(modelPath)`.
-- `Game::update(dt)` polls:
-  - `tryConsumeInitResult()` for init completion/failure
-  - `tryConsumeLatestResponse()` for completed generation output
-- Generation requests are queued using `requestGenerate(prompt)` and gated by `isReady()` / `isBusy()`.
-- `shutdown()` joins worker threads and unloads model.
+- `Game` manages a queued job layer (`LLMJobContext`) for room/NPC/quest prompt types.
+- `Game::update(dt)`:
+  - polls `tryConsumeInitResult()` for init completion/failure
+  - submits queued jobs through `processLLMQueue()` when service is idle
+  - consumes responses and routes them via `handleLLMResponse(...)`
+- Current LLM job outcomes:
+  - room-description text shown as temporary overlay
+  - NPC reply text shown in hub dialogue panel
+  - quest title/lore text updates applied to quest board entries
 
 Extension points:
 
-- Structured NPC dialogue API (speaker id, context/history, templates).
+- Stronger response validation/fallback strategies.
 - Streaming/caching/latency handling.
-- Prompt safety/format constraints.
+- Richer NPC prompt context and history handling.

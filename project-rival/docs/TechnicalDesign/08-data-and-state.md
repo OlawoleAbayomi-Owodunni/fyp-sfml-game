@@ -17,6 +17,7 @@ This chapter describes what state exists, who owns it, and what might need savin
   - pickup list
   - chest list
   - hub NPC list and dialogue state (`m_hubNPCs`, active NPC id, dialogue-open flag, selected response/options)
+  - NPC text buffers (`m_npcInputBuffer`, `m_npcLastResponse`)
   - combat state (`m_isInCombat`, `m_waveCounter`)
   - floor plan + floor layout
   - dungeon plan (seed + floor progression/completion)
@@ -26,7 +27,9 @@ This chapter describes what state exists, who owns it, and what might need savin
   - job-board interaction flags (`m_isAtJobBoard`, `m_blockJobBoardInteract`)
   - economy/upgrade state (coins, weapon/player upgrade levels, catalog indices, cosmetic index)
   - quest state manager (`QuestManager`)
-  - LLM service state
+  - LLM service state (`LLMService`)
+  - LLM queue state (`m_llmJobQueue`, current job, active-job flag)
+  - LLM presentation buffers (`m_latestRoomDescription`, `m_roomDescriptionTtl`, pending quest title/context arrays)
   - HUD state container (`PlayerHUD`)
 - `Player` owns:
   - transform/velocity/previous position

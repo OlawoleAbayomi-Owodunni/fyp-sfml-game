@@ -14,8 +14,8 @@ This chapter documents known shortcuts and future technical risks.
 - Dungeon completion behavior is still temporary (flow currently returns directly to hub mode, without a dedicated run-results/end screen).
 - Active-room detection is simple bounds checking against room rectangles.
 - Corridor generation is procedural and may need extra handling for alignment/overlap edge cases.
-- Hub-world shop interactions are currently shape-overlap driven and centralized in `Game`, so scalability/refactor pressure is expected as systems grow.
-- LLM integration is async and service-level/debug-trigger only; there is no streaming output, no gameplay-level NPC dialogue system, and no formal latency budget policy yet.
+- Hub-world interactions (shops, job board, NPC dialogue) are currently overlap-driven and centralized in `Game`, so scalability/refactor pressure is expected as systems grow.
+- LLM integration is async and queue-driven in `Game`; text is consumed as complete responses (no streaming output), and there is no formal latency budget policy yet.
 
 ## Technical risks
 

@@ -148,6 +148,7 @@
     <Text Include="..\automation\scripts\output\floor+dungeon-merge-changes.txt" />
     <Text Include="..\CMakeLists.txt" />
     <Text Include="automation\scripts\output\hub-merge-changes.txt" />
+    <Text Include="automation\scripts\output\llm-finalisation-merge-changes.txt" />
     <Text Include="automation\scripts\output\llm-integration-merge-changes.txt" />
     <Text Include="automation\scripts\output\menu-merge-changes.txt" />
     <Text Include="automation\scripts\output\npc-merge-changes.txt" />

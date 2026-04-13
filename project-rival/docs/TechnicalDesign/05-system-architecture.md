@@ -135,4 +135,5 @@ Current camera behavior supports both player-follow and floor-overview modes.
 Game management input:
 
 - Exit/pause/menu toggle: `Escape` keyboard / `Start` controller
-- Restart/start run: `R` or controller `Select`
+- Start/restart dungeon run: `R` keyboard
+- Camera toggle: `V` keyboard / `Select` controller

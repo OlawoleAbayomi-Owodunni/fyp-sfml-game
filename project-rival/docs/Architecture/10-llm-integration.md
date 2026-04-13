@@ -6,9 +6,7 @@ This document describes the current **local LLM integration** in the solution.
 
 ## Purpose
 
-The goal is to support future NPC dialogue and lore generation using a locally-run model.
-
-At the moment, the integration is **service-level with debug gameplay hooks** (load model + queue request + consume generated string). There is not yet a gameplay-level NPC dialogue system.
+The goal is to support NPC dialogue, room flavor text, and quest text generation using a locally-run model.
 
 ## Key components
 
@@ -36,6 +34,25 @@ Responsibilities:
 
 The game currently uses the async flow (init + request + poll) rather than calling synchronous generation directly.
 
+### `Game` LLM job queue layer
+
+`Game` now adds a small orchestration layer on top of `LLMService`:
+
+- `LLMJobType` currently includes:
+  - `ROOM_DESCRIPTION`
+  - `NPC_REPLY`
+  - `QUEST_TITLE`
+  - `QUEST_LORE`
+- Jobs are queued as `LLMJobContext` entries in `m_llmJobQueue`.
+- `processLLMQueue()` submits one queued prompt when the service is ready/idle.
+- `handleLLMResponse(...)` dispatches results by job type.
+
+Current outcomes:
+
+- Room-description jobs populate a short-lived in-game “Room Insight” text panel.
+- NPC-reply jobs update hub dialogue response text.
+- Quest-title and quest-lore jobs update quest board text through `QuestManager::updateBoardQuestText(...)`.
+
 ### `LLMWrapper` (vendored dependency)
 
 Files:
@@ -55,9 +72,10 @@ Notes:
 `Game` currently:
 
 - starts async model init during construction
-- polls init/result state during `update(dt)`
-- allows a debug generation request in dungeon mode (`Num0` keyboard, `DPadUp` gamepad)
-- logs generated response to console when available
+- polls init state/results during `update(dt)`
+- supports room-insight prompting in dungeon mode (`Num0` keyboard, `DPadUp` gamepad)
+- queues quest metadata prompts on hub entry (`queueQuestMetadataJobs()`)
+- routes completed responses back into room/NPC/quest UI state
 
 ## Model assets
 
@@ -67,9 +85,9 @@ A `.gguf` model is currently present under:
 
 ## Current limitations
 
-- Generation is currently asynchronous in the game loop, but responses are consumed as whole strings (no token streaming to UI).
-- No conversation state/history handling exists yet.
-- No dedicated NPC entities or dialogue UI layer exists yet.
+- Generation is asynchronous and consumed as whole strings (no token streaming UI yet).
+- Prompt/response validation is still lightweight (simple tagged-line parsing for quest text).
+- No formal latency budget policy exists yet.
 
 ## Performance notes (local benchmarks)
 
@@ -89,10 +107,6 @@ Notes:
 
 ## Next likely steps
 
-- Add an NPC dialogue layer that builds prompts from:
-  - NPC identity + role
-  - player state
-  - current room/floor context
-  - conversation history
-- Add response constraints/formatting (e.g., JSON-like tool outputs, safe-length limits).
-- Consider latency mitigation (caching, background worker thread, streaming output) if required.
+- Expand NPC prompt context (personality, relationship, run state, memory).
+- Improve response formatting guarantees (schema/tag validation + fallback templates).
+- Add streaming/caching/latency strategies if required.
