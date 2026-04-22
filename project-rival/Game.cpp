@@ -58,6 +58,32 @@ namespace
 		return &it->second;
 	}
 
+	bool drawFittedSprite(sf::RenderWindow& window,
+		const std::string& texturePath,
+		const sf::Vector2i& framePosition,
+		const sf::Vector2i& frameSize,
+		const sf::RectangleShape& targetShape)
+	{
+		const sf::Texture* texture = loadUiTexture(texturePath);
+		if (!texture)
+			return false;
+
+		sf::Sprite sprite(*texture);
+		sprite.setTextureRect(sf::IntRect(framePosition, frameSize));
+
+		const sf::FloatRect spriteBounds = sprite.getGlobalBounds();
+		if (spriteBounds.size.x <= 0.f || spriteBounds.size.y <= 0.f)
+			return false;
+
+		sprite.setOrigin(spriteBounds.getCenter());
+		sprite.setScale(sf::Vector2f(
+			targetShape.getSize().x / spriteBounds.size.x,
+			targetShape.getSize().y / spriteBounds.size.y));
+		sprite.setPosition(targetShape.getPosition());
+		window.draw(sprite);
+		return true;
+	}
+
 	void renderPortraitHolder(sf::RenderWindow& window, const HubNPCInfo& npcInfo, const sf::FloatRect& dialogueBoxBounds, bool texturedMode)
 	{
 		const sf::Vector2f holderSize(112.f, 112.f);
@@ -737,11 +763,50 @@ void Game::render()
 
 	if (m_gameMode == GameMode::HUB)
 	{
-		m_window.draw(m_weaponShop);
-		m_window.draw(m_cosmeticShop);
-		m_window.draw(m_armoryShop);
-		m_window.draw(m_playerShop);
-		m_window.draw(m_jobBoard);
+		if (texturedMode)
+		{
+			const bool weaponShopDrawn = drawFittedSprite(m_window,
+				"ASSETS/SPRITES/LEVELS/Shops.png",
+				sf::Vector2i(550, 0),
+				sf::Vector2i(120, 180),
+				m_weaponShop);
+			const bool cosmeticShopDrawn = drawFittedSprite(m_window,
+				"ASSETS/SPRITES/LEVELS/Shops.png",
+				sf::Vector2i(730, 0),
+				sf::Vector2i(170, 190),
+				m_cosmeticShop);
+			const bool armoryShopDrawn = drawFittedSprite(m_window,
+				"ASSETS/SPRITES/LEVELS/Shops.png",
+				sf::Vector2i(900, 0),
+				sf::Vector2i(160, 210),
+				m_armoryShop);
+			const bool playerShopDrawn = drawFittedSprite(m_window,
+				"ASSETS/SPRITES/LEVELS/Shops.png",
+				sf::Vector2i(1060, 20),
+				sf::Vector2i(140, 165),
+				m_playerShop);
+
+			if (!weaponShopDrawn) m_window.draw(m_weaponShop);
+			if (!cosmeticShopDrawn) m_window.draw(m_cosmeticShop);
+			if (!armoryShopDrawn) m_window.draw(m_armoryShop);
+			if (!playerShopDrawn) m_window.draw(m_playerShop);
+
+			const bool jobBoardDrawn = drawFittedSprite(m_window,
+				"ASSETS/SPRITES/LEVELS/Job Board.png",
+				sf::Vector2i(0, 60),
+				sf::Vector2i(192, 96),
+				m_jobBoard);
+			if (!jobBoardDrawn)
+				m_window.draw(m_jobBoard);
+		}
+		else
+		{
+			m_window.draw(m_weaponShop);
+			m_window.draw(m_cosmeticShop);
+			m_window.draw(m_armoryShop);
+			m_window.draw(m_playerShop);
+			m_window.draw(m_jobBoard);
+		}
 		renderHubShopPrompt();
 
 		for (auto& npc : m_hubNPCs) {
