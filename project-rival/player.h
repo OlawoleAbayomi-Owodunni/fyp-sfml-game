@@ -72,6 +72,7 @@ private:
 	// VARIABLES
 	sf::RectangleShape p_body;
 	CustomSprite p_sprite;
+	sf::Vector2f p_spriteBaseScale{ 1.f, 1.f };
 
 	sf::Vector2f p_velocity{ 0.f, 0.f };
 

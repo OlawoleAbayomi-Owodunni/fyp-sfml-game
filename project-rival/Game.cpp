@@ -45,6 +45,19 @@ namespace
 		return &it->second;
 	}
 
+	const sf::Texture* loadUiTexture(const std::string& texturePath)
+	{
+		static std::unordered_map<std::string, sf::Texture> textureCache;
+		auto [it, inserted] = textureCache.try_emplace(texturePath);
+		if (inserted)
+		{
+			if (!it->second.loadFromFile(texturePath))
+				return nullptr;
+		}
+
+		return &it->second;
+	}
+
 	void renderPortraitHolder(sf::RenderWindow& window, const HubNPCInfo& npcInfo, const sf::FloatRect& dialogueBoxBounds, bool texturedMode)
 	{
 		const sf::Vector2f holderSize(112.f, 112.f);
@@ -743,6 +756,26 @@ void Game::render()
 		m_hud.render(m_window);
 	else
        m_menuUI.render(m_window);
+
+	if (m_menuUI.isGameplayScreen())
+	{
+		if (const sf::Texture* crosshairTexture = loadUiTexture("ASSETS/SPRITES/UI/crosshair.png"))
+		{
+			sf::Sprite crosshair(*crosshairTexture);
+			const sf::FloatRect crosshairBounds = crosshair.getGlobalBounds();
+			if (crosshairBounds.size.x > 0.f && crosshairBounds.size.y > 0.f)
+			{
+				const sf::Vector2i mousePixelPos = sf::Mouse::getPosition(m_window);
+				const sf::Vector2f mouseWorldPos = m_window.mapPixelToCoords(mousePixelPos, m_window.getDefaultView());
+				const float targetSize = 36.f;
+				const float scale = targetSize / std::max(crosshairBounds.size.x, crosshairBounds.size.y);
+				crosshair.setOrigin(crosshairBounds.getCenter());
+				crosshair.setScale(sf::Vector2f(scale, scale));
+				crosshair.setPosition(mouseWorldPos);
+				m_window.draw(crosshair);
+			}
+		}
+	}
 
 	// Room description rendering
 	if (m_menuUI.isGameplayScreen() && m_roomDescriptionTtl > 0.f && !m_latestRoomDescription.empty())

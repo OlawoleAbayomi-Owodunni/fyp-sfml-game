@@ -1,6 +1,20 @@
 #include "PlayerHUD.h"
 #include "Quest.h"
 
+#include <unordered_map>
+
+namespace
+{
+	const sf::Texture* loadTexture(const std::string& texturePath)
+	{
+		static std::unordered_map<std::string, sf::Texture> textureCache;
+		auto [it, inserted] = textureCache.try_emplace(texturePath);
+		if (inserted && !it->second.loadFromFile(texturePath))
+			return nullptr;
+		return &it->second;
+	}
+}
+
 /**
  * @file PlayerHUD.cpp
  * @brief Implements the on-screen HUD for player health, ammo, coins, and quest progress.
@@ -126,6 +140,19 @@ void PlayerHUD::update(int currentHealth, int maxHealth, int currentAmmo, int ma
  */
 void PlayerHUD::render(sf::RenderWindow & window)
 {
+	if (const sf::Texture* hudTexture = loadTexture("ASSETS/SPRITES/UI/hud.png"))
+	{
+		sf::Sprite hudPanel(*hudTexture);
+		const sf::FloatRect panelBounds = hudPanel.getGlobalBounds();
+		const sf::Vector2f targetSize(420.f, 180.f);
+		if (panelBounds.size.x > 0.f && panelBounds.size.y > 0.f)
+		{
+			hudPanel.setScale(sf::Vector2f(targetSize.x / panelBounds.size.x, targetSize.y / panelBounds.size.y));
+			hudPanel.setPosition(sf::Vector2f(10.f, 10.f));
+			window.draw(hudPanel);
+		}
+	}
+
 	window.draw(m_healthBarBg);
 	window.draw(m_healthBar);
 	window.draw(m_healthText);

@@ -118,6 +118,9 @@ void Weapon::update(float dt, const sf::Vector2f playerPos, const sf::Vector2f a
  */
 void Weapon::render(sf::RenderWindow& window, bool texturedMode)
 {
+	if (texturedMode)
+		window.draw(w_shape);
+
 	if (texturedMode && w_hasSpriteVisual && w_sprite.isLoaded())
 	{
 		const bool faceLeft = (w_lastAimDir.x < 0.f);

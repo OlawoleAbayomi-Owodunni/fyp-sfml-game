@@ -25,10 +25,14 @@ void RoomInstance::buildFromPlan(const RoomPlan& plan, const sf::Vector2f& world
 
 	const float tileSize = plan.tileSize;
 
-	auto addSpriteForShape = [&](const sf::RectangleShape& shape)
+	auto addTileSprite = [&](const sf::Vector2f& position, const sf::Vector2f& shapeSize, const std::string& texturePath, const sf::Vector2i& framePosition, const sf::Vector2i& frameSize)
 		{
 			CustomSprite sprite;
-			if (!sprite.configure("ASSETS/SPRITES/LEVELS/Shops.png", {}, sf::Vector2i(0, 0)))
+			SpriteAnimationMap animations{
+				{ "Idle", { std::vector<sf::Vector2i>{ framePosition }, 1.f, true } }
+			};
+
+			if (!sprite.configure(texturePath, animations, frameSize))
 				return;
 
 			const sf::FloatRect spriteBounds = sprite.getGlobalBounds();
@@ -37,9 +41,9 @@ void RoomInstance::buildFromPlan(const RoomPlan& plan, const sf::Vector2f& world
 
 			sprite.setOrigin(sf::Vector2f(spriteBounds.size.x * 0.5f, spriteBounds.size.y * 0.5f));
 			sprite.setScale(sf::Vector2f(
-				shape.getSize().x / spriteBounds.size.x,
-				shape.getSize().y / spriteBounds.size.y));
-			sprite.setPosition(shape.getPosition());
+				shapeSize.x / spriteBounds.size.x,
+				shapeSize.y / spriteBounds.size.y));
+			sprite.setPosition(position);
 			ri_staticRoomSprites.push_back(sprite);
 		};
 	
@@ -56,7 +60,7 @@ void RoomInstance::buildFromPlan(const RoomPlan& plan, const sf::Vector2f& world
 				floor.setPosition(worldPos + sf::Vector2f(col * tileSize, row * tileSize));
 				floor.setFillColor(sf::Color(200, 200, 200)); // light grey floor
 				ri_staticRoomShapes.push_back(floor);
-				addSpriteForShape(floor);
+				addTileSprite(floor.getPosition(), floor.getSize(), "ASSETS/SPRITES/Everything.png", sf::Vector2i(72, 192), sf::Vector2i(64, 64));
 			}
 
 			// Walls
@@ -69,7 +73,7 @@ void RoomInstance::buildFromPlan(const RoomPlan& plan, const sf::Vector2f& world
 				wall.setFillColor(sf::Color(100, 100, 100)); // grey walls
 
 				ri_staticRoomShapes.push_back(wall);
-				addSpriteForShape(wall);
+				addTileSprite(wall.getPosition(), wall.getSize(), "ASSETS/SPRITES/Everything.png", sf::Vector2i(256, 128), sf::Vector2i(64, 64));
 
 				//setup collider for wall
 				StaticCollision collider(wall.getGlobalBounds(), CollisionLayer::WALL_LAYER,
@@ -98,7 +102,7 @@ void RoomInstance::buildFromPlan(const RoomPlan& plan, const sf::Vector2f& world
 				door.setFillColor(sf::Color(150, 75, 0)); // brown doors
 
 				ri_staticRoomShapes.push_back(door);
-				addSpriteForShape(door);
+				addTileSprite(door.getPosition(), door.getSize(), "ASSETS/SPRITES/Everything.png", sf::Vector2i(576, 256), sf::Vector2i(64, 64));
 
 				//setup collider for door if door is locked
 				for (auto& doorObj : plan.doors) {
@@ -128,16 +132,18 @@ void RoomInstance::buildFromPlan(const RoomPlan& plan, const sf::Vector2f& world
 
 		if (spawner.type == SpawnerType::PlayerSpawner) {
 			spawnPoint.setFillColor(sf::Color::Green);
+			addTileSprite(spawnPoint.getPosition(), spawnPoint.getSize(), "ASSETS/SPRITES/Everything.png", sf::Vector2i(72, 192), sf::Vector2i(64, 64));
 		}
 		else if (spawner.type == SpawnerType::EnemySpawner) {
 			spawnPoint.setFillColor(sf::Color::Red);
+			addTileSprite(spawnPoint.getPosition(), spawnPoint.getSize(), "ASSETS/SPRITES/Everything.png", sf::Vector2i(256, 128), sf::Vector2i(64, 64));
 		}
 		else if (spawner.type == SpawnerType::PortalSpawner) {
 			spawnPoint.setFillColor(sf::Color::Blue);
+			addTileSprite(spawnPoint.getPosition(), spawnPoint.getSize(), "ASSETS/SPRITES/Portal.png", sf::Vector2i(0, 0), sf::Vector2i(144, 144));
 		}
 
 		ri_staticRoomShapes.push_back(spawnPoint);
-		addSpriteForShape(spawnPoint);
 	}
 	// initialise triggers (DEBUG)
 	for (auto& trigger : plan.triggers) {
@@ -184,7 +190,10 @@ void RoomInstance::buildFromPlan(const RoomPlan& plan, const sf::Vector2f& world
 		triggerShape.setPosition(worldPos + static_cast<sf::Vector2f>(trigger.tilePos) * tileSize + positionOffset);
 
 		ri_staticRoomShapes.push_back(triggerShape);
-		addSpriteForShape(triggerShape);
+		if (trigger.type == TriggerType::PortalTrigger)
+			addTileSprite(triggerShape.getPosition(), triggerShape.getSize(), "ASSETS/SPRITES/Portal.png", sf::Vector2i(0, 0), sf::Vector2i(144, 144));
+		else if (trigger.type == TriggerType::DoorTrigger)
+			addTileSprite(triggerShape.getPosition(), triggerShape.getSize(), "ASSETS/SPRITES/Everything.png", sf::Vector2i(576, 256), sf::Vector2i(64, 64));
 
 
 		// setup collider for trigger
@@ -238,4 +247,26 @@ void RoomInstance::reset()
 	ri_staticRoomColliders.clear();
 	ri_staticRoomShapes.clear();
 	ri_staticRoomSprites.clear();
+}
+
+void RoomInstance::addSpriteForShape(const sf::RectangleShape& shape, const std::string& texturePath, const sf::Vector2i& framePosition, const sf::Vector2i& frameSize)
+{
+	CustomSprite sprite;
+	SpriteAnimationMap animations{
+		{ "Idle", { std::vector<sf::Vector2i>{ framePosition }, 1.f, true } }
+	};
+
+	if (!sprite.configure(texturePath, animations, frameSize))
+		return;
+
+	const sf::FloatRect spriteBounds = sprite.getGlobalBounds();
+	if (spriteBounds.size.x <= 0.f || spriteBounds.size.y <= 0.f)
+		return;
+
+	sprite.setOrigin(sf::Vector2f(spriteBounds.size.x * 0.5f, spriteBounds.size.y * 0.5f));
+	sprite.setScale(sf::Vector2f(
+		shape.getSize().x / spriteBounds.size.x,
+		shape.getSize().y / spriteBounds.size.y));
+	sprite.setPosition(shape.getPosition());
+	ri_staticRoomSprites.push_back(sprite);
 }

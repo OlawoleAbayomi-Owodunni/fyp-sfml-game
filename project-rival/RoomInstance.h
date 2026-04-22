@@ -16,6 +16,8 @@ public:
 	void reset();
 
 private:
+	void addSpriteForShape(const sf::RectangleShape& shape, const std::string& texturePath, const sf::Vector2i& framePosition, const sf::Vector2i& frameSize);
+
 	std::vector<StaticCollision> ri_staticRoomColliders;
 	std::vector<sf::RectangleShape> ri_staticRoomShapes;
 	std::vector<CustomSprite> ri_staticRoomSprites;

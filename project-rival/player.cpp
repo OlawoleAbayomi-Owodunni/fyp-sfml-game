@@ -113,6 +113,8 @@ void Player::render(sf::RenderWindow& window, bool texturedMode)
 	if (texturedMode && p_sprite.isLoaded())
 	{
 		p_sprite.setPosition(p_body.getPosition());
+		const float facing = (p_aimDir.x < 0.f) ? -1.f : 1.f;
+		p_sprite.setScale(sf::Vector2f(p_spriteBaseScale.x * facing, p_spriteBaseScale.y));
 		p_sprite.draw(window);
 	}
 	else
@@ -262,11 +264,11 @@ void Player::startUp()
 	p_body.setFillColor(sf::Color::Green);
 
 	SpriteAnimationMap playerAnimations{
-		{"Idle", {{sf::Vector2i(0, 0)}, 6.f, true}},
-		{"Run", {{sf::Vector2i(0, 0), sf::Vector2i(1, 0), sf::Vector2i(2, 0), sf::Vector2i(3, 0)}, 10.f, true}}
+		{"Idle", {{sf::Vector2i(0, 9)}, 1.f, true}},
+		{"Run", {{sf::Vector2i(0, 7), sf::Vector2i(0, 8)}, 10.f, true}}
 	};
 
-	if (!p_sprite.configure("ASSETS/SPRITES/Everything.png", playerAnimations, sf::Vector2i(32, 32)))
+	if (!p_sprite.configure("ASSETS/SPRITES/Everything.png", playerAnimations, sf::Vector2i(64, 64)))
 		p_sprite.configure("ASSETS/SPRITES/UI/Portrait - Arnold.png", {}, sf::Vector2i(0, 0));
 
 	if (p_sprite.isLoaded())
@@ -274,10 +276,11 @@ void Player::startUp()
 		const sf::FloatRect spriteBounds = p_sprite.getGlobalBounds();
 		if (spriteBounds.size.x > 0.f && spriteBounds.size.y > 0.f)
 		{
-			p_sprite.setOrigin(sf::Vector2f(spriteBounds.size.x * 0.5f, spriteBounds.size.y * 0.5f));
-			p_sprite.setScale(sf::Vector2f(
+			p_spriteBaseScale = sf::Vector2f(
 				p_body.getSize().x / spriteBounds.size.x,
-				p_body.getSize().y / spriteBounds.size.y));
+				p_body.getSize().y / spriteBounds.size.y);
+			p_sprite.setOrigin(sf::Vector2f(spriteBounds.size.x * 0.5f, spriteBounds.size.y * 0.5f));
+			p_sprite.setScale(p_spriteBaseScale);
 		}
 
 		p_sprite.setPosition(p_body.getPosition());

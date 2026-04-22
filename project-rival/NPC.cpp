@@ -1,5 +1,29 @@
 #include "NPC.h"
 
+namespace
+{
+	bool configureNpcBodySprite(CustomSprite& sprite, const HubNPCInfo& info)
+	{
+		const std::string atlasPath = "ASSETS/SPRITES/Everything.png";
+		SpriteAnimationMap animations;
+		std::vector<sf::Vector2i> frames;
+
+		if (info.name == "Arnold")
+			frames = { sf::Vector2i(64, 768) };
+		else if (info.name == "Cassandra")
+			frames = { sf::Vector2i(256, 512) };
+		else if (info.name == "Gunther")
+			frames = { sf::Vector2i(128, 640) };
+		else if (info.name == "Petra")
+			frames = { sf::Vector2i(0, 704) };
+		else
+			frames = { sf::Vector2i(0, 704) };
+
+		animations.emplace("Idle", SpriteAnimationClip{ frames, 1.f, true });
+		return sprite.configure(atlasPath, animations, sf::Vector2i(64, 64));
+	}
+}
+
 /**
  * @file NPC.cpp
  * @brief Implements hub NPC initialization and debug rendering.
@@ -32,15 +56,8 @@ void NPC::init(const HubNPCInfo& info, const sf::Vector2f worldPos, const sf::Co
 	npc_body.setPosition(worldPos);
 	npc_body.setFillColor(bodyColor);
 
-	if (!info.portraitPath.empty())
-	{
-		if (!npc_sprite.configure(info.portraitPath, {}, sf::Vector2i(0, 0)))
-			npc_sprite.configure("ASSETS/SPRITES/UI/Portrait - Petra.png", {}, sf::Vector2i(0, 0));
-	}
-	else
-	{
+	if (!configureNpcBodySprite(npc_sprite, info))
 		npc_sprite.configure("ASSETS/SPRITES/UI/Portrait - Petra.png", {}, sf::Vector2i(0, 0));
-	}
 
 	if (npc_sprite.isLoaded())
 	{

@@ -1,6 +1,19 @@
 #include "MenuUI.h"
 
 #include <sstream>
+#include <unordered_map>
+
+namespace
+{
+	const sf::Texture* loadTexture(const std::string& texturePath)
+	{
+		static std::unordered_map<std::string, sf::Texture> textureCache;
+		auto [it, inserted] = textureCache.try_emplace(texturePath);
+		if (inserted && !it->second.loadFromFile(texturePath))
+			return nullptr;
+		return &it->second;
+	}
+}
 
 /**
  * @file MenuUI.cpp
@@ -46,7 +59,7 @@ void MenuUI::init(const sf::Font& font, const sf::View& defaultView)
 			MenuButton button{ sf::RectangleShape(), sf::Text(font), action };
 			button.shape.setSize(sf::Vector2f(380.f, 68.f));
 			button.shape.setOrigin(button.shape.getSize() / 2.f);
-			button.shape.setFillColor(sf::Color(30, 30, 30, 220));
+			button.shape.setFillColor(sf::Color::White);
 			button.shape.setOutlineThickness(2.f);
 			button.shape.setOutlineColor(sf::Color::White);
 
@@ -126,10 +139,22 @@ void MenuUI::render(sf::RenderWindow& window)
 	const sf::Vector2f viewCenter = defaultView.getCenter();
 	const sf::Vector2f viewSize = defaultView.getSize();
 
+	if (const sf::Texture* backdropTexture = loadTexture("ASSETS/SPRITES/UI/Menu Backdrop.png"))
+	{
+		sf::Sprite backdrop(*backdropTexture);
+		const sf::FloatRect backdropBounds = backdrop.getGlobalBounds();
+		if (backdropBounds.size.x > 0.f && backdropBounds.size.y > 0.f)
+		{
+			backdrop.setScale(sf::Vector2f(viewSize.x / backdropBounds.size.x, viewSize.y / backdropBounds.size.y));
+			backdrop.setPosition(viewCenter - viewSize / 2.f);
+			window.draw(backdrop);
+		}
+	}
+
 	sf::RectangleShape overlay(viewSize);
 	//set the overlay to solid black if in main menu and then to semi-transparent black if in pause or game over menu
 	if (m_screen == MenuScreen::MAIN_MENU_SCREEN)
-		overlay.setFillColor(sf::Color::Black);
+		overlay.setFillColor(sf::Color(0, 0, 0, 90));
 	else
 		overlay.setFillColor(sf::Color(0, 0, 0, 170));
 	overlay.setOrigin(viewSize * 0.5f);
@@ -173,8 +198,10 @@ void MenuUI::render(sf::RenderWindow& window)
 	{
 		auto& button = (*buttons)[i];
 		const bool isSelected = (i == *selectedIndex);
-		button.shape.setFillColor(isSelected ? sf::Color(60, 60, 60, 240) : sf::Color(30, 30, 30, 220));
+		button.shape.setFillColor(sf::Color::White);
 		button.shape.setOutlineColor(isSelected ? sf::Color::Yellow : sf::Color::White);
+		if (const sf::Texture* buttonTexture = loadTexture("ASSETS/SPRITES/UI/Button Normal.png"))
+			button.shape.setTexture(buttonTexture);
 		window.draw(button.shape);
 		window.draw(button.label);
 	}

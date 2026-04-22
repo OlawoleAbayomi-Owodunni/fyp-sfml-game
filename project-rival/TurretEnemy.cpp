@@ -14,7 +14,10 @@ TurretEnemy::TurretEnemy(const sf::Vector2f pos, int totalHealth)
 	:Enemy(pos, totalHealth)
 {
 	initBody(sf::Vector2f(50.f, 50.f), sf::Color::Blue);
-	configureSprite("ASSETS/SPRITES/Everything.png", {}, sf::Vector2i(0, 0));
+	SpriteAnimationMap animations{
+		{ "Idle", { std::vector<sf::Vector2i>{ sf::Vector2i(0, 9) }, 1.f, true } }
+	};
+	configureSprite("ASSETS/SPRITES/Everything.png", animations, sf::Vector2i(64, 64));
 	init();
 }
 
