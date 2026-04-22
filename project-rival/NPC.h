@@ -33,6 +33,7 @@ struct HubNPCInfo
 	HubShopType shopType;
 	NPCPersonality personality;
 	std::string background;
+	std::string portraitPath;
 };
 
 class NPC : public ICollidable
@@ -52,6 +53,7 @@ public:
 
 	const HubNPCInfo& getInfo() const { return npc_info; }
 	const std::string& getDialogue() const { return npc_dialogue; }
+	const std::string& getPortraitPath() const { return npc_info.portraitPath; }
 
 	sf::FloatRect getCollisionBounds() const override { return npc_interactionBounds; }
 	CollisionProfile getCollisionProfile() const override { return npc_collisionProfile; }

@@ -99,6 +99,14 @@ void Weapon::init(WeaponType type)
 void Weapon::update(float dt, const sf::Vector2f playerPos, const sf::Vector2f aimDir)
 {
 	handlePositioning(playerPos, aimDir);
+	w_lastAimDir = aimDir;
+
+	if (w_hasSpriteVisual)
+	{
+		w_sprite.setPosition(w_shape.getPosition());
+		const float angle = std::atan2(aimDir.y, aimDir.x);
+		w_sprite.setRotation(sf::radians(angle));
+	}
 
 	if (w_cooldownRemaining > 0.0f)
 		w_cooldownRemaining -= dt;
@@ -108,9 +116,47 @@ void Weapon::update(float dt, const sf::Vector2f playerPos, const sf::Vector2f a
  * @brief Renders the weapon body shape.
  * @param window Render target.
  */
-void Weapon::render(sf::RenderWindow& window)
+void Weapon::render(sf::RenderWindow& window, bool texturedMode)
 {
-	window.draw(w_shape);
+	if (texturedMode && w_hasSpriteVisual && w_sprite.isLoaded())
+	{
+		const bool faceLeft = (w_lastAimDir.x < 0.f);
+		const sf::Vector2f baseScale = w_spriteBaseScale;
+		w_sprite.setScale(sf::Vector2f(faceLeft ? -baseScale.x : baseScale.x, baseScale.y));
+		w_sprite.draw(window);
+	}
+	else
+	{
+		window.draw(w_shape);
+	}
+}
+
+void Weapon::configureVisual(const std::string& texturePath, const sf::Vector2i& framePosition, const sf::Vector2i& frameSize, const sf::Vector2f& displaySize)
+{
+	SpriteAnimationMap animationFrames{
+		{ "Idle", { std::vector<sf::Vector2i>{ framePosition }, 1.f, true } }
+	};
+
+	if (!w_sprite.configure(texturePath, animationFrames, frameSize))
+	{
+		w_hasSpriteVisual = false;
+		return;
+	}
+
+	const sf::FloatRect spriteBounds = w_sprite.getGlobalBounds();
+	if (spriteBounds.size.x <= 0.f || spriteBounds.size.y <= 0.f)
+	{
+		w_hasSpriteVisual = false;
+		return;
+	}
+
+	w_sprite.setOrigin(sf::Vector2f(spriteBounds.size.x * 0.5f, spriteBounds.size.y * 0.5f));
+	w_spriteBaseScale = sf::Vector2f(
+		displaySize.x / spriteBounds.size.x,
+		displaySize.y / spriteBounds.size.y);
+	w_sprite.setScale(w_spriteBaseScale);
+	w_sprite.setPosition(w_shape.getPosition());
+	w_hasSpriteVisual = true;
 }
 
 
@@ -123,6 +169,7 @@ void Weapon::handlePositioning(const sf::Vector2f playerPos, const sf::Vector2f 
 {
 	sf::Vector2f position = playerPos;
 	w_shape.setPosition(position);
+	w_lastAimDir = aimDir;
 
 	float angle = std::atan2(aimDir.y, aimDir.x);
 	w_shape.setRotation(sf::radians(angle));

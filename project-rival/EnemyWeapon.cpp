@@ -1,6 +1,37 @@
 #include "EnemyWeapon.h"
 #include "NormalBulletProjectile.h"
 
+namespace
+{
+	void configureEnemyWeaponVisual(Weapon& weapon, WeaponType type)
+	{
+		const std::string atlasPath = "ASSETS/SPRITES/Everything.png";
+		switch (type)
+		{
+		case WeaponType::PISTOL:
+			weapon.configureVisual(atlasPath, sf::Vector2i(668, 408), sf::Vector2i(56, 36), sf::Vector2f(80.f, 20.f));
+			break;
+		case WeaponType::KNIFE:
+			weapon.configureVisual(atlasPath, sf::Vector2i(656, 492), sf::Vector2i(32, 72), sf::Vector2f(50.f, 50.f));
+			break;
+		case WeaponType::SWORD:
+			weapon.configureVisual(atlasPath, sf::Vector2i(912, 480), sf::Vector2i(32, 84), sf::Vector2f(50.f, 50.f));
+			break;
+		case WeaponType::AXE:
+			weapon.configureVisual(atlasPath, sf::Vector2i(976, 460), sf::Vector2i(32, 104), sf::Vector2f(50.f, 50.f));
+			break;
+		case WeaponType::ASSAULT_RIFLE:
+			weapon.configureVisual(atlasPath, sf::Vector2i(732, 404), sf::Vector2i(72, 36), sf::Vector2f(120.f, 20.f));
+			break;
+		case WeaponType::SHOTGUN:
+			weapon.configureVisual(atlasPath, sf::Vector2i(900, 400), sf::Vector2i(80, 40), sf::Vector2f(100.f, 25.f));
+			break;
+		default:
+			break;
+		}
+	}
+}
+
 /**
  * @file EnemyWeapon.cpp
  * @brief Implements enemy weapon spawning logic for projectiles and melee hits.
@@ -12,6 +43,8 @@
  */
 EnemyWeapon::EnemyWeapon(WeaponType type) : Weapon(type, 1)
 {
+	configureEnemyWeaponVisual(*this, type);
+
 	switch (type)
 	{
 	case PISTOL:

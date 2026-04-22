@@ -13,6 +13,8 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <algorithm>
+#include <unordered_map>
 
 /**
  * @file Game.cpp
@@ -30,6 +32,59 @@ static double const FPS{ 60.0f };
 
 namespace
 {
+	const sf::Texture* loadPortraitTexture(const std::string& texturePath)
+	{
+		static std::unordered_map<std::string, sf::Texture> textureCache;
+		auto [it, inserted] = textureCache.try_emplace(texturePath);
+		if (inserted)
+		{
+			if (!it->second.loadFromFile(texturePath))
+				return nullptr;
+		}
+
+		return &it->second;
+	}
+
+	void renderPortraitHolder(sf::RenderWindow& window, const HubNPCInfo& npcInfo, const sf::FloatRect& dialogueBoxBounds, bool texturedMode)
+	{
+		const sf::Vector2f holderSize(112.f, 112.f);
+		const sf::Vector2f holderPosition(
+			dialogueBoxBounds.position.x + 16.f,
+			dialogueBoxBounds.position.y - holderSize.y - 12.f);
+
+		sf::RectangleShape holder(holderSize);
+		holder.setPosition(holderPosition);
+		holder.setFillColor(sf::Color(18, 18, 18, 220));
+		holder.setOutlineThickness(2.f);
+		holder.setOutlineColor(sf::Color::White);
+
+		if (!texturedMode)
+		{
+			window.draw(holder);
+			return;
+		}
+
+		const sf::Texture* portraitTexture = loadPortraitTexture(npcInfo.portraitPath);
+		if (!portraitTexture)
+		{
+			window.draw(holder);
+			return;
+		}
+
+		window.draw(holder);
+
+		sf::Sprite portrait(*portraitTexture);
+		const sf::Vector2u textureSize = portraitTexture->getSize();
+		portrait.setOrigin(sf::Vector2f(textureSize.x / 2.f, textureSize.y / 2.f));
+
+		const float scaleX = (holderSize.x - 12.f) / static_cast<float>(textureSize.x);
+		const float scaleY = (holderSize.y - 12.f) / static_cast<float>(textureSize.y);
+		const float scale = std::min(scaleX, scaleY);
+		portrait.setScale(sf::Vector2f(scale, scale));
+		portrait.setPosition(holder.getPosition() + holder.getSize() / 2.f);
+		window.draw(portrait);
+	}
+
  /**
 	 * @brief Extracts a line value that follows a tag within a larger text blob.
 	 *
@@ -1982,6 +2037,7 @@ void Game::buildHubWorld()
 			npcInfo.shopType = HubShopType::WEAPON_SHOP;
 			npcInfo.personality = NPCPersonality::GREEDY;
 			npcInfo.background = "Black Market Dealer";
+			npcInfo.portraitPath = "ASSETS/SPRITES/UI/Portrait - Gunther.png";
 
 			m_hubNPCs.push_back(NPC(npcInfo,
 				gunShopCenter + sf::Vector2f(sideOffset, 0.f),
@@ -1993,6 +2049,7 @@ void Game::buildHubWorld()
 			npcInfo.shopType = HubShopType::COSMETIC_SHOP;
 			npcInfo.personality = NPCPersonality::PASSIONATE;
 			npcInfo.background = "Former adventurer turned Fashion Guru";
+			npcInfo.portraitPath = "ASSETS/SPRITES/UI/Portrait - Cassandra.png";
 
 			m_hubNPCs.push_back(NPC(npcInfo,
 				cosmeticShopCenter + sf::Vector2f(-sideOffset, 0.f),
@@ -2004,6 +2061,7 @@ void Game::buildHubWorld()
 			npcInfo.shopType = HubShopType::ARMORY_SHOP;
 			npcInfo.personality = NPCPersonality::PROFESSIONAL;
 			npcInfo.background = "Master blacksmith; Highly Intelligent";
+			npcInfo.portraitPath = "ASSETS/SPRITES/UI/Portrait - Arnold.png";
 
 			m_hubNPCs.push_back(NPC(npcInfo,
 				armoryShopCenter + sf::Vector2f(sideOffset, 0.f),
@@ -2015,6 +2073,7 @@ void Game::buildHubWorld()
 			npcInfo.shopType = HubShopType::PLAYER_SHOP;
 			npcInfo.personality = NPCPersonality::FRIENDLY;
 			npcInfo.background = "Skilled medic; Shady";
+			npcInfo.portraitPath = "ASSETS/SPRITES/UI/Portrait - Petra.png";
 
 			m_hubNPCs.push_back(NPC(npcInfo,
 				playerShopCenter + sf::Vector2f(-sideOffset, 0.f),
@@ -2302,6 +2361,7 @@ void Game::renderHubShopPrompt()
 		dialogueBox.setOutlineThickness(2.f);
 		dialogueBox.setOutlineColor(sf::Color::White);
 		m_window.draw(dialogueBox);
+		renderPortraitHolder(m_window, npc.getInfo(), dialogueBox.getGlobalBounds(), m_renderMode == RenderMode::TEXTURED_MODE);
 
 		promptText.setString(dialogue);
 		promptText.setCharacterSize(16);

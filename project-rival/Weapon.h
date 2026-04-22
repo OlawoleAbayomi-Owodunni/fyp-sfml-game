@@ -5,6 +5,7 @@
 
 #include "Projectile.h"
 #include "DamageTrigger.h"
+#include "CustomSprite.h"
 
 /**
  * @file Weapon.h
@@ -64,7 +65,8 @@ public:
 	virtual ~Weapon() = default;
 
 	virtual void update(float dt, const sf::Vector2f playerPos, const sf::Vector2f aimDir);
-	virtual void render(sf::RenderWindow& window);
+	virtual void render(sf::RenderWindow& window, bool texturedMode);
+	void configureVisual(const std::string& texturePath, const sf::Vector2i& framePosition, const sf::Vector2i& frameSize, const sf::Vector2f& displaySize);
 
 	void fire(const FireReq& req, std::vector<std::unique_ptr<Projectile>>& projectileList);
 	void fire(const FireReq& req, std::vector<std::unique_ptr<DamageTrigger>>& damageTriggerList);
@@ -90,6 +92,10 @@ private:
 	float w_fireRate;
 
 	sf::RectangleShape w_shape;
+	CustomSprite w_sprite;
+	sf::Vector2f w_spriteBaseScale{ 1.f, 1.f };
+	sf::Vector2f w_lastAimDir{ 1.f, 0.f };
+	bool w_hasSpriteVisual{ false };
 
 	FireReq w_fireReq;
 

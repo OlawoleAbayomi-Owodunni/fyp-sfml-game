@@ -68,7 +68,7 @@ void TurretEnemy::render(sf::RenderWindow& window, bool texturedMode)
 {
 	Enemy::render(window, texturedMode);
 
-	te_weapon.render(window);
+	te_weapon.render(window, texturedMode);
 }
 
 /**

@@ -18,6 +18,34 @@ namespace {
 	float length(const sf::Vector2f& v) {
 		return std::sqrt(v.x * v.x + v.y * v.y);
 	}
+
+	void configurePlayerWeaponVisual(Weapon& weapon, WeaponType type)
+	{
+		const std::string atlasPath = "ASSETS/SPRITES/Everything.png";
+		switch (type)
+		{
+		case WeaponType::PISTOL:
+			weapon.configureVisual(atlasPath, sf::Vector2i(508, 408), sf::Vector2i(52, 32), sf::Vector2f(80.f, 20.f));
+			break;
+		case WeaponType::ASSAULT_RIFLE:
+			weapon.configureVisual(atlasPath, sf::Vector2i(732, 404), sf::Vector2i(72, 36), sf::Vector2f(120.f, 20.f));
+			break;
+		case WeaponType::SHOTGUN:
+			weapon.configureVisual(atlasPath, sf::Vector2i(900, 400), sf::Vector2i(80, 40), sf::Vector2f(100.f, 25.f));
+			break;
+		case WeaponType::KNIFE:
+			weapon.configureVisual(atlasPath, sf::Vector2i(848, 492), sf::Vector2i(32, 72), sf::Vector2f(50.f, 50.f));
+			break;
+		case WeaponType::SWORD:
+			weapon.configureVisual(atlasPath, sf::Vector2i(912, 480), sf::Vector2i(32, 84), sf::Vector2f(50.f, 50.f));
+			break;
+		case WeaponType::AXE:
+			weapon.configureVisual(atlasPath, sf::Vector2i(976, 460), sf::Vector2i(32, 104), sf::Vector2f(50.f, 50.f));
+			break;
+		default:
+			break;
+		}
+	}
 }
 
 /**
@@ -94,7 +122,7 @@ void Player::render(sf::RenderWindow& window, bool texturedMode)
 
 	window.draw(p_reticle);
 
-	p_weapons[p_currentWeaponID]->render(window);
+		p_weapons[p_currentWeaponID]->render(window, texturedMode);
 }
 
 void Player::setBodyColor(const sf::Color& color)
@@ -488,12 +516,42 @@ std::unique_ptr<Weapon> Player::createWeapon(WeaponType type, int level)
 {
 	switch (type)
 	{
-	case WeaponType::PISTOL: return std::make_unique<PistolWeapon>(level);
-	case WeaponType::ASSAULT_RIFLE:	return std::make_unique<ARWeapon>(level);
-	case WeaponType::SHOTGUN: return std::make_unique<ShotgunWeapon>(level);
-	case WeaponType::KNIFE:	return std::make_unique<KnifeWeapon>();
-	case WeaponType::SWORD:	return std::make_unique<SwordWeapon>();
-	case WeaponType::AXE: return std::make_unique<AxeWeapon>();
+	case WeaponType::PISTOL:
+	{
+		auto weapon = std::make_unique<PistolWeapon>(level);
+		configurePlayerWeaponVisual(*weapon, type);
+		return weapon;
+	}
+	case WeaponType::ASSAULT_RIFLE:
+	{
+		auto weapon = std::make_unique<ARWeapon>(level);
+		configurePlayerWeaponVisual(*weapon, type);
+		return weapon;
+	}
+	case WeaponType::SHOTGUN:
+	{
+		auto weapon = std::make_unique<ShotgunWeapon>(level);
+		configurePlayerWeaponVisual(*weapon, type);
+		return weapon;
+	}
+	case WeaponType::KNIFE:
+	{
+		auto weapon = std::make_unique<KnifeWeapon>();
+		configurePlayerWeaponVisual(*weapon, type);
+		return weapon;
+	}
+	case WeaponType::SWORD:
+	{
+		auto weapon = std::make_unique<SwordWeapon>();
+		configurePlayerWeaponVisual(*weapon, type);
+		return weapon;
+	}
+	case WeaponType::AXE:
+	{
+		auto weapon = std::make_unique<AxeWeapon>();
+		configurePlayerWeaponVisual(*weapon, type);
+		return weapon;
+	}
 	default:
 		std::cerr << "Invalid weapon type requested: " << type << "\n";
 		return nullptr;

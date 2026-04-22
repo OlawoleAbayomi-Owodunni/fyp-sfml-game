@@ -32,8 +32,15 @@ void NPC::init(const HubNPCInfo& info, const sf::Vector2f worldPos, const sf::Co
 	npc_body.setPosition(worldPos);
 	npc_body.setFillColor(bodyColor);
 
-	if (!npc_sprite.configure("ASSETS/SPRITES/Everything.png", {}, sf::Vector2i(0, 0)))
+	if (!info.portraitPath.empty())
+	{
+		if (!npc_sprite.configure(info.portraitPath, {}, sf::Vector2i(0, 0)))
+			npc_sprite.configure("ASSETS/SPRITES/UI/Portrait - Petra.png", {}, sf::Vector2i(0, 0));
+	}
+	else
+	{
 		npc_sprite.configure("ASSETS/SPRITES/UI/Portrait - Petra.png", {}, sf::Vector2i(0, 0));
+	}
 
 	if (npc_sprite.isLoaded())
 	{
