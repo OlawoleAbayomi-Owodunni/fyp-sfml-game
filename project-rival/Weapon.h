@@ -95,6 +95,7 @@ private:
 	CustomSprite w_sprite;
 	sf::Vector2f w_spriteBaseScale{ 1.f, 1.f };
 	sf::Vector2f w_lastAimDir{ 1.f, 0.f };
+	bool w_faceLeft{ false };
 	bool w_hasSpriteVisual{ false };
 
 	FireReq w_fireReq;

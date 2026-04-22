@@ -25,7 +25,7 @@ void RoomInstance::buildFromPlan(const RoomPlan& plan, const sf::Vector2f& world
 
 	const float tileSize = plan.tileSize;
 	const std::string levelAtlasPath = "ASSETS/SPRITES/Everything.png";
-	const std::string portalAtlasPath = "ASSETS/SPRITES/LEVELS/Portal.png";
+	const std::string portalAtlasPath = "ASSETS/SPRITES/LEVELS/Teleporter.png";
 
 	auto addTileSprite = [&](const sf::Vector2f& position,
 		const sf::Vector2f& shapeSize,
@@ -38,18 +38,19 @@ void RoomInstance::buildFromPlan(const RoomPlan& plan, const sf::Vector2f& world
 				{ "Idle", { frameRects, fps, true } }
 			};
 
-			if (!sprite.configureWithRects(texturePath, animations))
-				return;
+			if (sprite.configureWithRects(texturePath, animations))
+			{
+				const sf::FloatRect spriteBounds = sprite.getGlobalBounds();
+				if (spriteBounds.size.x > 0.f && spriteBounds.size.y > 0.f)
+				{
+					sprite.setOrigin(sf::Vector2f(spriteBounds.size.x * 0.5f, spriteBounds.size.y * 0.5f));
+					sprite.setScale(sf::Vector2f(
+						shapeSize.x / spriteBounds.size.x,
+						shapeSize.y / spriteBounds.size.y));
+					sprite.setPosition(position);
+				}
+			}
 
-			const sf::FloatRect spriteBounds = sprite.getGlobalBounds();
-			if (spriteBounds.size.x <= 0.f || spriteBounds.size.y <= 0.f)
-				return;
-
-			sprite.setOrigin(sf::Vector2f(spriteBounds.size.x * 0.5f, spriteBounds.size.y * 0.5f));
-			sprite.setScale(sf::Vector2f(
-				shapeSize.x / spriteBounds.size.x,
-				shapeSize.y / spriteBounds.size.y));
-			sprite.setPosition(position);
 			ri_staticRoomSprites.push_back(sprite);
 		};
 	
@@ -286,10 +287,20 @@ const std::vector<StaticCollision>& RoomInstance::getStaticRoomColliders()
  */
 void RoomInstance::render(sf::RenderWindow& window, bool texturedMode)
 {
-	if (texturedMode && !ri_staticRoomSprites.empty() && ri_staticRoomSprites.size() == ri_staticRoomShapes.size())
+	if (texturedMode && !ri_staticRoomSprites.empty())
 	{
-		for (auto& sprite : ri_staticRoomSprites)
-			sprite.draw(window);
+		const std::size_t pairedCount = std::min(ri_staticRoomSprites.size(), ri_staticRoomShapes.size());
+		for (std::size_t i = 0; i < pairedCount; ++i)
+		{
+			if (ri_staticRoomSprites[i].isLoaded())
+				ri_staticRoomSprites[i].draw(window);
+			else
+				window.draw(ri_staticRoomShapes[i]);
+		}
+
+		for (std::size_t i = pairedCount; i < ri_staticRoomShapes.size(); ++i)
+			window.draw(ri_staticRoomShapes[i]);
+
 		return;
 	}
 

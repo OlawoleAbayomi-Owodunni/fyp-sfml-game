@@ -133,11 +133,14 @@ void Weapon::render(sf::RenderWindow& window, bool texturedMode)
 
 void Weapon::configureVisual(const std::string& texturePath, const sf::Vector2i& framePosition, const sf::Vector2i& frameSize, const sf::Vector2f& displaySize)
 {
-	SpriteAnimationMap animationFrames{
-		{ "Idle", { std::vector<sf::Vector2i>{ framePosition }, 1.f, true } }
+	(void)displaySize;
+
+	// Use explicit pixel rectangles instead of tile-based indexing
+	SpriteAnimationRectMap animationFrames{
+		{ "Idle", { std::vector<sf::IntRect>{ sf::IntRect(framePosition, frameSize) }, 1.f, true } }
 	};
 
-	if (!w_sprite.configure(texturePath, animationFrames, frameSize))
+	if (!w_sprite.configureWithRects(texturePath, animationFrames))
 	{
 		w_hasSpriteVisual = false;
 		return;
@@ -150,12 +153,9 @@ void Weapon::configureVisual(const std::string& texturePath, const sf::Vector2i&
 		return;
 	}
 
-	w_sprite.setOrigin(sf::Vector2f(spriteBounds.size.x * 0.5f, spriteBounds.size.y * 0.5f));
-	w_spriteBaseScale = sf::Vector2f(
-		displaySize.x / spriteBounds.size.x,
-		displaySize.y / spriteBounds.size.y);
-	w_sprite.setScale(w_spriteBaseScale);
+	w_sprite.setOrigin(sf::Vector2f(spriteBounds.size.x * 0.25f, spriteBounds.size.y * 0.5f));
 	w_sprite.setPosition(w_shape.getPosition());
+	w_faceLeft = false;
 	w_hasSpriteVisual = true;
 }
 
