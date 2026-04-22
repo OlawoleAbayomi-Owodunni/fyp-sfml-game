@@ -5,22 +5,22 @@ namespace
 	bool configureNpcBodySprite(CustomSprite& sprite, const HubNPCInfo& info)
 	{
 		const std::string atlasPath = "ASSETS/SPRITES/Everything.png";
-		SpriteAnimationMap animations;
-		std::vector<sf::Vector2i> frames;
+		SpriteAnimationRectMap animations;
+		std::vector<sf::IntRect> frames;
 
 		if (info.name == "Arnold")
-			frames = { sf::Vector2i(64, 768) };
+			frames = { sf::IntRect(sf::Vector2i(64, 768), sf::Vector2i(64, 64)) };
 		else if (info.name == "Cassandra")
-			frames = { sf::Vector2i(256, 512) };
+			frames = { sf::IntRect(sf::Vector2i(256, 512), sf::Vector2i(64, 64)) };
 		else if (info.name == "Gunther")
-			frames = { sf::Vector2i(128, 640) };
+			frames = { sf::IntRect(sf::Vector2i(128, 640), sf::Vector2i(64, 64)) };
 		else if (info.name == "Petra")
-			frames = { sf::Vector2i(0, 704) };
+			frames = { sf::IntRect(sf::Vector2i(0, 704), sf::Vector2i(64, 64)) };
 		else
-			frames = { sf::Vector2i(0, 704) };
+			frames = { sf::IntRect(sf::Vector2i(0, 704), sf::Vector2i(64, 64)) };
 
-		animations.emplace("Idle", SpriteAnimationClip{ frames, 1.f, true });
-		return sprite.configure(atlasPath, animations, sf::Vector2i(64, 64));
+		animations.emplace("Idle", SpriteAnimationRectClip{ frames, 1.f, true });
+		return sprite.configureWithRects(atlasPath, animations);
 	}
 }
 

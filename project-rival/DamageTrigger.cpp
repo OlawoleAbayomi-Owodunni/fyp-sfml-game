@@ -24,7 +24,22 @@ DamageTrigger::DamageTrigger(const sf::Vector2f& center, const sf::Vector2f& siz
 	dt_collisionProfile.layer = CollisionLayer::DAMAGE_TRIGGER_LAYER;
 	dt_collisionProfile.mask = targetMask;
 
-	if (!dt_sprite.configure("ASSETS/SPRITES/WEAPONS/60.png", {}, sf::Vector2i(0, 0)))
+	SpriteAnimationRectMap triggerAnimations{
+		{ "Idle", { std::vector<sf::IntRect>{
+			sf::IntRect(sf::Vector2i(480, 0), sf::Vector2i(48, 48)),
+			sf::IntRect(sf::Vector2i(960, 0), sf::Vector2i(48, 48)),
+			sf::IntRect(sf::Vector2i(1440, 0), sf::Vector2i(48, 48)),
+			sf::IntRect(sf::Vector2i(1920, 0), sf::Vector2i(48, 48)),
+			sf::IntRect(sf::Vector2i(2400, 0), sf::Vector2i(48, 48)),
+			sf::IntRect(sf::Vector2i(2880, 0), sf::Vector2i(48, 48)),
+			sf::IntRect(sf::Vector2i(3360, 0), sf::Vector2i(48, 48)),
+			sf::IntRect(sf::Vector2i(3840, 0), sf::Vector2i(48, 48)),
+			sf::IntRect(sf::Vector2i(4320, 0), sf::Vector2i(48, 48)),
+			sf::IntRect(sf::Vector2i(4800, 0), sf::Vector2i(48, 48))
+		}, 16.f, false } }
+	};
+
+	if (!dt_sprite.configureWithRects("ASSETS/SPRITES/WEAPONS/60.png", triggerAnimations))
 		dt_sprite.configure("ASSETS/SPRITES/UI/crosshair.png", {}, sf::Vector2i(0, 0));
 
 	if (dt_sprite.isLoaded())
@@ -49,6 +64,7 @@ DamageTrigger::DamageTrigger(const sf::Vector2f& center, const sf::Vector2f& siz
 void DamageTrigger::update(float dt)
 {
 	dt_lifetime -= dt;
+	dt_sprite.update(dt);
 	if (dt_lifetime <= 0.0f)
 	{
 		dt_shouldDestroy = true;

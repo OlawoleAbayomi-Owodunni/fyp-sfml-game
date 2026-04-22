@@ -19,7 +19,12 @@ Chest::Chest(const sf::Vector2f& worldPos, float tileSize)
 	c_shape.setOutlineThickness(2.f);
 	c_shape.setOutlineColor(sf::Color::Black);
 
-	if (!c_sprite.configure("ASSETS/SPRITES/Everything.png", {}, sf::Vector2i(0, 0)))
+	SpriteAnimationRectMap chestAnimations{
+		{ "Closed", { std::vector<sf::IntRect>{ sf::IntRect(sf::Vector2i(704, 128), sf::Vector2i(64, 64)) }, 1.f, true } },
+		{ "Open", { std::vector<sf::IntRect>{ sf::IntRect(sf::Vector2i(704, 192), sf::Vector2i(64, 64)) }, 1.f, true } }
+	};
+
+	if (!c_sprite.configureWithRects("ASSETS/SPRITES/Everything.png", chestAnimations))
 		c_sprite.configure("ASSETS/SPRITES/LEVELS/Job Board.png", {}, sf::Vector2i(0, 0));
 
 	if (c_sprite.isLoaded())
@@ -33,6 +38,7 @@ Chest::Chest(const sf::Vector2f& worldPos, float tileSize)
 				c_shape.getSize().y / spriteBounds.size.y));
 		}
 		c_sprite.setPosition(c_shape.getPosition());
+		c_sprite.setAnimation("Closed", true);
 	}
 }
 
@@ -57,5 +63,6 @@ void Chest::open()
 	{
 		c_isOpened = true;
 		c_shape.setFillColor(sf::Color(90, 45, 10)); // Dark Brown
+		c_sprite.setAnimation("Open", true);
 	}
 }

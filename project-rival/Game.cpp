@@ -767,23 +767,23 @@ void Game::render()
 		{
 			const bool weaponShopDrawn = drawFittedSprite(m_window,
 				"ASSETS/SPRITES/LEVELS/Shops.png",
-				sf::Vector2i(550, 0),
-				sf::Vector2i(120, 180),
+				sf::Vector2i(288, 128),
+				sf::Vector2i(64, 48),
 				m_weaponShop);
 			const bool cosmeticShopDrawn = drawFittedSprite(m_window,
 				"ASSETS/SPRITES/LEVELS/Shops.png",
-				sf::Vector2i(730, 0),
-				sf::Vector2i(170, 190),
+				sf::Vector2i(288, 128),
+				sf::Vector2i(64, 48),
 				m_cosmeticShop);
 			const bool armoryShopDrawn = drawFittedSprite(m_window,
 				"ASSETS/SPRITES/LEVELS/Shops.png",
-				sf::Vector2i(900, 0),
-				sf::Vector2i(160, 210),
+				sf::Vector2i(288, 128),
+				sf::Vector2i(64, 48),
 				m_armoryShop);
 			const bool playerShopDrawn = drawFittedSprite(m_window,
 				"ASSETS/SPRITES/LEVELS/Shops.png",
-				sf::Vector2i(1060, 20),
-				sf::Vector2i(140, 165),
+				sf::Vector2i(288, 128),
+				sf::Vector2i(64, 48),
 				m_playerShop);
 
 			if (!weaponShopDrawn) m_window.draw(m_weaponShop);
@@ -793,8 +793,8 @@ void Game::render()
 
 			const bool jobBoardDrawn = drawFittedSprite(m_window,
 				"ASSETS/SPRITES/LEVELS/Job Board.png",
-				sf::Vector2i(0, 60),
-				sf::Vector2i(192, 96),
+				sf::Vector2i(7, 27),
+				sf::Vector2i(82, 43),
 				m_jobBoard);
 			if (!jobBoardDrawn)
 				m_window.draw(m_jobBoard);

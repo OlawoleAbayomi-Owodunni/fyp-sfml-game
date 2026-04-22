@@ -37,5 +37,6 @@ void NormalBulletProjectile::init()
 void NormalBulletProjectile::update(float dt)
 {
 	p_body.move(p_direction * p_speed * dt);
+	p_sprite.update(dt);
 	onExpire(dt);
 }

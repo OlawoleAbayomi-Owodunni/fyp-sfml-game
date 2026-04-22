@@ -17,7 +17,9 @@ bool CustomSprite::configure(const std::string& texturePath, const SpriteAnimati
 {
 	m_loaded = false;
 	m_animations = animations;
+	m_rectAnimations.clear();
 	m_tileCutoutSize = tileCutoutSize;
+	m_useRectAnimations = false;
 	m_currentAnimationName.clear();
 	m_currentFrameIndex = 0;
 	m_frameTimerSeconds = 0.f;
@@ -46,31 +48,85 @@ bool CustomSprite::configure(const std::string& texturePath, const SpriteAnimati
 	return true;
 }
 
+bool CustomSprite::configureWithRects(const std::string& texturePath, const SpriteAnimationRectMap& animations)
+{
+	m_loaded = false;
+	m_animations.clear();
+	m_rectAnimations = animations;
+	m_tileCutoutSize = sf::Vector2i(0, 0);
+	m_useRectAnimations = true;
+	m_currentAnimationName.clear();
+	m_currentFrameIndex = 0;
+	m_frameTimerSeconds = 0.f;
+	m_sprite.reset();
+
+	if (!m_texture.loadFromFile(texturePath))
+		return false;
+
+	m_sprite.emplace(m_texture);
+	m_loaded = true;
+
+	if (m_rectAnimations.empty())
+	{
+		const sf::Vector2u textureSize = m_texture.getSize();
+		m_sprite->setTextureRect(sf::IntRect(
+			sf::Vector2i(0, 0),
+			sf::Vector2i(static_cast<int>(textureSize.x), static_cast<int>(textureSize.y))));
+		return true;
+	}
+
+	m_currentAnimationName = m_rectAnimations.begin()->first;
+	applyCurrentFrame();
+	return true;
+}
+
 void CustomSprite::update(float dtSeconds)
 {
 	if (!isLoaded() || !hasAnimations())
 		return;
 
-	auto animationIt = m_animations.find(m_currentAnimationName);
-	if (animationIt == m_animations.end())
+	std::size_t frameCount = 0;
+	float fps = 0.f;
+	bool loop = true;
+
+	if (m_useRectAnimations)
+	{
+		auto animationIt = m_rectAnimations.find(m_currentAnimationName);
+		if (animationIt == m_rectAnimations.end())
+			return;
+
+		const SpriteAnimationRectClip& clip = animationIt->second;
+		frameCount = clip.frameRects.size();
+		fps = clip.fps;
+		loop = clip.loop;
+	}
+	else
+	{
+		auto animationIt = m_animations.find(m_currentAnimationName);
+		if (animationIt == m_animations.end())
+			return;
+
+		const SpriteAnimationClip& clip = animationIt->second;
+		frameCount = clip.frameTiles.size();
+		fps = clip.fps;
+		loop = clip.loop;
+	}
+
+	if (frameCount == 0 || fps <= 0.f)
 		return;
 
-	const SpriteAnimationClip& clip = animationIt->second;
-	if (clip.frameTiles.empty() || clip.fps <= 0.f)
-		return;
-
-	const float frameDurationSeconds = 1.f / clip.fps;
+	const float frameDurationSeconds = 1.f / fps;
 	m_frameTimerSeconds += dtSeconds;
 
 	while (m_frameTimerSeconds >= frameDurationSeconds)
 	{
 		m_frameTimerSeconds -= frameDurationSeconds;
 
-		if (m_currentFrameIndex + 1 < clip.frameTiles.size())
+		if (m_currentFrameIndex + 1 < frameCount)
 		{
 			++m_currentFrameIndex;
 		}
-		else if (clip.loop)
+		else if (loop)
 		{
 			m_currentFrameIndex = 0;
 		}
@@ -87,9 +143,18 @@ void CustomSprite::draw(sf::RenderWindow& window) const
 
 bool CustomSprite::setAnimation(const std::string& animationName, bool restartIfSame)
 {
-	auto animationIt = m_animations.find(animationName);
-	if (animationIt == m_animations.end())
-		return false;
+	if (m_useRectAnimations)
+	{
+		auto animationIt = m_rectAnimations.find(animationName);
+		if (animationIt == m_rectAnimations.end())
+			return false;
+	}
+	else
+	{
+		auto animationIt = m_animations.find(animationName);
+		if (animationIt == m_animations.end())
+			return false;
+	}
 
 	if (!restartIfSame && m_currentAnimationName == animationName)
 		return true;
@@ -133,6 +198,9 @@ void CustomSprite::setColor(const sf::Color& color)
 
 bool CustomSprite::hasAnimation(const std::string& animationName) const
 {
+	if (m_useRectAnimations)
+		return m_rectAnimations.find(animationName) != m_rectAnimations.end();
+
 	return m_animations.find(animationName) != m_animations.end();
 }
 
@@ -148,6 +216,23 @@ void CustomSprite::applyCurrentFrame()
 {
 	if (!m_sprite.has_value())
 		return;
+
+	if (m_useRectAnimations)
+	{
+		auto animationIt = m_rectAnimations.find(m_currentAnimationName);
+		if (animationIt == m_rectAnimations.end())
+			return;
+
+		const SpriteAnimationRectClip& clip = animationIt->second;
+		if (clip.frameRects.empty())
+			return;
+
+		if (m_currentFrameIndex >= clip.frameRects.size())
+			m_currentFrameIndex = 0;
+
+		m_sprite->setTextureRect(clip.frameRects[m_currentFrameIndex]);
+		return;
+	}
 
 	auto animationIt = m_animations.find(m_currentAnimationName);
 	if (animationIt == m_animations.end())

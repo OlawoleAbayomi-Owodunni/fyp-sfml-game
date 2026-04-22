@@ -139,7 +139,11 @@ void MenuUI::render(sf::RenderWindow& window)
 	const sf::Vector2f viewCenter = defaultView.getCenter();
 	const sf::Vector2f viewSize = defaultView.getSize();
 
-	if (const sf::Texture* backdropTexture = loadTexture("ASSETS/SPRITES/UI/Menu Backdrop.png"))
+	const char* backdropPath = (m_screen == MenuScreen::MAIN_MENU_SCREEN)
+		? "ASSETS/IMAGES/Menu BG.png"
+		: "ASSETS/SPRITES/UI/Menu Backdrop.png";
+
+	if (const sf::Texture* backdropTexture = loadTexture(backdropPath))
 	{
 		sf::Sprite backdrop(*backdropTexture);
 		const sf::FloatRect backdropBounds = backdrop.getGlobalBounds();

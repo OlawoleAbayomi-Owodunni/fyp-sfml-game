@@ -27,10 +27,13 @@ GruntEnemy::GruntEnemy(const sf::Vector2f pos, int totalHealth)
 	:Enemy(pos, totalHealth)
 {
 	initBody(sf::Vector2f(50.f, 50.f), sf::Color::Red);
-	SpriteAnimationMap animations{
-		{ "Idle", { std::vector<sf::Vector2i>{ sf::Vector2i(0, 9) }, 1.f, true } }
+	SpriteAnimationRectMap animations{
+		{ "Idle", { std::vector<sf::IntRect>{
+			sf::IntRect(sf::Vector2i(512, 448), sf::Vector2i(128, 128)),
+			sf::IntRect(sf::Vector2i(512, 576), sf::Vector2i(128, 128))
+		}, 6.f, true } }
 	};
-	configureSprite("ASSETS/SPRITES/Everything.png", animations, sf::Vector2i(64, 64));
+	configureSpriteRects("ASSETS/SPRITES/Everything.png", animations);
 	init();
 }
 

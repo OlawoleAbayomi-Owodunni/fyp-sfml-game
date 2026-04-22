@@ -50,6 +50,7 @@ public:
 protected:
 	void initBody(const sf::Vector2f& size, const sf::Color& colour);
 	bool configureSprite(const std::string& texturePath, const SpriteAnimationMap& animations, const sf::Vector2i& tileCutoutSize);
+	bool configureSpriteRects(const std::string& texturePath, const SpriteAnimationRectMap& animations);
 	void syncSpriteToBody();
 
 	sf::RectangleShape e_body;

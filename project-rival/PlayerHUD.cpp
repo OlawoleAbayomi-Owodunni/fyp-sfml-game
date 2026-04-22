@@ -142,14 +142,28 @@ void PlayerHUD::render(sf::RenderWindow & window)
 {
 	if (const sf::Texture* hudTexture = loadTexture("ASSETS/SPRITES/UI/hud.png"))
 	{
-		sf::Sprite hudPanel(*hudTexture);
-		const sf::FloatRect panelBounds = hudPanel.getGlobalBounds();
-		const sf::Vector2f targetSize(420.f, 180.f);
-		if (panelBounds.size.x > 0.f && panelBounds.size.y > 0.f)
+		sf::Sprite healthBg(*hudTexture);
+		healthBg.setTextureRect(sf::IntRect(sf::Vector2i(105, 36), sf::Vector2i(78, 21)));
+		const sf::FloatRect healthBounds = healthBg.getGlobalBounds();
+		if (healthBounds.size.x > 0.f && healthBounds.size.y > 0.f)
 		{
-			hudPanel.setScale(sf::Vector2f(targetSize.x / panelBounds.size.x, targetSize.y / panelBounds.size.y));
-			hudPanel.setPosition(sf::Vector2f(10.f, 10.f));
-			window.draw(hudPanel);
+			healthBg.setScale(sf::Vector2f(
+				m_healthBarBg.getSize().x / healthBounds.size.x,
+				m_healthBarBg.getSize().y / healthBounds.size.y));
+			healthBg.setPosition(m_healthBarBg.getPosition());
+			window.draw(healthBg);
+		}
+
+		sf::Sprite ammoBg(*hudTexture);
+		ammoBg.setTextureRect(sf::IntRect(sf::Vector2i(105, 63), sf::Vector2i(78, 21)));
+		const sf::FloatRect ammoBounds = ammoBg.getGlobalBounds();
+		if (ammoBounds.size.x > 0.f && ammoBounds.size.y > 0.f)
+		{
+			ammoBg.setScale(sf::Vector2f(
+				m_ammoBarBg.getSize().x / ammoBounds.size.x,
+				m_ammoBarBg.getSize().y / ammoBounds.size.y));
+			ammoBg.setPosition(m_ammoBarBg.getPosition());
+			window.draw(ammoBg);
 		}
 	}
 

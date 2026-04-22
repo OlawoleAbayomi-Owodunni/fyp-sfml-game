@@ -26,6 +26,7 @@ protected:
 	void init_body();
 	virtual void onExpire(float dt);
 	bool configureSprite(const std::string& texturePath, const SpriteAnimationMap& animations, const sf::Vector2i& tileCutoutSize);
+	bool configureSpriteRects(const std::string& texturePath, const SpriteAnimationRectMap& animations);
 
 	bool p_shouldDestroy{ false };
 

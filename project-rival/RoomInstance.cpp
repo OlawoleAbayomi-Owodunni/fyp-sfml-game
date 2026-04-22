@@ -25,21 +25,20 @@ void RoomInstance::buildFromPlan(const RoomPlan& plan, const sf::Vector2f& world
 
 	const float tileSize = plan.tileSize;
 	const std::string levelAtlasPath = "ASSETS/SPRITES/Everything.png";
-	const std::string teleporterAtlasPath = "ASSETS/SPRITES/LEVELS/Teleporter.png";
+	const std::string portalAtlasPath = "ASSETS/SPRITES/LEVELS/Portal.png";
 
 	auto addTileSprite = [&](const sf::Vector2f& position,
 		const sf::Vector2f& shapeSize,
 		const std::string& texturePath,
-		const std::vector<sf::Vector2i>& frameTiles,
-		const sf::Vector2i& frameSize,
+		const std::vector<sf::IntRect>& frameRects,
 		float fps = 1.f)
 		{
 			CustomSprite sprite;
-			SpriteAnimationMap animations{
-				{ "Idle", { frameTiles, fps, true } }
+			SpriteAnimationRectMap animations{
+				{ "Idle", { frameRects, fps, true } }
 			};
 
-			if (!sprite.configure(texturePath, animations, frameSize))
+			if (!sprite.configureWithRects(texturePath, animations))
 				return;
 
 			const sf::FloatRect spriteBounds = sprite.getGlobalBounds();
@@ -67,7 +66,8 @@ void RoomInstance::buildFromPlan(const RoomPlan& plan, const sf::Vector2f& world
 				floor.setPosition(worldPos + sf::Vector2f(col * tileSize, row * tileSize));
 				floor.setFillColor(sf::Color(200, 200, 200)); // light grey floor
 				ri_staticRoomShapes.push_back(floor);
-				addTileSprite(floor.getPosition(), floor.getSize(), levelAtlasPath, { sf::Vector2i(72, 192) }, sf::Vector2i(64, 64));
+				addTileSprite(floor.getPosition(), floor.getSize(), levelAtlasPath,
+					{ sf::IntRect(sf::Vector2i(72, 192), sf::Vector2i(64, 64)) });
 			}
 
 			// Walls
@@ -80,7 +80,8 @@ void RoomInstance::buildFromPlan(const RoomPlan& plan, const sf::Vector2f& world
 				wall.setFillColor(sf::Color(100, 100, 100)); // grey walls
 
 				ri_staticRoomShapes.push_back(wall);
-				addTileSprite(wall.getPosition(), wall.getSize(), levelAtlasPath, { sf::Vector2i(256, 128) }, sf::Vector2i(64, 64));
+				addTileSprite(wall.getPosition(), wall.getSize(), levelAtlasPath,
+					{ sf::IntRect(sf::Vector2i(256, 128), sf::Vector2i(64, 64)) });
 
 				//setup collider for wall
 				StaticCollision collider(wall.getGlobalBounds(), CollisionLayer::WALL_LAYER,
@@ -109,7 +110,13 @@ void RoomInstance::buildFromPlan(const RoomPlan& plan, const sf::Vector2f& world
 				door.setFillColor(sf::Color(150, 75, 0)); // brown doors
 
 				ri_staticRoomShapes.push_back(door);
-				addTileSprite(door.getPosition(), door.getSize(), levelAtlasPath, { sf::Vector2i(576, 256) }, sf::Vector2i(64, 64));
+				addTileSprite(door.getPosition(), door.getSize(), levelAtlasPath,
+					{
+						sf::IntRect(sf::Vector2i(576, 256), sf::Vector2i(64, 64)),
+						sf::IntRect(sf::Vector2i(576, 192), sf::Vector2i(64, 64)),
+						sf::IntRect(sf::Vector2i(576, 128), sf::Vector2i(64, 64))
+					},
+					4.f);
 
 				//setup collider for door if door is locked
 				for (auto& doorObj : plan.doors) {
@@ -139,16 +146,36 @@ void RoomInstance::buildFromPlan(const RoomPlan& plan, const sf::Vector2f& world
 
 		if (spawner.type == SpawnerType::PlayerSpawner) {
 			spawnPoint.setFillColor(sf::Color::Green);
-			addTileSprite(spawnPoint.getPosition(), spawnPoint.getSize(), levelAtlasPath, { sf::Vector2i(72, 192) }, sf::Vector2i(64, 64));
+			addTileSprite(spawnPoint.getPosition(), spawnPoint.getSize(), levelAtlasPath,
+				{ sf::IntRect(sf::Vector2i(72, 192), sf::Vector2i(64, 64)) });
 		}
 		else if (spawner.type == SpawnerType::EnemySpawner) {
 			spawnPoint.setFillColor(sf::Color::Red);
-			addTileSprite(spawnPoint.getPosition(), spawnPoint.getSize(), levelAtlasPath, { sf::Vector2i(256, 128) }, sf::Vector2i(64, 64));
+			addTileSprite(spawnPoint.getPosition(), spawnPoint.getSize(), levelAtlasPath,
+				{ sf::IntRect(sf::Vector2i(256, 128), sf::Vector2i(64, 64)) });
 		}
 		else if (spawner.type == SpawnerType::PortalSpawner) {
 			spawnPoint.setFillColor(sf::Color::Blue);
-			addTileSprite(spawnPoint.getPosition(), spawnPoint.getSize(), teleporterAtlasPath,
-				{ sf::Vector2i(2, 0), sf::Vector2i(3, 0), sf::Vector2i(2, 1), sf::Vector2i(3, 1) }, sf::Vector2i(144, 144), 6.f);
+			addTileSprite(spawnPoint.getPosition(), spawnPoint.getSize(), portalAtlasPath,
+				{
+					sf::IntRect(sf::Vector2i(0, 0), sf::Vector2i(144, 144)),
+					sf::IntRect(sf::Vector2i(0, 144), sf::Vector2i(144, 144)),
+					sf::IntRect(sf::Vector2i(0, 288), sf::Vector2i(144, 144)),
+					sf::IntRect(sf::Vector2i(0, 432), sf::Vector2i(144, 144)),
+					sf::IntRect(sf::Vector2i(144, 0), sf::Vector2i(144, 144)),
+					sf::IntRect(sf::Vector2i(144, 144), sf::Vector2i(144, 144)),
+					sf::IntRect(sf::Vector2i(144, 288), sf::Vector2i(144, 144)),
+					sf::IntRect(sf::Vector2i(144, 432), sf::Vector2i(144, 144)),
+					sf::IntRect(sf::Vector2i(288, 0), sf::Vector2i(144, 144)),
+					sf::IntRect(sf::Vector2i(288, 144), sf::Vector2i(144, 144)),
+					sf::IntRect(sf::Vector2i(288, 288), sf::Vector2i(144, 144)),
+					sf::IntRect(sf::Vector2i(288, 432), sf::Vector2i(144, 144)),
+					sf::IntRect(sf::Vector2i(432, 0), sf::Vector2i(144, 144)),
+					sf::IntRect(sf::Vector2i(432, 144), sf::Vector2i(144, 144)),
+					sf::IntRect(sf::Vector2i(432, 288), sf::Vector2i(144, 144)),
+					sf::IntRect(sf::Vector2i(432, 432), sf::Vector2i(144, 144))
+				},
+				10.f);
 		}
 
 		ri_staticRoomShapes.push_back(spawnPoint);
@@ -199,10 +226,34 @@ void RoomInstance::buildFromPlan(const RoomPlan& plan, const sf::Vector2f& world
 
 		ri_staticRoomShapes.push_back(triggerShape);
 		if (trigger.type == TriggerType::PortalTrigger)
-			addTileSprite(triggerShape.getPosition(), triggerShape.getSize(), teleporterAtlasPath,
-				{ sf::Vector2i(2, 2), sf::Vector2i(3, 2), sf::Vector2i(2, 3), sf::Vector2i(3, 3) }, sf::Vector2i(144, 144), 8.f);
+			addTileSprite(triggerShape.getPosition(), triggerShape.getSize(), portalAtlasPath,
+				{
+					sf::IntRect(sf::Vector2i(0, 0), sf::Vector2i(144, 144)),
+					sf::IntRect(sf::Vector2i(0, 144), sf::Vector2i(144, 144)),
+					sf::IntRect(sf::Vector2i(0, 288), sf::Vector2i(144, 144)),
+					sf::IntRect(sf::Vector2i(0, 432), sf::Vector2i(144, 144)),
+					sf::IntRect(sf::Vector2i(144, 0), sf::Vector2i(144, 144)),
+					sf::IntRect(sf::Vector2i(144, 144), sf::Vector2i(144, 144)),
+					sf::IntRect(sf::Vector2i(144, 288), sf::Vector2i(144, 144)),
+					sf::IntRect(sf::Vector2i(144, 432), sf::Vector2i(144, 144)),
+					sf::IntRect(sf::Vector2i(288, 0), sf::Vector2i(144, 144)),
+					sf::IntRect(sf::Vector2i(288, 144), sf::Vector2i(144, 144)),
+					sf::IntRect(sf::Vector2i(288, 288), sf::Vector2i(144, 144)),
+					sf::IntRect(sf::Vector2i(288, 432), sf::Vector2i(144, 144)),
+					sf::IntRect(sf::Vector2i(432, 0), sf::Vector2i(144, 144)),
+					sf::IntRect(sf::Vector2i(432, 144), sf::Vector2i(144, 144)),
+					sf::IntRect(sf::Vector2i(432, 288), sf::Vector2i(144, 144)),
+					sf::IntRect(sf::Vector2i(432, 432), sf::Vector2i(144, 144))
+				},
+				10.f);
 		else if (trigger.type == TriggerType::DoorTrigger)
-			addTileSprite(triggerShape.getPosition(), triggerShape.getSize(), levelAtlasPath, { sf::Vector2i(576, 256) }, sf::Vector2i(64, 64));
+			addTileSprite(triggerShape.getPosition(), triggerShape.getSize(), levelAtlasPath,
+				{
+					sf::IntRect(sf::Vector2i(576, 256), sf::Vector2i(64, 64)),
+					sf::IntRect(sf::Vector2i(576, 192), sf::Vector2i(64, 64)),
+					sf::IntRect(sf::Vector2i(576, 128), sf::Vector2i(64, 64))
+				},
+				4.f);
 
 
 		// setup collider for trigger

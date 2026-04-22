@@ -23,9 +23,20 @@ struct SpriteAnimationClip
 };
 
 /**
+ * @brief Single animation clip that stores explicit pixel rectangles.
+ */
+struct SpriteAnimationRectClip
+{
+	std::vector<sf::IntRect> frameRects;
+	float fps{ 0.f };
+	bool loop{ true };
+};
+
+/**
  * @brief Name -> clip mapping used by CustomSprite.
  */
 using SpriteAnimationMap = std::unordered_map<std::string, SpriteAnimationClip>;
+using SpriteAnimationRectMap = std::unordered_map<std::string, SpriteAnimationRectClip>;
 
 class CustomSprite
 {
@@ -34,6 +45,7 @@ public:
 	CustomSprite(const std::string& texturePath, const SpriteAnimationMap& animations, const sf::Vector2i& tileCutoutSize);
 
 	bool configure(const std::string& texturePath, const SpriteAnimationMap& animations, const sf::Vector2i& tileCutoutSize);
+	bool configureWithRects(const std::string& texturePath, const SpriteAnimationRectMap& animations);
 
 	void update(float dtSeconds);
 	void draw(sf::RenderWindow& window) const;
@@ -53,14 +65,16 @@ public:
 
 private:
 	void applyCurrentFrame();
-	bool hasAnimations() const { return !m_animations.empty(); }
+	bool hasAnimations() const { return m_useRectAnimations ? !m_rectAnimations.empty() : !m_animations.empty(); }
 
 	bool m_loaded{ false };
 	sf::Texture m_texture;
 	std::optional<sf::Sprite> m_sprite;
 
 	SpriteAnimationMap m_animations;
+	SpriteAnimationRectMap m_rectAnimations;
 	sf::Vector2i m_tileCutoutSize{ 0, 0 };
+	bool m_useRectAnimations{ false };
 
 	std::string m_currentAnimationName;
 	std::size_t m_currentFrameIndex{ 0 };

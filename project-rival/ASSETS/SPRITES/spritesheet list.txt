@@ -1,0 +1,150 @@
+ASSETS/SPRITES/Everything.png: { 
+Player: 
+•	sprite cell size = 64x64 
+•	sprite position = [(0,576)] -> Idle; [(0,448), (0,512)] -> Run 
+,Turret: 
+•	sprite cell size = 64x64 
+•	sprite position = [(64, 896)] -> Idle 
+,Grunt: 
+•	sprite cell size = 128x128 
+•	sprite position = [(512,448), (512,576)] -> Idle 
+,Pistol (Turret): 
+•	sprite cell size = 56x36 
+•	sprite position = [(668,408)] -> Idle 
+,Pistol (player): 
+•	sprite cell size = 52x32 
+•	sprite position = [(508,408)] -> Idle 
+,Shotgun: 
+•	sprite cell size = 80x40 
+•	sprite position = [(900,400)] -> Idle 
+,Assault Rifle: 
+•	sprite cell size = 72x36 
+•	sprite position = [(732,404)] -> Idle 
+,Knife (Grunt): 
+•	sprite cell size = 32x72 
+•	sprite position = [(656,492)] -> Idle 
+,Knife (Player): 
+•	sprite cell size = 32x72 
+•	sprite position = [(848,492)] -> Idle 
+,Sword: 
+•	sprite cell size = 32x84 
+•	sprite position = [(912,480)] -> Idle 
+,Axe: 
+•	sprite cell size = 32x104 
+•	sprite position = [(976,460)] -> Idle 
+,NPC (Arnold): 
+•	sprite cell size = 64x64 
+•	sprite position = [(64,768)] -> Idle 
+,NPC (Cassandra): 
+•	sprite cell size = 64x64 
+•	sprite position = [(256,512)] -> Idle 
+,NPC (Gunther): 
+•	sprite cell size = 64x64 
+•	sprite position = [(128,640)] -> Idle 
+,NPC (Petra): 
+•	sprite cell size = 64x64 
+•	sprite position = [(0,704)] -> Idle 
+,Floor: 
+•	sprite cell size = 64x64 
+•	sprite position = [(72,192)] -> Idle 
+,Walls: 
+•	sprite cell size = 64x64 
+•	sprite position = [(256,128)] -> Idle 
+,Pillars: 
+•	sprite cell size = 64x84 
+•	sprite position = [(768,236)] -> Idle 
+,Chest: 
+•	sprite cell size = 64x64 
+•	sprite position = [(704,128)] -> Closed; [(704,192)] -> Open 
+,Door: 
+•	sprite cell size = 64x64 
+•	sprite position = [(576,256), (576,192), (576,128)] -> Closed; [(576,128), (576, 192), (576,256)] -> Open 
+,Coin: 
+•	sprite cell size = 32x32 
+•	sprite position = [(986,292)] -> Idle 
+,Bullet (Player): 
+•	sprite cell size = 32x32 
+•	sprite position = [(976,208)] -> Idle 
+,Bullet (Enemy): 
+•	sprite cell size = 32x32 
+•	sprite position = [(912,208)] -> Idle 
+,Health Pack: 
+•	sprite cell size = 28x48 
+•	sprite position = [(848,582)] -> Idle 
+,Ammo Pack: 
+•	sprite cell size = 32x46 
+•	sprite position = [(974,587)] -> Idle 
+} 
+
+ASSETS/SPRITES/LEVELS/Shops.png: { 
+Shops (all upgrade stations): 
+•	sprite cell size = 64x48 
+•	sprite position = [(288,128)] -> Idle 
+} 
+
+ASSETS/SPRITES/LEVELS/Job Board.png: { 
+Quest Board: 
+•	sprite cell size = 82x43 
+•	sprite position = [(7,27)] -> Idle 
+} 
+
+ASSETS/SPRITES/LEVELS/Portal.png: { 
+Portal: 
+•	sprite cell size = 144x144 
+•	sprite position = [(0,0), (0,144), (0,288), (0,432), (144,0), (144,144), (144,288), (144,432), (288,0), (288,144), (288,288), (288,432), (432,0), (432,144), (432,288), (432,432)] -> Idle 
+} 
+
+ASSETS/SPRITES/WEAPONS/60.png: { 
+Slash (for melee triggers): 
+•	sprite cell size = 48x48 
+•	sprite position = [(480,0), (960,0), (1440,0), (1920,0), (2400,0), (2880,0), (3360,0), (3840,0), (4320,0), (4800,0)] -> Swing 
+} 
+
+ASSETS/SPRITES/UI/crosshair.png: { 
+Crosshair: 
+•	Full png 
+} 
+
+ASSETS/SPRITES/UI/hud.png: { 
+Health Bar: 
+•	sprite cell size = 78x21 
+•	sprite position = [(105,36)] -> Idle 
+,Ammo Bar: 
+•	sprite cell size = 78x21 
+•	sprite position = [(105,63)] -> Idle 
+} 
+
+ASSETS/SPRITES/UI/Button Normal.png: { 
+All Menu UI Button shapes: 
+•	Full png 
+} 
+
+ASSETS/SPRITES/UI/Menu Backdrop.png: { 
+Menu backdrops: 
+•	Full png 
+} 
+
+ASSETS/IMAGES/Menu BG.png: { 
+Main Menu Background image: 
+•	Full png 
+} 
+
+ASSETS/SPRITES/UI/Portrait - Gunther.png: { 
+Gunther Portrait in chat menu: 
+•	Full png 
+} 
+
+ASSETS/SPRITES/UI/Portrait - Arnold.png: { 
+Arnold Portrait in chat menu: 
+•	Full png 
+} 
+
+ASSETS/SPRITES/UI/Portrait - Cassandra.png: { 
+Cassandra Portrait in chat menu: 
+•	Full png 
+} 
+
+ASSETS/SPRITES/UI/Portrait - Petra.png: { 
+Petra Portrait in chat menu: 
+•	Full png 
+}

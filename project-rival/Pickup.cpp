@@ -17,7 +17,28 @@ Pickup::Pickup(PickupType type, const sf::Vector2f& worldPos, float tileSize)
 	initVisual(tileSize);
 	p_shape.setPosition(worldPos);
 
-	if (!p_sprite.configure("ASSETS/SPRITES/Everything.png", {}, sf::Vector2i(0, 0)))
+	SpriteAnimationRectMap pickupAnimations;
+	const std::string pickupAtlasPath = "ASSETS/SPRITES/Everything.png";
+
+	switch (p_type)
+	{
+	case PickupType::HEALTH:
+		pickupAnimations.emplace("Idle", SpriteAnimationRectClip{ std::vector<sf::IntRect>{ sf::IntRect(sf::Vector2i(848, 582), sf::Vector2i(28, 48)) }, 1.f, true });
+		break;
+	case PickupType::AMMO:
+		pickupAnimations.emplace("Idle", SpriteAnimationRectClip{ std::vector<sf::IntRect>{ sf::IntRect(sf::Vector2i(974, 587), sf::Vector2i(32, 46)) }, 1.f, true });
+		break;
+	case PickupType::SINGLE_COIN:
+		pickupAnimations.emplace("Idle", SpriteAnimationRectClip{ std::vector<sf::IntRect>{ sf::IntRect(sf::Vector2i(986, 292), sf::Vector2i(32, 32)) }, 1.f, true });
+		break;
+	case PickupType::CHEST_COIN:
+		pickupAnimations.emplace("Idle", SpriteAnimationRectClip{ std::vector<sf::IntRect>{ sf::IntRect(sf::Vector2i(986, 292), sf::Vector2i(32, 32)) }, 1.f, true });
+		break;
+	default:
+		break;
+	}
+
+	if (!p_sprite.configureWithRects(pickupAtlasPath, pickupAnimations))
 		p_sprite.configure("ASSETS/SPRITES/UI/hud.png", {}, sf::Vector2i(0, 0));
 
 	if (p_sprite.isLoaded())

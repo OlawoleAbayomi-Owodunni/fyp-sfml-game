@@ -83,6 +83,25 @@ bool Enemy::configureSprite(const std::string& texturePath, const SpriteAnimatio
 	return true;
 }
 
+bool Enemy::configureSpriteRects(const std::string& texturePath, const SpriteAnimationRectMap& animations)
+{
+	if (!e_sprite.configureWithRects(texturePath, animations))
+		return false;
+
+	const sf::FloatRect spriteBounds = e_sprite.getGlobalBounds();
+	if (spriteBounds.size.x <= 0.f || spriteBounds.size.y <= 0.f)
+		return false;
+
+	e_sprite.setOrigin(sf::Vector2f(spriteBounds.size.x * 0.5f, spriteBounds.size.y * 0.5f));
+	e_sprite.setScale(sf::Vector2f(
+		e_body.getSize().x / spriteBounds.size.x,
+		e_body.getSize().y / spriteBounds.size.y));
+	e_sprite.setColor(e_body.getFillColor());
+	e_sprite.setPosition(e_body.getPosition());
+
+	return true;
+}
+
 void Enemy::syncSpriteToBody()
 {
 	if (!e_sprite.isLoaded())

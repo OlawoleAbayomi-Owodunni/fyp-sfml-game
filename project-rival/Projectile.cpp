@@ -23,7 +23,31 @@ Projectile::Projectile(sf::Vector2f spawnPoint, sf::Vector2f direction, float sp
 	p_spawnPoint(spawnPoint), p_direction(direction), p_speed(speed), p_damage(damage), p_isFromPlayer(isFromPlayer)
 {
 	init_body();
-	if (!configureSprite("ASSETS/SPRITES/WEAPONS/60.png", {}, sf::Vector2i(0, 0)))
+
+	// Atlas rects are grouped by ownership so player/enemy shots stay visually distinct.
+	SpriteAnimationRectMap bulletAnimations;
+	if (isFromPlayer)
+	{
+		bulletAnimations.emplace("Idle", SpriteAnimationRectClip{
+			std::vector<sf::IntRect>{
+				sf::IntRect(sf::Vector2i(976, 208), sf::Vector2i(32, 32))
+			},
+			1.f,
+			true
+		});
+	}
+	else
+	{
+		bulletAnimations.emplace("Idle", SpriteAnimationRectClip{
+			std::vector<sf::IntRect>{
+				sf::IntRect(sf::Vector2i(912, 208), sf::Vector2i(32, 32))
+			},
+			1.f,
+			true
+		});
+	}
+
+	if (!configureSpriteRects("ASSETS/SPRITES/Everything.png", bulletAnimations))
 		configureSprite("ASSETS/SPRITES/UI/crosshair.png", {}, sf::Vector2i(0, 0));
 
 	if(isFromPlayer)
@@ -106,6 +130,24 @@ void Projectile::init_body()
 bool Projectile::configureSprite(const std::string& texturePath, const SpriteAnimationMap& animations, const sf::Vector2i& tileCutoutSize)
 {
 	if (!p_sprite.configure(texturePath, animations, tileCutoutSize))
+		return false;
+
+	const sf::FloatRect spriteBounds = p_sprite.getGlobalBounds();
+	if (spriteBounds.size.x <= 0.f || spriteBounds.size.y <= 0.f)
+		return false;
+
+	p_sprite.setOrigin(sf::Vector2f(spriteBounds.size.x * 0.5f, spriteBounds.size.y * 0.5f));
+	p_sprite.setScale(sf::Vector2f(
+		p_body.getSize().x / spriteBounds.size.x,
+		p_body.getSize().y / spriteBounds.size.y));
+	p_sprite.setPosition(p_body.getPosition());
+
+	return true;
+}
+
+bool Projectile::configureSpriteRects(const std::string& texturePath, const SpriteAnimationRectMap& animations)
+{
+	if (!p_sprite.configureWithRects(texturePath, animations))
 		return false;
 
 	const sf::FloatRect spriteBounds = p_sprite.getGlobalBounds();
