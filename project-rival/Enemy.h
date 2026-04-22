@@ -6,6 +6,7 @@
 #include "ArriveBehaviour.h"
 
 #include "Collision.h"
+#include "CustomSprite.h"
 
 /**
  * @file Enemy.h
@@ -30,7 +31,7 @@ public:
 
 	virtual void init() = 0;
 	virtual void update(float dt) = 0;
-	virtual void render(sf::RenderWindow& window);
+	virtual void render(sf::RenderWindow& window, bool texturedMode);
 	virtual void reset();
 
 	virtual void setTarget(const Vector2f& target) = 0;
@@ -48,8 +49,11 @@ public:
 
 protected:
 	void initBody(const sf::Vector2f& size, const sf::Color& colour);
+	bool configureSprite(const std::string& texturePath, const SpriteAnimationMap& animations, const sf::Vector2i& tileCutoutSize);
+	void syncSpriteToBody();
 
 	sf::RectangleShape e_body;
+	CustomSprite e_sprite;
 	sf::Vector2f e_startPos;
 	sf::Vector2f e_prevPos;
 	sf::Vector2f e_target{ 0.f, 0.f };

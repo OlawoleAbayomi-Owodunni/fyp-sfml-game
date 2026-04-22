@@ -16,16 +16,37 @@ Pickup::Pickup(PickupType type, const sf::Vector2f& worldPos, float tileSize)
 {
 	initVisual(tileSize);
 	p_shape.setPosition(worldPos);
+
+	if (!p_sprite.configure("ASSETS/SPRITES/Everything.png", {}, sf::Vector2i(0, 0)))
+		p_sprite.configure("ASSETS/SPRITES/UI/hud.png", {}, sf::Vector2i(0, 0));
+
+	if (p_sprite.isLoaded())
+	{
+		const sf::FloatRect spriteBounds = p_sprite.getGlobalBounds();
+		if (spriteBounds.size.x > 0.f && spriteBounds.size.y > 0.f)
+		{
+			p_sprite.setOrigin(sf::Vector2f(spriteBounds.size.x * 0.5f, spriteBounds.size.y * 0.5f));
+			p_sprite.setScale(sf::Vector2f(
+				p_shape.getSize().x / spriteBounds.size.x,
+				p_shape.getSize().y / spriteBounds.size.y));
+		}
+		p_sprite.setPosition(p_shape.getPosition());
+	}
 }
 
 /**
  * @brief Renders the pickup if it has not been collected/destroyed.
  * @param window Render target.
  */
-void Pickup::render(sf::RenderWindow & window) const
+void Pickup::render(sf::RenderWindow & window, bool texturedMode) const
 {
 	if (!p_shouldDestroy)
-		window.draw(p_shape);
+	{
+		if (texturedMode && p_sprite.isLoaded())
+			p_sprite.draw(window);
+		else
+			window.draw(p_shape);
+	}
 }
 
 /**

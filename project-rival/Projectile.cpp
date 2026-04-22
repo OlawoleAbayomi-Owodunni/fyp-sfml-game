@@ -1,5 +1,7 @@
 #include "Projectile.h"
 
+#include <cmath>
+
 /**
  * @file Projectile.cpp
  * @brief Implements base projectile state such as collision profile, lifetime, and rendering.
@@ -21,6 +23,8 @@ Projectile::Projectile(sf::Vector2f spawnPoint, sf::Vector2f direction, float sp
 	p_spawnPoint(spawnPoint), p_direction(direction), p_speed(speed), p_damage(damage), p_isFromPlayer(isFromPlayer)
 {
 	init_body();
+	if (!configureSprite("ASSETS/SPRITES/WEAPONS/60.png", {}, sf::Vector2i(0, 0)))
+		configureSprite("ASSETS/SPRITES/UI/crosshair.png", {}, sf::Vector2i(0, 0));
 
 	if(isFromPlayer)
 	{
@@ -41,9 +45,19 @@ Projectile::Projectile(sf::Vector2f spawnPoint, sf::Vector2f direction, float sp
  * @brief Renders the projectile body.
  * @param window Render target.
  */
-void Projectile::render(sf::RenderWindow& window)
+void Projectile::render(sf::RenderWindow& window, bool texturedMode)
 {
-	window.draw(p_body);
+	if (texturedMode && p_sprite.isLoaded())
+	{
+		p_sprite.setPosition(p_body.getPosition());
+		if (p_direction != sf::Vector2f(0.f, 0.f))
+			p_sprite.setRotation(sf::radians(std::atan2(p_direction.y, p_direction.x)));
+		p_sprite.draw(window);
+	}
+	else
+	{
+		window.draw(p_body);
+	}
 }
 
 /**
@@ -87,6 +101,24 @@ void Projectile::init_body()
 	p_body.setFillColor(sf::Color::White);
 	p_body.setOrigin(p_body.getSize() / 2.f);
 	p_body.setPosition(p_spawnPoint);
+}
+
+bool Projectile::configureSprite(const std::string& texturePath, const SpriteAnimationMap& animations, const sf::Vector2i& tileCutoutSize)
+{
+	if (!p_sprite.configure(texturePath, animations, tileCutoutSize))
+		return false;
+
+	const sf::FloatRect spriteBounds = p_sprite.getGlobalBounds();
+	if (spriteBounds.size.x <= 0.f || spriteBounds.size.y <= 0.f)
+		return false;
+
+	p_sprite.setOrigin(sf::Vector2f(spriteBounds.size.x * 0.5f, spriteBounds.size.y * 0.5f));
+	p_sprite.setScale(sf::Vector2f(
+		p_body.getSize().x / spriteBounds.size.x,
+		p_body.getSize().y / spriteBounds.size.y));
+	p_sprite.setPosition(p_body.getPosition());
+
+	return true;
 }
 
 /**

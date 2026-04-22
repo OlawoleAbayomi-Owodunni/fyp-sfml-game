@@ -32,6 +32,22 @@ void NPC::init(const HubNPCInfo& info, const sf::Vector2f worldPos, const sf::Co
 	npc_body.setPosition(worldPos);
 	npc_body.setFillColor(bodyColor);
 
+	if (!npc_sprite.configure("ASSETS/SPRITES/Everything.png", {}, sf::Vector2i(0, 0)))
+		npc_sprite.configure("ASSETS/SPRITES/UI/Portrait - Petra.png", {}, sf::Vector2i(0, 0));
+
+	if (npc_sprite.isLoaded())
+	{
+		const sf::FloatRect spriteBounds = npc_sprite.getGlobalBounds();
+		if (spriteBounds.size.x > 0.f && spriteBounds.size.y > 0.f)
+		{
+			npc_sprite.setOrigin(sf::Vector2f(spriteBounds.size.x * 0.5f, spriteBounds.size.y * 0.5f));
+			npc_sprite.setScale(sf::Vector2f(
+				npc_body.getSize().x / spriteBounds.size.x,
+				npc_body.getSize().y / spriteBounds.size.y));
+		}
+		npc_sprite.setPosition(npc_body.getPosition());
+	}
+
 	const sf::Vector2f triggerSize(100.f, 100.f);
 	const sf::Vector2f triggerCenter = worldPos + triggerOffset;
 	npc_interactionBounds.position = triggerCenter - triggerSize / 2.f;
@@ -54,10 +70,18 @@ void NPC::init(const HubNPCInfo& info, const sf::Vector2f worldPos, const sf::Co
  * @brief Renders the NPC body and its interaction bounds (debug).
  * @param window Target render window.
  */
-void NPC::render(sf::RenderWindow & window)
+void NPC::render(sf::RenderWindow & window, bool texturedMode)
 {
-	window.draw(npc_body);
-	renderInteractionBounds(window);
+	if (texturedMode && npc_sprite.isLoaded())
+	{
+		npc_sprite.setPosition(npc_body.getPosition());
+		npc_sprite.draw(window);
+	}
+	else
+	{
+		window.draw(npc_body);
+		renderInteractionBounds(window);
+	}
 }
 
 /**

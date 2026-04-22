@@ -18,15 +18,34 @@ Chest::Chest(const sf::Vector2f& worldPos, float tileSize)
 	c_shape.setFillColor(sf::Color(139, 69, 19)); // Saddle Brown
 	c_shape.setOutlineThickness(2.f);
 	c_shape.setOutlineColor(sf::Color::Black);
+
+	if (!c_sprite.configure("ASSETS/SPRITES/Everything.png", {}, sf::Vector2i(0, 0)))
+		c_sprite.configure("ASSETS/SPRITES/LEVELS/Job Board.png", {}, sf::Vector2i(0, 0));
+
+	if (c_sprite.isLoaded())
+	{
+		const sf::FloatRect spriteBounds = c_sprite.getGlobalBounds();
+		if (spriteBounds.size.x > 0.f && spriteBounds.size.y > 0.f)
+		{
+			c_sprite.setOrigin(sf::Vector2f(spriteBounds.size.x * 0.5f, spriteBounds.size.y * 0.5f));
+			c_sprite.setScale(sf::Vector2f(
+				c_shape.getSize().x / spriteBounds.size.x,
+				c_shape.getSize().y / spriteBounds.size.y));
+		}
+		c_sprite.setPosition(c_shape.getPosition());
+	}
 }
 
 /**
  * @brief Renders the chest.
  * @param window Render target.
  */
-void Chest::render(sf::RenderWindow & window) const
+void Chest::render(sf::RenderWindow & window, bool texturedMode) const
 {
-	window.draw(c_shape);
+	if (texturedMode && c_sprite.isLoaded())
+		c_sprite.draw(window);
+	else
+		window.draw(c_shape);
 }
 
 /**

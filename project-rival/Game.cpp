@@ -639,31 +639,32 @@ void Game::render()
 		m_gameCamera = m_floorCamera;
 
 	m_window.setView(m_gameCamera);
+	const bool texturedMode = (m_renderMode == RenderMode::TEXTURED_MODE);
 	
 	for (auto& roomInstance : m_roomInstances) {
-		roomInstance.render(m_window);
+		roomInstance.render(m_window, texturedMode);
 	}
 
-	m_player.render(m_window);
+	m_player.render(m_window, texturedMode);
 
 	for (auto& enemy : m_enemies) {
-		enemy->render(m_window);
+		enemy->render(m_window, texturedMode);
 	}
 
 	for (auto& bullet : m_gameProjectiles) {
-		bullet->render(m_window);
+		bullet->render(m_window, texturedMode);
 	}
 
 	for(auto& trigger:m_activeDamageTriggers) {
-		trigger->render(m_window);
+		trigger->render(m_window, texturedMode);
 	}
 
 	for(auto& pickup:m_gamePickups) {
-		pickup->render(m_window);
+		pickup->render(m_window, texturedMode);
 	}
 
 	for(auto& chest:m_gameChests) {
-		chest->render(m_window);
+		chest->render(m_window, texturedMode);
 	}
 
 	if (m_gameMode == GameMode::HUB)
@@ -676,7 +677,7 @@ void Game::render()
 		renderHubShopPrompt();
 
 		for (auto& npc : m_hubNPCs) {
-			npc.render(m_window);
+			npc.render(m_window, texturedMode);
 		}
 	}
 

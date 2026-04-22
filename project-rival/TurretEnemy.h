@@ -11,7 +11,7 @@ public:
 	void init() override;
 	void update(float dt) override;
 	void update(float dt, std::vector<std::unique_ptr<Projectile>>& gameProjectiles);
-	void render(sf::RenderWindow& window) override;
+	void render(sf::RenderWindow& window, bool texturedMode) override;
 
 	void setTarget(const Vector2f& target) override;
 	EnemyType getEnemyType() const override { return EnemyType::TURRET; }

@@ -3,6 +3,7 @@
 #include <SFML/Graphics.hpp>
 #include "Collision.h"
 #include "HubShop.h"
+#include "CustomSprite.h"
 
 /**
  * @file NPC.h
@@ -47,7 +48,7 @@ public:
 		const sf::Color bodyColor,
 		const sf::Vector2f& triggerOffset);
 
-	void render(sf::RenderWindow& window);
+	void render(sf::RenderWindow& window, bool texturedMode);
 
 	const HubNPCInfo& getInfo() const { return npc_info; }
 	const std::string& getDialogue() const { return npc_dialogue; }
@@ -59,6 +60,7 @@ private:
 	void renderInteractionBounds(sf::RenderWindow& window);
 
 	sf::RectangleShape npc_body;
+	CustomSprite npc_sprite;
 	sf::FloatRect npc_interactionBounds;
 	CollisionProfile npc_collisionProfile;
 

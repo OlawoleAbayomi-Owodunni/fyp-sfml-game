@@ -3,6 +3,7 @@
 
 #include "Collision.h"
 #include "Weapon.h"
+#include "CustomSprite.h"
 
 /**
  * @brief A weapon entry stored in the player's loadout.
@@ -25,7 +26,7 @@ public:
 		const sf::Vector2i& mousePixelPos,
 		std::vector<std::unique_ptr<Projectile>>& gameProjectiles, 
 		std::vector<std::unique_ptr<DamageTrigger>>& instantiableTriggers);
-	void render(sf::RenderWindow& window);
+	void render(sf::RenderWindow& window, bool texturedMode);
 
 	const sf::Vector2f getPosition() const { return p_body.getPosition(); }
 	sf::FloatRect getCollisionBounds() const override { return p_body.getGlobalBounds(); }
@@ -38,7 +39,7 @@ public:
 	int getMaxAmmo() const { return p_maxAmmo; }
 
 	void setSpawnPosition(const sf::Vector2f& spawnPos) { p_body.setPosition(spawnPos); }
-	void setBodyColor(const sf::Color& color) { p_body.setFillColor(color); }
+	void setBodyColor(const sf::Color& color);
 	void setCurrentWeaponID(int id) { if (id >= 0 && id < p_weapons.size()) p_currentWeaponID = id; }
 
 	void hitWall();
@@ -70,6 +71,7 @@ private:
 
 	// VARIABLES
 	sf::RectangleShape p_body;
+	CustomSprite p_sprite;
 
 	sf::Vector2f p_velocity{ 0.f, 0.f };
 

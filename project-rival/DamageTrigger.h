@@ -1,6 +1,7 @@
 #pragma once
 #include <SFML/Graphics.hpp>
 #include "Collision.h"
+#include "CustomSprite.h"
 
 class DamageTrigger :public ICollidable
 {
@@ -8,7 +9,7 @@ public:
 	DamageTrigger(const sf::Vector2f& center, const sf::Vector2f& size, float lifetime, int damage, uint32_t targetMask);
 
 	void update(float dt);
-	void render(sf::RenderWindow& window);
+	void render(sf::RenderWindow& window, bool texturedMode);
 
 	const bool shouldDestroy() const { return dt_shouldDestroy; }
 	const int damage() const { return dt_damage; }
@@ -20,6 +21,7 @@ private:
 	void initShape(const sf::Vector2f& center, const sf::Vector2f& size);
 
 	sf::RectangleShape dt_shape;
+	CustomSprite dt_sprite;
 	sf::FloatRect dt_bounds;
 
 	CollisionProfile dt_collisionProfile;

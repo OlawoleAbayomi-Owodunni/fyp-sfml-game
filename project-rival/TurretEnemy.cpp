@@ -14,6 +14,7 @@ TurretEnemy::TurretEnemy(const sf::Vector2f pos, int totalHealth)
 	:Enemy(pos, totalHealth)
 {
 	initBody(sf::Vector2f(50.f, 50.f), sf::Color::Blue);
+	configureSprite("ASSETS/SPRITES/Everything.png", {}, sf::Vector2i(0, 0));
 	init();
 }
 
@@ -63,9 +64,9 @@ void TurretEnemy::update(float dt, std::vector<std::unique_ptr<Projectile>>& gam
  * @brief Renders the turret body and its weapon.
  * @param window Render target.
  */
-void TurretEnemy::render(sf::RenderWindow& window)
+void TurretEnemy::render(sf::RenderWindow& window, bool texturedMode)
 {
-	Enemy::render(window);
+	Enemy::render(window, texturedMode);
 
 	te_weapon.render(window);
 }

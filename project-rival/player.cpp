@@ -71,6 +71,7 @@ void Player::update(float dt, const sf::Vector2f& mousePos, const sf::Vector2i& 
 
 	handleMovement(dt);
 	handleAiming(mousePos, mousePixelPos);
+	p_sprite.update(dt);
 
 	ManageWeapons(instantiableTriggers, gameProjectiles, dt);
 }
@@ -79,12 +80,28 @@ void Player::update(float dt, const sf::Vector2f& mousePos, const sf::Vector2i& 
  * @brief Renders the player body, reticle, and currently equipped weapon.
  * @param window Render target.
  */
-void Player::render(sf::RenderWindow& window)
+void Player::render(sf::RenderWindow& window, bool texturedMode)
 {
-	window.draw(p_body);
+	if (texturedMode && p_sprite.isLoaded())
+	{
+		p_sprite.setPosition(p_body.getPosition());
+		p_sprite.draw(window);
+	}
+	else
+	{
+		window.draw(p_body);
+	}
+
 	window.draw(p_reticle);
 
 	p_weapons[p_currentWeaponID]->render(window);
+}
+
+void Player::setBodyColor(const sf::Color& color)
+{
+	p_body.setFillColor(color);
+	if (p_sprite.isLoaded())
+		p_sprite.setColor(color);
 }
 
 
@@ -216,6 +233,29 @@ void Player::startUp()
 	p_body.setOrigin(size / 2.f);
 	p_body.setFillColor(sf::Color::Green);
 
+	SpriteAnimationMap playerAnimations{
+		{"Idle", {{sf::Vector2i(0, 0)}, 6.f, true}},
+		{"Run", {{sf::Vector2i(0, 0), sf::Vector2i(1, 0), sf::Vector2i(2, 0), sf::Vector2i(3, 0)}, 10.f, true}}
+	};
+
+	if (!p_sprite.configure("ASSETS/SPRITES/Everything.png", playerAnimations, sf::Vector2i(32, 32)))
+		p_sprite.configure("ASSETS/SPRITES/UI/Portrait - Arnold.png", {}, sf::Vector2i(0, 0));
+
+	if (p_sprite.isLoaded())
+	{
+		const sf::FloatRect spriteBounds = p_sprite.getGlobalBounds();
+		if (spriteBounds.size.x > 0.f && spriteBounds.size.y > 0.f)
+		{
+			p_sprite.setOrigin(sf::Vector2f(spriteBounds.size.x * 0.5f, spriteBounds.size.y * 0.5f));
+			p_sprite.setScale(sf::Vector2f(
+				p_body.getSize().x / spriteBounds.size.x,
+				p_body.getSize().y / spriteBounds.size.y));
+		}
+
+		p_sprite.setPosition(p_body.getPosition());
+		p_sprite.setAnimation("Idle", true);
+	}
+
 	//physics
 	p_velocity = sf::Vector2f(0.f, 0.f);
 
@@ -278,6 +318,14 @@ void Player::handleMovement(float dt)
 
 	p_velocity = direction * p_moveSpeed;
 	p_body.move(p_velocity * dt);
+
+	if (p_sprite.hasAnimation("Run") && p_sprite.hasAnimation("Idle"))
+	{
+		if (direction != sf::Vector2f(0.f, 0.f))
+			p_sprite.setAnimation("Run");
+		else
+			p_sprite.setAnimation("Idle");
+	}
 }
 
 /**
@@ -314,6 +362,7 @@ void Player::handleAiming(const sf::Vector2f& mouseWorldPos, const sf::Vector2i&
 	else p_aimDir = sf::Vector2f(0.f, 0.f);
 
 	p_reticle.setPosition(p_body.getPosition() + p_aimDir * p_reticleDistance);
+	p_sprite.setPosition(p_body.getPosition());
 
 	p_prevMousePos = mouseWorldPos;
 	p_prevMousePixelPos = mousePixelPos;

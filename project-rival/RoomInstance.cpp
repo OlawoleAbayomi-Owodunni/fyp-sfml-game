@@ -18,11 +18,30 @@ void RoomInstance::buildFromPlan(const RoomPlan& plan, const sf::Vector2f& world
 {
 	ri_staticRoomColliders.clear();
 	ri_staticRoomShapes.clear();
+	ri_staticRoomSprites.clear();
 
 	if (!plan.isValid())
 		return;
 
 	const float tileSize = plan.tileSize;
+
+	auto addSpriteForShape = [&](const sf::RectangleShape& shape)
+		{
+			CustomSprite sprite;
+			if (!sprite.configure("ASSETS/SPRITES/LEVELS/Shops.png", {}, sf::Vector2i(0, 0)))
+				return;
+
+			const sf::FloatRect spriteBounds = sprite.getGlobalBounds();
+			if (spriteBounds.size.x <= 0.f || spriteBounds.size.y <= 0.f)
+				return;
+
+			sprite.setOrigin(sf::Vector2f(spriteBounds.size.x * 0.5f, spriteBounds.size.y * 0.5f));
+			sprite.setScale(sf::Vector2f(
+				shape.getSize().x / spriteBounds.size.x,
+				shape.getSize().y / spriteBounds.size.y));
+			sprite.setPosition(shape.getPosition());
+			ri_staticRoomSprites.push_back(sprite);
+		};
 	
 	// initialise each tile
 	for (int row = 0; row < plan.height; row++) {
@@ -37,6 +56,7 @@ void RoomInstance::buildFromPlan(const RoomPlan& plan, const sf::Vector2f& world
 				floor.setPosition(worldPos + sf::Vector2f(col * tileSize, row * tileSize));
 				floor.setFillColor(sf::Color(200, 200, 200)); // light grey floor
 				ri_staticRoomShapes.push_back(floor);
+				addSpriteForShape(floor);
 			}
 
 			// Walls
@@ -49,6 +69,7 @@ void RoomInstance::buildFromPlan(const RoomPlan& plan, const sf::Vector2f& world
 				wall.setFillColor(sf::Color(100, 100, 100)); // grey walls
 
 				ri_staticRoomShapes.push_back(wall);
+				addSpriteForShape(wall);
 
 				//setup collider for wall
 				StaticCollision collider(wall.getGlobalBounds(), CollisionLayer::WALL_LAYER,
@@ -77,6 +98,7 @@ void RoomInstance::buildFromPlan(const RoomPlan& plan, const sf::Vector2f& world
 				door.setFillColor(sf::Color(150, 75, 0)); // brown doors
 
 				ri_staticRoomShapes.push_back(door);
+				addSpriteForShape(door);
 
 				//setup collider for door if door is locked
 				for (auto& doorObj : plan.doors) {
@@ -115,6 +137,7 @@ void RoomInstance::buildFromPlan(const RoomPlan& plan, const sf::Vector2f& world
 		}
 
 		ri_staticRoomShapes.push_back(spawnPoint);
+		addSpriteForShape(spawnPoint);
 	}
 	// initialise triggers (DEBUG)
 	for (auto& trigger : plan.triggers) {
@@ -161,6 +184,7 @@ void RoomInstance::buildFromPlan(const RoomPlan& plan, const sf::Vector2f& world
 		triggerShape.setPosition(worldPos + static_cast<sf::Vector2f>(trigger.tilePos) * tileSize + positionOffset);
 
 		ri_staticRoomShapes.push_back(triggerShape);
+		addSpriteForShape(triggerShape);
 
 
 		// setup collider for trigger
@@ -191,8 +215,15 @@ const std::vector<StaticCollision>& RoomInstance::getStaticRoomColliders()
  * @brief Renders all prebuilt static room shapes.
  * @param window Target render window.
  */
-void RoomInstance::render(sf::RenderWindow& window)
+void RoomInstance::render(sf::RenderWindow& window, bool texturedMode)
 {
+	if (texturedMode && !ri_staticRoomSprites.empty() && ri_staticRoomSprites.size() == ri_staticRoomShapes.size())
+	{
+		for (auto& sprite : ri_staticRoomSprites)
+			sprite.draw(window);
+		return;
+	}
+
 	for (auto& shape : ri_staticRoomShapes)
 	{
 		window.draw(shape);
@@ -206,4 +237,5 @@ void RoomInstance::reset()
 {
 	ri_staticRoomColliders.clear();
 	ri_staticRoomShapes.clear();
+	ri_staticRoomSprites.clear();
 }

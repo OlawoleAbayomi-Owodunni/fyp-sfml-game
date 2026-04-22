@@ -36,15 +36,21 @@ void Enemy::initBody(const sf::Vector2f& size, const sf::Color& colour)
 	e_body.setFillColor(colour);
 	e_body.setOrigin(size / 2.f);
 	e_body.setPosition(e_startPos);
+	syncSpriteToBody();
 }
 
 /**
  * @brief Renders the enemy body.
  * @param window Render target.
  */
-void Enemy::render(sf::RenderWindow& window)
+void Enemy::render(sf::RenderWindow& window, bool texturedMode)
 {
-	window.draw(e_body);
+	syncSpriteToBody();
+
+	if (texturedMode && e_sprite.isLoaded())
+		e_sprite.draw(window);
+	else
+		window.draw(e_body);
 }
 
 /**
@@ -55,6 +61,34 @@ void Enemy::reset()
 	e_body.setPosition(e_startPos);
 	e_health = e_maxHealth;
 	e_isDead = false;
+	syncSpriteToBody();
+}
+
+bool Enemy::configureSprite(const std::string& texturePath, const SpriteAnimationMap& animations, const sf::Vector2i& tileCutoutSize)
+{
+	if (!e_sprite.configure(texturePath, animations, tileCutoutSize))
+		return false;
+
+	const sf::FloatRect spriteBounds = e_sprite.getGlobalBounds();
+	if (spriteBounds.size.x <= 0.f || spriteBounds.size.y <= 0.f)
+		return false;
+
+	e_sprite.setOrigin(sf::Vector2f(spriteBounds.size.x * 0.5f, spriteBounds.size.y * 0.5f));
+	e_sprite.setScale(sf::Vector2f(
+		e_body.getSize().x / spriteBounds.size.x,
+		e_body.getSize().y / spriteBounds.size.y));
+	e_sprite.setColor(e_body.getFillColor());
+	e_sprite.setPosition(e_body.getPosition());
+
+	return true;
+}
+
+void Enemy::syncSpriteToBody()
+{
+	if (!e_sprite.isLoaded())
+		return;
+
+	e_sprite.setPosition(e_body.getPosition());
 }
 
 /**

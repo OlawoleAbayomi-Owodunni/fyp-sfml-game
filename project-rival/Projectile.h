@@ -2,6 +2,7 @@
 #include "SFML/Graphics.hpp"
 
 #include "Collision.h"
+#include "CustomSprite.h"
 
 class Projectile : public ICollidable
 {
@@ -11,7 +12,7 @@ public:
 
 	virtual void init() = 0;
 	virtual void update(float dt) = 0;
-	virtual void render(sf::RenderWindow& window);
+	virtual void render(sf::RenderWindow& window, bool texturedMode);
 
 	virtual sf::FloatRect getCollisionBounds() const override;
 	virtual CollisionProfile getCollisionProfile() const override;
@@ -24,10 +25,12 @@ public:
 protected:
 	void init_body();
 	virtual void onExpire(float dt);
+	bool configureSprite(const std::string& texturePath, const SpriteAnimationMap& animations, const sf::Vector2i& tileCutoutSize);
 
 	bool p_shouldDestroy{ false };
 
 	sf::RectangleShape p_body;
+	CustomSprite p_sprite;
 	sf::Vector2f p_spawnPoint;
 	sf::Vector2f p_direction;
 
