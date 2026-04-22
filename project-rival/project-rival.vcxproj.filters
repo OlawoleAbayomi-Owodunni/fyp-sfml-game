@@ -273,6 +273,12 @@
     <ClCompile Include="NPC.cpp">
       <Filter>Header Files\NPCs</Filter>
     </ClCompile>
+    <ClCompile Include="CustomSprite.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SpriteAnimator.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Game.h">
@@ -395,14 +401,65 @@
     <ClInclude Include="HubShop.h">
       <Filter>Header Files\Hub</Filter>
     </ClInclude>
+    <ClInclude Include="CustomSprite.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SpriteAnimator.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <Image Include="ASSETS\IMAGES\SFML-LOGO.png">
+    <Image Include="ASSETS\IMAGES\Menu BG.png">
+      <Filter>Resource Files\IMAGES</Filter>
+    </Image>
+    <Image Include="ASSETS\SPRITES\Everything.png">
+      <Filter>Resource Files\IMAGES</Filter>
+    </Image>
+    <Image Include="ASSETS\SPRITES\LEVELS\Job Board.png">
+      <Filter>Resource Files\IMAGES</Filter>
+    </Image>
+    <Image Include="ASSETS\SPRITES\LEVELS\Shops.png">
+      <Filter>Resource Files\IMAGES</Filter>
+    </Image>
+    <Image Include="ASSETS\SPRITES\LEVELS\Teleporter.png">
+      <Filter>Resource Files\IMAGES</Filter>
+    </Image>
+    <Image Include="ASSETS\SPRITES\UI\Button Normal.png">
+      <Filter>Resource Files\IMAGES</Filter>
+    </Image>
+    <Image Include="ASSETS\SPRITES\UI\crosshair.png">
+      <Filter>Resource Files\IMAGES</Filter>
+    </Image>
+    <Image Include="ASSETS\SPRITES\UI\hud.png">
+      <Filter>Resource Files\IMAGES</Filter>
+    </Image>
+    <Image Include="ASSETS\SPRITES\UI\Menu Backdrop.png">
+      <Filter>Resource Files\IMAGES</Filter>
+    </Image>
+    <Image Include="ASSETS\SPRITES\UI\Portait - Gunther.png">
+      <Filter>Resource Files\IMAGES</Filter>
+    </Image>
+    <Image Include="ASSETS\SPRITES\UI\Portrait - Arnold.png">
+      <Filter>Resource Files\IMAGES</Filter>
+    </Image>
+    <Image Include="ASSETS\SPRITES\UI\Portrait - Cassandra.png">
+      <Filter>Resource Files\IMAGES</Filter>
+    </Image>
+    <Image Include="ASSETS\SPRITES\UI\Portrait - Petra.png">
+      <Filter>Resource Files\IMAGES</Filter>
+    </Image>
+    <Image Include="ASSETS\SPRITES\WEAPONS\60.png">
       <Filter>Resource Files\IMAGES</Filter>
     </Image>
   </ItemGroup>
   <ItemGroup>
     <Font Include="ASSETS\FONTS\ariblk.ttf">
+      <Filter>Resource Files\FONTS</Filter>
+    </Font>
+    <Font Include="ASSETS\FONTS\Conflict3040-WpnRV.ttf">
+      <Filter>Resource Files\FONTS</Filter>
+    </Font>
+    <Font Include="ASSETS\FONTS\NexiumRegular-LV0qg.otf">
       <Filter>Resource Files\FONTS</Filter>
     </Font>
   </ItemGroup>
@@ -553,5 +610,6 @@
     <Text Include="automation\scripts\output\npc-merge-changes.txt">
       <Filter>Resource Files\DOCUMENTATION\Git Summaries</Filter>
     </Text>
+    <Text Include="automation\scripts\output\llm-finalisation-merge-changes.txt" />
   </ItemGroup>
 </Project>

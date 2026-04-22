@@ -35,6 +35,7 @@ enum MenuAction
 	ACTION_CONTINUE,
 	ACTION_EXIT,
 	ACTION_RESUME,
+	ACTION_TOGGLE_RENDER_MODE,
 	ACTION_HUB_WORLD,
 	ACTION_MAIN_MENU,
 	ACTION_QUEST_0,
@@ -64,6 +65,7 @@ public:
 	bool isGameplayScreen() const { return m_screen == MenuScreen::GAMEPLAY_SCREEN; }
 
 	void setQuestBoardQuests(const std::vector<QuestData>& quests);
+	void setPauseRenderModeLabel(bool texturedMode);
 
 	void setGameOverStats(int kills, float timeSeconds, int coins, int healthPacks, int ammoPacks, float highscore);
 

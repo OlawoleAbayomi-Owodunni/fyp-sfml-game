@@ -259,6 +259,7 @@ x_drawFPS.setCharacterSize(24);
 
 	#pragma region Menu UI
     m_menuUI.init(m_arialFont, m_window.getDefaultView());
+	m_menuUI.setPauseRenderModeLabel(m_renderMode == RenderMode::TEXTURED_MODE);
     m_menuUI.setScreen(MenuScreen::MAIN_MENU_SCREEN);
 	#pragma endregion
 	m_activeShop = HubShopType::NONE_SHOP;
@@ -2383,6 +2384,13 @@ void Game::applyMenuAction(MenuAction action)
 
 	case MenuAction::ACTION_RESUME:
 		m_menuUI.setScreen(MenuScreen::GAMEPLAY_SCREEN);
+		break;
+
+	case MenuAction::ACTION_TOGGLE_RENDER_MODE:
+		m_renderMode = (m_renderMode == RenderMode::TEXTURED_MODE)
+			? RenderMode::DEBUG_SHAPES_MODE
+			: RenderMode::TEXTURED_MODE;
+		m_menuUI.setPauseRenderModeLabel(m_renderMode == RenderMode::TEXTURED_MODE);
 		break;
 
 	case MenuAction::ACTION_HUB_WORLD:

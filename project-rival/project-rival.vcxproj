@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -23,6 +23,7 @@
     <ClCompile Include="Chest.cpp" />
     <ClCompile Include="Collision.cpp" />
     <ClCompile Include="CombatRoom.cpp" />
+    <ClCompile Include="CustomSprite.cpp" />
     <ClCompile Include="DamageTrigger.cpp" />
     <ClCompile Include="EnemyWeapon.cpp" />
     <ClCompile Include="FloorGenerator.cpp" />
@@ -57,6 +58,7 @@
     <ClInclude Include="Chest.h" />
     <ClInclude Include="Collision.h" />
     <ClInclude Include="CombatRoom.h" />
+    <ClInclude Include="CustomSprite.h" />
     <ClInclude Include="DamageTrigger.h" />
     <ClInclude Include="DungeonPlan.h" />
     <ClInclude Include="EnemyWeapon.h" />
@@ -91,10 +93,20 @@
     <ClInclude Include="Weapon.h" />
   </ItemGroup>
   <ItemGroup>
-    <Image Include="ASSETS\IMAGES\SFML-LOGO.png">
-      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</DeploymentContent>
-      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</DeploymentContent>
-    </Image>
+    <Image Include="ASSETS\IMAGES\Menu BG.png" />
+    <Image Include="ASSETS\SPRITES\Everything.png" />
+    <Image Include="ASSETS\SPRITES\LEVELS\Job Board.png" />
+    <Image Include="ASSETS\SPRITES\LEVELS\Shops.png" />
+    <Image Include="ASSETS\SPRITES\LEVELS\Teleporter.png" />
+    <Image Include="ASSETS\SPRITES\UI\Button Normal.png" />
+    <Image Include="ASSETS\SPRITES\UI\crosshair.png" />
+    <Image Include="ASSETS\SPRITES\UI\hud.png" />
+    <Image Include="ASSETS\SPRITES\UI\Menu Backdrop.png" />
+    <Image Include="ASSETS\SPRITES\UI\Portait - Gunther.png" />
+    <Image Include="ASSETS\SPRITES\UI\Portrait - Arnold.png" />
+    <Image Include="ASSETS\SPRITES\UI\Portrait - Cassandra.png" />
+    <Image Include="ASSETS\SPRITES\UI\Portrait - Petra.png" />
+    <Image Include="ASSETS\SPRITES\WEAPONS\60.png" />
   </ItemGroup>
   <ItemGroup>
     <Font Include="ASSETS\FONTS\ariblk.ttf">
@@ -103,6 +115,8 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</ExcludedFromBuild>
     </Font>
+    <Font Include="ASSETS\FONTS\Conflict3040-WpnRV.ttf" />
+    <Font Include="ASSETS\FONTS\NexiumRegular-LV0qg.otf" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\automation\prompts\docs-architecture-development-log-context.md" />

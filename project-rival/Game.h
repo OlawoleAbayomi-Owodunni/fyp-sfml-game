@@ -60,6 +60,17 @@ enum GameMode
 };
 
 /**
+ * @brief Runtime visual render mode.
+ */
+enum RenderMode
+{
+	TEXTURED_MODE,
+	DEBUG_SHAPES_MODE,
+
+	RENDER_MODE_COUNT
+};
+
+/**
  * @brief Types of LLM jobs that can be queued.
  */
 enum LLMJobType
@@ -175,6 +186,7 @@ private:
 	sf::View m_gameCamera;
 	bool m_isPlayerCamera;
 	GameMode m_gameMode;
+	RenderMode m_renderMode{ RenderMode::TEXTURED_MODE };
 
 	#pragma region Menu UI
 	MenuUI m_menuUI{ m_arialFont, m_gameCamera };

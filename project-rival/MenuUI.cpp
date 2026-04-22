@@ -64,6 +64,7 @@ void MenuUI::init(const sf::Font& font, const sf::View& defaultView)
 
 	m_pauseMenuButtons = {
 		makeButton("Resume", MenuAction::ACTION_RESUME),
+		makeButton("Render Mode: Textured", MenuAction::ACTION_TOGGLE_RENDER_MODE),
 		makeButton("Go To Hub World", MenuAction::ACTION_HUB_WORLD),
 		makeButton("Go To Main Menu", MenuAction::ACTION_MAIN_MENU)
 	};
@@ -271,6 +272,22 @@ void MenuUI::setQuestBoardQuests(const std::vector<QuestData>& quests)
 {
 	m_questBoardQuests = quests;
 	updateQuestBoardButtons();
+}
+
+void MenuUI::setPauseRenderModeLabel(bool texturedMode)
+{
+	if (m_pauseMenuButtons.size() < 2)
+		return;
+
+	MenuButton& renderModeButton = m_pauseMenuButtons[1];
+	renderModeButton.label.setString(texturedMode ? "Render Mode: Textured" : "Render Mode: Debug");
+
+	const sf::FloatRect bounds = renderModeButton.label.getLocalBounds();
+	renderModeButton.label.setOrigin({
+		bounds.position.x + bounds.size.x / 2.f,
+		bounds.position.y + bounds.size.y / 2.f
+		});
+	renderModeButton.label.setPosition(renderModeButton.shape.getPosition());
 }
 #pragma endregion
 
