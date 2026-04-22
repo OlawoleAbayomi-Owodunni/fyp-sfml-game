@@ -6,6 +6,25 @@ namespace
 	{
 		return tileSize.x > 0 && tileSize.y > 0;
 	}
+
+	std::shared_ptr<const sf::Texture> getSharedTexture(const std::string& texturePath)
+	{
+		static std::unordered_map<std::string, std::weak_ptr<sf::Texture>> textureCache;
+
+		auto it = textureCache.find(texturePath);
+		if (it != textureCache.end())
+		{
+			if (std::shared_ptr<sf::Texture> existing = it->second.lock())
+				return existing;
+		}
+
+		std::shared_ptr<sf::Texture> texture = std::make_shared<sf::Texture>();
+		if (!texture->loadFromFile(texturePath))
+			return nullptr;
+
+		textureCache[texturePath] = texture;
+		return texture;
+	}
 }
 
 CustomSprite::CustomSprite(const std::string& texturePath, const SpriteAnimationMap& animations, const sf::Vector2i& tileCutoutSize)
@@ -24,16 +43,18 @@ bool CustomSprite::configure(const std::string& texturePath, const SpriteAnimati
 	m_currentFrameIndex = 0;
 	m_frameTimerSeconds = 0.f;
 	m_sprite.reset();
+	m_texture.reset();
 
-	if (!m_texture.loadFromFile(texturePath))
+	m_texture = getSharedTexture(texturePath);
+	if (!m_texture)
 		return false;
 
-	m_sprite.emplace(m_texture);
+	m_sprite.emplace(*m_texture);
 	m_loaded = true;
 
 	if (!hasAnimations())
 	{
-		const sf::Vector2u textureSize = m_texture.getSize();
+		const sf::Vector2u textureSize = m_texture->getSize();
 		m_sprite->setTextureRect(sf::IntRect(
 			sf::Vector2i(0, 0),
 			sf::Vector2i(static_cast<int>(textureSize.x), static_cast<int>(textureSize.y))));
@@ -59,16 +80,18 @@ bool CustomSprite::configureWithRects(const std::string& texturePath, const Spri
 	m_currentFrameIndex = 0;
 	m_frameTimerSeconds = 0.f;
 	m_sprite.reset();
+	m_texture.reset();
 
-	if (!m_texture.loadFromFile(texturePath))
+	m_texture = getSharedTexture(texturePath);
+	if (!m_texture)
 		return false;
 
-	m_sprite.emplace(m_texture);
+	m_sprite.emplace(*m_texture);
 	m_loaded = true;
 
 	if (m_rectAnimations.empty())
 	{
-		const sf::Vector2u textureSize = m_texture.getSize();
+		const sf::Vector2u textureSize = m_texture->getSize();
 		m_sprite->setTextureRect(sf::IntRect(
 			sf::Vector2i(0, 0),
 			sf::Vector2i(static_cast<int>(textureSize.x), static_cast<int>(textureSize.y))));

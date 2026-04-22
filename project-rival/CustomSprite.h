@@ -3,6 +3,7 @@
 #include <SFML/graphics.hpp>
 
 #include <optional>
+#include <memory>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -68,7 +69,7 @@ private:
 	bool hasAnimations() const { return m_useRectAnimations ? !m_rectAnimations.empty() : !m_animations.empty(); }
 
 	bool m_loaded{ false };
-	sf::Texture m_texture;
+	std::shared_ptr<const sf::Texture> m_texture;
 	std::optional<sf::Sprite> m_sprite;
 
 	SpriteAnimationMap m_animations;
