@@ -104,7 +104,7 @@ void Weapon::update(float dt, const sf::Vector2f playerPos, const sf::Vector2f a
 	if (w_hasSpriteVisual)
 	{
 		w_sprite.setPosition(w_shape.getPosition());
-		const float angle = std::atan2(aimDir.y, aimDir.x);
+		const float angle = w_shape.getRotation().asRadians();
 		w_sprite.setRotation(sf::radians(angle));
 	}
 
@@ -120,9 +120,10 @@ void Weapon::render(sf::RenderWindow& window, bool texturedMode)
 {
 	if (texturedMode && w_hasSpriteVisual && w_sprite.isLoaded())
 	{
-		const bool faceLeft = (w_lastAimDir.x < 0.f);
+		const bool facingLeft = (w_lastAimDir.x < 0.f);
 		const sf::Vector2f baseScale = w_spriteBaseScale;
-		w_sprite.setScale(sf::Vector2f(faceLeft ? -baseScale.x : baseScale.x, baseScale.y));
+		if(facingLeft) w_sprite.setScale(sf::Vector2f(baseScale.x, -baseScale.y));
+		else w_sprite.setScale(baseScale);
 		w_sprite.draw(window);
 	}
 	else
